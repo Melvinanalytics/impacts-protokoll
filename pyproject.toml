@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "impacts-protocol"
+version = "0.1.0"
+description = "File-native IMPACTS protocol contracts"
+requires-python = ">=3.11"
+dependencies = [
+    "jsonschema>=4.23",
+    "PyYAML>=6.0",
+]
+
+[project.scripts]
+impacts = "impacts_protocol.cli:main"
+
+[tool.setuptools]
+packages = [
+    "impacts_protocol",
+    "impacts_protocol.schemas",
+]
+
+[tool.setuptools.package-dir]
+impacts_protocol = "src/impacts_protocol"
+"impacts_protocol.schemas" = "02_protocol/schemas"
+
+[tool.setuptools.package-data]
+"impacts_protocol.schemas" = ["*.json"]

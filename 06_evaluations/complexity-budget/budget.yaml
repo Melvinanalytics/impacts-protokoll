@@ -1,0 +1,7 @@
+# Grenzen und Attributionsdaten. Baseline: Git-Zielstand, durch check.py gemessen.
+version: 3
+limits:
+  root_dirs: 6
+  protocol_schemas: 9
+  max_total_required_fields_per_schema: 21
+approvals: []

@@ -1,0 +1,12 @@
+id: hauptprozess:gutachten
+leistung_ref: leistung:gutachten
+entry: pruefen
+nodes:
+  - id: pruefen
+    type: task
+    next:
+      - abgeschlossen
+  - id: abgeschlossen
+    type: end
+    next: []
+    event: Gutachten abgeschlossen
