@@ -44,28 +44,23 @@ _StrictLoader.add_constructor(
 )
 
 
-def load_yaml(path: Path, root: Path | None = None) -> dict[str, Any]:
-    """Load one YAML object from *path*."""
-    try:
-        value = yaml.load(_read_text(path, root), Loader=_StrictLoader)
-    except DuplicateKeyError:
-        raise
-    except (OSError, UnicodeError, yaml.YAMLError) as error:
-        raise ValueError(f"invalid YAML: {error}") from error
-    if not isinstance(value, dict):
-        raise ValueError("YAML document must be an object")
-    return value
-
-
 def load_frontmatter(path: Path, root: Path | None = None) -> dict[str, Any]:
     """Load YAML frontmatter, returning an empty object when none is present."""
+    metadata, _ = load_frontmatter_and_body(path, root)
+    return metadata
+
+
+def load_frontmatter_and_body(
+    path: Path, root: Path | None = None
+) -> tuple[dict[str, Any], str]:
+    """Load YAML frontmatter and the Markdown body from one context file."""
     try:
         text = _read_text(path, root)
     except (OSError, UnicodeError) as error:
         raise ValueError(f"invalid Markdown: {error}") from error
     lines = text.splitlines()
     if not lines or lines[0].strip() != "---":
-        return {}
+        return {}, text
     try:
         closing_index = next(
             index for index, line in enumerate(lines[1:], start=1) if line.strip() == "---"
@@ -82,10 +77,10 @@ def load_frontmatter(path: Path, root: Path | None = None) -> dict[str, Any]:
     except yaml.YAMLError as error:
         raise ValueError(f"invalid frontmatter YAML: {error}") from error
     if value is None:
-        return {}
+        return {}, "\n".join(lines[closing_index + 1 :])
     if not isinstance(value, dict):
         raise ValueError("frontmatter must be an object")
-    return value
+    return value, "\n".join(lines[closing_index + 1 :])
 
 
 def _read_text(path: Path, root: Path | None) -> str:

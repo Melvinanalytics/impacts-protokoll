@@ -18,7 +18,7 @@ class CliTests(unittest.TestCase):
             target = Path(directory) / "demo"
 
             self.assertEqual(
-                0, main(["init", str(target), "--customer", "demo-kunde"])
+                0, main(["init", str(target)])
             )
             self.assertEqual(0, main(["validate", str(target)]))
 
@@ -31,9 +31,7 @@ class CliTests(unittest.TestCase):
 
             error_output = StringIO()
             with redirect_stderr(error_output):
-                exit_code = main(
-                    ["init", str(target), "--customer", "demo-kunde"]
-                )
+                exit_code = main(["init", str(target)])
 
             self.assertNotEqual(0, exit_code)
             self.assertIn("exists", error_output.getvalue())

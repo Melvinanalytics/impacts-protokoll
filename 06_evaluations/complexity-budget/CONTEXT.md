@@ -5,6 +5,6 @@ evidence_status: reported
 
 # Komplexitätsbudget
 
-Deterministisches Gate gegen Komplexitätsausbruch. `budget.yaml` hält Grenzen und Attributionsdaten. `check.py` misst den Arbeitsbaum. Im privaten Verlauf hält der unveränderliche Commit `2c0aaa5d425cdd9a3daf9ffa9a5d800c84c625a5` die akzeptierten Ausgangsgrenzen. Eine saubere Public-Historie enthält diesen privaten Commit absichtlich nicht; dort verwendet derselbe Checker die fest codierte portable Baseline `6/7/20` und die Limits `6/9/21`.
+Deterministisches Gate gegen Komplexitätsausbruch. `budget.yaml` hält Grenzen und Attributionsdaten. `check.py` misst den Arbeitsbaum. Die menschlich bestätigte V0.2-Grenze `5/5/15` bildet den einmaligen Bootstrap. Danach liest der Checker seine Vergleichsgrenze aus dem letzten erreichbaren öffentlichen Release-Tag. Ein Tag am aktuellen `HEAD` wird übersprungen, damit auch der Post-Tag-Check gegen den vorherigen Stand prüft.
 
-Spätere Commits können `budget.yaml` nicht als eigene Baseline verwenden. Eine Erhöhung braucht `approved_by: human:<id>` samt Begründung im Budget. Das Feld dokumentiert die Attribution und authentifiziert sie nicht. Eine Änderung des gebundenen Commits, der portablen Baseline oder der portablen Limits ist eine sichtbare Änderung am Gate und braucht menschliche Prüfung. Regeln und Quellen stehen im Einfachheitsvertrag unter `AGENTS.md`.
+Eine Erhöhung braucht `approved_by: human:<id>` samt Begründung im Budget. Das Feld dokumentiert die Attribution und authentifiziert sie nicht. Geschütztes `main` und geschützte Release-Tags sichern die Baseline gegen Selbständerung. Regeln und Quellen stehen im Einfachheitsvertrag unter `AGENTS.md`.

@@ -1,21 +1,18 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:impacts:schema:leistung:v0",
+  "$id": "urn:impacts:schema:leistung:v1",
   "title": "Leistung",
   "type": "object",
   "additionalProperties": false,
   "properties": {
-    "id": {
-      "type": "string",
-      "minLength": 1
-    },
-    "hauptprozess_ref": {
-      "type": "string",
-      "minLength": 1
+    "ergebnis": {"type": "string", "minLength": 1, "pattern": ".*\\S.*"},
+    "kennzahl": {"type": "string", "minLength": 1, "pattern": ".*\\S.*"},
+    "abnahme": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1, "pattern": ".*\\S.*"}
     }
   },
-  "required": [
-    "id",
-    "hauptprozess_ref"
-  ]
+  "required": ["ergebnis", "kennzahl", "abnahme"]
 }

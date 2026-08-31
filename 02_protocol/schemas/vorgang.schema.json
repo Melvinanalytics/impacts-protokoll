@@ -1,37 +1,54 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:impacts:schema:vorgang:v0",
+  "$id": "urn:impacts:schema:vorgang:v1",
   "title": "Vorgang",
   "type": "object",
   "additionalProperties": false,
   "properties": {
-    "id": {
-      "type": "string",
-      "minLength": 1
-    },
-    "hauptprozess_ref": {
-      "type": "string",
-      "minLength": 1
-    },
-    "status": {
-      "enum": ["angelegt", "in_pruefung", "wartend", "abgeschlossen"]
-    },
-    "run_id": {
-      "type": "string",
-      "minLength": 1
-    },
-    "receipt_refs": {
+    "type": {"const": "vorgang"},
+    "id": {"type": "string", "pattern": "^vorgang:[a-z0-9]+(?:-[a-z0-9]+)*$"},
+    "application_revision": {"type": "string", "pattern": "^git-tree:(?:[0-9a-f]{40}|[0-9a-f]{64})$"},
+    "laufpfad": {
       "type": "array",
       "minItems": 1,
-      "uniqueItems": true,
-      "items": {"type": "string", "minLength": 1}
+      "items": {"$ref": "#/$defs/laufpfadeintrag"}
     }
   },
-  "required": [
-    "id",
-    "hauptprozess_ref",
-    "status",
-    "run_id",
-    "receipt_refs"
-  ]
+  "required": ["type", "id", "application_revision", "laufpfad"],
+  "$defs": {
+    "laufpfadeintrag": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "arbeitsschritt_ref": {"type": "string", "pattern": "^arbeitsschritt:[a-z0-9]+(?:-[a-z0-9]+)*$"},
+        "versuch": {"type": "integer", "minimum": 1},
+        "status": {"enum": ["aktiv", "wartend", "abgeschlossen"]},
+        "eingabe_hash": {"$ref": "#/$defs/hash"},
+        "gewaehlte_route": {"type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"},
+        "ausgabe_hash": {"$ref": "#/$defs/hash"},
+        "wiedereinstieg": {"$ref": "#/$defs/wiedereinstieg"},
+        "freigabe": {"$ref": "#/$defs/freigabe"}
+      },
+      "required": ["arbeitsschritt_ref", "versuch", "status", "eingabe_hash"]
+    },
+    "hash": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "wiedereinstieg": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "ausloeser": {"type": "string", "minLength": 1, "pattern": ".*\\S.*"},
+        "continuation_ref": {"type": "string", "minLength": 1, "pattern": ".*\\S.*"}
+      },
+      "required": ["ausloeser", "continuation_ref"]
+    },
+    "freigabe": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "by": {"type": "string", "pattern": "^human:[^:\\s][^\\s]*$"},
+        "at": {"type": "string", "format": "date-time"}
+      },
+      "required": ["by", "at"]
+    }
+  }
 }

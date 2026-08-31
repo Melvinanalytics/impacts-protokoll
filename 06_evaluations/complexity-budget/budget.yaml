@@ -1,7 +1,15 @@
 # Grenzen und Attributionsdaten. Baseline: Git-Zielstand, durch check.py gemessen.
-version: 3
+version: 4
 limits:
-  root_dirs: 6
-  protocol_schemas: 9
-  max_total_required_fields_per_schema: 21
+  root_dirs: 5
+  protocol_schemas: 5
+  max_total_required_fields_per_schema: 15
 approvals: []
+initial_release:
+  tag: v0.2.0
+  limits:
+    root_dirs: 5
+    protocol_schemas: 5
+    max_total_required_fields_per_schema: 15
+  approved_by: human:melvin
+  reason: Human-confirmed V1 boundary for initial public V0.2 release

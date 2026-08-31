@@ -1,11 +1,12 @@
 """File-native IMPACTS workspace protocol."""
 
+from .generator import init_workspace
 from .model import Issue, ValidationReport
-from .validator import validate_application, validate_workspace
+from .validator import validate
 
 __all__ = [
     "Issue",
     "ValidationReport",
-    "validate_application",
-    "validate_workspace",
+    "init_workspace",
+    "validate",
 ]
