@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Komplexitätsbudget gegen private Git- oder portable Public-Baseline prüfen."""
+"""Komplexitätsbudget gegen den letzten öffentlichen Release-Tag prüfen."""
 
 import json
 import re
@@ -24,17 +24,7 @@ IGNORED_ROOT = {
 }
 METRICS = ("root_dirs", "protocol_schemas", "max_total_required_fields_per_schema")
 HUMAN_ATTRIBUTION = re.compile(r"human:[^:\s][^\s]*\Z")
-ACCEPTED_BASELINE_REVISION = "2c0aaa5d425cdd9a3daf9ffa9a5d800c84c625a5"
-PORTABLE_BASELINE = {
-    "root_dirs": 6,
-    "protocol_schemas": 7,
-    "max_total_required_fields_per_schema": 20,
-}
-PORTABLE_LIMITS = {
-    "root_dirs": 6,
-    "protocol_schemas": 9,
-    "max_total_required_fields_per_schema": 21,
-}
+RELEASE_TAG = re.compile(r"v(?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)\Z")
 
 
 def measure() -> dict:
@@ -44,63 +34,35 @@ def measure() -> dict:
     return _measurement(roots, counts)
 
 
-def accepted_baseline() -> dict[str, int]:
-    """Measure committed architecture without trusting mutable budget values."""
-    revision = _baseline_revision()
-    if revision is None:
-        return dict(PORTABLE_BASELINE)
-    roots = _git("ls-tree", "-d", "--name-only", revision).splitlines()
-    paths = [
-        p for p in _git("ls-tree", "-r", "--name-only", revision, "02_protocol/schemas").splitlines()
-        if p.endswith(".json")
-    ]
-    counts = {Path(p).name: _required_count(json.loads(_git("show", f"{revision}:{p}"))) for p in paths}
-    measured = _measurement(roots, counts)
-    return {field: int(measured[field]) for field in METRICS}
-
-
-def accepted_limits() -> dict[str, int]:
-    """Read limits from the accepted revision when its budget is inspectable."""
-    revision = _baseline_revision()
-    if revision is None:
-        return dict(PORTABLE_LIMITS)
-    try:
-        relative = BUDGET.resolve().relative_to(HISTORY_REPO.resolve()).as_posix()
-        previous = yaml.safe_load(_git("show", f"{revision}:{relative}"))
-        limits = previous.get("limits") if isinstance(previous, dict) else None
-        if not isinstance(limits, dict) or set(limits) != set(METRICS):
-            raise ValueError("accepted budget limits have an invalid form")
-        if not all(
-            isinstance(limits[field], int) and not isinstance(limits[field], bool)
-            for field in METRICS
-        ):
-            raise ValueError("accepted budget limits must be integers")
-        return {field: int(limits[field]) for field in METRICS}
-    except (ValueError, subprocess.CalledProcessError):
-        return accepted_baseline()
+def accepted_limits(budget: dict) -> dict[str, int]:
+    """Read the immutable prior release boundary or the approved V0.2 bootstrap."""
+    initial = budget["initial_release"]
+    baseline_tag = _baseline_tag()
+    if baseline_tag is None or _version_key(baseline_tag) < _version_key(initial["tag"]):
+        return dict(initial["limits"])
+    relative = "06_evaluations/complexity-budget/budget.yaml"
+    previous = yaml.safe_load(_git("show", f"{baseline_tag}:{relative}"))
+    limits = previous.get("limits") if isinstance(previous, dict) else None
+    _validate_limits(limits, "release-tag limits")
+    return {field: int(limits[field]) for field in METRICS}
 
 
 def main() -> int:
     try:
         budget = yaml.safe_load(BUDGET.read_text(encoding="utf-8"))
-        baseline_limits = accepted_limits()
+        if not isinstance(budget, dict) or budget.get("version") != 4:
+            raise ValueError("budget.yaml braucht version 4")
+        if set(budget) != {"version", "limits", "approvals", "initial_release"}:
+            raise ValueError("budget.yaml besitzt unbekannte Felder")
+        limits, approvals = budget.get("limits"), budget.get("approvals")
+        _validate_limits(limits, "limits")
+        _validate_initial_release(budget.get("initial_release"))
+        if not isinstance(approvals, list):
+            raise ValueError("approvals muss eine Liste sein")
+        baseline_limits = accepted_limits(budget)
     except (OSError, ValueError, json.JSONDecodeError, subprocess.CalledProcessError) as error:
-        print(f"VERLETZUNG: Budget oder Git-Baseline nicht prüfbar: {error}")
+        print(f"VERLETZUNG: Budget oder Release-Baseline nicht prüfbar: {error}")
         return 1
-    if not isinstance(budget, dict) or budget.get("version") != 3:
-        print("VERLETZUNG: budget.yaml braucht version 3.")
-        return 1
-    if set(budget) != {"version", "limits", "approvals"}:
-        print("VERLETZUNG: budget.yaml erlaubt nur version, limits und approvals.")
-        return 1
-    limits, approvals = budget.get("limits"), budget.get("approvals")
-    if not isinstance(limits, dict) or set(limits) != set(METRICS) or not isinstance(approvals, list):
-        print("VERLETZUNG: limits oder approvals besitzen eine ungültige Form.")
-        return 1
-    for field, value in limits.items():
-        if not isinstance(value, int) or isinstance(value, bool) or value < 0:
-            print(f"VERLETZUNG: {field} braucht eine nichtnegative Ganzzahl.")
-            return 1
     for approval in approvals:
         if not isinstance(approval, dict):
             print("VERLETZUNG: approval muss ein Objekt sein.")
@@ -139,45 +101,57 @@ def _git(*args: str) -> str:
     return subprocess.check_output(["git", "-C", str(HISTORY_REPO), *args], text=True, stderr=subprocess.STDOUT)
 
 
-def _baseline_revision() -> str | None:
+def _baseline_tag() -> str | None:
     git_metadata = HISTORY_REPO / ".git"
     if not git_metadata.exists() and not git_metadata.is_symlink():
         return None
-    _git("rev-parse", "--verify", "HEAD^{commit}")
-    _git("rev-list", "--objects", "HEAD")
-    object_type = _git_object_type(ACCEPTED_BASELINE_REVISION)
-    if object_type is None:
-        return None
-    if object_type != "commit":
-        raise ValueError(
-            f"accepted baseline must be a commit, got {object_type!r}"
-        )
-    _git("cat-file", "-e", f"{ACCEPTED_BASELINE_REVISION}^{{commit}}")
-    return ACCEPTED_BASELINE_REVISION
-
-
-def _git_object_type(object_name: str) -> str | None:
-    result = subprocess.run(
-        [
-            "git",
-            "-C",
-            str(HISTORY_REPO),
-            "cat-file",
-            "--batch-check=%(objectname) %(objecttype)",
-        ],
-        input=f"{object_name}\n",
-        text=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        check=True,
+    head = _git("rev-parse", "HEAD")
+    tags = _git(
+        "tag",
+        "--merged",
+        "HEAD",
+        "--list",
+        "v[0-9]*",
+        "--sort=-version:refname",
     )
-    output = result.stdout.strip()
-    if output == f"{object_name} missing":
-        return None
-    prefix = f"{object_name} "
-    if output.startswith(prefix) and "\n" not in output:
-        return output.removeprefix(prefix)
-    raise ValueError(f"unexpected git object response: {output!r}")
+    for tag in tags.splitlines():
+        if RELEASE_TAG.fullmatch(tag) is None:
+            continue
+        if _git("rev-list", "-n", "1", tag) != head:
+            return tag
+    return None
+
+
+def _version_key(tag: str) -> tuple[int, int, int]:
+    match = RELEASE_TAG.fullmatch(tag)
+    if match is None:
+        raise ValueError(f"invalid release tag: {tag}")
+    return tuple(int(match.group(name)) for name in ("major", "minor", "patch"))
+
+
+def _validate_limits(value, label: str) -> None:
+    if not isinstance(value, dict) or set(value) != set(METRICS):
+        raise ValueError(f"{label} besitzt eine ungültige Form")
+    if not all(
+        isinstance(value[field], int)
+        and not isinstance(value[field], bool)
+        and value[field] >= 0
+        for field in METRICS
+    ):
+        raise ValueError(f"{label} braucht nichtnegative Ganzzahlen")
+
+
+def _validate_initial_release(value) -> None:
+    expected = {"tag", "limits", "approved_by", "reason"}
+    if not isinstance(value, dict) or set(value) != expected:
+        raise ValueError("initial_release besitzt eine ungültige Form")
+    if RELEASE_TAG.fullmatch(str(value["tag"])) is None:
+        raise ValueError("initial_release braucht einen Release-Tag")
+    _validate_limits(value["limits"], "initial_release limits")
+    if HUMAN_ATTRIBUTION.fullmatch(str(value["approved_by"])) is None:
+        raise ValueError("initial_release braucht approved_by human:<id>")
+    if not str(value["reason"]).strip():
+        raise ValueError("initial_release braucht eine Begründung")
 
 
 def _measurement(root_names: list[str], counts: dict[str, int]) -> dict:

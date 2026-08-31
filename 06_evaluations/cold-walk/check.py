@@ -5,8 +5,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from impacts_protocol.generator import generate_workspace
-from impacts_protocol.validator import validate_workspace
+from impacts_protocol import init_workspace, validate
 from impacts_protocol.workspace_contract import (
     WORKSPACE_FOLDERS,
     WORKSPACE_TEMPLATE_FILES,
@@ -29,7 +28,7 @@ def inspect_workspace(root: Path) -> WalkResult:
     root = Path(root)
     issues = [
         f"{issue.code}: {issue.path}: {issue.message}"
-        for issue in validate_workspace(root).issues
+        for issue in validate(root).issues
     ]
     folders = tuple(sorted(path.name for path in root.iterdir() if path.is_dir()))
     expected_folders = tuple(sorted(WORKSPACE_FOLDERS))
@@ -55,7 +54,7 @@ def inspect_workspace(root: Path) -> WalkResult:
 def main() -> int:
     """Generate, inspect, and report one disposable template."""
     with TemporaryDirectory(prefix="impacts-cold-walk-") as directory:
-        root = generate_workspace(Path(directory) / "workspace", "walk-demo")
+        root = init_workspace(Path(directory) / "workspace")
         result = inspect_workspace(root)
         for folder in result.folders:
             print(f"FOLDER {folder}")

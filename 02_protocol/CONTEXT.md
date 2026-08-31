@@ -1,17 +1,17 @@
 # Protocol routing
 
-This area owns static method contracts, schemas and invariants.
+This area owns five static schemas and the complete-path invariant.
 
 ## Language
 
-**Leistung** is one repeatable owed result. It has a reciprocal 1:1 reference to one Hauptprozess.
+**Leistung** is the embedded, ID-less result contract of one Hauptprozess. It names the valued end state, metric and acceptance conditions.
 
-**Hauptprozess** is the reusable process definition that produces one Leistung. It owns its Teilprozesse and complete process paths.
+**Hauptprozess** is the Aggregate Root of one Application. It ends when its Leistung is achieved.
 
-**Teilprozess** is a closed section of one Hauptprozess. It owns its Arbeitsschritte.
+**Teilprozess** is one closed context section of its Hauptprozess.
 
-**Arbeitsschritt** is one ICM stage with declared inputs, processing, outputs, verification and gate.
+**Arbeitsschritt** is one ICM stage. It declares inputs, outputs, verification and routes. Its Markdown body explains processing.
 
-**Vorgang** is one complete concrete execution of one Hauptprozess. Its customer files live under `06_vorgaenge/<id>/`.
+**Vorgang** is one concrete run of the Application revision named by its Git tree. Its Laufpfad is the only run-state authority.
 
-Read [complete-process-paths.md](invariants/complete-process-paths.md) before changing process topology. The current architecture is [contract-only-core-design.md](../docs/superpowers/specs/2026-08-26-contract-only-core-design.md).
+Use [impacts-method.md](impacts-method.md) to turn observed work into an optimized Application. Read [complete-process-paths.md](invariants/complete-process-paths.md) before changing process topology. Normative architecture: [minimal-core-design.md](../docs/superpowers/specs/2026-08-30-minimal-core-design.md).

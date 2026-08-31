@@ -1,52 +1,113 @@
 from pathlib import Path
-import unittest
+import sys
+from tempfile import TemporaryDirectory
 
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "src"))
+
+import impacts_protocol
+import impacts_protocol.validator as validator
+from impacts_protocol import init_workspace, validate
 
 
-class CoreBoundaryTests(unittest.TestCase):
-    def test_core_contains_protocol_interface_without_capability_implementation(self):
-        forbidden = (
-            ROOT / "04_capabilities",
-            ROOT / "06_evaluations" / "dokumentenarbeit-invarianten",
-            ROOT / "src" / "impacts_protocol" / "capabilities.py",
-            ROOT / "05_examples" / "dokumentenarbeit-golden",
+def test_public_api_contains_only_minimal_contract():
+    assert set(impacts_protocol.__all__) == {
+        "Issue",
+        "ValidationReport",
+        "init_workspace",
+        "validate",
+    }
+    assert not hasattr(validator, "validate_workspace")
+    assert not hasattr(validator, "validate_application")
+
+
+def test_retired_core_surfaces_are_absent():
+    assert not (ROOT / "00_charter").exists()
+    schemas = ROOT / "02_protocol" / "schemas"
+    assert {path.name for path in schemas.glob("*.json")} == {
+        "leistung.schema.json",
+        "hauptprozess.schema.json",
+        "teilprozess.schema.json",
+        "arbeitsschritt.schema.json",
+        "vorgang.schema.json",
+    }
+
+
+def test_missing_router_fails_closed():
+    with TemporaryDirectory() as directory:
+        root = init_workspace(Path(directory) / "workspace")
+        (root / "CONTEXT.md").unlink()
+
+        assert {issue.code for issue in validate(root).issues} == {"routing.missing"}
+
+
+def test_invalid_frontmatter_fails_closed():
+    with TemporaryDirectory() as directory:
+        root = init_workspace(Path(directory) / "workspace")
+        (root / "CONTEXT.md").write_text("---\ntype: [\n---\n", encoding="utf-8")
+
+        assert "format.invalid" in {issue.code for issue in validate(root).issues}
+
+
+def test_router_type_and_exclusive_frontmatter_are_enforced():
+    with TemporaryDirectory() as directory:
+        root = init_workspace(Path(directory) / "workspace")
+        (root / "CONTEXT.md").write_text(
+            "---\ntype: workspace\nname: duplicate-authority\n---\n",
+            encoding="utf-8",
         )
 
-        self.assertEqual([], [str(path.relative_to(ROOT)) for path in forbidden if path.exists()])
+        assert "routing.type" in {issue.code for issue in validate(root).issues}
 
-    def test_core_routes_and_packaging_do_not_name_capability_implementation(self):
-        files = (
-            ROOT / "README.md",
-            ROOT / "CONTEXT.md",
-            ROOT / "pyproject.toml",
+        (root / "CONTEXT.md").write_text("---\ntype: unknown\n---\n", encoding="utf-8")
+        assert "routing.type" in {issue.code for issue in validate(root).issues}
+
+        (root / "CONTEXT.md").write_text(
+            "---\ntype: [workspace]\n---\n", encoding="utf-8"
         )
-        forbidden = ("04_capabilities", "capability_packs", "dokumentenarbeit")
-
-        findings = []
-        for path in files:
-            text = path.read_text(encoding="utf-8")
-            findings.extend(
-                f"{path.name}: {term}" for term in forbidden if term in text
-            )
-        self.assertEqual([], findings)
-
-    def test_core_has_no_capability_registry_dependency(self):
-        findings = []
-        for path in (ROOT / "src" / "impacts_protocol").glob("*.py"):
-            text = path.read_text(encoding="utf-8")
-            if "CapabilityRegistry" in text or "from .capabilities" in text:
-                findings.append(path.name)
-
-        self.assertEqual([], findings)
-
-    def test_evaluation_router_names_each_core_evaluation(self):
-        router = (ROOT / "06_evaluations" / "CONTEXT.md").read_text(encoding="utf-8")
-
-        self.assertIn("cold-walk/CONTEXT.md", router)
-        self.assertIn("complexity-budget/CONTEXT.md", router)
+        assert "routing.type" in {issue.code for issue in validate(root).issues}
 
 
-if __name__ == "__main__":
-    unittest.main()
+def test_core_folder_symlink_fails_closed():
+    with TemporaryDirectory() as directory:
+        base = Path(directory)
+        root = init_workspace(base / "workspace")
+        (root / "applications").rmdir()
+        (root / "applications").symlink_to(base, target_is_directory=True)
+
+        assert "structure.symlink" in {issue.code for issue in validate(root).issues}
+
+
+def test_workspace_root_symlink_fails_closed():
+    with TemporaryDirectory() as directory:
+        base = Path(directory)
+        root = init_workspace(base / "workspace")
+        alias = base / "workspace-alias"
+        alias.symlink_to(root, target_is_directory=True)
+
+        assert "structure.symlink" in {issue.code for issue in validate(alias).issues}
+
+
+def test_customer_owned_extra_folder_is_outside_core_validation():
+    with TemporaryDirectory() as directory:
+        root = init_workspace(Path(directory) / "workspace")
+        (root / "customer-notes").mkdir()
+        (root / "customer-notes" / "note.md").write_text("frei", encoding="utf-8")
+
+        assert validate(root).valid
+
+
+def test_filesystem_scan_error_fails_closed(monkeypatch):
+    with TemporaryDirectory() as directory:
+        root = init_workspace(Path(directory) / "workspace")
+        original = Path.iterdir
+
+        def fail_for_applications(path):
+            if path == root / "applications":
+                raise PermissionError("denied")
+            return original(path)
+
+        monkeypatch.setattr(Path, "iterdir", fail_for_applications)
+
+        assert "structure.invalid" in {issue.code for issue in validate(root).issues}

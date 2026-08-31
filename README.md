@@ -1,37 +1,32 @@
 # IMPACTS Protocol
 
-IMPACTS is a contract-only core for file-native customer workspaces. It defines process terms, folder conventions, schemas, static validation and an empty workspace template.
+IMPACTS is a small public contract for file-native customer work. It turns an optimized process definition into human-readable Applications and revision-bound runs.
 
-Start with [CONTEXT.md](CONTEXT.md). The current authority is [contract-only-core-design.md](docs/superpowers/specs/2026-08-26-contract-only-core-design.md).
+Current authority: [Minimaler IMPACTS-Core V1](docs/superpowers/specs/2026-08-30-minimal-core-design.md).
 
 ## Core boundary
 
-The Core owns two commands:
-
 ```bash
-impacts init /tmp/impacts-demo --customer demo-kunde
+impacts init /tmp/impacts-demo
 impacts validate /tmp/impacts-demo
 ```
 
-`init` creates an empty folder template. `validate` reads folders, IDs, references, hierarchy and schemas. Agent harnesses handle package checkout, tool calls and process execution.
+`init` creates `CONTEXT.md`, `applications/` and `vorgaenge/`. `validate` reads these files without changing them. Agent Harnesses execute work. Git versions Applications. Capabilities own tools and deterministic calculations.
 
-Reference code lives in [`src/impacts_protocol/`](src/impacts_protocol/). Core checks live in [`06_evaluations/`](06_evaluations/).
+## Model
 
-Application, Expertise, Experience and Capability packages live in separate repositories. Customer workspaces contain customer-owned foundations, records, process provenance, concrete runs and derived views.
+```text
+Application
+└── Hauptprozess { Leistung }
+    └── Teilprozess
+        └── Arbeitsschritt
 
-## Process model
+Vorgang
+├── application_revision
+└── laufpfad
+```
 
-- A `Leistung` is a repeatable owed result.
-- One `Hauptprozess` produces exactly one `Leistung`.
-- A `Teilprozess` belongs to one Hauptprozess.
-- An `Arbeitsschritt` belongs to one Teilprozess.
-- A `Vorgang` is one complete concrete Hauptprozess run.
-
-The hierarchy is `Leistung 1:1 Hauptprozess → Teilprozess 1:n → Arbeitsschritt 1:n`.
-
-## File graph
-
-A file is a node. A stable ID supplies identity. A reference supplies an edge. Frontmatter supplies type. The enclosing folder supplies context. Obsidian, Graphviz and Neo4j exports under `99_ansichten/` remain derived views.
+One Application contains one Hauptprozess. Leistung is its embedded result contract. Arbeitsschritte own routes. A Vorgang derives its process and current step from the bound Application tree and Laufpfad.
 
 ## Verification
 
@@ -42,3 +37,7 @@ PYTHONPATH=src python3 06_evaluations/cold-walk/check.py
 ```
 
 Public distribution follows [public-release-gate.md](docs/release/public-release-gate.md).
+
+## License
+
+Licensed under the [Apache License 2.0](LICENSE).

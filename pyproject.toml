@@ -1,12 +1,14 @@
 [build-system]
-requires = ["setuptools>=68"]
+requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "impacts-protocol"
-version = "0.1.0"
+version = "0.2.0"
 description = "File-native IMPACTS protocol contracts"
 requires-python = ">=3.11"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
 dependencies = [
     "jsonschema>=4.23",
     "PyYAML>=6.0",

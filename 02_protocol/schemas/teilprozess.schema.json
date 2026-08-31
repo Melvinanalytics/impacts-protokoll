@@ -1,21 +1,13 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:impacts:schema:teilprozess:v0",
+  "$id": "urn:impacts:schema:teilprozess:v1",
   "title": "Teilprozess",
   "type": "object",
   "additionalProperties": false,
   "properties": {
-    "id": {
-      "type": "string",
-      "minLength": 1
-    },
-    "hauptprozess_ref": {
-      "type": "string",
-      "minLength": 1
-    }
+    "type": {"const": "teilprozess"},
+    "id": {"type": "string", "pattern": "^teilprozess:[a-z0-9]+(?:-[a-z0-9]+)*$"},
+    "ergebnis": {"type": "string", "minLength": 1, "pattern": ".*\\S.*"}
   },
-  "required": [
-    "id",
-    "hauptprozess_ref"
-  ]
+  "required": ["type", "id", "ergebnis"]
 }
