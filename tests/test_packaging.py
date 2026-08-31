@@ -9,6 +9,15 @@ import pytest
 
 
 ROOT = Path(__file__).resolve().parents[1]
+pytestmark = pytest.mark.skipif(
+    subprocess.run(
+        [sys.executable, "-m", "pip", "--version"],
+        capture_output=True,
+        text=True,
+    ).returncode
+    != 0,
+    reason="packaging tests require pip",
+)
 
 
 def _install(temporary_root: Path) -> tuple[Path, Path, dict[str, str]]:
@@ -46,15 +55,6 @@ def _install(temporary_root: Path) -> tuple[Path, Path, dict[str, str]]:
     return target, run_directory, environment
 
 
-@pytest.mark.skipif(
-    subprocess.run(
-        [sys.executable, "-m", "pip", "--version"],
-        capture_output=True,
-        text=True,
-    ).returncode
-    != 0,
-    reason="packaging test requires pip",
-)
 def test_non_editable_install_exposes_minimal_cli_from_unrelated_cwd():
     with TemporaryDirectory() as directory:
         temporary_root = Path(directory)
