@@ -80,6 +80,35 @@ def test_non_editable_install_exposes_minimal_cli_from_unrelated_cwd():
         assert checked.returncode == 0, checked.stdout + checked.stderr
 
 
+def test_non_editable_install_exposes_template_and_hash_from_unrelated_cwd():
+    with TemporaryDirectory() as directory:
+        temporary_root = Path(directory)
+        _, run_directory, environment = _install(temporary_root)
+        attempt = temporary_root / "001"
+        (attempt / "input").mkdir(parents=True)
+        (attempt / "input" / "auftrag.md").write_text("Auftrag", encoding="utf-8")
+
+        template = subprocess.run(
+            ["impacts", "template", "arbeitsschritt"],
+            cwd=run_directory,
+            env=environment,
+            capture_output=True,
+            text=True,
+        )
+        digest = subprocess.run(
+            ["impacts", "hash", str(attempt), "input/auftrag.md"],
+            cwd=run_directory,
+            env=environment,
+            capture_output=True,
+            text=True,
+        )
+
+        assert template.returncode == 0, template.stderr
+        assert template.stdout.startswith("---\ntype: arbeitsschritt\n")
+        assert digest.returncode == 0, digest.stderr
+        assert digest.stdout.startswith("sha256:") and len(digest.stdout.strip()) == 71
+
+
 def test_non_editable_install_contains_only_five_schemas_and_minimal_api():
     with TemporaryDirectory() as directory:
         temporary_root = Path(directory)
@@ -93,8 +122,8 @@ def test_non_editable_install_contains_only_five_schemas_and_minimal_api():
                     "from importlib import metadata, resources; "
                     "files=resources.files('impacts_protocol.schemas'); "
                     "names=sorted(p.name for p in files.iterdir() if p.name.endswith('.json')); "
-                    "assert set(impacts_protocol.__all__)=={'Issue','ValidationReport','init_workspace','validate'}; "
-                    "assert metadata.version('impacts-protocol')=='0.2.0'; "
+                    "assert set(impacts_protocol.__all__)=={'HashSurfaceError','Issue','ValidationReport','init_workspace','surface_hash','validate'}; "
+                    "assert metadata.version('impacts-protocol')=='0.3.0'; "
                     "assert names==['arbeitsschritt.schema.json','hauptprozess.schema.json','leistung.schema.json','teilprozess.schema.json','vorgang.schema.json'], names"
                 ),
             ],
@@ -120,7 +149,7 @@ def test_distribution_declares_and_contains_apache_license():
                     "distribution=metadata.distribution('impacts-protocol'); "
                     "assert distribution.metadata['License-Expression']=='Apache-2.0'; "
                     "names={str(path) for path in distribution.files}; "
-                    "assert 'impacts_protocol-0.2.0.dist-info/licenses/LICENSE' in names, names"
+                    "assert 'impacts_protocol-0.3.0.dist-info/licenses/LICENSE' in names, names"
                 ),
             ],
             cwd=run_directory,

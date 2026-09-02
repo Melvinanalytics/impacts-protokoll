@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "impacts-protocol"
-version = "0.2.0"
+version = "0.3.0"
 description = "File-native IMPACTS protocol contracts"
 requires-python = ">=3.11"
 license = "Apache-2.0"
@@ -21,11 +21,14 @@ impacts = "impacts_protocol.cli:main"
 packages = [
     "impacts_protocol",
     "impacts_protocol.schemas",
+    "impacts_protocol.templates",
 ]
 
 [tool.setuptools.package-dir]
 impacts_protocol = "src/impacts_protocol"
 "impacts_protocol.schemas" = "02_protocol/schemas"
+"impacts_protocol.templates" = "02_protocol/templates"
 
 [tool.setuptools.package-data]
 "impacts_protocol.schemas" = ["*.json"]
+"impacts_protocol.templates" = ["*.md"]

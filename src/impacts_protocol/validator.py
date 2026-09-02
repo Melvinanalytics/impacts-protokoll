@@ -3,7 +3,6 @@
 from collections import deque
 from dataclasses import dataclass
 from datetime import datetime
-import hashlib
 from io import BytesIO
 from importlib import resources
 import json
@@ -17,6 +16,7 @@ from typing import Any
 from jsonschema import Draft202012Validator, FormatChecker
 from referencing import Registry, Resource
 
+from .hashing import HashSurfaceError, surface_hash
 from .io import load_frontmatter_and_body
 from .model import Issue, ValidationReport
 from .workspace_contract import WORKSPACE_FOLDERS
@@ -553,73 +553,13 @@ def _surface_hash(
     workspace: Path,
     issues: list[Issue],
 ) -> str | None:
-    if not isinstance(declared, list):
-        return None
-    files: dict[str, str] = {}
-    for relative in declared:
-        if not isinstance(relative, str):
-            return None
-        source = attempt_root / relative
-        candidates = _hash_candidates(source, attempt_root, workspace, issues)
-        if candidates is None:
-            return None
-        for path in candidates:
-            try:
-                normalized = path.resolve().relative_to(attempt_root.resolve()).as_posix()
-            except (OSError, ValueError):
-                _add(issues, "hash.mismatch", path, workspace, "Hash surface escapes attempt directory")
-                return None
-            files[normalized] = hashlib.sha256(path.read_bytes()).hexdigest()
-    entries = [
-        {"path": path, "sha256": digest}
-        for path, digest in sorted(files.items(), key=lambda item: item[0].encode("utf-8"))
-    ]
-    payload = (
-        json.dumps(entries, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
-        + "\n"
-    ).encode("utf-8")
-    return "sha256:" + hashlib.sha256(payload).hexdigest()
-
-
-def _hash_candidates(
-    source: Path,
-    attempt_root: Path,
-    workspace: Path,
-    issues: list[Issue],
-) -> list[Path] | None:
-    if _has_symlink_component(source, attempt_root):
-        _add(issues, "structure.symlink", source, workspace, "Hash surface contains a symlink")
+    if not isinstance(declared, list) or not all(isinstance(item, str) for item in declared):
         return None
     try:
-        source.resolve().relative_to(attempt_root.resolve())
-    except (OSError, ValueError):
-        _add(issues, "hash.mismatch", source, workspace, "Hash surface escapes attempt directory")
+        return surface_hash(attempt_root, declared)
+    except HashSurfaceError as error:
+        _add(issues, error.code, error.path, workspace, error.message)
         return None
-    if source.is_file():
-        return [source]
-    if not source.is_dir():
-        _add(issues, "hash.mismatch", source, workspace, "Declared hash surface has no regular file")
-        return None
-
-    files: list[Path] = []
-    pending = [source]
-    while pending:
-        directory = pending.pop()
-        for path in sorted(directory.iterdir(), key=lambda item: item.name):
-            if path.is_symlink():
-                _add(issues, "structure.symlink", path, workspace, "Hash surface contains a symlink")
-                return None
-            if path.is_dir():
-                pending.append(path)
-            elif path.is_file():
-                files.append(path)
-            else:
-                _add(issues, "hash.mismatch", path, workspace, "Hash surface contains a non-regular entry")
-                return None
-    if not files:
-        _add(issues, "hash.mismatch", source, workspace, "Declared hash surface has no regular file")
-        return None
-    return sorted(files)
 
 
 def _attempt_directories(

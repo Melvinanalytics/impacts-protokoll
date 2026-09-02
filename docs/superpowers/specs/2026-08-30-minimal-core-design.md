@@ -7,6 +7,8 @@ date: 2026-08-30
 verified:
   by: human:melvin
   at: 2026-08-30
+amended_by: docs/superpowers/specs/2026-09-02-executable-core-design.md
+amended_at: 2026-09-02
 ---
 
 # Minimaler IMPACTS-Core V1
@@ -19,11 +21,13 @@ Die Build-Methodik steht in [`02_protocol/impacts-method.md`](../../../02_protoc
 
 Das Harness führt Arbeitsschritte aus und schreibt Laufdaten. Git transportiert und versioniert Applications. Capabilities besitzen Werkzeuge und deterministische Rechnungen. Kundenbezogene Inhalte leben im Kunden-Repository.
 
-Der Core besitzt zwei Befehle:
+Der Core besitzt vier Befehle:
 
 ```text
 impacts init PATH
 impacts validate ROOT
+impacts hash VERSUCHSORDNER FLAECHE...
+impacts template ART
 ```
 
 Die öffentliche Python-API lautet:
@@ -31,7 +35,10 @@ Die öffentliche Python-API lautet:
 ```python
 init_workspace(path: Path) -> Path
 validate(root: Path) -> ValidationReport
+surface_hash(attempt_root: Path, declared: Sequence[str]) -> str
 ```
+
+`hash` und `template` lesen nur. Sie kamen mit V0.3, siehe [2026-09-02-executable-core-design.md](2026-09-02-executable-core-design.md).
 
 ## 2. Domänenmodell
 
@@ -240,7 +247,7 @@ Eine Revision bleibt während eines Vorgangs unverändert. Neue Application-Fass
 
 ## 9. Initialisierung und Validierung
 
-`init_workspace` erzeugt den Zielbaum atomar über ein benachbartes Staging-Verzeichnis. Ein vorhandenes Ziel bleibt unverändert. Das Root-`CONTEXT.md` enthält ausschließlich `type: workspace` im Frontmatter und eine kurze menschliche Erklärung.
+`init_workspace` erzeugt den Zielbaum atomar über ein benachbartes Staging-Verzeichnis. Ein vorhandenes Ziel bleibt unverändert. Das Root-`CONTEXT.md` enthält ausschließlich `type: workspace` im Frontmatter und als Body den Betriebsvertrag für Mensch und Harness (V0.3, Abschnitt 3.3).
 
 `validate` liest `type` aus Root-`CONTEXT.md`:
 
@@ -288,7 +295,7 @@ README, Root-Router, Protokollrouter und Invarianten zeigen anschließend aussch
 
 ## 12. Abnahme
 
-Umsetzung ist vollständig, wenn Mutationstests jeden Fehler aus Abschnitt 10 am öffentlichen Interface rot zeigen, das Init-Ergebnis exakt drei Flächen besitzt, fünf Schemas verbleiben, Validierung read-only bleibt und installierte CLI aus fremdem Arbeitsverzeichnis funktioniert.
+Umsetzung ist vollständig, wenn Mutationstests jeden Fehler aus Abschnitt 10 am öffentlichen Interface rot zeigen, das Init-Ergebnis exakt drei Flächen besitzt, fünf Schemas verbleiben, Validierung read-only bleibt und installierte CLI aus fremdem Arbeitsverzeichnis funktioniert, und wenn der Cold Walk einen synthetischen Vorgang mit Schleife, Wartezustand und Human Gate durchläuft, eine Eingangsmutation als `hash.mismatch` erkennt und die Application in ein zweites Repository mit gleichem Tree-OID überträgt (V0.3, Abschnitte 3.4 und 3.5).
 
 Zielbudget:
 

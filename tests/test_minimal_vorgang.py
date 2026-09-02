@@ -1,5 +1,3 @@
-import hashlib
-import json
 from pathlib import Path
 import subprocess
 import sys
@@ -9,7 +7,7 @@ from tempfile import TemporaryDirectory
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from impacts_protocol import init_workspace, validate
+from impacts_protocol import init_workspace, surface_hash, validate
 from tests.support import read_context, replace_context, write_application, write_context
 
 
@@ -17,26 +15,6 @@ def _git(root: Path, *args: str) -> str:
     return subprocess.check_output(
         ["git", "-C", str(root), *args], text=True
     ).strip()
-
-
-def _surface_hash(attempt: Path, declared: list[str]) -> str:
-    entries = []
-    for relative in declared:
-        path = attempt / relative
-        files = [path] if path.is_file() else sorted(p for p in path.rglob("*") if p.is_file())
-        for file_path in files:
-            entries.append(
-                {
-                    "path": file_path.relative_to(attempt).as_posix(),
-                    "sha256": hashlib.sha256(file_path.read_bytes()).hexdigest(),
-                }
-            )
-    entries.sort(key=lambda entry: entry["path"].encode("utf-8"))
-    payload = (
-        json.dumps(entries, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
-        + "\n"
-    ).encode("utf-8")
-    return "sha256:" + hashlib.sha256(payload).hexdigest()
 
 
 def _prepare_workspace(base: Path) -> tuple[Path, Path]:
@@ -67,9 +45,9 @@ def _prepare_workspace(base: Path) -> tuple[Path, Path]:
             "arbeitsschritt_ref": f"arbeitsschritt:{slug}",
             "versuch": 1,
             "status": "abgeschlossen",
-            "eingabe_hash": _surface_hash(attempt, ["input/auftrag.md"]),
+            "eingabe_hash": surface_hash(attempt, ["input/auftrag.md"]),
             "gewaehlte_route": route,
-            "ausgabe_hash": _surface_hash(attempt, ["output/ergebnis.md"]),
+            "ausgabe_hash": surface_hash(attempt, ["output/ergebnis.md"]),
         }
         if slug == "pruefen":
             entry["freigabe"] = {
@@ -238,8 +216,8 @@ def test_hash_surface_rejects_a_directory_symlink():
         for entry in metadata["laufpfad"]:
             slug = entry["arbeitsschritt_ref"].removeprefix("arbeitsschritt:")
             attempt = run / "arbeitsschritte" / slug / "001"
-            entry["eingabe_hash"] = _surface_hash(attempt, ["input"])
-            entry["ausgabe_hash"] = _surface_hash(attempt, ["output"])
+            entry["eingabe_hash"] = surface_hash(attempt, ["input"])
+            entry["ausgabe_hash"] = surface_hash(attempt, ["output"])
         replace_context(run / "CONTEXT.md", metadata)
 
         external = base / "external"

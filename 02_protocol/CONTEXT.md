@@ -1,6 +1,6 @@
 # Protocol routing
 
-This area owns five static schemas and the complete-path invariant.
+This area owns five static schemas, one template per object, the complete-path invariant and the architect skill that turns observed work into Applications.
 
 ## Language
 
@@ -14,4 +14,6 @@ This area owns five static schemas and the complete-path invariant.
 
 **Vorgang** is one concrete run of the Application revision named by its Git tree. Its Laufpfad is the only run-state authority.
 
-Use [impacts-method.md](impacts-method.md) to turn observed work into an optimized Application. Read [complete-process-paths.md](invariants/complete-process-paths.md) before changing process topology. Normative architecture: [minimal-core-design.md](../docs/superpowers/specs/2026-08-30-minimal-core-design.md).
+Use [impacts-method.md](impacts-method.md) to turn observed work into an optimized Application. Start every `CONTEXT.md` from its template in [templates/](templates/) or `impacts template <kind>`; the frontmatter names every schema field, the body carries the method context. Read [complete-process-paths.md](invariants/complete-process-paths.md) before changing process topology. Normative architecture: [minimal-core-design.md](../docs/superpowers/specs/2026-08-30-minimal-core-design.md).
+
+To ingest an observed process, restructure an existing customer folder or import an Application from a Fachrepo, use the skill in [impacts-architect/SKILL.md](impacts-architect/SKILL.md).

@@ -13,9 +13,11 @@ from impacts_protocol import init_workspace, validate
 
 def test_public_api_contains_only_minimal_contract():
     assert set(impacts_protocol.__all__) == {
+        "HashSurfaceError",
         "Issue",
         "ValidationReport",
         "init_workspace",
+        "surface_hash",
         "validate",
     }
     assert not hasattr(validator, "validate_workspace")

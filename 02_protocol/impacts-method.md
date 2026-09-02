@@ -46,6 +46,16 @@ Run representative Vorgänge against a baseline. Compare the primary outcome, gu
 
 Commit the tested Application revision and use it for new Vorgänge. Existing Vorgänge remain bound to their historical revision. A later improvement produces another reviewable Application revision.
 
+An Application moves between repositories as a byte copy of `applications/<slug>/`:
+
+```bash
+git -C <source-repo> archive <commit>:applications/<slug> | tar -x -C applications/<slug>
+git add applications/<slug>
+git commit -m "import applications/<slug> from <source>@<commit> (tree <oid>)"
+```
+
+The tree oid is content-addressed, so `git rev-parse HEAD:applications/<slug>` yields the same value in both repositories; that equality is the proof of origin. Provenance lives in the commit message, never inside the tree: one changed byte changes the oid. Running Vorgänge keep their oid after a later import; new Vorgänge bind the new one. The cold walk proves this transport.
+
 ## Where the context lives
 
 The Application body explains market topology, value flow and the optimization contract. The embedded Leistung holds the result, its main metric and acceptance conditions. A Teilprozess body explains its contribution and leading indicator. An Arbeitsschritt owns inputs, outputs, verification, routes and optional human markers.
