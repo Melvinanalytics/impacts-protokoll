@@ -5,6 +5,8 @@ evidence_status: verified
 normative: true
 date: 2026-09-02
 extends: docs/superpowers/specs/2026-08-30-minimal-core-design.md
+amended_by: docs/superpowers/specs/2026-09-07-domain-named-tree-design.md
+amended_at: 2026-09-07
 verified:
   by: human:melvin
   at: 2026-09-02
@@ -48,24 +50,26 @@ Gibt `sha256:<hex>` nach §7 aus und endet mit 0. Eine fehlende, leere, verlinkt
 impacts template ART
 ```
 
-`ART` ist `application`, `hauptprozess`, `teilprozess`, `arbeitsschritt` oder `vorgang`. Quelle ist `02_protocol/templates/<art>.md`, paketiert wie die Schemas. Die Frontmatter jeder Vorlage nennt genau die Felder ihres Schemas. Der Body trägt die Methode aus `impacts-method.md`, "Where the context lives":
+`ART` ist `application`, `hauptprozess`, `teilprozess`, `arbeitsschritt` oder `vorgang`. Quelle ist `02_protocol/templates/<art>.md`, paketiert wie die Schemas. Die Frontmatter jeder `CONTEXT.md`-Vorlage nennt genau die Felder ihres Schemas. Der Body trägt die Methode aus `impacts-method.md`, "Where the context lives":
 
 | Vorlage | Body-Abschnitte |
 |---|---|
-| application | Markttopologie, Wertfluss, Zielgröße und Guardrails, Touchpoints, Automationsgrenze |
-| hauptprozess | Weg zur Leistung, Durchsatz und Durchlaufzeit, Engpass |
+| application | Schablone des Baums (Amendment 2026-09-07): Baum, Regeln, Beispiel; keine Frontmatter, kein Router |
+| hauptprozess | Relevantes Umfeld, Wertfluss, Zielgröße und Guardrails, Touchpoints, Automationsgrenze, Weg zur Leistung, Durchsatz und Durchlaufzeit, Engpass |
 | teilprozess | Beitrag zur Leistung, Frühindikator |
 | arbeitsschritt | Ein Job, Eingaben, Nicht laden, Verarbeitung, Ausgaben, Prüfung, Human Check |
 | vorgang | Betreff, Stand |
 
 Der Validator prüft die Body-Struktur nicht. Er bleibt bei Nichtleere für den Arbeitsschritt.
 
+Methoden-Amendment 2026-09-06: `Relevantes Umfeld` ersetzt den bisherigen obligatorisch kommerziellen Titel `Markttopologie`; Markt und Zahler werden nur bei Relevanz beschrieben. Die bestehenden Abschnitte werden nach der öffentlichen Methode befüllt, insbesondere `Zielgröße und Guardrails` für das begrenzte Vorhaben. Dies ändert keine Schemafelder und zwingt keine historischen Applications zur Umbindung. Maßgeblich für methodische Annahmen und UX/AX/DX ist `02_protocol/impacts-method.md`, für Schrittgrenzen `02_protocol/impacts-architect/references/zuschnitt.md`; die Vorlagen konkretisieren diese Regeln, ohne eigene abweichende Kriterien einzuführen.
+
 ### 3.3 Betriebsvertrag im Workspace-Router
 
 `init` schreibt in den Body der Root-`CONTEXT.md` den Betriebsvertrag für Mensch und Harness:
 
 1. Workspace-Root ist Git-Root. Vorgänge binden nur committete Application-Trees.
-2. Application entwerfen: `impacts template`, Dateien nur `CONTEXT.md`, committen, `git rev-parse HEAD:applications/<slug>`.
+2. Application entwerfen: `impacts template application` zeigt die Schablone, `impacts template <art>` jede `CONTEXT.md`; Ordner tragen fachliche Namen (`applications/<hauptprozess>/<teilprozess>/<arbeitsschritt>/CONTEXT.md`, Amendment 2026-09-07), Dateien nur `CONTEXT.md`, committen, `git rev-parse HEAD:applications/<slug>`.
 3. Vorgang öffnen: `vorgaenge/<slug>/CONTEXT.md` mit `application_revision`, erster Laufpfadeintrag am Einstieg, Versuch `001`, Eingaben nach `input/`, `impacts hash`.
 4. Versuch abschließen: Ausgaben nach `output/`, `impacts hash`, `gewaehlte_route`, nächster Eintrag.
 5. Human Gate: der Eintrag bleibt `aktiv`. Nur der benannte Mensch schreibt `freigabe`. Kein Agent schreibt `human:<id>`.
@@ -111,7 +115,7 @@ Eine Application wandert als Byte-Kopie von `applications/<slug>/` (`git archive
 
 ### 3.6 Architect-Skill
 
-`02_protocol/impacts-architect/` hält die Methode als ausführbare Prozedur für ein Agenten-Harness: `SKILL.md` mit Build-Modus (Identify bis Scale als Schritte mit Interviewfragen), Restructure-Modus (sechs Dateirollen mit Zuhause, Referenzprüfung, Migrationskarte, copy-verify-remove) und Import-Modus, `references/zuschnitt.md` mit den Schnittregeln je Objekt und der Automationsgrenze, `templates/ist-prozess.md` als Erfassungsbogen für beobachtete Prozesse. Kein Schema, kein Pflichtfeld, kein Root-Ordner. Installation durch Kopie nach `.claude/skills/`.
+`02_protocol/impacts-architect/` hält die Methode als ausführbare Prozedur für ein Agenten-Harness: `SKILL.md` mit Build-Modus (Identify bis Scale als Schritte mit Interviewfragen), Restructure-Modus (Dateirollen mit Zuhause, Referenzprüfung, Migrationskarte, copy-verify-remove) und Import-Modus, `references/zuschnitt.md` mit den Schnittregeln je Objekt und der Automationsgrenze, `templates/ist-prozess.md` als Erfassungsbogen für beobachtete Prozesse. Kein Schema, kein Pflichtfeld, kein Root-Ordner. Der Skill benötigt die benachbarten Protokolldateien; eine isolierte Ordnerkopie ist nicht selbstständig verwendbar.
 
 ## 4. Öffentliche Oberfläche V0.3
 

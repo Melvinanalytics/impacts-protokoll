@@ -1,0 +1,8 @@
+{
+  "missing": [],
+  "operation": "vollstaendigkeitsgrad-berechnen",
+  "percent": 100,
+  "present": ["Name", "Geburtsdatum"],
+  "required": ["Name", "Geburtsdatum"],
+  "sentinel": "vollstaendigkeitsgrad-v1"
+}

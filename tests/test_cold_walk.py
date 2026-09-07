@@ -9,7 +9,6 @@ sys.path.insert(0, str(ROOT / "src"))
 COLD_WALK = ROOT / "06_evaluations" / "cold-walk"
 CHECK_PATH = COLD_WALK / "check.py"
 BEISPIEL = COLD_WALK / "beispiel" / "applications" / "prueffall"
-
 from impacts_protocol import validate
 
 EXPECTED_STATES = (
@@ -64,7 +63,7 @@ def test_walk_main_prints_the_router_chain_and_passes(capsys):
     output = capsys.readouterr().out
     assert exit_code == 0
     assert "ROUTER applications/prueffall/CONTEXT.md" in output
-    assert "ROUTER applications/prueffall/hauptprozess/teilprozesse/vorpruefung/arbeitsschritte/pruefen/CONTEXT.md" in output
+    assert "ROUTER applications/prueffall/vorpruefung/pruefen/CONTEXT.md" in output
     assert "STOP" in output
     assert output.rstrip().endswith("PASS cold walk")
 
@@ -80,6 +79,15 @@ def test_walk_imports_the_application_into_a_second_repository_with_equal_oid():
         assert result.valid
 
 
+def test_walk_import_rejects_missing_capability_then_executes_materialized_tree():
+    check = _check_module()
+    with TemporaryDirectory() as directory:
+        result = check.walk(Path(directory))
+
+    assert "import.capability_materialized_and_executed" in _proofs(result)
+    assert "import.missing_capability" in _rejections(result)
+
+
 def test_walk_main_reports_the_import(capsys):
     check = _check_module()
 
@@ -88,3 +96,83 @@ def test_walk_main_reports_the_import(capsys):
     output = capsys.readouterr().out
     assert exit_code == 0
     assert "IMPORT tree oid gleich in zweitem Repository" in output
+
+
+def _proofs(result):
+    return getattr(result, "proofs", frozenset())
+
+
+def _rejections(result):
+    return getattr(result, "rejections", frozenset())
+
+
+def test_walk_binds_and_replays_the_exact_capability_authority():
+    check = _check_module()
+    with TemporaryDirectory() as directory:
+        result = check.walk(Path(directory))
+
+    assert {
+        "capability.application_tuple_executed",
+        "capability.path_resolved_at_workspace_revision",
+        "capability.old_revision_replayed",
+    } <= _proofs(result)
+    assert {
+        "capability.unbound_valid_tree",
+        "capability.wrong_path",
+        "capability.wrong_operation",
+    } <= _rejections(result)
+
+
+def test_walk_materializes_source_from_bound_commit_and_rejects_false_provenance():
+    check = _check_module()
+    with TemporaryDirectory() as directory:
+        result = check.walk(Path(directory))
+
+    assert {
+        "application.source_requirement_drives_resolution",
+        "source.bound_snapshot",
+        "source.dirty_worktree_ignored",
+    } <= _proofs(result)
+    assert {
+        "source.wrong_digest",
+        "source.wrong_control",
+        "source.wrong_revision",
+        "source.wrong_existing_path",
+    } <= _rejections(result)
+
+
+def test_walk_connects_step_files_by_attempt_origin_and_content_digest():
+    check = _check_module()
+    with TemporaryDirectory() as directory:
+        result = check.walk(Path(directory))
+
+    assert {
+        "application.handoff_mapping_drives_origin",
+        "handoff.content_and_origin_bound",
+    } <= _proofs(result)
+    assert {
+        "handoff.changed_consumer_bytes",
+        "handoff.wrong_digest",
+        "handoff.wrong_attempt",
+        "handoff.wrong_producer_file",
+        "handoff.useless_control_evidence",
+    } <= _rejections(result)
+
+
+def test_walk_preflights_gate_before_mutation_and_requires_external_decision_fixture():
+    check = _check_module()
+    with TemporaryDirectory() as directory:
+        result = check.walk(Path(directory))
+
+    assert {
+        "gate.failed_preflight_left_run_unchanged",
+        "gate.open_has_no_decision",
+        "gate.external_decision_fixture_consumed",
+    } <= _proofs(result)
+    assert {
+        "handoff.changed_consumer_bytes",
+        "handoff.wrong_digest",
+        "handoff.wrong_attempt",
+        "handoff.wrong_producer_file",
+        "handoff.useless_control_evidence",
+    } <= _rejections(result)

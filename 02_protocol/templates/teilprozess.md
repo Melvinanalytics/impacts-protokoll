@@ -6,7 +6,7 @@ ergebnis: Prüffähiger Prüfbericht
 
 # Vorprüfung
 
-Ein Teilprozess ist ein fachlich geschlossener Abschnitt des Hauptprozesses. Seine Arbeitsschritte liegen unter `arbeitsschritte/`. Beispielwerte ersetzen.
+Ein Teilprozess ist ein fachlich geschlossener Abschnitt des Hauptprozesses. Seine Arbeitsschritte sind seine Unterordner; der Ordnername ist der Slug seiner ID. Beispielwerte ersetzen.
 
 ## Beitrag zur Leistung
 

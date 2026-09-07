@@ -7,8 +7,10 @@ date: 2026-08-30
 verified:
   by: human:melvin
   at: 2026-08-30
-amended_by: docs/superpowers/specs/2026-09-02-executable-core-design.md
-amended_at: 2026-09-02
+amended_by:
+  - docs/superpowers/specs/2026-09-02-executable-core-design.md
+  - docs/superpowers/specs/2026-09-07-domain-named-tree-design.md
+amended_at: 2026-09-07
 ---
 
 # Minimaler IMPACTS-Core V1
@@ -69,33 +71,28 @@ workspace/
 
 `grundlagen/` und `records/` dürfen bei einem realen Kundenbedarf hinzukommen. Andere kundenfachliche Flächen bleiben außerhalb der Core-Prüfung.
 
-Eine Application besitzt diesen Baum:
+Eine Application besitzt diesen Baum (Amendment 2026-09-07, siehe [domain-named-tree-design.md](2026-09-07-domain-named-tree-design.md); die Ordner tragen fachliche Namen, die Rolle steht im `type`):
 
 ```text
-applications/<application-slug>/
-├── CONTEXT.md                    # type: application
-└── hauptprozess/
-    ├── CONTEXT.md                # Hauptprozess mit Leistung
-    └── teilprozesse/
-        └── <teilprozess-slug>/
-            ├── CONTEXT.md        # Teilprozess
-            └── arbeitsschritte/
-                └── <arbeitsschritt-slug>/
-                    └── CONTEXT.md
+applications/<hauptprozess-slug>/
+├── CONTEXT.md                    # type: hauptprozess, mit Leistung
+└── <teilprozess-slug>/
+    ├── CONTEXT.md                # type: teilprozess
+    └── <arbeitsschritt-slug>/
+        └── CONTEXT.md            # type: arbeitsschritt
 ```
 
-`<application-slug>`, `<teilprozess-slug>` und `<arbeitsschritt-slug>` folgen `[a-z0-9]+(?:-[a-z0-9]+)*`. Der Application-Baum ist geschlossen: Auf jeder gezeigten Ebene sind nur die gezeigten Dateien und Unterordner zulässig. Kundenfachliche Erweiterungen liegen auf Workspace-Ebene.
+`<hauptprozess-slug>`, `<teilprozess-slug>` und `<arbeitsschritt-slug>` folgen `[a-z0-9]+(?:-[a-z0-9]+)*`; die ID jeder Datei ist `<type>:<ordnername>`. Der Application-Baum ist geschlossen: Neben `CONTEXT.md` und Slug-Ordnern der nächsten Ebene ist nichts zulässig, ein Arbeitsschritt hat keine Unterordner. Kundenfachliche Erweiterungen liegen auf Workspace-Ebene.
 
 Ein Vorgang besitzt diesen Baum:
 
 ```text
 vorgaenge/<vorgang-slug>/
 ├── CONTEXT.md
-└── arbeitsschritte/
-    └── <arbeitsschritt-slug>/
-        └── <versuch>/
-            ├── input/
-            └── output/
+└── <arbeitsschritt-slug>/
+    └── <versuch>/
+        ├── input/
+        └── output/
 ```
 
 `<versuch>` ist dreistellig. `versuch: 1` entspricht `001`. Nur im Laufpfad erreichte Arbeitsschritte und Versuche besitzen Ordner.

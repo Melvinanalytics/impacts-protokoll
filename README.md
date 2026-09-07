@@ -10,25 +10,24 @@ Current authority: [Minimaler IMPACTS-Core V1](docs/superpowers/specs/2026-08-30
 impacts init /tmp/impacts-demo
 impacts validate /tmp/impacts-demo
 impacts template arbeitsschritt
-impacts hash /tmp/impacts-demo/vorgaenge/demo-001/arbeitsschritte/start/001 input/auftrag.md
+impacts template application
+impacts hash /tmp/impacts-demo/vorgaenge/demo-001/start/001 input/auftrag.md
 ```
 
-`init` creates `CONTEXT.md`, `applications/` and `vorgaenge/`; the router body carries the operating contract for humans and harnesses. `validate` reads these files without changing them. `template` prints the `CONTEXT.md` template of one core object with every schema field and the method context. `hash` computes the surface hash of one attempt, the same bytes the validator recomputes. Agent Harnesses execute work. Git versions Applications. Capabilities own tools and deterministic calculations.
+`init` creates `CONTEXT.md`, `applications/` and `vorgaenge/`; the router body carries the operating contract for humans and harnesses. `validate` reads these files without changing them. `template` prints the `CONTEXT.md` template of one core object with every schema field and the method context; `template application` prints the Schablone of the whole tree. `hash` computes the surface hash of one attempt, the same bytes the validator recomputes. Agent Harnesses execute work. Git versions Applications. Optional [Capabilities](02_protocol/capabilities.md) own bounded reusable research, analysis, transformation or calculation inside a workstep; they remain outside the Core.
 
 ## Model
 
 ```text
-Application
-└── Hauptprozess { Leistung }
-    └── Teilprozess
-        └── Arbeitsschritt
+applications/<hauptprozess>/CONTEXT.md                     Hauptprozess { Leistung }
+applications/<hauptprozess>/<teilprozess>/CONTEXT.md        Teilprozess
+applications/<hauptprozess>/<teilprozess>/<schritt>/CONTEXT.md   Arbeitsschritt
 
-Vorgang
-├── application_revision
-└── laufpfad
+vorgaenge/<vorgang>/CONTEXT.md                             application_revision, laufpfad
+vorgaenge/<vorgang>/<schritt>/<versuch>/input|output       one attempt
 ```
 
-One Application contains one Hauptprozess. Leistung is its embedded result contract. Arbeitsschritte own routes. A Vorgang derives its process and current step from the bound Application tree and Laufpfad. The workspace root is the Git repository root; a Vorgang binds only a committed Application tree.
+An Application is one Hauptprozess; its folder is the process name, its subfolders are the Teilprozesse and their subfolders the Arbeitsschritte. The role of every `CONTEXT.md` is its `type`; the generic role names appear only in the Schablone. Leistung is its embedded result contract. Arbeitsschritte own routes. A Vorgang derives its process and current step from the bound Application tree and Laufpfad. The workspace root is the Git repository root; a Vorgang binds only a committed Application tree.
 
 ## Design time
 
@@ -36,7 +35,7 @@ The skill in [02_protocol/impacts-architect](02_protocol/impacts-architect/SKILL
 
 ## Example
 
-[06_evaluations/cold-walk/beispiel](06_evaluations/cold-walk/beispiel/applications/prueffall/) holds a synthetic Application with a loop, a wait and a human gate. The cold walk runs it through one complete Vorgang with the public API and proves that a changed input fires `hash.mismatch`.
+[06_evaluations/cold-walk/beispiel](06_evaluations/cold-walk/beispiel/applications/prueffall/) holds a synthetic Application with a loop, a wait, a human gate and a small calculation Capability. The cold walk runs it through one complete Vorgang with the public API and locally proves Application-driven source and handoff resolution, revision-bound Capability execution, Gate preflight and executable transport into a second repository while preserving the Core boundary.
 
 ## Verification
 

@@ -12,7 +12,7 @@ entscheiden 001   abgeschlossen  freigegeben -> end:entschieden
 mutation          one input byte changed -> hash.mismatch
 ```
 
-Every state is validated. Closing an attempt whose route leads to another Arbeitsschritt and opening that successor is one write: the validator rejects a Laufpfad that ends on such a closed entry (`run.invalid: Next Laufpfad entry must follow selected route`). The final step carries a synthetic `freigabe` by `human:beispiel-pruefer`; a real workspace receives that entry only from the named human. The mutation proves that the validator fires.
+Every state is validated. Closing an attempt whose route leads to another Arbeitsschritt and opening that successor is one logical transition after preflight, not a transactional filesystem write: the validator rejects a Laufpfad that ends on such a closed entry (`run.invalid: Next Laufpfad entry must follow selected route`). The final step carries a synthetic `freigabe` by `human:beispiel-pruefer`; a real workspace receives that entry only from the named human. The mutation proves that the validator fires.
 
 Run:
 

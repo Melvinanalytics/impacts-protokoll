@@ -32,7 +32,7 @@ def _prepare_workspace(base: Path) -> tuple[Path, Path]:
     for index, (slug, route) in enumerate(
         (("start", "weiter"), ("pruefen", "freigegeben")), start=1
     ):
-        attempt = run / "arbeitsschritte" / slug / "001"
+        attempt = run / slug / "001"
         (attempt / "input").mkdir(parents=True)
         (attempt / "output").mkdir()
         (attempt / "input" / "auftrag.md").write_text(
@@ -130,7 +130,7 @@ def test_malformed_selected_route_fails_closed_without_exception():
 def test_changed_input_bytes_break_hash_binding():
     with TemporaryDirectory() as directory:
         root, run = _prepare_workspace(Path(directory))
-        (run / "arbeitsschritte/start/001/input/auftrag.md").write_text(
+        (run / "start/001/input/auftrag.md").write_text(
             "verändert", encoding="utf-8"
         )
 
@@ -140,7 +140,7 @@ def test_changed_input_bytes_break_hash_binding():
 def test_changed_output_bytes_break_hash_binding():
     with TemporaryDirectory() as directory:
         root, run = _prepare_workspace(Path(directory))
-        (run / "arbeitsschritte/pruefen/001/output/ergebnis.md").write_text(
+        (run / "pruefen/001/output/ergebnis.md").write_text(
             "verändert", encoding="utf-8"
         )
 
@@ -160,7 +160,7 @@ def test_human_gate_rejects_agent_approval():
 def test_missing_attempt_directory_is_rejected():
     with TemporaryDirectory() as directory:
         root, run = _prepare_workspace(Path(directory))
-        attempt = run / "arbeitsschritte/start/001"
+        attempt = run / "start/001"
         for path in sorted(attempt.rglob("*"), reverse=True):
             path.unlink() if path.is_file() else path.rmdir()
         attempt.rmdir()
@@ -201,7 +201,7 @@ def test_hash_surface_rejects_a_directory_symlink():
         root, run = _prepare_workspace(base)
         application = root / "applications/video"
         for slug in ("start", "pruefen"):
-            path = application / f"hauptprozess/teilprozesse/produktion/arbeitsschritte/{slug}/CONTEXT.md"
+            path = application / f"produktion/{slug}/CONTEXT.md"
             metadata = read_context(path)
             metadata["eingaben"] = ["input"]
             metadata["ausgaben"] = ["output"]
@@ -215,7 +215,7 @@ def test_hash_surface_rejects_a_directory_symlink():
         )
         for entry in metadata["laufpfad"]:
             slug = entry["arbeitsschritt_ref"].removeprefix("arbeitsschritt:")
-            attempt = run / "arbeitsschritte" / slug / "001"
+            attempt = run / slug / "001"
             entry["eingabe_hash"] = surface_hash(attempt, ["input"])
             entry["ausgabe_hash"] = surface_hash(attempt, ["output"])
         replace_context(run / "CONTEXT.md", metadata)
@@ -223,7 +223,7 @@ def test_hash_surface_rejects_a_directory_symlink():
         external = base / "external"
         external.mkdir()
         (external / "secret.txt").write_text("outside", encoding="utf-8")
-        input_root = run / "arbeitsschritte/start/001/input"
+        input_root = run / "start/001/input"
         (input_root / "auftrag.md").unlink()
         input_root.rmdir()
         input_root.symlink_to(external, target_is_directory=True)

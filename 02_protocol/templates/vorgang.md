@@ -11,7 +11,7 @@ laufpfad:
 
 # Prüffall 001
 
-Ein Vorgang ist ein konkreter Lauf einer committeten Application. `application_revision` kommt aus `git rev-parse HEAD:applications/<slug>`. Der Laufpfad ist die einzige Zustandsautorität; jeder Eintrag besitzt seinen Versuchsordner unter `arbeitsschritte/<slug>/<versuch>/`. Hashes liefert `impacts hash`. Beispielwerte ersetzen.
+Ein Vorgang ist ein konkreter Lauf einer committeten Application. `application_revision` kommt aus `git rev-parse HEAD:applications/<slug>`. Der Laufpfad ist die einzige Zustandsautorität; jeder Eintrag besitzt seinen Versuchsordner unter `<arbeitsschritt>/<versuch>/`. Hashes liefert `impacts hash`. Beispielwerte ersetzen.
 
 ## Betreff
 

@@ -23,6 +23,8 @@ The public tree consists of exactly these paths from `main`:
 docs/release/
 docs/superpowers/specs/2026-08-30-minimal-core-design.md
 docs/superpowers/specs/2026-09-02-executable-core-design.md
+docs/superpowers/specs/2026-09-04-icm-form-selection-design.md
+docs/superpowers/specs/2026-09-07-domain-named-tree-design.md
 ```
 
 Everything else under `docs/` stays private: audits, research, plans, superseded specs and `docs/CONTEXT.md`. The root `CONTEXT.md` row that routes to the design record is dropped from the export. The export lands as one commit on a `release/v<version>` branch from `origin/main`; its message names the `main` commit it was cut from.

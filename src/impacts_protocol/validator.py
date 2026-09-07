@@ -111,11 +111,7 @@ def validate(root: Path) -> ValidationReport:
     try:
         metadata = _load_context(root / "CONTEXT.md", root, issues)
         root_type = metadata.get("type") if metadata is not None else None
-        if (
-            isinstance(root_type, str)
-            and root_type in {"workspace", "application"}
-            and set(metadata) != {"type"}
-        ):
+        if root_type == "workspace" and set(metadata) != {"type"}:
             _add(
                 issues,
                 "routing.type",
@@ -125,10 +121,10 @@ def validate(root: Path) -> ValidationReport:
             )
         if root_type == "workspace":
             _validate_workspace(root, issues)
-        elif root_type == "application":
+        elif root_type == "hauptprozess":
             _validate_application(root, issues)
         elif metadata is not None:
-            _add(issues, "routing.type", root / "CONTEXT.md", root, "Root type must be workspace or application")
+            _add(issues, "routing.type", root / "CONTEXT.md", root, "Root type must be workspace or hauptprozess")
     except (OSError, RuntimeError) as error:
         _add(issues, "structure.invalid", root, root, f"Core tree cannot be read: {error}")
     return ValidationReport(_ordered(issues))
@@ -168,28 +164,23 @@ def _validate_application(
     _reject_symlinks(root, root, issues)
     if check_slug and SLUG.fullmatch(root.name) is None:
         _add(issues, "structure.invalid", root, root, "Application folder needs a slug")
-    router = _load_context(root / "CONTEXT.md", root, issues, expected_type="application")
-    if router is None:
-        return None
-
-    _validate_exact_children(root, root, issues, {"hauptprozess"})
-    process_root = root / "hauptprozess"
-    _validate_exact_children(process_root, root, issues, {"teilprozesse"})
     process = _load_context(
-        process_root / "CONTEXT.md",
+        root / "CONTEXT.md",
         root,
         issues,
         expected_type="hauptprozess",
         schema_name="hauptprozess",
     )
-    parts_root = process_root / "teilprozesse"
-    part_dirs = _child_directories(parts_root, root, issues, "Teilprozess")
+    if process is None:
+        return None
+    if check_slug and process.get("id") != f"hauptprozess:{root.name}":
+        _add(issues, "structure.invalid", root, root, "Hauptprozess ID must match folder slug")
+    part_dirs = _slug_children(root, root, issues, "Teilprozess")
     if not part_dirs:
-        _add(issues, "structure.invalid", parts_root, root, "Hauptprozess needs at least one Teilprozess")
+        _add(issues, "structure.invalid", root, root, "Hauptprozess needs at least one Teilprozess")
 
     steps: dict[str, tuple[Path, dict[str, Any]]] = {}
     for part_root in part_dirs:
-        _validate_exact_children(part_root, root, issues, {"arbeitsschritte"})
         part = _load_context(
             part_root / "CONTEXT.md",
             root,
@@ -199,19 +190,18 @@ def _validate_application(
         )
         if part is not None and part.get("id") != f"teilprozess:{part_root.name}":
             _add(issues, "structure.invalid", part_root, root, "Teilprozess ID must match folder slug")
-        step_dirs = _child_directories(
-            part_root / "arbeitsschritte", root, issues, "Arbeitsschritt"
-        )
+        step_dirs = _slug_children(part_root, root, issues, "Arbeitsschritt")
         if not step_dirs:
             _add(
                 issues,
                 "structure.invalid",
-                part_root / "arbeitsschritte",
+                part_root,
                 root,
                 "Teilprozess needs at least one Arbeitsschritt",
             )
         for step_root in step_dirs:
-            _validate_exact_children(step_root, root, issues, set())
+            if _slug_children(step_root, root, issues, "Arbeitsschritt"):
+                _add(issues, "structure.invalid", step_root, root, "Arbeitsschritt must not contain subfolders")
             step = _load_context(
                 step_root / "CONTEXT.md",
                 root,
@@ -230,8 +220,6 @@ def _validate_application(
             else:
                 steps[step_id] = (step_root, step)
 
-    if process is None:
-        return None
     application = Application(root, process, steps)
     _validate_graph(application, issues)
     if len(issues) > before and not steps:
@@ -244,7 +232,7 @@ def _validate_graph(application: Application, issues: list[Issue]) -> None:
     steps = application.arbeitsschritte
     entry = application.hauptprozess.get("einstieg_ref")
     if not isinstance(entry, str) or entry not in steps:
-        _add(issues, "reference.unresolved", root / "hauptprozess/CONTEXT.md", root, "Hauptprozess entry does not resolve")
+        _add(issues, "reference.unresolved", root / "CONTEXT.md", root, "Hauptprozess entry does not resolve")
         return
 
     adjacency: dict[str, set[str]] = {step_id: set() for step_id in steps}
@@ -335,7 +323,6 @@ def _validate_vorgang(run_root: Path, workspace: Path, issues: list[Issue]) -> N
         expected_attempts.add((step_id.removeprefix("arbeitsschritt:"), attempt_number))
         attempt_root = (
             run_root
-            / "arbeitsschritte"
             / step_id.removeprefix("arbeitsschritt:")
             / f"{attempt_number:03d}"
         )
@@ -380,7 +367,7 @@ def _validate_vorgang(run_root: Path, workspace: Path, issues: list[Issue]) -> N
         _add(
             issues,
             "run.invalid",
-            run_root / "arbeitsschritte" / slug / f"{number:03d}",
+            run_root / slug / f"{number:03d}",
             workspace,
             "Attempt directory and Laufpfad differ",
         )
@@ -566,11 +553,10 @@ def _attempt_directories(
     run_root: Path, workspace: Path, issues: list[Issue]
 ) -> set[tuple[str, int]]:
     result: set[tuple[str, int]] = set()
-    steps_root = run_root / "arbeitsschritte"
-    if _has_symlink_component(steps_root, run_root) or not steps_root.is_dir():
-        return result
-    for step_root in steps_root.iterdir():
-        if not step_root.is_dir() or step_root.is_symlink():
+    for step_root in run_root.iterdir():
+        if step_root.name == "CONTEXT.md":
+            continue
+        if not step_root.is_dir() or step_root.is_symlink() or SLUG.fullmatch(step_root.name) is None:
             _add(issues, "run.invalid", step_root, workspace, "Invalid workstep run directory")
             continue
         for attempt in step_root.iterdir():
@@ -605,14 +591,6 @@ def _load_context(
         _add(issues, "routing.type", path, root, f"Router type must be {expected_type}")
     if require_body and not body.strip():
         _add(issues, "routing.missing", path, root, "Arbeitsschritt processing body is missing")
-    if expected_type == "application" and set(metadata) != {"type"}:
-        _add(
-            issues,
-            "routing.type",
-            path,
-            root,
-            "Application router frontmatter must contain only type",
-        )
     if schema_name is not None:
         try:
             errors = SCHEMA_REGISTRY.errors(schema_name, metadata)
@@ -624,41 +602,27 @@ def _load_context(
     return metadata
 
 
-def _child_directories(
+def _slug_children(
     path: Path, root: Path, issues: list[Issue], label: str
 ) -> list[Path]:
-    if _has_symlink_component(path, root):
-        _add(issues, "structure.symlink", path, root, f"{label} collection is a symlink")
-        return []
-    if not path.is_dir():
+    """Return the slug-named subfolders of one process node; flag everything else."""
+    if _has_symlink_component(path, root) or not path.is_dir():
         return []
     children: list[Path] = []
     for child in sorted(path.iterdir(), key=lambda item: item.name):
         if child.is_symlink():
             _add(issues, "structure.symlink", child, root, f"{label} is a symlink")
+        elif child.name == "CONTEXT.md":
+            if not child.is_file():
+                _add(issues, "structure.invalid", child, root, "CONTEXT.md must be a file")
         elif child.is_dir():
-            children.append(child)
+            if SLUG.fullmatch(child.name) is None:
+                _add(issues, "structure.invalid", child, root, f"{label} folder needs a slug")
+            else:
+                children.append(child)
         else:
-            _add(issues, "structure.invalid", child, root, f"{label} collection contains a non-directory")
-    return children
-
-
-def _validate_exact_children(
-    path: Path,
-    root: Path,
-    issues: list[Issue],
-    allowed_directories: set[str],
-) -> None:
-    if _has_symlink_component(path, root) or not path.is_dir():
-        return
-    allowed = {"CONTEXT.md", *allowed_directories}
-    for child in path.iterdir():
-        if child.name not in allowed:
             _add(issues, "structure.invalid", child, root, "Unknown Application entry")
-        elif child.name == "CONTEXT.md" and not child.is_file():
-            _add(issues, "structure.invalid", child, root, "CONTEXT.md must be a file")
-        elif child.name in allowed_directories and not child.is_dir():
-            _add(issues, "structure.invalid", child, root, "Application collection must be a directory")
+    return children
 
 
 def _reject_symlinks(path: Path, root: Path, issues: list[Issue]) -> None:

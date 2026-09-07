@@ -34,13 +34,17 @@ Beobachtet, nicht optimiert. Diese Datei ist Quellmaterial für Identify und lie
 
 Vor der Entscheidung liest die Leitung den Prüfbericht. Sonst niemand.
 
+Warum ist diese menschliche Grenze erforderlich, was genau wird entschieden und wer darf die Grenze ändern? Erforderliche Autorität, menschliche Interaktion und gewohnte Arbeitsteilung unterscheiden. Welche Unterstützung ist bereits erlaubt, und welche Entscheidung bleibt offen?
+
+Für die genannte Dauer: Von welchem Start bis zu welchem akzeptierten Ende? Welche Zeit ist Bearbeitung, welche Warten auf Eingaben, Übergabe oder Entscheidung, welche Nacharbeit? Quellen oder berichtete Spannen nennen; fehlende Messung offenlassen.
+
 ## Was bleibt gleich, was ist je Lauf neu
 
 Gleich: Prüfkatalog, Bescheidvorlage, Zuständigkeiten. Neu: Antrag, Anlagen, Rückfragen.
 
-## Was verlässt den Prozess, wer zahlt dafür
+## Was verlässt den Prozess, wer nimmt es ab
 
-Der Bescheid. Zahler ist der Antragsteller über die Gebühr.
+Der Bescheid geht an den Antragsteller; die Leitung prüft die Abnahmebedingungen. Einen Zahler nur nennen, wenn er für die Leistung relevant ist.
 
 ## Wer fasst es an
 
@@ -49,6 +53,16 @@ Intern: Sachbearbeitung, Leitung. Kunde: Antragsteller bei Rückfragen. Extern: 
 ## Was bricht, wenn ein Schritt falsch läuft, und fällt es auf
 
 Eine falsche Entscheidung kostet ein Widerspruchsverfahren; sie fällt erst beim Widerspruch auf. Ein unvollständiger Prüfbericht fällt der Leitung auf.
+
+## Berechnungen und Entscheidungen
+
+Welche Ergebnisse werden gerechnet oder fachlich abgeleitet? Welche Regeln und Eingaben führen dorthin?
+
+Welche Beiträge leisten heute Mensch, Agent und deterministisches System? Nur vorhandene Beiträge erfassen; ihre Zielverteilung wird erst innerhalb der geklärten Grenzen entworfen.
+
+## Datenherkunft und Aktualität
+
+Woher stammen die verwendeten Werte, auf welchen Stand beziehen sie sich, und was muss vor welcher Nutzung kontrolliert oder aktualisiert werden?
 
 ## Quellen
 

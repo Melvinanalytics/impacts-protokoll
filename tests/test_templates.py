@@ -18,8 +18,17 @@ TEMPLATES = ROOT / "02_protocol" / "templates"
 SCHEMAS = ROOT / "02_protocol" / "schemas"
 SCHEMA_KINDS = ("hauptprozess", "teilprozess", "arbeitsschritt", "vorgang")
 SECTIONS = {
-    "application": ("Markttopologie", "Wertfluss", "Zielgröße", "Touchpoints", "Automationsgrenze"),
-    "hauptprozess": ("Weg zur Leistung", "Durchsatz", "Engpass"),
+    "application": ("Baum", "Regeln", "Beispiel"),
+    "hauptprozess": (
+        "Relevantes Umfeld",
+        "Wertfluss",
+        "Zielgröße",
+        "Touchpoints",
+        "Automationsgrenze",
+        "Weg zur Leistung",
+        "Durchsatz",
+        "Engpass",
+    ),
     "teilprozess": ("Beitrag", "Frühindikator"),
     "arbeitsschritt": (
         "Ein Job",
@@ -53,10 +62,16 @@ def test_template_frontmatter_is_a_valid_schema_instance(kind):
     assert list(SCHEMA_REGISTRY.errors(kind, metadata)) == []
 
 
-def test_application_template_router_carries_only_type():
-    metadata, _ = load_frontmatter_and_body(TEMPLATES / "application.md")
+def test_application_template_is_the_tree_schablone():
+    text = (TEMPLATES / "application.md").read_text(encoding="utf-8")
 
-    assert metadata == {"type": "application"}
+    assert not text.startswith("---")
+    assert "applications/<hauptprozess>/" in text
+    assert "<teilprozess>/" in text and "<arbeitsschritt>/" in text
+    for kind in ("hauptprozess", "teilprozess", "arbeitsschritt", "vorgang"):
+        assert f"impacts template {kind}" in text
+    assert "hauptprozess/" not in text.replace("<hauptprozess>/", "")
+    assert "teilprozesse/" not in text and "arbeitsschritte/" not in text
 
 
 @pytest.mark.parametrize("kind", sorted(SECTIONS))
@@ -83,3 +98,26 @@ def test_cli_template_rejects_unknown_kind():
         main(["template", "hauptprozesse"])
 
     assert error.value.code == 2
+
+
+def test_workstep_template_exposes_only_the_local_capability_call():
+    _, body = load_frontmatter_and_body(TEMPLATES / "arbeitsschritt.md")
+
+    for field in (
+        "Aufruf-ID",
+        "Capability-Pfad",
+        "Capability-Revision",
+        "Operation",
+        "erwartete Ausgabe",
+        "Mindestprüfung",
+    ):
+        assert field in body
+    assert "Parameterschema" not in body
+
+
+def test_workstep_template_materializes_stable_inputs_with_provenance():
+    _, body = load_frontmatter_and_body(TEMPLATES / "arbeitsschritt.md")
+
+    inputs = body[body.index("## Eingaben") : body.index("## Nicht laden")]
+    assert "materialisiert" in inputs
+    assert "*-herkunft.md" in inputs
