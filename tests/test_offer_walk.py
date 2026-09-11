@@ -662,13 +662,20 @@ def test_capacity_rejects_invalid_population_rates(values):
 
 
 @pytest.mark.parametrize('language,heading', [('en', 'Synthetic offer-preparation decision'), ('de', 'Synthetische Entscheidung zur Angebotsvorbereitung')])
-def test_retained_offer_discovery_is_inspectable_and_existing_target_is_preserved(tmp_path, language, heading):
+@pytest.mark.parametrize('aliased_parent', [False, True])
+def test_retained_offer_discovery_is_inspectable_and_existing_target_is_preserved(tmp_path, language, heading, aliased_parent):
     import subprocess
-    target = tmp_path / 'retained'
+    parent = tmp_path
+    if aliased_parent:
+        actual = tmp_path / 'actual'
+        actual.mkdir()
+        parent = tmp_path / 'alias'
+        parent.symlink_to(actual, target_is_directory=True)
+    target = parent / 'retained'
     command = [sys.executable, str(ROOT / '06_evaluations/offer-walk/run.py'), '--language', language, '--discovery', '--keep', str(target)]
     result = subprocess.run(command, capture_output=True, text=True)
     assert result.returncode == 0, result.stderr
-    assert 'PASS:' in result.stdout and str(target) in result.stdout
+    assert 'PASS:' in result.stdout and str(target.resolve()) in result.stdout
     assert heading in (target / 'grundlagen/discovery.md').read_text()
     assert 'grundlagen/discovery.md' in (target / 'CONTEXT.md').read_text()
     assert walk.validate(target).valid

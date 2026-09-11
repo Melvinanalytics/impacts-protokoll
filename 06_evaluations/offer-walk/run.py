@@ -163,8 +163,8 @@ def open_offer(target: Path, values: dict, language: str) -> Path:
     protocol = subprocess.run(["git", "-C", str(ROOT), "rev-parse", "--show-toplevel", "HEAD"], capture_output=True, text=True)
     reference = protocol.stdout.splitlines()
     protocol_ref = reference[1] if protocol.returncode == 0 and len(reference) == 2 and Path(reference[0]).resolve() == ROOT.resolve() else ("nicht versioniert" if de else "unversioned")
-    protocol_link = quote(Path(os.path.relpath(ROOT / "CONTEXT.md", root)).as_posix(), safe="/")
-    architect_link = quote(Path(os.path.relpath(ROOT / "02_protocol/impacts-architect/SKILL.md", root)).as_posix(), safe="/")
+    protocol_link = quote(Path(os.path.relpath(ROOT / "CONTEXT.md", root.resolve())).as_posix(), safe="/")
+    architect_link = quote(Path(os.path.relpath(ROOT / "02_protocol/impacts-architect/SKILL.md", root.resolve())).as_posix(), safe="/")
     with (root / "CONTEXT.md").open("a", encoding="utf-8") as router:
         router.write(("\n## Synthetisches Angebotsbeispiel\n\n" if de else "\n## Synthetic offer example\n\n") +
             f"[Application]({APP}/CONTEXT.md) · [" + ("Aktueller Vorgang" if de else "Current run") + f"]({RUN}/CONTEXT.md)\n\n" +
