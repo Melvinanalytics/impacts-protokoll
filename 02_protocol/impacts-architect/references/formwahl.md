@@ -60,7 +60,7 @@ For a new Core workspace, `impacts init PATH --language en|de` creates only the 
 - Customer types remain local vocabulary. `type` suffices until a real query needs another field.
 - Instances sharing a lifecycle start in one fact file or table. A file per instance requires an independent query, independent change, its own evidence or its own relationships. The work report names the qualifying criterion for each split.
 - Every `reported` handover claim resolves to the preserved handover or source artifact. A source register is a router or index, not a replacement for the actual artifact.
-- An unknown workflow remains observed evidence. Create an Application only with a repeatable run, accepted result and supported boundary.
+- An unknown workflow remains a gap; mark reconstructed work `hypothesis`. Supplied descriptions alone prove neither execution nor feasibility. Create an Application only with a repeatable run, accepted result and supported boundary.
 - Explicitly internal material stays separate from customer facts and is excluded from customer questions.
 
 An empty collection has an explicit authoritative empty state in its responsible router. Do not create an empty category, README or index merely to make absence clickable. Once entries exist, replace or extend the empty state with direct links. The Knowledge Walk may stop at an explicit empty state.
