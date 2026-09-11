@@ -26,10 +26,12 @@ def test_valid_application_has_no_issues():
         assert report.valid, report.issues
 
 
-def test_application_requires_exactly_one_hauptprozess():
+def test_hauptprozess_id_matches_its_folder_slug():
     with TemporaryDirectory() as directory:
         root = write_application(Path(directory) / "video")
-        shutil.copytree(root / "hauptprozess", root / "zweiter-hauptprozess")
+        metadata = read_context(root / "CONTEXT.md")
+        metadata["id"] = "hauptprozess:anderer-name"
+        replace_context(root / "CONTEXT.md", metadata)
 
         assert "structure.invalid" in issue_codes(root)
 
@@ -44,7 +46,7 @@ def test_application_folder_requires_a_slug():
 def test_application_rejects_an_unknown_runtime_subtree():
     with TemporaryDirectory() as directory:
         root = write_application(Path(directory) / "video")
-        runtime = root / "hauptprozess/runtime"
+        runtime = root / "produktion" / "start" / "runtime"
         runtime.mkdir()
         (runtime / "state.json").write_text("{}", encoding="utf-8")
 
@@ -54,38 +56,61 @@ def test_application_rejects_an_unknown_runtime_subtree():
 def test_application_requires_each_hierarchy_child():
     with TemporaryDirectory() as directory:
         root = write_application(Path(directory) / "video")
-        shutil.rmtree(root / "hauptprozess" / "teilprozesse")
+        shutil.rmtree(root / "produktion")
 
         assert "structure.invalid" in issue_codes(root)
 
 
-def test_application_router_contains_only_its_type():
+def test_application_root_is_its_hauptprozess():
     with TemporaryDirectory() as directory:
         root = write_application(Path(directory) / "video")
-        write_context(
-            root / "CONTEXT.md",
-            {"type": "application", "name": "duplicate-authority"},
-        )
+        write_context(root / "CONTEXT.md", {"type": "application"}, "# Video")
 
         assert "routing.type" in issue_codes(root)
+
+
+def test_application_rejects_a_file_beside_context():
+    with TemporaryDirectory() as directory:
+        root = write_application(Path(directory) / "video")
+        (root / "notizen.md").write_text("frei", encoding="utf-8")
+
+        assert "structure.invalid" in issue_codes(root)
 
 
 def test_schema_violation_fails_at_public_interface():
     with TemporaryDirectory() as directory:
         root = write_application(Path(directory) / "video")
-        path = root / "hauptprozess/CONTEXT.md"
+        path = root / "CONTEXT.md"
         metadata = read_context(path)
         metadata.pop("leistung")
         replace_context(path, metadata)
 
-        assert "schema.invalid" in issue_codes(root)
+        errors = [issue for issue in validate(root).issues if issue.code == "schema.invalid"]
+        assert len(errors) == 1
+        assert errors[0].path == "CONTEXT.md"
+        assert errors[0].message == "<root>: 'leistung' is a required property"
+
+
+@pytest.mark.parametrize("invalid", [[42, 17], []])
+def test_schema_errors_locate_nested_array_values(tmp_path, invalid):
+    root = write_application(tmp_path / "video")
+    metadata = read_context(root / "CONTEXT.md")
+    metadata["leistung"]["abnahme"] = invalid
+    replace_context(root / "CONTEXT.md", metadata)
+
+    errors = [issue for issue in validate(root).issues if issue.code == "schema.invalid"]
+
+    expected = ["/leistung/abnahme/0:", "/leistung/abnahme/1:"] if invalid else ["/leistung/abnahme:"]
+    assert len(errors) == len(expected)
+    assert all(issue.path == "CONTEXT.md" for issue in errors)
+    assert all(issue.message.startswith(pointer) for issue, pointer in zip(errors, expected))
 
 
 @pytest.mark.parametrize("body", ["", "   \n\t"])
 def test_workstep_requires_a_processing_body(body):
     with TemporaryDirectory() as directory:
         root = write_application(Path(directory) / "video")
-        path = root / "hauptprozess/teilprozesse/produktion/arbeitsschritte/start/CONTEXT.md"
+        path = root / "produktion/start/CONTEXT.md"
         metadata = read_context(path)
         write_context(path, metadata, body)
 
@@ -95,7 +120,7 @@ def test_workstep_requires_a_processing_body(body):
 def test_workstep_ids_are_application_wide_unique():
     with TemporaryDirectory() as directory:
         root = write_application(Path(directory) / "video")
-        second = root / "hauptprozess" / "teilprozesse" / "zweite"
+        second = root / "zweite"
         write_context(
             second / "CONTEXT.md",
             {
@@ -105,7 +130,7 @@ def test_workstep_ids_are_application_wide_unique():
             },
         )
         write_workstep(
-            second / "arbeitsschritte",
+            second,
             "start",
             step_id="arbeitsschritt:start",
         )
@@ -116,7 +141,7 @@ def test_workstep_ids_are_application_wide_unique():
 def test_workstep_id_matches_its_folder_slug():
     with TemporaryDirectory() as directory:
         root = write_application(Path(directory) / "video")
-        path = root / "hauptprozess/teilprozesse/produktion/arbeitsschritte/start/CONTEXT.md"
+        path = root / "produktion/start/CONTEXT.md"
         metadata = read_context(path)
         metadata["id"] = "arbeitsschritt:anderer-name"
         replace_context(path, metadata)
@@ -127,7 +152,7 @@ def test_workstep_id_matches_its_folder_slug():
 def test_unresolved_route_is_rejected():
     with TemporaryDirectory() as directory:
         root = write_application(Path(directory) / "video")
-        path = root / "hauptprozess/teilprozesse/produktion/arbeitsschritte/start/CONTEXT.md"
+        path = root / "produktion/start/CONTEXT.md"
         metadata = read_context(path)
         metadata["routen"] = {"weiter": "arbeitsschritt:fehlt"}
         replace_context(path, metadata)
@@ -138,8 +163,7 @@ def test_unresolved_route_is_rejected():
 def test_unreachable_workstep_is_rejected():
     with TemporaryDirectory() as directory:
         root = write_application(Path(directory) / "video")
-        steps = root / "hauptprozess/teilprozesse/produktion/arbeitsschritte"
-        write_workstep(steps, "verwaist")
+        write_workstep(root / "produktion", "verwaist")
 
         assert "process.unreachable" in issue_codes(root)
 
@@ -147,7 +171,7 @@ def test_unreachable_workstep_is_rejected():
 def test_every_workstep_needs_a_path_to_end():
     with TemporaryDirectory() as directory:
         root = write_application(Path(directory) / "video")
-        path = root / "hauptprozess/teilprozesse/produktion/arbeitsschritte/pruefen/CONTEXT.md"
+        path = root / "produktion/pruefen/CONTEXT.md"
         metadata = read_context(path)
         metadata["routen"] = {
             "freigegeben": "arbeitsschritt:start",
@@ -161,7 +185,7 @@ def test_every_workstep_needs_a_path_to_end():
 def test_human_gate_has_exact_decision_routes():
     with TemporaryDirectory() as directory:
         root = write_application(Path(directory) / "video")
-        path = root / "hauptprozess/teilprozesse/produktion/arbeitsschritte/pruefen/CONTEXT.md"
+        path = root / "produktion/pruefen/CONTEXT.md"
         metadata = read_context(path)
         metadata["routen"] = {"ok": "end:fertig"}
         replace_context(path, metadata)

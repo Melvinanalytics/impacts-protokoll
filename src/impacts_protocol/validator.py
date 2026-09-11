@@ -1,23 +1,22 @@
 """Read-only validation for the minimal file-native IMPACTS contract."""
 
 from collections import deque
+from contextlib import ExitStack
 from dataclasses import dataclass
 from datetime import datetime
-import hashlib
-from io import BytesIO
 from importlib import resources
 import json
 from pathlib import Path
 import re
 import subprocess
-import tarfile
 from tempfile import TemporaryDirectory
 from typing import Any
 
 from jsonschema import Draft202012Validator, FormatChecker
 from referencing import Registry, Resource
 
-from .io import load_frontmatter_and_body
+from .hashing import HashSurfaceError, surface_hash
+from .io import _has_symlink_component, load_frontmatter_and_body
 from .model import Issue, ValidationReport
 from .workspace_contract import WORKSPACE_FOLDERS
 
@@ -111,11 +110,7 @@ def validate(root: Path) -> ValidationReport:
     try:
         metadata = _load_context(root / "CONTEXT.md", root, issues)
         root_type = metadata.get("type") if metadata is not None else None
-        if (
-            isinstance(root_type, str)
-            and root_type in {"workspace", "application"}
-            and set(metadata) != {"type"}
-        ):
+        if root_type == "workspace" and set(metadata) != {"type"}:
             _add(
                 issues,
                 "routing.type",
@@ -125,10 +120,10 @@ def validate(root: Path) -> ValidationReport:
             )
         if root_type == "workspace":
             _validate_workspace(root, issues)
-        elif root_type == "application":
+        elif root_type == "hauptprozess":
             _validate_application(root, issues)
         elif metadata is not None:
-            _add(issues, "routing.type", root / "CONTEXT.md", root, "Root type must be workspace or application")
+            _add(issues, "routing.type", root / "CONTEXT.md", root, "Root type must be workspace or hauptprozess")
     except (OSError, RuntimeError) as error:
         _add(issues, "structure.invalid", root, root, f"Core tree cannot be read: {error}")
     return ValidationReport(_ordered(issues))
@@ -139,8 +134,8 @@ def _validate_workspace(root: Path, issues: list[Issue]) -> None:
         path = root / folder
         if path.is_symlink():
             _add(issues, "structure.symlink", path, root, "Core folder is a symlink")
-        elif not path.is_dir():
-            _add(issues, "structure.invalid", path, root, "Required workspace folder is missing")
+        elif path.exists() and not path.is_dir():
+            _add(issues, "structure.invalid", path, root, "Workspace collection must be a directory")
     applications = root / "applications"
     if applications.is_dir() and not applications.is_symlink():
         for path in sorted(applications.iterdir(), key=lambda item: item.name):
@@ -151,14 +146,17 @@ def _validate_workspace(root: Path, issues: list[Issue]) -> None:
             else:
                 _add(issues, "structure.invalid", path, root, "Applications contains a non-directory")
     runs = root / "vorgaenge"
-    if runs.is_dir() and not runs.is_symlink():
-        for path in sorted(runs.iterdir(), key=lambda item: item.name):
-            if path.is_symlink():
-                _add(issues, "structure.symlink", path, root, "Vorgang is a symlink")
-            elif path.is_dir():
-                _validate_vorgang(path, root, issues)
-            else:
-                _add(issues, "structure.invalid", path, root, "Vorgaenge contains a non-directory")
+    # Definitions are immutable; run files and Git refs are rechecked on every call.
+    definitions: dict[str, Application | str] = {}
+    with ExitStack() as snapshots:
+        if runs.is_dir() and not runs.is_symlink():
+            for path in sorted(runs.iterdir(), key=lambda item: item.name):
+                if path.is_symlink():
+                    _add(issues, "structure.symlink", path, root, "Vorgang is a symlink")
+                elif path.is_dir():
+                    _validate_vorgang(path, root, issues, definitions, snapshots)
+                else:
+                    _add(issues, "structure.invalid", path, root, "Vorgaenge contains a non-directory")
 
 
 def _validate_application(
@@ -168,56 +166,47 @@ def _validate_application(
     _reject_symlinks(root, root, issues)
     if check_slug and SLUG.fullmatch(root.name) is None:
         _add(issues, "structure.invalid", root, root, "Application folder needs a slug")
-    router = _load_context(root / "CONTEXT.md", root, issues, expected_type="application")
-    if router is None:
-        return None
-
-    _validate_exact_children(root, root, issues, {"hauptprozess"})
-    process_root = root / "hauptprozess"
-    _validate_exact_children(process_root, root, issues, {"teilprozesse"})
     process = _load_context(
-        process_root / "CONTEXT.md",
+        root / "CONTEXT.md",
         root,
         issues,
-        expected_type="hauptprozess",
-        schema_name="hauptprozess",
+        kind="hauptprozess",
     )
-    parts_root = process_root / "teilprozesse"
-    part_dirs = _child_directories(parts_root, root, issues, "Teilprozess")
+    if process is None:
+        return None
+    if check_slug and process.get("id") != f"hauptprozess:{root.name}":
+        _add(issues, "structure.invalid", root, root, "Hauptprozess ID must match folder slug")
+    part_dirs = _slug_children(root, root, issues, "Teilprozess")
     if not part_dirs:
-        _add(issues, "structure.invalid", parts_root, root, "Hauptprozess needs at least one Teilprozess")
+        _add(issues, "structure.invalid", root, root, "Hauptprozess needs at least one Teilprozess")
 
     steps: dict[str, tuple[Path, dict[str, Any]]] = {}
     for part_root in part_dirs:
-        _validate_exact_children(part_root, root, issues, {"arbeitsschritte"})
         part = _load_context(
             part_root / "CONTEXT.md",
             root,
             issues,
-            expected_type="teilprozess",
-            schema_name="teilprozess",
+            kind="teilprozess",
         )
         if part is not None and part.get("id") != f"teilprozess:{part_root.name}":
             _add(issues, "structure.invalid", part_root, root, "Teilprozess ID must match folder slug")
-        step_dirs = _child_directories(
-            part_root / "arbeitsschritte", root, issues, "Arbeitsschritt"
-        )
+        step_dirs = _slug_children(part_root, root, issues, "Arbeitsschritt")
         if not step_dirs:
             _add(
                 issues,
                 "structure.invalid",
-                part_root / "arbeitsschritte",
+                part_root,
                 root,
                 "Teilprozess needs at least one Arbeitsschritt",
             )
         for step_root in step_dirs:
-            _validate_exact_children(step_root, root, issues, set())
+            if _slug_children(step_root, root, issues, "Arbeitsschritt"):
+                _add(issues, "structure.invalid", step_root, root, "Arbeitsschritt must not contain subfolders")
             step = _load_context(
                 step_root / "CONTEXT.md",
                 root,
                 issues,
-                expected_type="arbeitsschritt",
-                schema_name="arbeitsschritt",
+                kind="arbeitsschritt",
                 require_body=True,
             )
             if step is None or not isinstance(step.get("id"), str):
@@ -230,8 +219,6 @@ def _validate_application(
             else:
                 steps[step_id] = (step_root, step)
 
-    if process is None:
-        return None
     application = Application(root, process, steps)
     _validate_graph(application, issues)
     if len(issues) > before and not steps:
@@ -244,7 +231,7 @@ def _validate_graph(application: Application, issues: list[Issue]) -> None:
     steps = application.arbeitsschritte
     entry = application.hauptprozess.get("einstieg_ref")
     if not isinstance(entry, str) or entry not in steps:
-        _add(issues, "reference.unresolved", root / "hauptprozess/CONTEXT.md", root, "Hauptprozess entry does not resolve")
+        _add(issues, "reference.unresolved", root / "CONTEXT.md", root, "Hauptprozess entry does not resolve")
         return
 
     adjacency: dict[str, set[str]] = {step_id: set() for step_id in steps}
@@ -276,33 +263,38 @@ def _validate_graph(application: Application, issues: list[Issue]) -> None:
     for step_id in sorted(set(steps) - reachable):
         _add(issues, "process.unreachable", steps[step_id][0], root, f"Unreachable Arbeitsschritt: {step_id}")
 
+    predecessors: dict[str, set[str]] = {step_id: set() for step_id in steps}
+    for step_id, targets in adjacency.items():
+        for target in targets:
+            predecessors[target].add(step_id)
     can_end = set(direct_end)
-    changed = True
-    while changed:
-        changed = False
-        for step_id, targets in adjacency.items():
-            if step_id not in can_end and targets & can_end:
+    queue = deque(direct_end)
+    while queue:
+        for step_id in predecessors[queue.popleft()]:
+            if step_id not in can_end:
                 can_end.add(step_id)
-                changed = True
+                queue.append(step_id)
     for step_id in sorted(set(steps) - can_end):
         _add(issues, "process.no_end", steps[step_id][0], root, f"No reachable end from: {step_id}")
 
 
-def _validate_vorgang(run_root: Path, workspace: Path, issues: list[Issue]) -> None:
+def _validate_vorgang(
+    run_root: Path, workspace: Path, issues: list[Issue],
+    definitions: dict[str, Application | str], snapshots: ExitStack,
+) -> None:
     _reject_symlinks(run_root, workspace, issues)
     document = _load_context(
         run_root / "CONTEXT.md",
         workspace,
         issues,
-        expected_type="vorgang",
-        schema_name="vorgang",
+        kind="vorgang",
     )
     if document is None:
         return
     if document.get("id") != f"vorgang:{run_root.name}":
         _add(issues, "structure.invalid", run_root, workspace, "Vorgang ID must match folder slug")
     application = _resolve_application(
-        workspace, document.get("application_revision"), run_root, issues
+        workspace, document.get("application_revision"), run_root, issues, definitions, snapshots
     )
     if application is None:
         return
@@ -335,7 +327,6 @@ def _validate_vorgang(run_root: Path, workspace: Path, issues: list[Issue]) -> N
         expected_attempts.add((step_id.removeprefix("arbeitsschritt:"), attempt_number))
         attempt_root = (
             run_root
-            / "arbeitsschritte"
             / step_id.removeprefix("arbeitsschritt:")
             / f"{attempt_number:03d}"
         )
@@ -357,7 +348,6 @@ def _validate_vorgang(run_root: Path, workspace: Path, issues: list[Issue]) -> N
             _validate_completed_entry(
                 entry,
                 step,
-                application,
                 entries,
                 index,
                 run_root,
@@ -380,7 +370,7 @@ def _validate_vorgang(run_root: Path, workspace: Path, issues: list[Issue]) -> N
         _add(
             issues,
             "run.invalid",
-            run_root / "arbeitsschritte" / slug / f"{number:03d}",
+            run_root / slug / f"{number:03d}",
             workspace,
             "Attempt directory and Laufpfad differ",
         )
@@ -389,7 +379,6 @@ def _validate_vorgang(run_root: Path, workspace: Path, issues: list[Issue]) -> N
 def _validate_completed_entry(
     entry: dict[str, Any],
     step: dict[str, Any],
-    application: Application,
     entries: list[Any],
     index: int,
     run_root: Path,
@@ -446,46 +435,54 @@ def _resolve_application(
     revision: Any,
     run_root: Path,
     issues: list[Issue],
+    definitions: dict[str, Application | str],
+    snapshots: ExitStack,
 ) -> Application | None:
-    if not isinstance(revision, str) or not revision.startswith("git-tree:"):
+    if not isinstance(revision, str) or re.fullmatch(r"git-tree:(?:[0-9a-f]{40}|[0-9a-f]{64})", revision) is None:
         _add(issues, "revision.invalid", run_root / "CONTEXT.md", workspace, "Application revision is invalid")
+        return None
+
+    def reject(message: str) -> None:
+        definitions[revision] = message
+        _add(issues, "revision.invalid", run_root / "CONTEXT.md", workspace, message)
+
+    cached = definitions.get(revision)
+    if isinstance(cached, Application):
+        return cached
+    if isinstance(cached, str):
+        reject(cached)
         return None
     oid = revision.removeprefix("git-tree:")
     repository = _git(workspace, "rev-parse", "--show-toplevel")
     if repository is None or Path(repository).resolve() != workspace.resolve():
-        _add(issues, "revision.invalid", run_root / "CONTEXT.md", workspace, "Workspace root must be the Git repository root")
+        reject("Workspace root must be the Git repository root")
         return None
-    object_type = _git(workspace, "cat-file", "-t", oid)
-    if object_type != "tree" or not _tree_is_reachable_application(workspace, oid):
-        _add(issues, "revision.invalid", run_root / "CONTEXT.md", workspace, "Application tree is missing or unreachable")
+    if _git(workspace, "cat-file", "-t", oid) != "tree":
+        reject("Application tree is missing or unreachable")
         return None
-    try:
-        archive = subprocess.run(
-            ["git", "-C", str(workspace), "archive", "--format=tar", oid],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            check=False,
+    # Keep the paths in Application alive until all dependent runs were checked.
+    target = Path(snapshots.enter_context(TemporaryDirectory(prefix="impacts-application-")))
+    if not _materialize_tree(workspace, oid, target):
+        reject("Application tree is unreadable or contains an unsafe entry")
+        return None
+    nested: list[Issue] = []
+    application = _validate_application(target, nested, check_slug=False)
+    if application is None or nested:
+        details = "; ".join(
+            f"{issue.path}: {issue.code}: {issue.message}" for issue in _ordered(nested)
         )
-    except OSError:
-        _add(issues, "revision.invalid", run_root / "CONTEXT.md", workspace, "Git cannot read the Application tree")
+        message = f"Application {revision} violates the V1 contract"
+        reject(f"{message}: {details}" if details else message)
         return None
-    if archive.returncode != 0:
-        _add(issues, "revision.invalid", run_root / "CONTEXT.md", workspace, "Application tree cannot be read")
+    slug = application.hauptprozess["id"].removeprefix("hauptprozess:")
+    if not _tree_is_reachable_application(workspace, oid, slug):
+        reject("Application tree is missing or unreachable at its declared slug")
         return None
-    with TemporaryDirectory(prefix="impacts-application-") as directory:
-        target = Path(directory)
-        if not _extract_tree_archive(archive.stdout, target):
-            _add(issues, "revision.invalid", run_root / "CONTEXT.md", workspace, "Application tree contains an unsafe entry")
-            return None
-        nested: list[Issue] = []
-        application = _validate_application(target, nested, check_slug=False)
-        if application is None or nested:
-            _add(issues, "revision.invalid", run_root / "CONTEXT.md", workspace, "Application tree violates the V1 contract")
-            return None
-        return application
+    definitions[revision] = application
+    return application
 
 
-def _tree_is_reachable_application(workspace: Path, oid: str) -> bool:
+def _tree_is_reachable_application(workspace: Path, oid: str, slug: str) -> bool:
     commits = _git(workspace, "rev-list", "--all")
     if commits is None:
         return False
@@ -502,49 +499,76 @@ def _tree_is_reachable_application(workspace: Path, oid: str) -> bool:
                 and len(parts) == 3
                 and parts[2] == oid
                 and len(path_parts) == 2
-                and SLUG.fullmatch(path_parts[1]) is not None
+                and path_parts[1] == slug
             ):
                 return True
     return False
 
 
-def _extract_tree_archive(payload: bytes, target: Path) -> bool:
+def _materialize_tree(workspace: Path, oid: str, target: Path) -> bool:
+    """Read exact Git objects, without archive attributes or replacement refs."""
+    listing = _git(workspace, "ls-tree", "-rtz", oid)
+    if listing is None:
+        return False
+    reserved_names = {"CON", "PRN", "AUX", "NUL", "CONIN$", "CONOUT$"} | {
+        prefix + digit for prefix in ("COM", "LPT") for digit in "123456789¹²³"
+    }
     try:
-        with tarfile.open(fileobj=BytesIO(payload), mode="r:") as archive:
-            members = archive.getmembers()
-            for member in members:
-                relative = Path(member.name)
-                if relative.is_absolute() or ".." in relative.parts or member.issym() or member.islnk():
+        entries = {}
+        for entry in filter(None, listing.split("\0")):
+            metadata, separator, name = entry.partition("\t")
+            mode, kind, object_id = metadata.split()
+            relative = Path(name)
+            if not separator or relative.is_absolute() or any(part in {"", ".", ".."} for part in name.split("/")):
+                return False
+            # A bound Git name must retain its identity on either filesystem.
+            if any(
+                part.endswith((".", " "))
+                or any(ord(char) < 32 or char in '\\:*?"<>|' for char in part)
+                or part.partition(".")[0].rstrip(" ").upper() in reserved_names
+                for part in name.split("/")
+            ):
+                return False
+            if name in entries or (mode, kind) not in {
+                ("040000", "tree"), ("100644", "blob"), ("100755", "blob"),
+            }:
+                return False
+            entries[name] = (mode, kind, object_id)
+        for name in entries:
+            for parent in Path(name).parents:
+                if parent != Path(".") and entries.get(parent.as_posix(), (None, None))[1] != "tree":
                     return False
-                if not member.isdir() and not member.isfile():
+        for name, (mode, kind, object_id) in entries.items():
+            destination = target / name
+            if kind == "tree":
+                destination.mkdir()
+            else:
+                content = _git(workspace, "cat-file", "blob", object_id, binary=True)
+                if content is None:
                     return False
-            for member in members:
-                destination = target / member.name
-                if member.isdir():
-                    destination.mkdir(parents=True, exist_ok=True)
-                else:
-                    destination.parent.mkdir(parents=True, exist_ok=True)
-                    source = archive.extractfile(member)
-                    if source is None:
-                        return False
-                    destination.write_bytes(source.read())
-    except (OSError, tarfile.TarError):
+                # Exclusive creation also rejects aliases on case-insensitive or
+                # Unicode-normalizing filesystems instead of overwriting bytes.
+                with destination.open("xb") as output:
+                    output.write(content)
+    except (OSError, ValueError):
         return False
     return True
 
 
-def _git(root: Path, *args: str) -> str | None:
+def _git(root: Path, *args: str, binary: bool = False) -> str | bytes | None:
     try:
         result = subprocess.run(
-            ["git", "-C", str(root), *args],
+            ["git", "--no-replace-objects", "-C", str(root), *args],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            text=True,
+            text=not binary,
             check=False,
         )
-    except OSError:
+    except (OSError, UnicodeError):
         return None
-    return result.stdout.strip() if result.returncode == 0 else None
+    if result.returncode != 0:
+        return None
+    return result.stdout if binary else result.stdout.strip()
 
 
 def _surface_hash(
@@ -553,88 +577,30 @@ def _surface_hash(
     workspace: Path,
     issues: list[Issue],
 ) -> str | None:
-    if not isinstance(declared, list):
-        return None
-    files: dict[str, str] = {}
-    for relative in declared:
-        if not isinstance(relative, str):
-            return None
-        source = attempt_root / relative
-        candidates = _hash_candidates(source, attempt_root, workspace, issues)
-        if candidates is None:
-            return None
-        for path in candidates:
-            try:
-                normalized = path.resolve().relative_to(attempt_root.resolve()).as_posix()
-            except (OSError, ValueError):
-                _add(issues, "hash.mismatch", path, workspace, "Hash surface escapes attempt directory")
-                return None
-            files[normalized] = hashlib.sha256(path.read_bytes()).hexdigest()
-    entries = [
-        {"path": path, "sha256": digest}
-        for path, digest in sorted(files.items(), key=lambda item: item[0].encode("utf-8"))
-    ]
-    payload = (
-        json.dumps(entries, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
-        + "\n"
-    ).encode("utf-8")
-    return "sha256:" + hashlib.sha256(payload).hexdigest()
-
-
-def _hash_candidates(
-    source: Path,
-    attempt_root: Path,
-    workspace: Path,
-    issues: list[Issue],
-) -> list[Path] | None:
-    if _has_symlink_component(source, attempt_root):
-        _add(issues, "structure.symlink", source, workspace, "Hash surface contains a symlink")
+    if not isinstance(declared, list) or not all(isinstance(item, str) for item in declared):
         return None
     try:
-        source.resolve().relative_to(attempt_root.resolve())
-    except (OSError, ValueError):
-        _add(issues, "hash.mismatch", source, workspace, "Hash surface escapes attempt directory")
+        return surface_hash(attempt_root, declared)
+    except HashSurfaceError as error:
+        _add(issues, error.code, error.path, workspace, error.message)
         return None
-    if source.is_file():
-        return [source]
-    if not source.is_dir():
-        _add(issues, "hash.mismatch", source, workspace, "Declared hash surface has no regular file")
-        return None
-
-    files: list[Path] = []
-    pending = [source]
-    while pending:
-        directory = pending.pop()
-        for path in sorted(directory.iterdir(), key=lambda item: item.name):
-            if path.is_symlink():
-                _add(issues, "structure.symlink", path, workspace, "Hash surface contains a symlink")
-                return None
-            if path.is_dir():
-                pending.append(path)
-            elif path.is_file():
-                files.append(path)
-            else:
-                _add(issues, "hash.mismatch", path, workspace, "Hash surface contains a non-regular entry")
-                return None
-    if not files:
-        _add(issues, "hash.mismatch", source, workspace, "Declared hash surface has no regular file")
-        return None
-    return sorted(files)
 
 
 def _attempt_directories(
     run_root: Path, workspace: Path, issues: list[Issue]
 ) -> set[tuple[str, int]]:
     result: set[tuple[str, int]] = set()
-    steps_root = run_root / "arbeitsschritte"
-    if _has_symlink_component(steps_root, run_root) or not steps_root.is_dir():
-        return result
-    for step_root in steps_root.iterdir():
-        if not step_root.is_dir() or step_root.is_symlink():
-            _add(issues, "run.invalid", step_root, workspace, "Invalid workstep run directory")
+    for step_root in run_root.iterdir():
+        if step_root.name == "CONTEXT.md":
             continue
-        for attempt in step_root.iterdir():
-            if not attempt.is_dir() or attempt.is_symlink() or len(attempt.name) != 3 or not attempt.name.isdigit() or int(attempt.name) < 1:
+        if not step_root.is_dir() or step_root.is_symlink() or SLUG.fullmatch(step_root.name) is None:
+            _add(issues, "run.invalid", step_root, workspace, "Invalid Arbeitsschritt run directory")
+            continue
+        attempts = list(step_root.iterdir())
+        if not attempts:
+            _add(issues, "run.invalid", step_root, workspace, "Unreached Arbeitsschritt run directory")
+        for attempt in attempts:
+            if not attempt.is_dir() or attempt.is_symlink() or re.fullmatch(r"[0-9]{3}", attempt.name) is None or int(attempt.name) < 1:
                 _add(issues, "run.invalid", attempt, workspace, "Attempt directory must be a positive three-digit number")
                 continue
             result.add((step_root.name, int(attempt.name)))
@@ -646,8 +612,7 @@ def _load_context(
     root: Path,
     issues: list[Issue],
     *,
-    expected_type: str | None = None,
-    schema_name: str | None = None,
+    kind: str | None = None,
     require_body: bool = False,
 ) -> dict[str, Any] | None:
     if _has_symlink_component(path, root):
@@ -661,64 +626,46 @@ def _load_context(
     except ValueError as error:
         _add(issues, "format.invalid", path, root, str(error))
         return None
-    if expected_type is not None and metadata.get("type") != expected_type:
-        _add(issues, "routing.type", path, root, f"Router type must be {expected_type}")
+    if kind is not None and metadata.get("type") != kind:
+        _add(issues, "routing.type", path, root, f"Router type must be {kind}")
     if require_body and not body.strip():
         _add(issues, "routing.missing", path, root, "Arbeitsschritt processing body is missing")
-    if expected_type == "application" and set(metadata) != {"type"}:
-        _add(
-            issues,
-            "routing.type",
-            path,
-            root,
-            "Application router frontmatter must contain only type",
-        )
-    if schema_name is not None:
+    if kind is not None:
         try:
-            errors = SCHEMA_REGISTRY.errors(schema_name, metadata)
+            errors = SCHEMA_REGISTRY.errors(kind, metadata)
         except (OSError, ValueError, json.JSONDecodeError) as error:
             _add(issues, "format.invalid", path, root, str(error))
         else:
             for error in errors:
-                _add(issues, "schema.invalid", path, root, error.message)
+                pointer = "/" + "/".join(
+                    str(part).replace("~", "~0").replace("/", "~1")
+                    for part in error.absolute_path
+                ) if error.absolute_path else "<root>"
+                _add(issues, "schema.invalid", path, root, f"{pointer}: {error.message}")
     return metadata
 
 
-def _child_directories(
+def _slug_children(
     path: Path, root: Path, issues: list[Issue], label: str
 ) -> list[Path]:
-    if _has_symlink_component(path, root):
-        _add(issues, "structure.symlink", path, root, f"{label} collection is a symlink")
-        return []
-    if not path.is_dir():
+    """Return the slug-named subfolders of one process node; flag everything else."""
+    if _has_symlink_component(path, root) or not path.is_dir():
         return []
     children: list[Path] = []
     for child in sorted(path.iterdir(), key=lambda item: item.name):
         if child.is_symlink():
             _add(issues, "structure.symlink", child, root, f"{label} is a symlink")
+        elif child.name == "CONTEXT.md":
+            if not child.is_file():
+                _add(issues, "structure.invalid", child, root, "CONTEXT.md must be a file")
         elif child.is_dir():
-            children.append(child)
+            if SLUG.fullmatch(child.name) is None:
+                _add(issues, "structure.invalid", child, root, f"{label} folder needs a slug")
+            else:
+                children.append(child)
         else:
-            _add(issues, "structure.invalid", child, root, f"{label} collection contains a non-directory")
-    return children
-
-
-def _validate_exact_children(
-    path: Path,
-    root: Path,
-    issues: list[Issue],
-    allowed_directories: set[str],
-) -> None:
-    if _has_symlink_component(path, root) or not path.is_dir():
-        return
-    allowed = {"CONTEXT.md", *allowed_directories}
-    for child in path.iterdir():
-        if child.name not in allowed:
             _add(issues, "structure.invalid", child, root, "Unknown Application entry")
-        elif child.name == "CONTEXT.md" and not child.is_file():
-            _add(issues, "structure.invalid", child, root, "CONTEXT.md must be a file")
-        elif child.name in allowed_directories and not child.is_dir():
-            _add(issues, "structure.invalid", child, root, "Application collection must be a directory")
+    return children
 
 
 def _reject_symlinks(path: Path, root: Path, issues: list[Issue]) -> None:
@@ -728,21 +675,6 @@ def _reject_symlinks(path: Path, root: Path, issues: list[Issue]) -> None:
     for child in path.rglob("*"):
         if child.is_symlink():
             _add(issues, "structure.symlink", child, root, "Core tree contains a symlink")
-
-
-def _has_symlink_component(path: Path, root: Path) -> bool:
-    try:
-        relative = path.relative_to(root)
-    except ValueError:
-        return True
-    current = root
-    if current.is_symlink():
-        return True
-    for part in relative.parts:
-        current = current / part
-        if current.is_symlink():
-            return True
-    return False
 
 
 def _add(

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Komplexitätsbudget gegen den letzten öffentlichen Release-Tag prüfen."""
+"""Check the complexity budget against the preceding public release tag."""
 
 import json
 import re
@@ -51,49 +51,49 @@ def main() -> int:
     try:
         budget = yaml.safe_load(BUDGET.read_text(encoding="utf-8"))
         if not isinstance(budget, dict) or budget.get("version") != 4:
-            raise ValueError("budget.yaml braucht version 4")
+            raise ValueError("budget.yaml requires version 4")
         if set(budget) != {"version", "limits", "approvals", "initial_release"}:
-            raise ValueError("budget.yaml besitzt unbekannte Felder")
+            raise ValueError("budget.yaml has unknown fields")
         limits, approvals = budget.get("limits"), budget.get("approvals")
         _validate_limits(limits, "limits")
         _validate_initial_release(budget.get("initial_release"))
         if not isinstance(approvals, list):
-            raise ValueError("approvals muss eine Liste sein")
+            raise ValueError("approvals must be a list")
         baseline_limits = accepted_limits(budget)
     except (OSError, ValueError, json.JSONDecodeError, subprocess.CalledProcessError) as error:
-        print(f"VERLETZUNG: Budget oder Release-Baseline nicht prüfbar: {error}")
+        print(f"VIOLATION: Cannot verify budget or release baseline: {error}")
         return 1
     for approval in approvals:
         if not isinstance(approval, dict):
-            print("VERLETZUNG: approval muss ein Objekt sein.")
+            print("VIOLATION: approval must be an object.")
             return 1
         by = approval.get("approved_by")
         if not isinstance(by, str) or HUMAN_ATTRIBUTION.fullmatch(by) is None:
-            print(f"VERLETZUNG: approval braucht approved_by human:<id>: {approval}")
+            print(f"VIOLATION: approval requires approved_by human:<id>: {approval}")
             return 1
         if approval.get("field") not in METRICS or not str(approval.get("reason", "")).strip():
-            print(f"VERLETZUNG: approval braucht Messfeld und Begründung: {approval}")
+            print(f"VIOLATION: approval requires a metric and reason: {approval}")
             return 1
     for field in METRICS:
         if limits[field] <= baseline_limits[field]:
             continue
         matching = [a for a in approvals if a.get("field") == field and a.get("from") == baseline_limits[field] and a.get("to") == limits[field]]
         if not matching:
-            print(f"VERLETZUNG: Budgeterhöhung ohne dokumentierte human:-Attribution: {field} {baseline_limits[field]} -> {limits[field]}")
+            print(f"VIOLATION: Budget increase without documented human: attribution: {field} {baseline_limits[field]} -> {limits[field]}")
             return 1
     actual = measure()
     failures = []
     for field in METRICS:
         value, limit = actual[field], limits[field]
-        status = "ok" if value <= limit else "VERLETZUNG"
-        print(f"{status:10} {field:40} ist={value:3} limit={limit}")
+        status = "ok" if value <= limit else "VIOLATION"
+        print(f"{status:10} {field:40} actual={value:3} limit={limit}")
         if value > limit:
             failures.append(field)
     if failures:
-        print("\nBudget verletzt:", ", ".join(failures))
-        print("Struktur vereinfachen oder eine human:-Attribution mit Begründung dokumentieren.")
+        print("\nBudget exceeded:", ", ".join(failures))
+        print("Simplify the structure or document a human: attribution with a reason.")
         return 1
-    print("\nKomplexitätsbudget eingehalten.")
+    print("\nComplexity budget respected.")
     return 0
 
 
@@ -131,27 +131,27 @@ def _version_key(tag: str) -> tuple[int, int, int]:
 
 def _validate_limits(value, label: str) -> None:
     if not isinstance(value, dict) or set(value) != set(METRICS):
-        raise ValueError(f"{label} besitzt eine ungültige Form")
+        raise ValueError(f"{label} has an invalid shape")
     if not all(
         isinstance(value[field], int)
         and not isinstance(value[field], bool)
         and value[field] >= 0
         for field in METRICS
     ):
-        raise ValueError(f"{label} braucht nichtnegative Ganzzahlen")
+        raise ValueError(f"{label} requires nonnegative integers")
 
 
 def _validate_initial_release(value) -> None:
     expected = {"tag", "limits", "approved_by", "reason"}
     if not isinstance(value, dict) or set(value) != expected:
-        raise ValueError("initial_release besitzt eine ungültige Form")
+        raise ValueError("initial_release has an invalid shape")
     if RELEASE_TAG.fullmatch(str(value["tag"])) is None:
-        raise ValueError("initial_release braucht einen Release-Tag")
+        raise ValueError("initial_release requires a release tag")
     _validate_limits(value["limits"], "initial_release limits")
     if HUMAN_ATTRIBUTION.fullmatch(str(value["approved_by"])) is None:
-        raise ValueError("initial_release braucht approved_by human:<id>")
+        raise ValueError("initial_release requires approved_by human:<id>")
     if not str(value["reason"]).strip():
-        raise ValueError("initial_release braucht eine Begründung")
+        raise ValueError("initial_release requires a reason")
 
 
 def _measurement(root_names: list[str], counts: dict[str, int]) -> dict:

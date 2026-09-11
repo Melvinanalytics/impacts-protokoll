@@ -53,3 +53,21 @@ def test_init_is_atomic_when_target_exists():
 
         assert marker.read_text(encoding="utf-8") == "keep"
         assert list(target.iterdir()) == [marker]
+
+
+def test_init_router_body_states_the_operating_contract():
+    with TemporaryDirectory() as directory:
+        root = _init_workspace(Path(directory) / "workspace")
+
+        body = (root / "CONTEXT.md").read_text(encoding="utf-8").split("---", 2)[2]
+
+        for phrase in (
+            "impacts template",
+            "impacts hash",
+            "impacts validate",
+            "git rev-parse HEAD:applications/",
+            "Git root",
+            "No agent writes `human:<id>`",
+            "02_protocol/ontology.md",
+        ):
+            assert phrase in body, f"router body lacks {phrase!r}"

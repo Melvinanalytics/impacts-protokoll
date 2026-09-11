@@ -33,10 +33,8 @@ def write_workstep(
 
 
 def write_application(root: Path) -> Path:
-    write_context(root / "CONTEXT.md", {"type": "application"}, "# Video")
-    process = root / "hauptprozess"
     write_context(
-        process / "CONTEXT.md",
+        root / "CONTEXT.md",
         {
             "type": "hauptprozess",
             "id": "hauptprozess:video",
@@ -49,7 +47,7 @@ def write_application(root: Path) -> Path:
         },
         "# Video-Produktion",
     )
-    part = process / "teilprozesse" / "produktion"
+    part = root / "produktion"
     write_context(
         part / "CONTEXT.md",
         {
@@ -59,14 +57,13 @@ def write_application(root: Path) -> Path:
         },
         "# Produktion",
     )
-    steps = part / "arbeitsschritte"
     write_workstep(
-        steps,
+        part,
         "start",
         routes={"weiter": "arbeitsschritt:pruefen"},
     )
     write_workstep(
-        steps,
+        part,
         "pruefen",
         routes={
             "freigegeben": "end:video-veroeffentlicht",

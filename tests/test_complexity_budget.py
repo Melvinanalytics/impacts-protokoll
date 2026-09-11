@@ -110,4 +110,4 @@ def test_joint_budget_and_fallback_increase_cannot_bypass_release_tag():
             exit_code = check.main()
 
     assert exit_code == 1
-    assert "Budgeterhöhung" in output.getvalue()
+    assert "Budget increase" in output.getvalue()

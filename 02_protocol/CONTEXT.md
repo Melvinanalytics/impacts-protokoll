@@ -1,17 +1,19 @@
 # Protocol routing
 
-This area owns five static schemas and the complete-path invariant.
+This area owns five static schemas, one template per object, the complete-path invariant and the architect skill that turns observed work into Applications.
 
-## Language
+## Entry points
 
-**Leistung** is the embedded, ID-less result contract of one Hauptprozess. It names the valued end state, metric and acceptance conditions.
+**Before capturing, changing or applying domain meaning, read [ontology.md](ontology.md).** It owns protocol vocabulary, scoped obligations and separate Author/change and Use paths. Capability authority remains [capabilities.md](capabilities.md). For customer-facing work, apply [language.md](language.md).
 
-**Hauptprozess** is the Aggregate Root of one Application. It ends when its Leistung is achieved.
+Use [impacts-method.md](impacts-method.md) for the build method; use its [templates](templates/) and [complete-path invariant](invariants/complete-process-paths.md) only when constructing or changing an Application. For customer initialization or knowledge topology, use the [Architect's form selection](impacts-architect/SKILL.md#form-selection). Customer files own meaning and evidence; this router only selects the next authority.
 
-**Teilprozess** is one closed context section of its Hauptprozess.
+## Task routes
 
-**Arbeitsschritt** is one ICM stage. It declares inputs, outputs, verification and routes. Its Markdown body explains processing.
+For source-grounded answers, apply the [Use completion check](ontology.md#use). Select one row and load its conditional targets for the needed subquestions. Each fact keeps its existing home.
 
-**Vorgang** is one concrete run of the Application revision named by its Git tree. Its Laufpfad is the only run-state authority.
-
-Use [impacts-method.md](impacts-method.md) to turn observed work into an optimized Application. Read [complete-process-paths.md](invariants/complete-process-paths.md) before changing process topology. Normative architecture: [minimal-core-design.md](../docs/superpowers/specs/2026-08-30-minimal-core-design.md).
+| Question | Start | Conditional load |
+|---|---|---|
+| Workstep prompt, tools, data, acquisition, binding, processing or new evidence | [Compose an Arbeitsschritt](impacts-method.md#compose-an-arbeitsschritt) | [Capability call](capabilities.md#capability-aufruf) for reusable/versioned operations; [Snapshot and provenance](capabilities.md#snapshot-und-herkunftsnachweis) for run binding; [Work from prerequisites](impacts-method.md#work-from-prerequisites) for processing/new evidence; [ontology enforcement](ontology.md#enforcement-and-completion) for obligations/checks |
+| Products/services → bounded process and file home | [Reverse-engineer a product or service](impacts-method.md#reverse-engineer-a-product-or-service) | [Native topology and boundaries](impacts-architect/references/formwahl.md#native-topology-and-boundaries) for homes; [ontology inference](ontology.md#meaning-and-valid-inference) for kind/instance or relationship claims; [form selection](impacts-architect/SKILL.md#form-selection) when the Application boundary is unresolved |
+| Filled offer → agreement, delivery or service coverage | [Ontology inference](ontology.md#meaning-and-valid-inference) | [Checkable linked-data questions](impacts-architect/references/datenbezug.md#prüfbare-fragen-und-grenzen) for keys/versions/scope; [catalog-to-offer example](impacts-architect/references/datenbezug.md#vom-katalog-über-die-pipeline-zum-ausgefüllten-angebot) for process/file context; [ontology enforcement](ontology.md#enforcement-and-completion) for required checks/evidence |

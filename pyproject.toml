@@ -4,15 +4,21 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "impacts-protocol"
-version = "0.2.0"
+version = "0.3.0"
 description = "File-native IMPACTS protocol contracts"
+readme = "README.md"
 requires-python = ">=3.11"
 license = "Apache-2.0"
 license-files = ["LICENSE"]
 dependencies = [
     "jsonschema>=4.23",
     "PyYAML>=6.0",
+    "referencing>=0.28.4",
 ]
+
+[project.urls]
+Repository = "https://github.com/Melvinanalytics/impacts-protokoll"
+Issues = "https://github.com/Melvinanalytics/impacts-protokoll/issues"
 
 [project.scripts]
 impacts = "impacts_protocol.cli:main"
@@ -21,11 +27,14 @@ impacts = "impacts_protocol.cli:main"
 packages = [
     "impacts_protocol",
     "impacts_protocol.schemas",
+    "impacts_protocol.templates",
 ]
 
 [tool.setuptools.package-dir]
 impacts_protocol = "src/impacts_protocol"
 "impacts_protocol.schemas" = "02_protocol/schemas"
+"impacts_protocol.templates" = "02_protocol/templates"
 
 [tool.setuptools.package-data]
 "impacts_protocol.schemas" = ["*.json"]
+"impacts_protocol.templates" = ["*.md", "de/*.md"]

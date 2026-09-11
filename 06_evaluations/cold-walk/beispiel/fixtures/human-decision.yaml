@@ -1,0 +1,8 @@
+route: freigegeben
+freigabe:
+  by: human:beispiel-pruefer
+  at: "2026-09-02T10:00:00+02:00"
+output: |
+  Prüfbericht: vollständig
+  Entscheidung: bewilligt
+  Begründung: Vollständigkeitsgrad 100 Prozent
