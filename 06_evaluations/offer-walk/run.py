@@ -5,11 +5,13 @@ import argparse
 from decimal import Decimal, DecimalException, Inexact, localcontext
 import hashlib
 import json
+import os
 from pathlib import Path
 import re
 import subprocess
 import sys
 from tempfile import TemporaryDirectory
+from urllib.parse import quote
 
 import yaml
 
@@ -151,19 +153,28 @@ def open_offer(target: Path, values: dict, language: str) -> Path:
         "ausgaben": ["output/entscheidung.md"], "gate": "human",
         "pruefung": "Die benannte Person entscheidet über den geprüften internen Entwurf und begründet freigegeben oder abgelehnt in output/entscheidung.md." if de else
                     "The named reviewer decides on the checked internal draft and records freigegeben or abgelehnt with reasons in output/entscheidung.md.",
-        "routen": {"freigegeben": "end:versandbereit", "abgelehnt": "end:abgelehnt"}},
-        "Angebot und Prüfbericht lesen. Entscheidung mit Begründung bleibt offen; Versand ist nicht Teil dieses Laufs." if de else
-        "Read the offer and check report. A reasoned decision remains pending; sending is outside this run.")
+        "routen": {"freigegeben": "end:entwurf-freigegeben", "abgelehnt": "end:abgelehnt"}},
+        "Rolle: Verantwortliche Person für den Angebotsprozess. Konkrete Person und Befugnis sind offen; vor einer Entscheidung benennen und prüfen. Angebot und Prüfbericht lesen. Entscheidung mit Begründung bleibt offen; Versand ist nicht Teil dieses Laufs." if de else
+        "Role: offer-process owner. The actual person and authority are open; identify and check them before a decision. Read the offer and check report. A reasoned decision remains pending; sending is outside this run.")
     git(root, "init", "-q")
     git(root, "add", ".")
     git(root, "-c", "user.name=IMPACTS synthetic fixture", "-c", "user.email=fixture@example.invalid", "commit", "-qm", "Synthetic offer inputs and Application")
     commit = git(root, "rev-parse", "HEAD")
+    protocol = subprocess.run(["git", "-C", str(ROOT), "rev-parse", "--show-toplevel", "HEAD"], capture_output=True, text=True)
+    reference = protocol.stdout.splitlines()
+    protocol_ref = reference[1] if protocol.returncode == 0 and len(reference) == 2 and Path(reference[0]).resolve() == ROOT.resolve() else ("nicht versioniert" if de else "unversioned")
+    protocol_link = quote(Path(os.path.relpath(ROOT / "CONTEXT.md", root)).as_posix(), safe="/")
+    architect_link = quote(Path(os.path.relpath(ROOT / "02_protocol/impacts-architect/SKILL.md", root)).as_posix(), safe="/")
     with (root / "CONTEXT.md").open("a", encoding="utf-8") as router:
         router.write(("\n## Synthetisches Angebotsbeispiel\n\n" if de else "\n## Synthetic offer example\n\n") +
             f"[Application]({APP}/CONTEXT.md) · [" + ("Aktueller Vorgang" if de else "Current run") + f"]({RUN}/CONTEXT.md)\n\n" +
-            ("Gebundene Quellen und Beispiel-Harness: " if de else "Bound sources and example harness: ") +
+            ("Gebundene Quelldateien: " if de else "Bound source files: ") +
             "[data.json](grundlagen/data.json) · [renderer.py](grundlagen/renderer.py)\n\n" +
-            ("Quellrevision: " if de else "Source revision: ") + f"`{commit}`.\n")
+            ("Quellrevision: " if de else "Source revision: ") + f"`{commit}`.\n\n" +
+            ("Protokoll-Navigation: " if de else "Protocol navigation: ") + f"[CONTEXT.md]({protocol_link}) · [Architect]({architect_link}). " +
+            ("Checkout-Referenz: " if de else "Checkout reference: ") + f"`{protocol_ref}`. " +
+            ("Diese Links zeigen lebende Referenzseiten; sie binden keine zusätzlichen Lauf-Eingaben. Die Renderer-Kopie ist gebundene Evidenz, kein eigenständiges Programm. Das Beispiel wird im vollständigen Protokoll-Checkout ausgeführt.\n" if de else
+             "These links open live reference pages; they bind no additional run inputs. The renderer copy is bound evidence, not a standalone program. Execute the example from the complete protocol checkout.\n"))
     provenance = {name: {"revision": commit, "path": f"grundlagen/{name}", "sha256": digest(text.encode())} for name, text in sources.items()}
     attempt = root / RUN / "entwerfen/001"
     (attempt / "input").mkdir(parents=True)

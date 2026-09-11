@@ -673,10 +673,11 @@ def test_retained_offer_discovery_is_inspectable_and_existing_target_is_preserve
     assert 'grundlagen/discovery.md' in (target / 'CONTEXT.md').read_text()
     assert walk.validate(target).valid
     import re
+    from urllib.parse import unquote
     for router in (target / 'CONTEXT.md', target / walk.RUN / 'CONTEXT.md'):
         links = re.findall(r'\]\(([^)]+)\)', router.read_text())
         assert links
-        assert all((router.parent / ref).resolve().is_file() for ref in links)
+        assert all((router.parent / unquote(ref)).resolve().is_file() for ref in links)
     metadata = read_context(target / walk.RUN / 'CONTEXT.md')
     assert metadata['laufpfad'][-1]['status'] == 'aktiv'
     assert 'freigabe' not in metadata['laufpfad'][-1]
