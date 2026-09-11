@@ -18,28 +18,28 @@ TEMPLATES = ROOT / "02_protocol" / "templates"
 SCHEMAS = ROOT / "02_protocol" / "schemas"
 SCHEMA_KINDS = ("hauptprozess", "teilprozess", "arbeitsschritt", "vorgang")
 SECTIONS = {
-    "application": ("Baum", "Regeln", "Beispiel"),
+    "application": ("Tree", "Rules", "Example"),
     "hauptprozess": (
-        "Relevantes Umfeld",
-        "Wertfluss",
-        "Zielgröße",
+        "Relevant environment",
+        "Value flow",
+        "Objective",
         "Touchpoints",
-        "Automationsgrenze",
-        "Weg zur Leistung",
-        "Durchsatz",
-        "Engpass",
+        "Automation boundary",
+        "Path to the result",
+        "Throughput",
+        "Bottleneck",
     ),
-    "teilprozess": ("Beitrag", "Frühindikator"),
+    "teilprozess": ("Contribution", "Leading indicator"),
     "arbeitsschritt": (
-        "Ein Job",
-        "Eingaben",
-        "Nicht laden",
-        "Verarbeitung",
-        "Ausgaben",
-        "Prüfung",
-        "Human Check",
+        "One job",
+        "Inputs",
+        "Excluded context",
+        "Processing",
+        "Outputs",
+        "Check",
+        "Human check",
     ),
-    "vorgang": ("Betreff", "Stand"),
+    "vorgang": ("Subject", "Progress"),
 }
 
 
@@ -118,6 +118,14 @@ def test_workstep_template_exposes_only_the_local_capability_call():
 def test_workstep_template_materializes_stable_inputs_with_provenance():
     _, body = load_frontmatter_and_body(TEMPLATES / "arbeitsschritt.md")
 
-    inputs = body[body.index("## Eingaben") : body.index("## Nicht laden")]
-    assert "materialisiert" in inputs
+    inputs = body[body.index("## Inputs") : body.index("## Excluded context")]
+    assert "harness materializes these bytes under `input/`" in inputs
     assert "*-herkunft.md" in inputs
+
+
+def test_generated_workstep_routes_ontology_and_binds_document_blank():
+    body = template_text("arbeitsschritt")
+    assert "02_protocol/ontology.md" in body
+    assert "document blanks outside the Application; their live links do not bind them" in body
+    assert "Fill an output copy of the bound document blank" in body
+    assert "Preserve current input bytes" in body

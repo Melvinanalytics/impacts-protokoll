@@ -41,6 +41,8 @@ EXPECTED_PROOFS = frozenset(
         "gate.open_has_no_decision",
         "gate.external_decision_fixture_consumed",
         "import.capability_materialized_and_executed",
+        "wait.permitted_draft_preserves_current_state",
+        "wait.resume_binds_new_attempt_inputs",
     }
 )
 EXPECTED_REJECTIONS = frozenset(
@@ -58,6 +60,12 @@ EXPECTED_REJECTIONS = frozenset(
         "handoff.wrong_attempt",
         "handoff.wrong_producer_file",
         "handoff.useless_control_evidence",
+        "wait.changed_bound_input",
+        "wait.concurrent_laufpfad_entry",
+        "wait.missing_response",
+        "wait.response_mismatch",
+        "wait.stale_draft_overwrite",
+        "wait.unsafe_response_path",
     }
 )
 
@@ -176,7 +184,7 @@ class Harness:
     ) -> None:
         slug = entry["arbeitsschritt_ref"].removeprefix("arbeitsschritt:")
         attempt = self.attempt(slug, entry["versuch"])
-        _write_files(attempt, outputs)
+        _write_outputs(attempt, outputs)
         self._complete_entry(entry, slug, attempt, route, freigabe)
         self._write()
 
@@ -207,13 +215,12 @@ class Harness:
         next_inputs: dict[str, str],
     ) -> dict:
         """Run mutation-free preflight, then perform one logical Harness transition."""
-        if self.steps[next_slug].get("gate") == "human":
-            self._preflight_gate(entry, outputs, route, next_slug, next_inputs)
+        self._preflight_handoff(entry, outputs, route, next_slug, next_inputs)
 
         slug = entry["arbeitsschritt_ref"].removeprefix("arbeitsschritt:")
         attempt = self.attempt(slug, entry["versuch"])
         next_attempt = self.attempt(next_slug, next_versuch)
-        _write_files(attempt, outputs)
+        _write_outputs(attempt, outputs)
         _write_files(next_attempt, next_inputs)
         self._complete_entry(entry, slug, attempt, route)
         next_entry = self._active_entry(next_slug, next_versuch, next_attempt)
@@ -248,7 +255,7 @@ class Harness:
         if freigabe is not None:
             entry["freigabe"] = freigabe
 
-    def _preflight_gate(
+    def _preflight_handoff(
         self,
         entry: dict,
         outputs: dict[str, str],
@@ -258,25 +265,44 @@ class Harness:
     ) -> None:
         missing = set(self.steps[next_slug]["eingaben"]) - set(inputs)
         if missing:
-            raise ProofError(f"Gate inputs missing: {sorted(missing)}")
+            raise ProofError(f"Handoff inputs missing: {sorted(missing)}")
         producer_slug = entry["arbeitsschritt_ref"].removeprefix("arbeitsschritt:")
         handoff = _application_handoff(
             self.root, self.revision, producer_slug, route
         )
         if handoff.consumer_slug != next_slug:
-            raise ProofError("Gate target differs from Application handoff")
+            raise ProofError("Handoff target differs from Application handoff")
         if handoff.producer_output not in outputs:
-            raise ProofError("Gate producer output differs from Application handoff")
+            raise ProofError("Producer output differs from Application handoff")
         if handoff.consumer_input not in inputs:
-            raise ProofError("Gate consumer input differs from Application handoff")
+            raise ProofError("Consumer input differs from Application handoff")
         if handoff.provenance_input not in inputs:
-            raise ProofError("Gate provenance input missing")
+            raise ProofError("Handoff provenance input missing")
         _verify_handoff(
             outputs[handoff.producer_output].encode("utf-8"),
             inputs[handoff.consumer_input].encode("utf-8"),
             inputs[handoff.provenance_input],
             handoff.origin(producer_slug, entry["versuch"]),
         )
+        if producer_slug == "nachfordern":
+            # This example's receipt check; continuation_ref has no such Core semantics.
+            receipt_ref = entry.get("wiedereinstieg", {}).get("continuation_ref")
+            if not isinstance(receipt_ref, str) or not receipt_ref:
+                raise ProofError("Nachreichung has no received source file")
+            relative = Path(receipt_ref)
+            receipt = self.root / relative
+            if (
+                relative.is_absolute()
+                or ".." in relative.parts
+                or not receipt.resolve().is_relative_to(self.root.resolve())
+            ):
+                raise ProofError("Unsafe response source path")
+            if not receipt.is_file():
+                raise ProofError("Nachreichung has no received source file")
+            if receipt.read_bytes() != outputs[handoff.producer_output].encode("utf-8"):
+                raise ProofError("Nachreichung differs from received source")
+            if _fields(inputs[handoff.provenance_input]).get("Eingangsquelle") != receipt_ref:
+                raise ProofError("Nachreichung provenance omits received source")
 
     def _write(self) -> None:
         metadata = {
@@ -286,9 +312,23 @@ class Harness:
             "laufpfad": self.laufpfad,
         }
         frontmatter = yaml.safe_dump(metadata, allow_unicode=True, sort_keys=False).rstrip()
+        current = self.laufpfad[-1]
+        slug = current["arbeitsschritt_ref"].removeprefix("arbeitsschritt:")
+        attempt = self.attempt(slug, current["versuch"])
+        stand = [f"Aktuell: {slug} {current['versuch']:03d}, {current['status']}."]
+        for output in self.steps[slug]["ausgaben"]:
+            path = attempt / output
+            if path.is_file():
+                label = "Abgeschlossene Ausgabe" if current["status"] == "abgeschlossen" else "Entwurf; noch nicht abgeschlossen"
+                stand.append(f"{label}: [{output}]({path.relative_to(self.run_root).as_posix()}).")
+        if current["status"] == "wartend":
+            resume = current["wiedereinstieg"]
+            stand.append(f"Offen: belegter Eingang zu {resume['ausloeser']} ({resume['continuation_ref']}).")
+            stand.append("Der Antragsteller liefert die Angaben; ein Mensch führt den Kontakt. Erlaubt bleibt die Vorbereitung der Rückfrage; kein automatischer Versand.")
+        body = "\n\n".join(stand)
         self.run_root.mkdir(parents=True, exist_ok=True)
         (self.run_root / "CONTEXT.md").write_text(
-            f"---\n{frontmatter}\n---\n\n# Prüffall 001\n\nSynthetischer Lauf des Cold Walk.\n",
+            f"---\n{frontmatter}\n---\n\n# Prüffall 001\n\nSynthetischer Lauf des Cold Walk.\n\n## Stand\n\n{body}\n",
             encoding="utf-8",
         )
 
@@ -345,7 +385,7 @@ def walk(base: Path) -> WalkResult:
         changed_handoff.consumer_input: probe_payload,
         changed_handoff.provenance_input: changed_provenance,
     }
-    changed_harness._preflight_gate(
+    changed_harness._preflight_handoff(
         probe_entry,
         {changed_handoff.producer_output: probe_payload},
         "bestanden",
@@ -353,7 +393,7 @@ def walk(base: Path) -> WalkResult:
         changed_inputs,
     )
     old_inputs_rejected = _is_rejected(
-        lambda: changed_harness._preflight_gate(
+        lambda: changed_harness._preflight_handoff(
             probe_entry,
             {changed_handoff.producer_output: probe_payload},
             "bestanden",
@@ -471,10 +511,11 @@ def walk(base: Path) -> WalkResult:
     entry = harness.open(
         "pruefen",
         1,
-        {"input/antrag.md": first_record.decode("utf-8"), **common_inputs},
+        {**_record_inputs(root, "records/antrag-001/erstantrag.md", first_record.decode("utf-8")), **common_inputs},
     )
     states.append(harness.state("pruefen 001 aktiv"))
     first_report = _render_report(call, workspace_revision, first_result)
+    clarification = _application_handoff(root, revision, "pruefen", "klaerung")
 
     entry = harness.advance(
         entry,
@@ -482,25 +523,164 @@ def walk(base: Path) -> WalkResult:
         "klaerung",
         "nachfordern",
         1,
-        {"input/pruefbericht.md": first_report},
+        {
+            clarification.consumer_input: first_report,
+            clarification.provenance_input: _handoff_provenance(
+                clarification.origin("pruefen", 1), first_report.encode("utf-8")
+            ),
+        },
     )
     states.append(harness.state("nachfordern 001 aktiv nach klaerung"))
 
-    harness.wait(entry, "unterlagen-nachgereicht", "records/antrag-001")
+    response_ref = "records/antrag-001/nachreichung.md"
+    harness.wait(entry, "unterlagen-nachgereicht", response_ref)
     states.append(harness.state("nachfordern 001 wartend"))
 
+    # Exercise file/state compatibility and the derived Stand, not autonomous permission checks.
+    waiting_attempt = harness.attempt("nachfordern", 1)
+    waiting_input = waiting_attempt / "input/pruefbericht.md"
+    bound_report = waiting_input.read_bytes()
+    run_file = harness.run_root / "CONTEXT.md"
+    waiting_state = load_frontmatter(run_file)
+    finding = next(
+        (line.removeprefix("Befund: fehlt: ")
+        for line in bound_report.decode("utf-8").splitlines()
+        if line.startswith("Befund: fehlt: ")),
+        None,
+    )
+    if not finding:
+        raise ProofError("Bound report has no missing-field finding for the draft")
+    draft = f"Entwurf für menschliche Rückfrage: Bitte {finding} nachreichen.\n"
+    draft_path = waiting_attempt / "output/nachforderung.md"
+    _write_files(waiting_attempt, {"output/nachforderung.md": draft})
+    harness._write()
+    visible_state = run_file.read_text(encoding="utf-8")
+    if (
+        draft_path.read_text(encoding="utf-8") == draft
+        and load_frontmatter(run_file) == waiting_state
+        and waiting_input.read_bytes() == bound_report
+        and not {"gewaehlte_route", "freigabe", "ausgabe_hash"} & entry.keys()
+        and "nachfordern/001/output/nachforderung.md" in visible_state
+        and response_ref in visible_state
+        and "kein automatischer Versand" in visible_state
+        and harness.state("draft while waiting").valid
+    ):
+        proofs.add("wait.permitted_draft_preserves_current_state")
+
+    waiting_input.write_text("Neue, ungebundene Aussage\n", encoding="utf-8")
+    if "hash.mismatch" in harness.state("mutated waiting input").codes:
+        rejections.add("wait.changed_bound_input")
+    waiting_input.write_bytes(bound_report)
+
+    # Both input surfaces exist; the violation is a waiting entry before the last entry.
+    premature = harness.attempt("nachfordern", 2)
+    _write_files(premature, {
+        "input/pruefbericht.md": bound_report.decode("utf-8"),
+        "input/pruefbericht-herkunft.md": (waiting_attempt / "input/pruefbericht-herkunft.md").read_text(encoding="utf-8"),
+    })
+    harness.laufpfad.append(harness._active_entry("nachfordern", 2, premature))
+    harness._write()
+    if "run.invalid" in harness.state("active entry after waiting entry").codes:
+        rejections.add("wait.concurrent_laufpfad_entry")
+    harness.laufpfad.pop()
+    shutil.rmtree(premature)
+    harness._write()
+
     second_record = "Name: Erika Beispiel\nGeburtsdatum: 01.01.1990\n"
+    response_handoff = _application_handoff(root, revision, "nachfordern", "nachgereicht")
+    response_origin = response_handoff.origin("nachfordern", 1)
+    response_provenance = (
+        _handoff_provenance(response_origin, second_record.encode("utf-8"))
+        + f"Eingangsquelle: {response_ref}\n"
+    )
+    response_inputs = {
+        response_handoff.consumer_input: second_record,
+        response_handoff.provenance_input: response_provenance,
+        **common_inputs,
+    }
+    outputs = {"output/nachforderung.md": draft, response_handoff.producer_output: second_record}
+    before_response = _directory_digest(harness.run_root)
+    if _is_rejected(
+        lambda: harness.advance(entry, outputs, "nachgereicht", "pruefen", 2, response_inputs),
+        "no received source file",
+    ):
+        if _directory_digest(harness.run_root) == before_response:
+            rejections.add("wait.missing_response")
+
+    # External receipt and a human edit are synthetic fixtures, not agent-generated approval.
+    _write_files(root, {response_ref: "Nicht der behauptete Eingang\n"})
+    if _is_rejected(
+        lambda: harness.advance(entry, outputs, "nachgereicht", "pruefen", 2, response_inputs),
+        "differs from received source",
+    ):
+        if _directory_digest(harness.run_root) == before_response:
+            rejections.add("wait.response_mismatch")
+    _write_files(root, {response_ref: second_record})
+    external = root.parent / "outside-response.md"
+    external.write_text(second_record, encoding="utf-8")
+    escape_link = root / "records/response-link.md"
+    escape_link.symlink_to(external)
+    unsafe_paths = (str(external), "../outside-response.md", "records/response-link.md")
+    refused = []
+    try:
+        for unsafe in unsafe_paths:
+            entry["wiedereinstieg"]["continuation_ref"] = unsafe
+            candidate_inputs = {
+                **response_inputs,
+                response_handoff.provenance_input: response_provenance.replace(response_ref, unsafe),
+            }
+            refused.append(_is_rejected(
+                lambda: harness.advance(entry, outputs, "nachgereicht", "pruefen", 2, candidate_inputs),
+                "Unsafe response source path",
+            ))
+    finally:
+        entry["wiedereinstieg"]["continuation_ref"] = response_ref
+        escape_link.unlink()
+        external.unlink()
+    if all(refused) and _directory_digest(harness.run_root) == before_response:
+        rejections.add("wait.unsafe_response_path")
+    edited_draft = draft + "Bitte geben Sie bei der Rückmeldung das Aktenzeichen an.\n"
+    draft_path.write_text(edited_draft, encoding="utf-8")
+    before_retry = _directory_digest(harness.run_root)
+    try:
+        harness.advance(entry, outputs, "nachgereicht", "pruefen", 2, response_inputs)
+    except ProofError as error:
+        if "Existing output differs" in str(error) and _directory_digest(harness.run_root) == before_retry:
+            rejections.add("wait.stale_draft_overwrite")
+
+    # Use the reviewed on-disk draft and actual receipt, not stale in-memory drafts.
+    outputs = {
+        "output/nachforderung.md": draft_path.read_text(encoding="utf-8"),
+        response_handoff.producer_output: (root / response_ref).read_text(encoding="utf-8"),
+    }
     entry = harness.advance(
         entry,
-        {"output/nachforderung.md": "Bitte Geburtsdatum nachreichen\n"},
+        outputs,
         "nachgereicht",
         "pruefen",
         2,
-        {"input/antrag.md": second_record, **common_inputs},
+        response_inputs,
     )
     states.append(harness.state("pruefen 002 aktiv nach nachgereicht"))
 
     second_attempt = harness.attempt("pruefen", 2)
+    _verify_handoff(
+        (waiting_attempt / response_handoff.producer_output).read_bytes(),
+        (second_attempt / response_handoff.consumer_input).read_bytes(),
+        (second_attempt / response_handoff.provenance_input).read_text(encoding="utf-8"),
+        response_origin,
+    )
+    if (
+        (harness.attempt("pruefen", 1) / "input/antrag.md").read_bytes() == first_record
+        and waiting_input.read_bytes() == bound_report
+        and (second_attempt / "input/antrag.md").read_text(encoding="utf-8") == second_record
+        and harness.laufpfad[-2]["status"] == "abgeschlossen"
+        and entry["status"] == "aktiv"
+        and draft_path.read_text(encoding="utf-8") == edited_draft
+        and harness.laufpfad[-2]["ausgabe_hash"] == surface_hash(waiting_attempt, harness.steps["nachfordern"]["ausgaben"])
+        and (waiting_attempt / response_handoff.producer_output).read_bytes() == (root / response_ref).read_bytes()
+    ):
+        proofs.add("wait.resume_binds_new_attempt_inputs")
     second_result = _execute_capability(
         root,
         revision,
@@ -634,7 +814,7 @@ def walk(base: Path) -> WalkResult:
 
 
 def _prepare_workspace(base: Path) -> tuple[Path, str, str, str, str]:
-    root = init_workspace(base / "workspace")
+    root = init_workspace(base / "workspace", language="de")
     shutil.copytree(BEISPIEL, root / "applications" / APPLICATION)
     shutil.copytree(CAPABILITY, root / "capabilities" / "vollstaendigkeitsgrad")
     shutil.copytree(GRUNDLAGEN, root / "grundlagen")
@@ -954,11 +1134,11 @@ def _directory_digest(root: Path) -> str:
     return _content_digest(json.dumps(entries, separators=(",", ":")).encode("utf-8"))
 
 
-def _is_rejected(operation) -> bool:
+def _is_rejected(operation, expected_message: str | None = None) -> bool:
     try:
         operation()
-    except ProofError:
-        return True
+    except ProofError as error:
+        return expected_message is None or expected_message in str(error)
     return False
 
 
@@ -972,7 +1152,7 @@ def _import_into_second_repository(
     rules_provenance: str,
 ) -> tuple[State, bool, frozenset[str], frozenset[str]]:
     """Import the Application, reject its missing Capability, then materialize and run it."""
-    kunde = init_workspace(Path(base) / "kunde")
+    kunde = init_workspace(Path(base) / "kunde", language="de")
     target = kunde / "applications" / APPLICATION
     target.mkdir()
     archive = _git_archive(source, revision)
@@ -1055,7 +1235,7 @@ def _import_into_second_repository(
         "pruefen",
         1,
         {
-            "input/antrag.md": record.decode("utf-8"),
+            **_record_inputs(kunde, "records/antrag-001/erstantrag.md", record.decode("utf-8")),
             imported_source.input_path: rules.decode("utf-8"),
             imported_source.provenance_input: rules_provenance,
         },
@@ -1110,6 +1290,29 @@ def _router_chain(root: Path) -> list[str]:
         step,
     ]
     return [path.relative_to(root).as_posix() for path in chain]
+
+
+def _write_outputs(attempt: Path, outputs: dict[str, str]) -> None:
+    """Bind existing editable files only if the caller used their actual current bytes."""
+    for relative, value in outputs.items():
+        path = attempt / relative
+        if path.exists() and path.read_bytes() != value.encode("utf-8"):
+            raise ProofError(f"Existing output differs; read and review current file: {relative}")
+    _write_files(attempt, outputs)
+
+
+def _record_inputs(root: Path, path: str, payload: str) -> dict[str, str]:
+    """Supply an external synthetic receipt, then capture its actual bytes and source."""
+    _write_files(root, {path: payload})
+    received = (root / path).read_bytes()
+    return {
+        "input/antrag.md": received.decode("utf-8"),
+        "input/antrag-herkunft.md": (
+            f"Herkunft: synthetischer Eingang\nUrsprung: {path}\n"
+            f"Content-Digest: sha256:{_content_digest(received)}\n"
+            "Kontrollnachweis: bytegleich mit gespeicherter Eingangsdatei\n"
+        ),
+    }
 
 
 def _write_files(attempt: Path, files: dict[str, str]) -> None:

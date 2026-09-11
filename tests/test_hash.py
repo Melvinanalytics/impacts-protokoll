@@ -36,7 +36,7 @@ def _attempt(base: Path, files: dict[str, str]) -> Path:
     return attempt
 
 
-def test_single_file_surface_matches_section_7_serialization():
+def test_single_file_surface_matches_canonical_serialization():
     with TemporaryDirectory() as directory:
         files = {"input/auftrag.md": "Auftrag"}
         attempt = _attempt(Path(directory), files)
@@ -126,3 +126,21 @@ def test_cli_hash_reports_invalid_surface_and_exits_one():
 
         assert exit_code == 1
         assert "hash.mismatch" in errors.getvalue()
+
+
+@pytest.mark.parametrize("declared", [[], iter(()), 42, True, {"input/"}, "input/", b"input/", [""], [None], ["/input/"]])
+def test_invalid_declaration_uses_hash_error_boundary(tmp_path, declared):
+    with pytest.raises(HashSurfaceError) as error:
+        surface_hash(tmp_path, declared)
+    assert error.value.code == "hash.mismatch"
+
+
+def test_unreadable_surface_uses_hash_error_boundary(tmp_path, monkeypatch):
+    attempt = _attempt(tmp_path, {"input/auftrag.md": "x"})
+
+    def denied(*args, **kwargs):
+        raise PermissionError("synthetic unreadable file")
+
+    monkeypatch.setattr(Path, "open", denied)
+    with pytest.raises(HashSurfaceError, match="Hash surface cannot be read"):
+        surface_hash(attempt, ["input/auftrag.md"])

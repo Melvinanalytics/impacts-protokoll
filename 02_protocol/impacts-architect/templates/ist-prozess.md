@@ -1,69 +1,59 @@
 ---
 type: ist-prozess
-name: Antrag prüfen und entscheiden
-owner: Sachbearbeitung
-frequency: je Auftrag
-trigger: Antrag geht ein
+name: Review and decide a request
+owner: Case worker
+frequency: Per request
+trigger: Request arrives
 inputs:
-  - Antrag mit Anlagen
+  - Request with attachments
 outputs:
-  - Bescheid
+  - Decision notice
 tools:
-  - E-Mail
-  - Fachanwendung
-duration: drei Tage bis zwei Wochen
-value: 4
-pain: 3
+  - Email
+  - Domain application
+duration: Three days to two weeks
 touchpoint: standard
 evidence_status: reported
 ---
 
-# Antrag prüfen und entscheiden
+# Review and decide a request
 
-Beobachtet, nicht optimiert. Diese Datei ist Quellmaterial für Identify und liegt unter `grundlagen/ist-prozesse/`. Sie wird nie zur Application; die Application entsteht nach Minimize und Perfect. Beispielwerte ersetzen.
+Synthetic capture example. Reuse an existing source home; otherwise capture under `grundlagen/ist-prozesse/`. This is source material for Identify, never an Application itself. When starting from a product/service description or finished result, distinguish source claims from a reconstructed workflow (`hypothesis`); an unknown current workflow stays `open`. Replace example values in the customer's working language; the German counterpart is `de/ist-prozess.md`. Keep evidence labels and sources beside individual claims.
 
-## Ablauf heute
+## Current workflow
 
-1. Antrag geht per E-Mail ein und wird in der Fachanwendung angelegt.
-2. Sachbearbeitung prüft Vollständigkeit.
-3. Bei Lücken Rückfrage beim Antragsteller, Vorgang bleibt liegen.
-4. Prüfbericht, dann Entscheidung durch die Leitung.
-5. Bescheid geht raus.
+1. A request arrives by email and is registered.
+2. A case worker checks completeness.
+3. Missing information prompts a question; the case waits.
+4. A check report precedes the responsible manager's decision.
+5. The decision notice is sent.
 
-## Wo wird angehalten und geprüft
+## Stops and checks
 
-Vor der Entscheidung liest die Leitung den Prüfbericht. Sonst niemand.
+In this example, the manager reads the report before deciding. Clarify why the human boundary is required, its decision scope and who may change it. Distinguish required authority, human interaction and habitual division of work. Name already permitted assistance and unresolved decisions.
 
-Warum ist diese menschliche Grenze erforderlich, was genau wird entschieden und wer darf die Grenze ändern? Erforderliche Autorität, menschliche Interaktion und gewohnte Arbeitsteilung unterscheiden. Welche Unterstützung ist bereits erlaubt, und welche Entscheidung bleibt offen?
+For duration, define start and accepted end. Distinguish active work, missing inputs, handoffs, decisions and rework. Name sources/reported ranges; leave missing measurement open. While waiting, identify the missing information or decision and the contributions already possible within known rules and authority. Keep observations separate from proposed improvements.
 
-Für die genannte Dauer: Von welchem Start bis zu welchem akzeptierten Ende? Welche Zeit ist Bearbeitung, welche Warten auf Eingaben, Übergabe oder Entscheidung, welche Nacharbeit? Quellen oder berichtete Spannen nennen; fehlende Messung offenlassen.
+## Reused definition and new run values
 
-## Was bleibt gleich, was ist je Lauf neu
+The check catalog, notice blank and responsibilities recur. Requests, attachments and questions belong to the case; its business record may outlive several process runs. Each run binds the necessary excerpt. Identify relevant offerings or domain subjects, instances/versions and their evidence. Link existing definitions and records rather than duplicating them.
 
-Gleich: Prüfkatalog, Bescheidvorlage, Zuständigkeiten. Neu: Antrag, Anlagen, Rückfragen.
+## Result and acceptance
 
-## Was verlässt den Prozess, wer nimmt es ab
+The notice goes to the requester; the responsible manager checks acceptance conditions. Include a payer only when relevant. For each required result component, identify its producing job, prerequisites and observable acceptance. For an offering, distinguish catalog promise, agreed scope and actual fulfillment. Apply the method's “Reverse-engineer a product or service”; name unsupported links and the next evidence action instead of inventing observed work.
 
-Der Bescheid geht an den Antragsteller; die Leitung prüft die Abnahmebedingungen. Einen Zahler nur nennen, wenn er für die Leistung relevant ist.
+## Participants
 
-## Wer fasst es an
+Synthetic roles: case worker, manager and requester during clarification; no external participant is asserted.
 
-Intern: Sachbearbeitung, Leitung. Kunde: Antragsteller bei Rückfragen. Extern: niemand.
+## Failure and detectability
 
-## Was bricht, wenn ein Schritt falsch läuft, und fällt es auf
+A wrong decision may cause an appeal and become visible only then; the manager may detect an incomplete report earlier. Capture the actual harm and detection evidence.
 
-Eine falsche Entscheidung kostet ein Widerspruchsverfahren; sie fällt erst beim Widerspruch auf. Ein unvollständiger Prüfbericht fällt der Leitung auf.
+## Calculations and decisions
 
-## Berechnungen und Entscheidungen
+Which results are calculated or inferred, under which rules and inputs? Record existing human, agent and deterministic contributions. Design their future mix only within clarified boundaries.
 
-Welche Ergebnisse werden gerechnet oder fachlich abgeleitet? Welche Regeln und Eingaben führen dorthin?
+## Sources and freshness
 
-Welche Beiträge leisten heute Mensch, Agent und deterministisches System? Nur vorhandene Beiträge erfassen; ihre Zielverteilung wird erst innerhalb der geklärten Grenzen entworfen.
-
-## Datenherkunft und Aktualität
-
-Woher stammen die verwendeten Werte, auf welchen Stand beziehen sie sich, und was muss vor welcher Nutzung kontrolliert oder aktualisiert werden?
-
-## Quellen
-
-Gespräch mit der Sachbearbeitung am 2026-09-02. Prüfkatalog Version 3.
+Where do needed values, rules and blanks live? Name the key/selection, revision, actual read operation or provider, receiving input and required check. Record missing access separately from missing data. Identify which processing is an existing instruction, implemented tool or proposed change. Illustrative sources are a case-worker conversation dated 2026-09-02 and check catalog version 3; replace them with reachable evidence. They do not assert a real interview.

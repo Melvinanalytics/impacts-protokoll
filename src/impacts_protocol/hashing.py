@@ -1,9 +1,19 @@
-"""The one surface hash of the protocol (design section 7)."""
+"""Canonical attempt-surface hashing.
+
+Hash each regular file's raw bytes with SHA-256. Sort by the UTF-8 bytes of its
+attempt-relative POSIX path. Encode the list of {"path", "sha256"} records as
+UTF-8 JSON with ensure_ascii=False, sorted keys and separators=(",", ":"), then
+append one LF. SHA-256 that payload and prefix its lowercase hex with "sha256:".
+Overlapping declarations include each path once. Missing, empty, escaping and
+symlinked surfaces fail; this content identity does not establish permission.
+"""
 
 import hashlib
 import json
 from pathlib import Path
 from typing import Sequence
+
+from .io import _has_symlink_component
 
 
 class HashSurfaceError(ValueError):
@@ -19,14 +29,22 @@ class HashSurfaceError(ValueError):
 def surface_hash(attempt_root: Path, declared: Sequence[str]) -> str:
     """Bind every regular file under the declared surfaces of one attempt."""
     attempt_root = Path(attempt_root)
+    if not isinstance(declared, Sequence) or isinstance(declared, (str, bytes)) or not declared:
+        raise HashSurfaceError("hash.mismatch", attempt_root, "Declare at least one hash surface")
     files: dict[str, str] = {}
     for relative in declared:
-        for path in _candidates(attempt_root / relative, attempt_root):
-            try:
+        if not isinstance(relative, str) or not relative or Path(relative).is_absolute():
+            raise HashSurfaceError("hash.mismatch", attempt_root, "Hash surface must be a nonempty relative path")
+        source = attempt_root / relative
+        try:
+            for path in _candidates(source, attempt_root):
                 normalized = path.resolve().relative_to(attempt_root.resolve()).as_posix()
-            except (OSError, ValueError) as error:
-                raise HashSurfaceError("hash.mismatch", path, "Hash surface escapes attempt directory") from error
-            files[normalized] = hashlib.sha256(path.read_bytes()).hexdigest()
+                with path.open("rb") as content:
+                    files[normalized] = hashlib.file_digest(content, "sha256").hexdigest()
+        except HashSurfaceError:
+            raise
+        except (OSError, ValueError, RuntimeError) as error:
+            raise HashSurfaceError("hash.mismatch", source, f"Hash surface cannot be read: {error}") from error
     entries = [
         {"path": path, "sha256": digest}
         for path, digest in sorted(files.items(), key=lambda item: item[0].encode("utf-8"))
@@ -65,18 +83,3 @@ def _candidates(source: Path, attempt_root: Path) -> list[Path]:
     if not files:
         raise HashSurfaceError("hash.mismatch", source, "Declared hash surface has no regular file")
     return sorted(files)
-
-
-def _has_symlink_component(path: Path, root: Path) -> bool:
-    try:
-        relative = path.relative_to(root)
-    except ValueError:
-        return True
-    current = root
-    if current.is_symlink():
-        return True
-    for part in relative.parts:
-        current = current / part
-        if current.is_symlink():
-            return True
-    return False

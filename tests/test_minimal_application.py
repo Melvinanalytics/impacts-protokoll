@@ -85,7 +85,25 @@ def test_schema_violation_fails_at_public_interface():
         metadata.pop("leistung")
         replace_context(path, metadata)
 
-        assert "schema.invalid" in issue_codes(root)
+        errors = [issue for issue in validate(root).issues if issue.code == "schema.invalid"]
+        assert len(errors) == 1
+        assert errors[0].path == "CONTEXT.md"
+        assert errors[0].message == "<root>: 'leistung' is a required property"
+
+
+@pytest.mark.parametrize("invalid", [[42, 17], []])
+def test_schema_errors_locate_nested_array_values(tmp_path, invalid):
+    root = write_application(tmp_path / "video")
+    metadata = read_context(root / "CONTEXT.md")
+    metadata["leistung"]["abnahme"] = invalid
+    replace_context(root / "CONTEXT.md", metadata)
+
+    errors = [issue for issue in validate(root).issues if issue.code == "schema.invalid"]
+
+    expected = ["/leistung/abnahme/0:", "/leistung/abnahme/1:"] if invalid else ["/leistung/abnahme:"]
+    assert len(errors) == len(expected)
+    assert all(issue.path == "CONTEXT.md" for issue in errors)
+    assert all(issue.message.startswith(pointer) for issue, pointer in zip(errors, expected))
 
 
 @pytest.mark.parametrize("body", ["", "   \n\t"])

@@ -9,14 +9,14 @@ laufpfad:
     eingabe_hash: sha256:0000000000000000000000000000000000000000000000000000000000000000
 ---
 
-# Prüffall 001
+# Review case 001
 
-Ein Vorgang ist ein konkreter Lauf einer committeten Application. `application_revision` kommt aus `git rev-parse HEAD:applications/<slug>`. Der Laufpfad ist die einzige Zustandsautorität; jeder Eintrag besitzt seinen Versuchsordner unter `<arbeitsschritt>/<versuch>/`. Hashes liefert `impacts hash`. Beispielwerte ersetzen.
+A run executes a committed Application. Obtain `application_revision` from `git rev-parse HEAD:applications/<slug>`. `laufpfad` alone owns execution state; each entry has an attempt folder at `<arbeitsschritt>/<versuch>/`. Use `impacts hash` for hashes. Replace example values and explain the run in the customer's bound working language.
 
-## Betreff
+## Subject
 
-Wer oder was Gegenstand dieses Vorgangs ist. Verweis auf den Record unter `records/`, falls vorhanden.
+Who or what this run concerns. Link the existing business record at its local home or source-system reference.
 
-## Stand
+## Progress
 
-Erklärung des Laufpfads für Menschen: aktueller Schritt, offene Frage, nächster Mensch. Der Laufpfad selbst bleibt maschinenlesbar im Frontmatter.
+Explain the execution path for people: current step and attempt, usable results, restricted drafts, missing evidence or decision, responsible person and next permitted work. Link the files; derive status from `laufpfad` rather than maintaining another status. A prepared draft establishes neither sending nor approval. For a wait, name the expected event or deadline and the responsible follow-up; if it does not arrive, use the declared fallback route or escalate the missing decision. An event alone authorizes no transition.

@@ -1,19 +1,23 @@
 ---
 name: impacts-architect
-description: Use when customer initialization or knowledge topology needs the smallest fitting ICM form, when an observed process should become an IMPACTS Application, when an existing customer repository must be restructured, or when an approved Application should be imported from a Fachrepo.
+description: Use when customer initialization or knowledge topology needs a file home, when deriving processes from products/services or observed work, restructuring a customer repository, or importing an approved Application from a Fachrepo.
 ---
 
 # IMPACTS Architect
 
 This skill selects the smallest fitting ICM form, then produces only the files that form needs. For a Pipeline, the core validates an Application tree of `CONTEXT.md` files. Other forms use the workspace's native routers, `grundlagen/` and `records/` where real content requires them. The skill never executes an Arbeitsschritt, never writes `human:<id>`, and never introduces a schema, field or folder kind the core does not have.
 
-Read the core before designing: [formwahl.md](references/formwahl.md) defines form selection and native knowledge topology, `impacts template <kind>` prints the contract of every core object, [impacts-method.md](../impacts-method.md) owns the Pipeline method and UX/AX/DX acceptance, [zuschnitt.md](references/zuschnitt.md) owns process cutting rules, and the [Capability-Regel](../capabilities.md) owns optional processing boundaries. Use this skill with the protocol checkout; a standalone folder copy omits its sibling references.
+Start with the [formwahl work report](references/formwahl.md#arbeitsbericht-vor-baumvorschlag), including its business-capture branch. For a Pipeline, load the [capture/build method](../impacts-method.md#capture-business-meaning) and the phase section in use; load the [decomposition rules](references/zuschnitt.md#arbeitsschritt) when cutting work and the [automation boundary](references/zuschnitt.md#automation-boundary) when assigning contributions. Load the [Capability contract](../capabilities.md) and its relevant [extraction/call rules](../capabilities.md#wann-extrahieren) plus [source](../capabilities.md#snapshot-und-herkunftsnachweis), [handoff](../capabilities.md#sichtbare-ausgabe-und-übergabe), [writeback](../capabilities.md#rückübertragung-in-geschäftsrecords) or [Gate](../capabilities.md#signale-und-human-gate) rules only when that branch is present, including work without an extracted Capability. For every form, use the linked [evidence labels](references/zuschnitt.md#evidence) and [UX/AX/DX acceptance](../impacts-method.md#readability-and-processing). Use this skill with the protocol checkout; a standalone folder copy omits its sibling references.
+
+Before capturing, changing or applying domain meaning in any form, read [Author or change](../ontology.md#author-or-change) or [Use](../ontology.md#use), then apply the ontology's [evidence and obligations](../ontology.md#evidence-and-obligations) and [enforcement/completion](../ontology.md#enforcement-and-completion). Routine use does not recapture the model; Core validity alone does not establish domain correctness. For catalog, pipeline and document-template composition, follow the [worked company example](references/datenbezug.md#from-catalog-through-pipeline-to-a-filled-offer).
+
+Resolve the customer’s [working language](../language.md#select-and-bind) before capture or import. Use localized templates (`--language de` for German-only work); keep all customer-readable instructions, drafts and decision requests in that language. Apply the actual [language/meaning check](../language.md#enforce-at-use-boundaries) before customer use. The protocol’s English does not override the customer setting.
 
 ## Invariants
 
-1. One Application holds one Hauptprozess with one embedded Leistung. Two Leistungen mean two Applications.
+1. One Application holds one Hauptprozess with one embedded process Leistung. Two independently bounded process results mean two Applications; catalog items are not Application boundaries.
 2. Arbeitsschritte own their routes, the Hauptprozess owns the entry, every step reaches a named end.
-3. The Application tree holds only `CONTEXT.md` files. Reference material lives in `grundlagen/`, customer instances in `records/`, reusable processing in Fachrepo- or Workspace-level `capabilities/<slug>/`, code otherwise in dependencies.
+3. The Application tree holds only `CONTEXT.md` files. Reference material lives in `grundlagen/`; continuing business instances stay in their designated systems or maintained records. Reusable processing lives in Fachrepo- or Workspace-level `capabilities/<slug>/`, code otherwise in dependencies.
 4. The workspace root is the git root. A Vorgang binds a committed Application tree.
 5. `gate: human` marks an authority, risk or legal boundary and nothing else. `customer_touchpoint` marks where the customer is in the interaction.
 6. Factory and run stay apart: no Vorgang changes the Application.
@@ -22,7 +26,7 @@ Read the core before designing: [formwahl.md](references/formwahl.md) defines fo
 
 ## Form selection
 
-Before proposing a tree, complete the work-report recipe in [formwahl.md](references/formwahl.md). Then select the smallest fitting form from the units that grow or repeat: Pipeline, Record Library, Knowledge Bundle, Context Map, Umbrella or System Map. Enter Build mode only when the selected form is a Pipeline that will become an Application. For a non-process form, build only its native Markdown topology and use the applicable walk branch below.
+Before proposing a tree, complete the work-report recipe in [formwahl.md](references/formwahl.md#arbeitsbericht-vor-baumvorschlag). Then select the smallest fitting form from the units that grow or repeat: Pipeline, Record Library, Knowledge Bundle, Context Map, Umbrella or System Map. Enter Build mode only when the selected form is a Pipeline that will become an Application. For a non-process form, build only its native Markdown topology and use the applicable walk branch below.
 
 ## Choose a mode
 
@@ -33,7 +37,7 @@ Before proposing a tree, complete the work-report recipe in [formwahl.md](refere
 
 ## Topology path
 
-Before proposing a tree, require the completed work-report recipe from [formwahl.md](references/formwahl.md). For a newly described Record Library, Knowledge Bundle or Context Map, create only populated native Markdown homes and links under its rules. Run its Knowledge Walk when the topology uses `records/` or fachliche `grundlagen/`; if a Context Map links only Applications, run the Process Walk for each linked Application. Add no checker or runtime.
+For a newly described Record Library, Knowledge Bundle or Context Map, create only populated native Markdown homes and links under its rules. Run its Knowledge Walk when the topology uses `records/` or domain `grundlagen/`; if a Context Map links only Applications, run the Process Walk for each linked Application. Add no checker or runtime.
 
 For an Umbrella, create a small router to multiple independent Pipeline Applications, then run the Process Walk for each Application.
 
@@ -41,49 +45,21 @@ For a System Map, use the existing repository map and files, then select and tes
 
 ## Build mode
 
-Identify → Minimize → Perfect → Augment → Construct → Test → Scale, as a procedure.
+Follow the method's phases in order; load each linked section when doing that work. Reuse the form-selection evidence and fill the existing Application template sections.
 
-**Identify.** Interview a few questions at a time and write one [ist-prozess.md](templates/ist-prozess.md) per observed process into `grundlagen/ist-prozesse/`:
-
-- What leaves the process, who receives or accepts it, and what makes it usable? A payer matters only where relevant. That informs the Leistung: `ergebnis`, `kennzahl`, `abnahme`.
-- Walk me through one run. Where must a person interact, judge or authorize, why, and who may change that boundary? Which decision and subsequent action does it cover? A pause alone establishes neither a Human Gate nor a Teilprozess.
-- From which start to which accepted end does the reported duration run? Distinguish active work, waiting and rework using available evidence or reported ranges. What remains unknown?
-- What stays the same every run, and what is new each time? Stable material goes to `grundlagen/`, the rest is Vorgang input.
-- Where does customer interaction create trust, advice, commitment or experience? Classify those touchpoints as `standard` or `sacred`; other external participants remain dependencies, not automatic touchpoints.
-- What breaks if this step is wrong, and would you notice? That feeds the automation boundary.
-- Which outputs are calculated or derived? For each: which sanctioned rule, inputs, units, source, stand, required control, actual evidence and allowed business use produce it?
-
-Then fill the existing sections of the Application template under [Identify](../impacts-method.md#identify). Put the bounded intervention and its evidence, decision-maker, intended effect and reassessment conditions under `Zielgröße und Guardrails`. Name the evidenced limit and what would falsify it; a missing input or waiting decision may matter more than processing capacity.
-
-**Minimize.** Remove work and avoidable waits that contribute neither to the Leistung nor its guardrails, following [Minimize](../impacts-method.md#minimize). Preserve required human decisions while improving preparation and handoff. List changes under Wertfluss so the customer can see their consequences; actual availability remains a feasibility constraint.
-
-**Perfect.** Cut with [zuschnitt.md](references/zuschnitt.md): Teilprozesse at closed context sections, Arbeitsschritte at one job each, routes named by the outcome of `pruefung`, one `end:<slug>` per terminal outcome including the negative ones, waits as `wartend` states, loops with an exit. Reverse-engineer each calculated result from acceptance through its producing step and sanctioned rule to actual run inputs and source. Materialize missing evidence or leave it `open`.
-
-**Augment.** Compose the needed contributions inside each Arbeitsschritt using the [Automation boundary](references/zuschnitt.md#automation-boundary). Apply the Capability-Regel only when extraction is earned. The Arbeitsschritt retains business `pruefung`, Nutzungsgrenze and route. Every permitted `hypothesis` names impact and a `Validierungsauftrag`; every irreplaceable `open` input creates a `gezielte Frage`.
-
-**Construct.** `impacts template <kind>` for every object, filled from the captures, under `applications/<slug>/`. `impacts validate applications/<slug>` until exit 0. Commit. `git rev-parse HEAD:applications/<slug>` is the revision new Vorgänge bind.
-
-**Test.** Apply the walk branches below and the method's [Test](../impacts-method.md#test). The Architect prepares and reviews the Application; the responsible harness separately exercises representative Vorgänge, respecting Human Gates. Keep readability, technical execution and observed benefit as separate results. A consistency repair may finish with business-time improvement explicitly unproven.
-
-**Scale.** Commit the tested revision. New Vorgänge bind it; running Vorgänge keep theirs.
+1. [Identify](../impacts-method.md#identify). Use [reverse engineering](../impacts-method.md#reverse-engineer-a-product-or-service) for supplied products/services. For new observations without a suitable home, use [ist-prozess.md](templates/ist-prozess.md) or its [German counterpart](templates/de/ist-prozess.md) under `grundlagen/ist-prozesse/`.
+2. [Minimize](../impacts-method.md#minimize). Record proposed removals and their consequences in `Value flow`.
+3. [Perfect](../impacts-method.md#perfect). Use [Leistung and decomposition](references/zuschnitt.md#leistung) to cut the supported work into the existing tree.
+4. [Augment](../impacts-method.md#augment). Select contributions through the [automation boundary](references/zuschnitt.md#automation-boundary); load Capability [extraction](../capabilities.md#wann-extrahieren) and [call](../capabilities.md#capability-aufruf) rules only when applicable.
+5. [Construct](../impacts-method.md#construct). Generate each object with `impacts template <kind>` under `applications/<slug>/`; complete [workstep composition](../impacts-method.md#compose-an-arbeitsschritt) and the [workspace/harness setup](references/formwahl.md#native-topologie-und-schnitt). Run `impacts validate applications/<slug>` until exit 0, then commit. `git rev-parse HEAD:applications/<slug>` identifies the tree new Vorgänge bind.
+6. [Test](../impacts-method.md#test). Apply the walk branches below. The Architect prepares and reviews; the responsible harness exercises representative Vorgänge within their declared authority.
+7. [Scale](../impacts-method.md#scale). Commit the tested revision. Follow [Reviewed correction](../impacts-method.md#reviewed-correction) for subsequent changes in any form.
 
 ## Restructure mode
 
 1. Inventory, touch nothing. Name the protocol revision actually bound, its declaration and the intended comparison revision. Record whether the inspected files are a committed or explicitly captured working state; preserve others' changes. List the tree. Per area: what it is, when last touched, what refers to it.
-2. Find the hidden forms before hidden Applications. Ask which units grow or repeat, select each form with [formwahl.md](references/formwahl.md), then identify Applications only inside selected Pipelines. For each Pipeline, ask where work enters and leaves; interview the folder the way you would interview the person.
-3. Classify every file into one role and its home:
-
-| Role | Home |
-|---|---|
-| Router: identity and routing | root `CONTEXT.md`, the body `impacts init` writes |
-| Application: how a step works | `applications/<hauptprozess>/<teilprozess>/<arbeitsschritt>/CONTEXT.md` |
-| Record or customer instance | `records/` |
-| Grundlage: stable reference, rules, assets, rights | `grundlagen/` |
-| Vorgang-Artefakt: input or output of one run | `vorgaenge/<slug>/<step>/<versuch>/input` or `output` |
-| Capability: reusable bounded processing | `capabilities/<slug>/` in the Fachrepo or Workspace, outside Core and Application |
-| Other tool: code that is not a Capability | `tools/` or `src/` as a foreign dir; an external tool becomes a pinned dependency |
-| Tot: superseded, duplicate, unreferenced | delete after step 4; git history keeps it, no archive folder |
-
+2. Find the hidden forms before hidden Applications. Ask which units grow or repeat, select each form with the [formwahl work report](references/formwahl.md#arbeitsbericht-vor-baumvorschlag), then identify Applications only inside selected Pipelines. For each Pipeline, ask where work enters and leaves; interview the folder the way you would interview the person.
+3. Classify every file by the [existing homes](references/formwahl.md#native-topologie-und-schnitt). Retain non-Capability code at its existing `tools/`, `src/` or dependency home outside the Application. Mark superseded, duplicate or unreferenced files for retirement only after the reference check; Git history preserves them without an archive folder.
 4. Reference check before any move: in-repo links, sibling paths, symlinks, and consumers outside the repo such as scripts, jobs and other repositories. Ask the owner for the outside ones. A file with a live referrer is held, or moved together with its referrers in one change.
 5. Migration map for human approval: old path, new path, role, referrers found.
 6. Migrate by copy, verify, remove: copy, compare file count and hashes, only then remove. Check case-folded destination collisions first.
@@ -92,7 +68,7 @@ Then fill the existing sections of the Application template under [Identify](../
 ## Import mode
 
 1. Check the declared source and target protocol revisions under [Review another Fachrepo](../impacts-method.md#review-another-fachrepo). Content identity alone does not establish compatibility with another protocol revision.
-2. Use the single transport procedure in [Scale](../impacts-method.md#scale), including referenced Capability trees. Preserve existing target work; do not extract over an existing Application or Capability directory. Missing or different bound trees block execution under the [Capability-Regel](../capabilities.md#transport).
+2. Use the single transport procedure in [Scale](../impacts-method.md#scale), including referenced Capability trees. Preserve existing target work; do not extract over an existing Application or Capability directory. Missing or different bound trees block execution under the [Capability contract](../capabilities.md#transport).
 3. Keep imported revisions intact and run the applicable walks. Customer-specific data uses declared source bindings; a changed process or bound rule requires a reviewed new Application revision, not an unbound override.
 
 ## Walk test
@@ -102,19 +78,21 @@ Choose the branch established by form selection. For a Pipeline/Application, a c
 1. Open the root `CONTEXT.md`. Can it say where it is and how to advance a Vorgang from this one file?
 2. Validate the selected workspace or Application directory with `impacts validate`. Record the target and protocol revision; a different repository root is not automatically a Core workspace.
 3. Open `vorgaenge/<slug>/CONTEXT.md`. The current step is the last Laufpfad entry. Open that step's `CONTEXT.md`: inputs, outputs, `pruefung`, routes and applicable human check are all named. For an Application with no Vorgang yet, inspect its declared entry and mark run evidence as not yet demonstrated.
-   Use `impacts hash` on declared attempt surfaces to check recorded hashes; this reads files and does not execute the workstep.
+   Use `impacts hash` on declared attempt surfaces to check recorded hashes; this reads files and does not execute the Arbeitsschritt.
 4. Every Application body section holds the customer's facts, each labelled `verified`, `reported`, `hypothesis` or `open`.
 5. Report the loaded router, Arbeitsschritt and input paths. Aim for at most 8k tokens of actual task payload, not a minimum size. If the payload tokenizer is unavailable, report bytes/words and that limitation instead of an exact token-PASS.
 6. Where calculations or step handoffs exist, follow one applicable calculated output to its sanctioned rule and materialized inputs, and one applicable handoff to its attempt-qualified origin and content digest. Record absent features as not applicable; declared features without a run remain unproven, not absent.
-7. Where a Human Gate exists, inspect the required input/control evidence and the scope of its decision. Before opening it, the responsible harness applies the Capability-Regel preflight. Opening creates neither route nor `freigabe`; `pruefung` evaluates the later Gate output. A read-only review does not open or approve the Gate.
+7. Where a Human Gate exists, inspect the required input/control evidence and the scope of its decision. Before opening it, the responsible harness applies the Capability contract preflight. Opening creates neither route nor `freigabe`; `pruefung` evaluates the later Gate output. A read-only review does not open or approve the Gate.
 
-Apply [Readability and processing](../impacts-method.md#readability-and-processing) to the existing capture, processing, verification, change and handoff surfaces. On failure, repair the authoritative wording or link first. Keep genuinely missing evidence as a focused question; split files only when the existing form or task boundary earns it.
+Apply [Readability and processing](../impacts-method.md#readability-and-processing) to the existing capture, processing, verification, change and handoff surfaces. On failure, follow [Reviewed correction](../impacts-method.md#reviewed-correction) at the authoritative wording or link. Keep genuinely missing evidence as a focused question; split files only when the existing form or task boundary earns it.
 
-Run the Knowledge Walk only when the topology uses `records/` or fachliche `grundlagen/`, following [formwahl.md](references/formwahl.md). This covers Record Libraries, Knowledge Bundles and Context Maps against their linked facts. A Context Map that links only Applications uses their Process Walks. Umbrellas and System Maps test each child form through its applicable branch. Do not automate the walk or introduce a new checker.
+Where preparation during a wait is declared, exercise a representative case against [Work from prerequisites](../impacts-method.md#work-from-prerequisites). Record its observed draft, blocker and continuation.
+
+Run the [Knowledge Walk](references/formwahl.md#knowledge-walk) only when the topology uses `records/` or domain `grundlagen/`. This covers Record Libraries, Knowledge Bundles and Context Maps against their linked facts. A Context Map that links only Applications uses their Process Walks. Umbrellas and System Maps test each child form through its applicable branch. Do not automate the walk or introduce a new checker.
 
 ## Guardrails
 
 - Use chat or a saved prompt while no repeatable Leistung and meaningful process boundary are established; form selection, not an arbitrary occurrence count, determines whether to build an Application.
-- Stopp-Frage before any new term, field, folder kind or schema: name the existing structure that already does it.
+- Stop question before any new term, field, folder kind or schema: name the existing structure that already does it.
 - Never write `human:<id>`. The human writes `freigabe`; the agent prepares the evidence.
 - The responsible customer confirms the Application before its first real Vorgang. This release decision does not overwrite the individual claims' evidence labels or supply missing source evidence.

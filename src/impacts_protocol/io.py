@@ -29,12 +29,14 @@ class _StrictLoader(yaml.SafeLoader):
 def _construct_unique_mapping(
     loader: _StrictLoader, node: MappingNode, deep: bool = False
 ) -> dict[Any, Any]:
-    seen = []
+    seen: set[str] = set()
     for key_node, _ in node.value:
         key = loader.construct_object(key_node, deep=deep)
+        if not isinstance(key, str):
+            raise ValueError("frontmatter keys must be strings")
         if key in seen:
             raise DuplicateKeyError(key)
-        seen.append(key)
+        seen.add(key)
     return yaml.SafeLoader.construct_mapping(loader, node, deep=deep)
 
 
@@ -92,3 +94,18 @@ def _read_text(path: Path, root: Path | None) -> str:
     if root is not None and not resolved.is_relative_to(Path(root).resolve()):
         raise PathEscapeError("source path resolves outside workspace root")
     return resolved.read_text(encoding="utf-8")
+
+
+def _has_symlink_component(path: Path, root: Path) -> bool:
+    try:
+        relative = path.relative_to(root)
+    except ValueError:
+        return True
+    current = root
+    if current.is_symlink():
+        return True
+    for part in relative.parts:
+        current = current / part
+        if current.is_symlink():
+            return True
+    return False

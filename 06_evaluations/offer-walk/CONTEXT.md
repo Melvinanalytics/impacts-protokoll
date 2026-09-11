@@ -1,0 +1,43 @@
+# Paired offer walk
+
+A synthetic, local two-step Application demonstrates the [ontology boundary](../../02_protocol/ontology.md#enforcement-and-completion) and [working language](../../02_protocol/language.md). It starts with the prepared request from the [company example](../../02_protocol/impacts-architect/references/datenbezug.md#concrete-run-inputs), renders a fixed offer, checks actual content and hands both draft and report to a pending human gate.
+
+Run from the repository root:
+
+```sh
+python3 06_evaluations/offer-walk/run.py --language de
+python3 06_evaluations/offer-walk/run.py --language en
+python3 -m pytest -q tests/test_offer_walk.py
+```
+
+By default the commands use temporary repositories and remove them afterward. Add `--keep PATH` to retain a new workspace; an existing target is refused. Add `--discovery` for the synthetic capacity comparison and its decision note, linked from that workspace’s root router. Tests can retain their temporary artifacts for inspection. No customer data, sending, source-system writeback or human approval occurs. The final state is a pending human decision, not an accepted offer.
+
+The example binds the language instruction and contract, source values, blank and exact renderer bytes through committed source provenance and declared attempt inputs. The renderer pins the two supported blank digests and uses the bound copy; later documentation edits cannot change an existing run's template check. A changed blank requires a reviewed renderer revision. The same renderer calculates both language views; inserted values are restricted IDs/numbers and mapped catalog units. Arithmetic uses up to 50 significant digits and rejects inexact operations or amounts requiring an undeclared rounding rule. Arbitrary text is rejected at this fixed-output boundary. That proves the implemented surface, not perfect language detection or semantic verification for arbitrary prose.
+
+Before any successful transition, the local harness verifies the run's input hash, source bindings, renderer identity, required values/relationships/units/calculation and exact localized output. It generates the report itself, then binds byte-identical offer/report inputs and provenance in the human gate. The check does not accept a model-written report as evidence. Missing price permits only an internal clarification note that identifies the absent input and explicitly leaves identity, quantities, units and other prerequisites unchecked; it is not a checked offer and cannot pass the priced-offer handoff. Rejected preflight leaves files and state unchanged.
+
+This deliberately small harness serves this example only. It is separate from Core and the existing single-handoff cold walk. It does not implement acquisition, scheduling, generic language detection, execution isolation or human authentication. Its bindings reject stale or inconsistent revisions; they cannot detect coordinated rewriting of the run, provenance and hashes without an independent trusted history. Real adoption supplies the domain's approved sources, permissions, runtime environment and checks for any additional prose or effects.
+
+## Controlled source handover
+
+[answer.py](answer.py) exercises a separate, local boundary: the harness fixes the task, source commit, exact sections, destination and complete input inventory before accepting writer output. `bind` copies source bytes and provenance into new staging outside reached attempts. A caller derives `declared_inputs` from the bound workstep’s `eingaben`, including provenance, and supplies its approved source mappings. The helper never infers that inventory from an answer. Its code stays outside the Application tree.
+
+`extract` supports UTF-8 with LF and a final newline, unindented ATX headings, adjacent `<a id="…"></a>` anchors and fenced examples. It requires a unique exact heading and, when present, its explicit unique anchor. It includes nested sections and excludes the next peer section’s anchor. It does not guess slugs, duplicate-heading suffixes, setext headings or arbitrary HTML; unsupported forms fail. `render` preserves selected source spans byte for byte. German presentation wraps necessary original quotations; it does not silently translate authoritative clauses.
+
+Operational findings cover only declared fixture files: a trusted synthetic access policy plus equality to the pinned source bytes. Writer-supplied structured fields may name the complete input set; access, status, hashes and prose are computed or rejected. `equality` checks the whole output. `deliver` uses that check for the actual candidate, staging, consumer copy and retry; fallback destinations must be fixed by another trusted contract and use the same function. Failed checks supply no successful delivery result. A post-write mutation is detected; the prototype claims no concurrent filesystem transaction or rollback of an external effect.
+
+The return value `local_inputs_pass` describes those local checks only. It grants no business permission and opens no attempt. Missing access produces a diagnostic while the dependent business step remains unopened. An optional same-revision check models one declared freshness rule; real actions require their own current-state and authority checks. Correct reproduction of an incorrectly selected section still passes mechanically. The guarantee is limited to trusted-contract preservation, not source truth, complete answers to arbitrary questions, authentication or business effectiveness.
+
+P1–P4 exercise a fixture-local two-step Application: committed body supplies selection and destination; preparation binds the request, produces source bytes/provenance, and opens the answer step only after local checks. Missing access leaves the real preparation entry active with a diagnostic. A declared retry opens answer attempt 002 on a new bound source request, rechecks the edited draft and preserves 001. The fixture harness checks Core validation, the complete declared input surfaces and the current attempt before actual delivery; request/provenance changes and added or removed files block output writes. The helper alone grants no run transition. The P1–P4 and N1–N16 cases live in [test_offer_walk.py](../../tests/test_offer_walk.py). The Q1 counterexample retains the distinction between a narrow explanation and the original full question; it is not a substitute for a fresh-reader evaluation.
+
+## Reviewed correction case
+
+The positioning regression in [test_offer_walk.py](../../tests/test_offer_walk.py) starts with a historical campaign source and a separately maintained current positioning source. A synthetic reviewed change repoints the workstep’s existing source binding. A new run uses the new Application revision and current source; the old run retains its campaign evidence and fails `hash.mismatch` if rewritten. The old campaign remains usable for historical interpretation only. No actual customer approval, preference promotion or measured reduction in recurring mistakes is inferred.
+
+Use the method’s single [Reviewed correction procedure](../../02_protocol/impacts-method.md#reviewed-correction) for this and other forms. The complementary handoff regression retains the gate’s declared report input: removing its producer mapping blocks the transition and preserves the prior run state. Byte checks alone do not establish that deleting a real review or formatting job preserves its business function.
+
+## Discovery before acceleration
+
+`run.py --discovery --keep PATH` retains the existing offer run plus a synthetic automation request, its consequential clarification and four deterministic daily-capacity scenarios. Preparation 6 → 18 with review fixed at 6 raises the review queue by 12 cases/day under the declared assumptions; reviewed capacity is only an upper bound on accepted output. Sensitivity includes review at 9 and demand at 4. The changed intervention controls new preparation and investigates the limiting review work, preserving quality and decision authority.
+
+The note and computed scenarios use ordinary `grundlagen/` homes linked from the generated router. They are a separate conditional decision aid, not a retroactive input to the already bound offer. The case names the responsible decision role without inventing an actual person or approval. No observed customer acceptance, lead-time saving or reviewer-attention reduction is claimed. A real evaluation records the same population, acceptance, waiting, rework and attention before and after; excluding difficult cases cannot count as improvement.

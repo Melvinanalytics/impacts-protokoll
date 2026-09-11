@@ -4,3 +4,7 @@ __pycache__/
 *.py[cod]
 /.pytest_cache/
 /.coverage
+
+# Private source-checkout work never belongs in a public artifact.
+/docs/
+/v03_*.md

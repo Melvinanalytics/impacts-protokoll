@@ -1,17 +1,17 @@
 ---
 type: teilprozess
 id: teilprozess:vorpruefung
-ergebnis: Prüffähiger Prüfbericht
+ergebnis: Reviewable check report
 ---
 
-# Vorprüfung
+# Preliminary review
 
-Ein Teilprozess ist ein fachlich geschlossener Abschnitt des Hauptprozesses. Seine Arbeitsschritte sind seine Unterordner; der Ordnername ist der Slug seiner ID. Beispielwerte ersetzen.
+A subprocess is a coherent domain section of the main process. Its worksteps are subfolders; its folder name is its ID slug. Replace example values in the customer's working language.
 
-## Beitrag zur Leistung
+## Contribution to the result
 
-Was dieser Abschnitt an die Leistung liefert und welcher Folgeabschnitt darauf aufbaut.
+What this section contributes and which subsequent section consumes it.
 
-## Frühindikator
+## Leading indicator
 
-Der kontrollierbare Leading Indicator dieses Abschnitts. Er bleibt `hypothesis`, bis beobachtete Vorgänge seinen Zusammenhang mit der Kennzahl der Leistung stützen.
+Include only when an early observation supports a concrete steering decision: name the indicator, proposed relationship to the result metric and possible action. The relationship remains `hypothesis` until observed runs support it. Otherwise omit this section; contribution and section result remain required.

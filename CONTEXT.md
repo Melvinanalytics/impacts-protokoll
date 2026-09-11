@@ -1,13 +1,11 @@
 # IMPACTS Protocol navigation
 
-| Need | Location |
-|---|---|
-| Normative V1 design | [minimal-core-design.md](docs/superpowers/specs/2026-08-30-minimal-core-design.md) |
-| Executable core V0.3: hash, templates, operating contract, walk | [executable-core-design.md](docs/superpowers/specs/2026-09-02-executable-core-design.md) |
-| Domain-named Application tree: folders carry process names, roles stay in `type` | [domain-named-tree-design.md](docs/superpowers/specs/2026-09-07-domain-named-tree-design.md) |
-| Protocol terms, schemas, templates and the architect skill | [02_protocol/CONTEXT.md](02_protocol/CONTEXT.md) |
-| Initialization and read-only validation | [`src/impacts_protocol/`](src/impacts_protocol/) |
-| Core evaluations | [06_evaluations/CONTEXT.md](06_evaluations/CONTEXT.md) |
-| Public release | [public-release-gate.md](docs/release/public-release-gate.md) |
+For an existing definition, follow [Use](02_protocol/ontology.md#use); for missing or changing meaning, follow [Author or change](02_protocol/ontology.md#author-or-change). Then select one intent below. Its completion check governs when to stop; the table locates the needed authority. Before changing a surface, read its closest `CONTEXT.md`; customer facts live in the customer repository and bound history in the run's router.
 
-Read the closest `CONTEXT.md` before changing a surface. Customer material belongs in its customer repository.
+| Intent | Authority pointers |
+|---|---|
+| Workstep prompt, tools, data, source binding, processing or new evidence | [Compose an Arbeitsschritt](02_protocol/impacts-method.md#compose-an-arbeitsschritt) · [Snapshot and provenance](02_protocol/capabilities.md#snapshot-und-herkunftsnachweis) · [Work from prerequisites](02_protocol/impacts-method.md#work-from-prerequisites) · [Ontology enforcement](02_protocol/ontology.md#enforcement-and-completion) |
+| Products/services → bounded process and file home | [Reverse-engineer a product or service](02_protocol/impacts-method.md#reverse-engineer-a-product-or-service) · [Native topology and boundaries](02_protocol/impacts-architect/references/formwahl.md#native-topology-and-boundaries) · [Ontology inference](02_protocol/ontology.md#meaning-and-valid-inference) |
+| Filled offer → agreement, delivery or service coverage | [Ontology inference](02_protocol/ontology.md#meaning-and-valid-inference) · [Checkable linked-data questions](02_protocol/impacts-architect/references/datenbezug.md#prüfbare-fragen-und-grenzen) · [Catalog-to-offer example](02_protocol/impacts-architect/references/datenbezug.md#vom-katalog-über-die-pipeline-zum-ausgefüllten-angebot) · [Ontology enforcement](02_protocol/ontology.md#enforcement-and-completion) |
+
+For other concerns, use the [protocol router](02_protocol/CONTEXT.md), [language contract](02_protocol/language.md), [core evaluations](06_evaluations/CONTEXT.md). For initialization or validation use [`src/impacts_protocol/`](src/impacts_protocol/). Do not load unrelated branches or scan the repository to discover a home.

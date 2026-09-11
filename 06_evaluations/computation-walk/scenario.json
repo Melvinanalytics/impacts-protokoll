@@ -1,0 +1,34 @@
+{
+  "kind": "scenario",
+  "subject": "synthetic-service-A",
+  "window": "2026-09; one common month",
+  "as_of": "2026-09-07T12:00:00+02:00",
+  "assumptions": {
+    "same_window": true,
+    "comparable_cases": true,
+    "non_overlapping_pools": true,
+    "constraints_included": true
+  },
+  "demand": {
+    "buyers": {"value": 1200, "unit": "buyer", "status": "hypothesis", "origin": "synthetic:eligible-buyers"},
+    "reach": {"value": 0.5, "unit": "share", "status": "hypothesis", "origin": "synthetic:unique-reach"},
+    "conversion": {"value": 0.2, "unit": "share", "status": "hypothesis", "origin": "synthetic:buyer-conversion"},
+    "frequency": {"value": 1, "unit": "case/buyer/window", "status": "hypothesis", "origin": "synthetic:frequency"}
+  },
+  "resources": {
+    "production": {
+      "hours": {"value": 160, "unit": "staff_hour/window", "status": "hypothesis", "origin": "synthetic:production-availability"},
+      "effort": {"value": 2, "unit": "staff_hour/case", "status": "hypothesis", "origin": "synthetic:production-effort-including-rework"}
+    },
+    "review": {
+      "hours": {"value": 120, "unit": "staff_hour/window", "status": "hypothesis", "origin": "synthetic:review-availability"},
+      "effort": {"value": 1, "unit": "staff_hour/case", "status": "hypothesis", "origin": "synthetic:review-effort-including-rework"}
+    }
+  },
+  "economics": {
+    "price": {"value": 500, "unit": "EUR/case", "status": "hypothesis", "origin": "synthetic:net-price"},
+    "variable_cost": {"value": 100, "unit": "EUR/case", "status": "hypothesis", "origin": "synthetic:genuinely-variable-cost"},
+    "retained_fixed_cost": {"value": 20000, "unit": "EUR/window", "status": "hypothesis", "origin": "synthetic:retained-cost-including-payroll"},
+    "incremental_cost": {"value": 0, "unit": "EUR/window", "status": "hypothesis", "origin": "synthetic:whole-intervention-cost"}
+  }
+}

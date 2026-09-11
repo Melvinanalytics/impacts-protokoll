@@ -1,7 +1,10 @@
 # Core evaluations
 
-This directory contains deterministic checks for Core contracts.
+This directory contains optional deterministic checks for Core contracts. Load one only when the question asks for its executable boundary; its synthetic fixtures do not establish customer facts, authority or business effects.
 
-[cold-walk/CONTEXT.md](cold-walk/CONTEXT.md) runs a synthetic Vorgang through loop, wait and human gate with the public API. [complexity-budget/CONTEXT.md](complexity-budget/CONTEXT.md) checks the simplicity budget.
+- [Cold walk](cold-walk/CONTEXT.md): run state, loop/wait/gate and handoff.
+- [Computation walk](computation-walk/CONTEXT.md): independent synthetic calculation and dependent blockers.
+- [Offer walk](offer-walk/CONTEXT.md): fixed German/English output, controlled source handover and reviewed-correction fixtures; commercial claims route to the ontology/example.
+- [Complexity budget](complexity-budget/CONTEXT.md): declared structural metrics.
 
-Package evaluations live with their package. Customer regression material stays in the customer repository.
+Package evaluations live with their package. Customer regression material stays in the customer repository. Do not load sibling walks or exhaust their outgoing links.

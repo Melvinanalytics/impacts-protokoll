@@ -1,8 +1,9 @@
-# Schablone einer Application
+# Application layout
 
-Eine Application ist ein Hauptprozess mit seiner Leistung, seinen Teilprozessen und Arbeitsschritten. Die Ordner tragen die fachlichen Namen des Prozesses; die Rolle jeder `CONTEXT.md` steht in ihrem `type`. Diese Schablone zeigt, wo jede Datei liegt und welche Vorlage sie erzeugt. Sie ist kein Router und wird nicht als `CONTEXT.md` gespeichert.
+An Application is one main process with its accepted result, subprocesses and worksteps. Folders carry domain names; each `CONTEXT.md` declares its role in `type`. This layout shows where each file belongs and which template creates it. It is not a router and is not stored as `CONTEXT.md`. Select the customer's language with `--language de` or `--language en` when generating working templates.
 
-## Baum
+<a id="baum"></a>
+## Tree
 
 ```text
 applications/<hauptprozess>/
@@ -19,14 +20,16 @@ vorgaenge/<vorgang>/
     └── output/
 ```
 
-## Regeln
+## Rules
 
-- `<hauptprozess>`, `<teilprozess>`, `<arbeitsschritt>` und `<vorgang>` sind Slugs: `[a-z0-9]+(?:-[a-z0-9]+)*`. Die ID jeder `CONTEXT.md` ist `<type>:<ordnername>`.
-- Der Application-Baum enthält nur `CONTEXT.md`-Dateien und Ordner. Jeder Hauptprozess hat mindestens einen Teilprozess, jeder Teilprozess mindestens einen Arbeitsschritt; ein Arbeitsschritt hat keine Unterordner.
-- Arbeitsschritt-IDs sind in der ganzen Application eindeutig. Routen zeigen auf `arbeitsschritt:<slug>` oder `end:<slug>`; jeder Schritt erreicht ein Ende.
-- `<versuch>` ist dreistellig, `versuch: 1` heißt `001`. Nur im Laufpfad erreichte Arbeitsschritte und Versuche besitzen Ordner.
+- Placeholders are slugs matching `[a-z0-9]+(?:-[a-z0-9]+)*`. Each ID is `<type>:<folder-name>`.
+- An Application contains only `CONTEXT.md` files and folders. Each main process has at least one subprocess, each subprocess at least one workstep; worksteps have no subfolders.
+- Workstep IDs are unique across the Application. Routes target `arbeitsschritt:<slug>` or `end:<slug>`; every step can reach an end.
+- `<versuch>` has three digits; `versuch: 1` means `001`. Only steps and attempts reached by `laufpfad` have run folders.
 
-## Beispiel
+The workstep body contains its prompt and tool invocation contract. Shared rules, prompt fragments and document blanks keep their existing domain home outside this tree and enter attempts as declared inputs with provenance. Tool implementations remain dependencies or earned Capabilities; actual values, intermediate work and result evidence belong to the run. Use the bound protocol's `impacts-method.md`, “Compose an Arbeitsschritt”, and the workstep template to fill this contract.
+
+## Example
 
 ```text
 applications/prueffall/
@@ -40,4 +43,4 @@ applications/prueffall/
     └── entscheiden/CONTEXT.md  # arbeitsschritt:entscheiden
 ```
 
-`impacts validate .` prüft den Baum vor jedem Commit.
+Run `impacts validate .` before each commit.

@@ -2,46 +2,46 @@
 type: hauptprozess
 id: hauptprozess:prueffall
 leistung:
-  ergebnis: Entschiedener Prüffall
-  kennzahl: Durchlauf von Antrag bis Entscheidung
+  ergebnis: Decided review case
+  kennzahl: Lead time from request to decision
   abnahme:
-    - Prüfbericht liegt vor
-    - Entscheidung ist menschlich freigegeben
+    - Check report is available
+    - Decision is approved by the responsible human
 einstieg_ref: arbeitsschritt:pruefen
 ---
 
-# Prüffall entscheiden
+# Decide a review case
 
-Der Hauptprozess ist die Wurzel der Application: `applications/<slug>/CONTEXT.md`. Seine Teilprozesse sind seine Unterordner, deren Arbeitsschritte wiederum deren Unterordner. Er ist der vollständige Weg bis zur eingebetteten Leistung. `einstieg_ref` nennt den ersten Arbeitsschritt. Die Routen stehen an den Arbeitsschritten. Dieser Body trägt das Identify-Ergebnis der IMPACTS-Methode; er ist Kontext für Mensch und Harness, kein Schema. Beispielwerte ersetzen.
+The main process is the Application root at `applications/<slug>/CONTEXT.md`. Its subfolders are subprocesses, whose subfolders are worksteps. It defines the complete path to the embedded result. `einstieg_ref` names the first workstep; each workstep owns its routes. This body carries Identify context for people and harnesses, not another schema. Replace example values in the customer's working language.
 
-## Relevantes Umfeld
+## Relevant environment
 
-Empfänger, Beteiligte, Abhängigkeiten und Grenzen der Leistung. Markt-, Nachfrage- oder Vermittlungsbeziehungen nur aufnehmen, wenn sie für die betrachtete Entscheidung relevant sind.
+Recipient, participants, dependencies and result boundaries. Include market, demand or intermediary relationships only when relevant to the decision.
 
-## Wertfluss
+## Value flow
 
-Wertobjekt und Empfänger; Kunde, Zahler und beteiligte Externe nur bei Relevanz. Wo Wert entsteht, übergeben und abgenommen wird.
+Valued result and recipient; customer, payer and external parties only where relevant. Link each required result component to its producing job, prerequisites and acceptance evidence. Given a product/service, distinguish its promised or agreed scope from this process's result and actual fulfillment. Reference existing definitions/records and observed cases; mark reconstructed work as `hypothesis` and unresolved dependencies as `open` with their next action and use restriction.
 
-## Zielgröße und Guardrails
+## Objective and guardrails
 
-Ein primäres Ziel und seine beobachtbare Abnahme. Die Fragen aus Identify für dieses begrenzte Vorhaben beantworten: Evidenz und offene Fragen, nächster Eingriff oder Beobachtung, Zuständigkeit, erwartete Wirkung sowie Wiederprüf-/Stoppbedingung. Qualität, Zeit und Kosten durch passende Guardrails schützen.
+One primary objective and observable acceptance. Address Identify's questions for this bounded intervention: evidence and gaps, next intervention or observation, responsibility, expected effect and recheck/stop condition. Protect quality, time and cost with relevant guardrails.
 
 ## Touchpoints
 
-Customer-Touchpoints dieser Application. `standard`: ein Mensch führt die Interaktion, das Harness bereitet vor und nach. `sacred`: geschützt, eine Reklassifizierung braucht menschliche Prüfung der Application. Interne Human Gates stehen am Arbeitsschritt.
+`standard`: a person leads the customer interaction; the harness prepares and follows up. `sacred`: protected interaction whose reclassification needs human review of the Application. Internal human gates belong to worksteps.
 
-## Automationsgrenze
+## Automation boundary
 
-Welche menschlichen Grenzen gelten, warum und wer darf sie ändern? Eingangsvarianz, Ergebnistoleranz, Schadenshöhe, Umkehrbarkeit und Entdeckbarkeit bestimmen die erlaubte Unterstützung. Gewohnte Arbeitsteilung von erforderlicher Autorität und tatsächlicher Verfügbarkeit unterscheiden; konkrete Beiträge stehen im jeweiligen Arbeitsschritt.
+Which human boundaries apply, why, and who may change them? Input variance, result tolerance, harm, reversibility and detectability determine permitted assistance. Distinguish habitual division of work from required authority and actual availability; each workstep names its concrete contributions.
 
-## Weg zur Leistung
+## Path to the result
 
-Welche Teilprozesse in welcher Folge zur Leistung führen und woran das Ende erkennbar ist.
+Which subprocesses contribute to the result, how their prerequisites are obtained, and how success, rejection or an incomplete case ends or waits. `einstieg_ref` and workstep routes own the sequence; this explanation does not maintain a second route table. Independent Applications exchange evidenced results through separate runs, not cross-Application step routes.
 
-## Durchsatz und Durchlaufzeit
+## Throughput and lead time
 
-Erwarteter Durchsatz, Work in Progress und Durchlaufzeit. Für den Zeitvergleich Start und akzeptiertes Ende festlegen; aktive Bearbeitung von Warten, Übergaben und Nacharbeit unterscheiden. Quelle oder berichtete Spanne nennen, Unbekanntes offenlassen. Überlappende Tätigkeiten nicht zur Durchlaufzeit addieren. Die Kennzahl der Leistung ist der Lagging Indicator dieses Prozesses.
+Expected throughput, work in progress and elapsed time. Define start and accepted end; distinguish active work, waiting, handoffs and rework. Name the source or reported range; leave unknowns open. Do not sum overlapping activities as lead time. The result metric is this process's lagging indicator.
 
-## Engpass
+## Bottleneck
 
-Welche belegte Begrenzung bestimmt derzeit die Leistung oder Durchlaufzeit, und welche Beobachtung würde diese Annahme widerlegen? Das kann Verarbeitungskapazität, eine fehlende Eingabe oder eine wartende Entscheidung sein. Kürzere Einzelarbeit allein belegt keine Verbesserung des Gesamtprozesses. Erforderliche menschliche Grenzen bleiben bei einer Umgestaltung erhalten.
+Which evidenced constraint currently limits the result or lead time, and what observation would refute that assumption? Capacity, missing input or a pending decision may constrain it. Faster isolated work does not establish improvement of the whole process. Preserve required human boundaries during redesign.

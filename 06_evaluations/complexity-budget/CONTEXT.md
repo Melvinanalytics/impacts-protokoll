@@ -1,10 +1,10 @@
 ---
-title: Komplexitätsbudget
+title: Complexity budget
 evidence_status: reported
 ---
 
-# Komplexitätsbudget
+# Complexity budget
 
-Deterministisches Gate gegen Komplexitätsausbruch. `budget.yaml` hält Grenzen und Attributionsdaten. `check.py` misst den Arbeitsbaum. Die menschlich bestätigte V0.2-Grenze `5/5/15` bildet den einmaligen Bootstrap. Danach liest der Checker seine Vergleichsgrenze aus dem letzten erreichbaren öffentlichen Release-Tag. Ein Tag am aktuellen `HEAD` wird übersprungen, damit auch der Post-Tag-Check gegen den vorherigen Stand prüft.
+A deterministic gate against structural growth. `budget.yaml` holds limits and attribution; `check.py` measures the working tree. The human-confirmed V0.2 boundary `5/5/15` is the initial bootstrap. Afterward, the checker reads its comparison boundary from the latest reachable public release tag. It skips a tag at the current `HEAD`, so a post-tag check still compares against the preceding release.
 
-Eine Erhöhung braucht `approved_by: human:<id>` samt Begründung im Budget. Das Feld dokumentiert die Attribution und authentifiziert sie nicht. Geschütztes `main` und geschützte Release-Tags sichern die Baseline gegen Selbständerung. Regeln und Quellen stehen im Einfachheitsvertrag unter `AGENTS.md`.
+An increase requires `approved_by: human:<id>` and a reason in the budget. This records attribution; it does not authenticate it. Protected `main` and release tags provide the baseline's protection against self-modification. See the simplicity contract in [AGENTS.md](../../AGENTS.md) for the rules and sources.

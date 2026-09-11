@@ -1,78 +1,68 @@
-# Capability-Regel
+# Capability contract
 
-Diese Datei ist die einzige öffentliche Begriffs- und Verhaltensautorität für Capabilities in IMPACTS.
+A Capability is an optional reusable operation inside a workstep. Its domain contract, implementation and checks live together outside the Application tree. This file owns Capability authority, source binding and handoffs. [Meaning and valid inference](ontology.md#meaning-and-valid-inference), [evidence and obligations](ontology.md#evidence-and-obligations), and [enforcement and completion](ontology.md#enforcement-and-completion) stay in the ontology instruction; the [language contract](language.md#enforce-at-use-boundaries) owns customer-readable presentation.
 
-Eine **Capability** ist eine begrenzte, wiederverwendbare Verarbeitung innerhalb eines Arbeitsschritts. Sie nimmt deklarierte Eingaben entgegen und erzeugt ein sichtbares, prüfbares Ergebnis. Sie kann Recherche, Analyse, Transformation, Berechnung oder einen engen Werkzeugaufruf enthalten.
+## Responsibilities
 
-Eine Capability ist kein sechster Core-Typ. D-10 bleibt bestehen: Weder Core-Schema noch allgemeiner Validator binden oder führen Capabilities aus. Die folgenden Regeln sind Markdown-Konvention und Verantwortung des Fachrepo-, Workspace- oder Vorgangs-Harnesses.
-
-## Begriffe
-
-| Begriff | Bedeutung |
+| Concept | Responsibility |
 |---|---|
-| Herkunft | fachliche Quelle eines Werts, etwa ERP, Rezeptur oder Produktionsleitung |
-| Ursprung | konkrete lokale Laufdatei oder externe Referenz, aus der der Lauf gelesen hat |
-| Snapshot | im Lauf tatsächlich verwendete Bytes |
-| Datenkontrolle | für einen Nutzungszweck verlangtes Verfahren |
-| Kontrollnachweis | Beleg der im konkreten Lauf ausgeführten Kontrolle |
-| `pruefung` | Bewertung der beobachtbaren Arbeitsschrittausgabe |
-| technische Nutzungsbedingung | Bedingung, unter der ein Capability-Ergebnis fachlich belastbar ist |
-| Nutzungsgrenze | erlaubter Geschäftszweck der Arbeitsschrittausgabe |
+| Capability definition | Reusable operation, parameters, rule and technical use conditions |
+| Workstep | Local call, declared inputs/outputs, intended use, check and route |
+| Harness | Execute the bound operation, collect actual evidence and enforce prerequisites |
+| Source origin | Actual local file or external reference read by this run |
+| Snapshot | Bytes actually used in the run |
+| Data control | Procedure required for an intended use |
+| Control evidence | Evidence of the control performed in this run |
+| `pruefung` | Observable evaluation of the workstep output |
+| Technical use condition | Condition under which an operation's result is applicable |
+| Use restriction | Permitted business purpose of the output |
 
-`verified`, aktuell, kontrolliert und verbindlich nutzbar sind verschiedene Aussagen.
+Verified, current, checked and authorized for use are distinct claims.
 
-## Wann extrahieren
+<a id="wann-extrahieren"></a>
+## When to extract
 
-Jede Berechnung verweist auf ihre sanktionierte Rechenregel. Eine Verarbeitung erhält nur dann eine eigene Capability-Heimat, wenn mindestens eins gilt:
+Every bound calculation references its sanctioned rule. Give processing its own Capability home only when at least one applies:
 
-- mehrere Arbeitsschritte oder Applications brauchen dieselbe Operation;
-- sie besitzt einen eigenen deterministischen Kern;
-- sie besitzt eigene Quellen-, Aktualitäts- oder Prüfregeln;
-- sie soll unabhängig vom Arbeitsschritt versioniert werden.
+- Several worksteps or Applications need the same operation.
+- It has an independent deterministic core.
+- It has independent source, freshness or checking rules.
+- It needs versioning independently of the workstep.
 
-Sonst bleibt sie im Arbeitsschritt. Capability-Heimat ist `capabilities/<slug>/` im Fachrepo oder Workspace, außerhalb des Core und der Application.
+Otherwise keep it in the workstep. Use `capabilities/<slug>/` in the domain repository or workspace, outside Core and the Application.
 
-## Rechen-Capability
+<a id="rechen-capability"></a>
+## Calculation Capability
 
-Eine Rechen-Capability besitzt einen kompakten, versionsgebundenen Fachvertrag:
+Keep a compact revision-bound contract: operation/purpose; parameter shape with units, granularity and time; sanctioned method/formula; failure and blocking cases including data requirements per use; deterministic checker; visible evidence format; fixtures; sensitivity cases only where result tolerance matters.
 
-1. Operation und Zweck;
-2. Parameterschema mit Einheiten, Granularität und Zeitbezug;
-3. sanktionierte Methode oder Formel;
-4. Fehler- und Blockierfälle einschließlich der Datenanforderungen je Nutzung;
-5. deterministischen Prüfer;
-6. sichtbares Belegformat;
-7. Fixtures;
-8. Sensitivitätsfälle nur bei relevanter Ergebnistoleranz.
+Definition, formula, checker, evidence format and fixtures share one Capability revision. A Git tree OID binds files, not interpreter/library environments. State an environment as a technical use condition when it affects results.
 
-Definition, Formel, Prüfer, Belegformat und Fixtures liegen unter derselben gebundenen Capability-Revision. Ein Git-Tree-OID bindet diese Dateien, aber keine Interpreter- oder Bibliotheksumgebung. Wo die Umgebung das Ergebnis beeinflusst, nennt der Fachvertrag sie als technische Nutzungsbedingung.
+<a id="capability-aufruf"></a>
+## Capability call
 
-## Capability-Aufruf
-
-Der Arbeitsschritt wiederholt den Fachvertrag nicht. Er bindet lokal:
+The workstep binds its local call, without repeating the domain contract. These labels are stable parser vocabulary across languages:
 
 ```markdown
-Aufruf-ID: liefertermin-1
-Capability-Pfad: capabilities/liefertermin/CONTEXT.md
-Capability-Revision: git-tree:<oid>
-Operation: liefertermin-berechnen
+- Aufruf-ID: `liefertermin-1`
+- Capability-Pfad: `capabilities/liefertermin/CONTEXT.md`
+- Capability-Revision: `git-tree:<oid>`
+- Operation: `liefertermin-berechnen`
 ```
 
-Bei genau einem Aufruf darf die ID als `<arbeitsschritt-slug>-1` abgeleitet werden; mehrere Aufrufe erhalten explizite IDs. Autorität ist das Tupel aus Aufruf-ID, auflösbarem Pfad, Tree-OID und Operation in der gebundenen Application-Revision. Vor dem Vorgang bindet das Harness eine erreichbare Workspace-Revision, löst darin das Elternverzeichnis des Capability-Pfads auf und verlangt denselben Tree-OID. Es führt diesen aufgelösten Tree aus und schreibt Workspace-Revision sowie Aufruftupel in den normalen Capability-Beleg. Die Capability bescheinigt ihre eigene Herkunft nicht.
+For one call, its ID may derive as `<arbeitsschritt-slug>-1`; multiple calls need explicit IDs. The [reference harness](../06_evaluations/cold-walk/CONTEXT.md) reads this block and requires the derived value to be written before binding the revision. It supports one call in the example step; general multiple-call execution is not established.
 
-Der Tree-OID bindet Identität, nicht Vertrauenswürdigkeit. Ein produktives Harness führt nur fachlich freigegebene Capability-Revisionen aus. Isolation, Berechtigungen, Geheimnisse und Laufzeitumgebung liegen außerhalb des IMPACTS-Core.
+Authority is the tuple of call ID, resolvable path, tree OID and operation in the bound Application. Before the run, the harness binds a reachable workspace revision, resolves the Capability's parent directory there and requires the same tree OID. It executes that tree and writes the workspace revision and tuple into the ordinary result evidence. The Capability does not attest its own origin.
 
-IMPACTS kennt an dieser Grenze nur:
+The OID establishes identity, not trustworthiness. A production harness executes only domain-approved revisions. Isolation, permissions, secrets and runtime environment remain outside Core.
 
 ```text
-Capability-Aufruf -> sichtbare Ausgabe -> pruefung -> Route
+Capability call -> Visible output -> pruefung -> Route
 ```
 
 ## Data Governance
 
-Die Application nennt erwartete Herkunft und Mindestkontrolle. Erst der Vorgang belegt tatsächliche Daten.
-
-Eine maschinenlesbare Minimalbindung darf direkt beim Aufruf stehen:
+The Application specifies expected origin, acquisition and minimum control for each source input, with or without a Capability call. The domain home owns the reusable source mapping. The workstep supplies the local selection: identity, purpose, time, needed fields/relationships, configured reader or responsible provider, and destination input. A tool name or URL alone is not an acquisition contract. Use the existing body and these stable parser labels:
 
 ```markdown
 ### Quellenanforderung
@@ -84,54 +74,80 @@ Eine maschinenlesbare Minimalbindung darf direkt beim Aufruf stehen:
 - Erforderliche Kontrolle: `revisionsgebunden materialisieren`
 ```
 
-Der Block wird für jede stabile Quell-Eingabe wiederholt. Das Harness liest die Sollbindung aus derselben gebundenen Application-Revision wie den Capability-Aufruf. Der Vorgang schreibt die tatsächlich gelesenen Bytes und den Kontrollnachweis separat unter `input/`.
+Repeat the block for each stable source input, referring to its acquisition in Processing. Inputs from preceding steps instead use the producer's [handoff mapping](#sichtbare-ausgabe-und-übergabe). The harness resolves the declaration from the bound Application; implementation support for the selected reader must exist before execution. Missing access leaves a specific blocker, not an invented snapshot or competing source of truth.
 
-| Objekt | Laufbezogene Aussagen |
-|---|---|
-| Eingabe | Evidenzstatus, Herkunft, Ursprung/Snapshot, Stand, erforderliche Datenkontrolle und Kontrollnachweis |
-| Capability-Ergebnis | offene Annahmen und technische Nutzungsbedingungen |
-| Arbeitsschrittausgabe | Nutzungsgrenze des Geschäftszwecks |
-| Route | tatsächliche Prozessfolge |
+Inputs carry claim evidence, source/origin, snapshot, revision and required/actual control. Capability results retain assumptions and technical conditions; workstep outputs retain business-use restrictions; routes record actual process progression.
 
-Zulässige Evidenzlabels bleiben `verified`, `reported`, `hypothesis` und `open`. Eine erforderliche Kontrolle wie „vor Zusage manuell abgleichen“ bleibt getrennt vom tatsächlichen Nachweis wie „bestätigt durch `human:produktionsplanung` am ...“. Diese Attribution schreibt im realen Vorgang nur der benannte Mensch.
+Apply [evidence labels](impacts-architect/references/zuschnitt.md#evidence) per claim. A required manual check before commitment differs from evidence that a named person actually checked it. In a real run, that person supplies their own attribution.
 
-Kontrollstärke folgt Volatilität, Wiederholung, Schadenshöhe, Ergebnistoleranz, Reproduzierbarkeit und vorhandener Infrastruktur. Revisionsbindung, manuelle Bestätigung und automatische Überwachung sind Praktiken, keine Reifestufen. Kleine Betriebe dürfen mit Dateien und dokumentierten Bestätigungen arbeiten.
+Control strength follows volatility, repetition, harm, result tolerance, reproducibility and existing infrastructure. Revision binding, manual confirmation and automatic monitoring are practices, not maturity levels. Small businesses may use files and documented confirmations.
 
-## Snapshot und Herkunftsnachweis
+<a id="tabellen-und-beziehungen"></a>
+### Tables and relationships
 
-Vor Ausführung liegen die kleinste fachlich ausreichende, reproduzierbar herleitbare Quelle oder Projektion und eine separate `*-herkunft.md` unter dem Versuch in `input/`. Beide sind deklarierte Eingaben und werden vom bestehenden Eingabe-Flächenhash gebunden.
+For needed tables, the domain description names row meaning, unique key, source/access and required relationships: source columns, target collection, target key and business meaning. Composite keys include every decision-relevant component, such as tenant or contract version. File path, business identity and source revision differ. Existing schemas stay at their home; local structured metadata describes only missing meaning. Document-based facts have the same meaning/evidence obligations without requiring a table.
 
-- Direkte Kopie liest die Bytes aus der gebundenen Revision, etwa `git show <commit>:<pfad>`, nicht aus dem aktuellen Working Tree.
-- Projektion nennt Quellrevision, Quellpfad, Quelldigest und reproduzierbare Extraktionsregel.
-- Nicht deterministische Extraktion nennt ihre menschliche oder capability-spezifische Bestätigung.
+A document link reaches this description; actual rows join through keys, not similar names or shared folders. Automated processing executes needed type, uniqueness, reference and multiplicity checks. A matching foreign key alone establishes neither validity nor authority. No match requires sufficient coverage before claiming absence; multiple valid matches must not collapse to the first.
 
-`Content-Digest` ist kleingeschriebenes hexadezimales SHA-256 über rohe Datei-Bytes. Er ist nicht der aggregierte Flächenhash.
+Selection names starting identity, purpose, time and required relationships/fields. The configured reader supplies the bounded excerpt with reproducible selection and provenance. Reuse source/relationship rules across calls. Metadata requires a reader and checker. Core implements neither table joins nor a general domain schema; see the [linked-data read path](impacts-architect/references/datenbezug.md#the-question-determines-the-read-path) and [offer/agreement evidence path](impacts-architect/references/datenbezug.md#from-catalog-through-pipeline-to-a-filled-offer).
 
-## Sichtbare Ausgabe und Übergabe
+<a id="bedeutung-und-zulässige-schlüsse"></a>
+### Meaning and inference
 
-Der Capability-Beleg bleibt eine normale Datei unter `output/`; sein Format gehört der Capability. Er zeigt gebundene Rechenregel, verwendete Eingaben, Ergebnis, ausgeführte Checks, Annahmen und technische Nutzungsbedingungen. Eine Parametertabelle oder gleichwertige Blockliste ist zulässig. Es entsteht kein Receipt-Schema.
+Apply the appropriate [Author or change](ontology.md#author-or-change) or [Use](ontology.md#use) branch of the ontology. Its [inference rules](ontology.md#meaning-and-valid-inference) and [evidence/obligation rules](ontology.md#evidence-and-obligations) are authoritative.
 
-Eine lokale Schrittübergabe hat zwei Belege:
+<a id="fachliche-durchsetzung"></a>
+### Domain enforcement
 
-1. Application: erwartete Abbildung `A/output/datei.md -> B/input/datei.md`, genau einmal im erzeugenden Arbeitsschritt neben Ausgabe und Route.
-2. Vorgang: bytegleiche Consumer-Datei plus `*-herkunft.md` mit versuchsqualifiziertem, zum aktuellen Vorgang relativem Ursprung und gleichem Content-Digest.
+Check scope, evidence and completion follow [Enforcement and completion](ontology.md#enforcement-and-completion). The workstep and executing harness enforce those conditions; Core validation does not replace them.
 
-Producer-`ausgabe_hash` und Consumer-`eingabe_hash` binden ihre jeweiligen Oberflächen. Weil relative Pfade eingehen, werden sie nicht verglichen und bilden keine Hashkette. Der allgemeine Validator prüft auch Herkunfts- und Digestbehauptungen nicht; ein lokales Harness kann dies tun, wenn der Nutzungszweck es verlangt.
+<a id="snapshot-und-herkunftsnachweis"></a>
+## Snapshot and provenance
 
-## Signale und Human Gate
+1. **Declare paths before Application binding.** The workstep's `eingaben` names the source/projection file and separate `*-herkunft.md`. This binds the input contract; actual bytes must be acquired before the designated attempt opens.
+2. **Acquire the attempt's data.** Resolve the declared source, permitted read operation, required source state and selection. **Versioned source:** read the bound immutable revision, such as `git show <commit>:<path>`. **Mutable source:** capture the actual returned response/excerpt and read time. Reading time alone proves neither freshness nor source completeness.
+3. **Materialize the declared inputs.** Keep the smallest sufficient source or projection and its separate provenance at the declared paths. Provenance identifies actual origin, source revision or its absence, read time for mutable sources, selection/extraction, resulting Content-Digest and required/actual controls. A projection identifies source path/revision and digest and retains enough source evidence to inspect its derivation. Nondeterministic extraction records its human or Capability-specific confirmation.
+4. **Check and open the attempt.** Verify declared inputs and the controls required for opening, then install the designated attempt files under `input/`, hash the declared surface and open the entry as one logical transition. Stage outside reached attempt folders; on failure, remove unbound staging and leave the prior `laufpfad` unchanged. This is not a claim of filesystem atomicity. A placeholder does not satisfy a missing prerequisite; evidence of a gap can support only the declared diagnostic or acquisition job.
 
-- `hypothesis` nennt Wirkung und konkreten Validierungsauftrag.
-- `open` bleibt ohne Ersatzwert und erzeugt eine gezielte Frage.
-- Eine Warnung ohne Nutzungsgrenze, Prüfauftrag, Frage oder blockierende Folge genügt nicht.
+The Application tree binds its own instructions only. Referenced rules, prompt fragments, document blanks and needed source meaning outside that tree must also be materialized as declared inputs; a pinned Capability follows its separate call contract. Bind no secret values in these files: configured access remains with the harness. New source evidence acquired after opening follows [Work from prerequisites](impacts-method.md#work-from-prerequisites), preserving the existing input set.
 
-Vor `open()` eines Schritts mit `gate: human` prüft das ausführende Harness dessen deklarierte Eingaben und erforderliche Kontrollnachweise. Scheitert diese Vorbedingung, bleibt der bisherige Lauf unverändert. Nach menschlicher Bearbeitung bewertet `pruefung` weiterhin nur die Ausgabe des Gate-Schritts. `freigegeben` oder `abgelehnt` und `freigabe` stammen im realen Vorgang ausschließlich vom Menschen.
+`Content-Digest` is lowercase hexadecimal SHA-256 of raw file bytes, not the aggregate surface hash.
 
-Der allgemeine Validator erzwingt diese Vorbedingung nicht und authentifiziert keine Person. Ein synthetischer Walk kann nur zeigen, dass `open()` keine Route oder Freigabe schreibt und der Abschluss eine extern zugeführte Entscheidungs-Fixture benötigt.
+<a id="sichtbare-ausgabe-und-übergabe"></a>
+## Visible output and handoff
+
+Capability evidence is an ordinary `output/` file in the Capability's own format. It shows bound rule, used inputs, result, executed checks, assumptions and technical use conditions. A parameter table or equivalent block list is sufficient; no receipt schema is introduced.
+
+A local handoff has two records: the Application's expected producer-output → consumer-input mapping per route, declared once at the producer; and the run's byte-identical consumer file with `*-herkunft.md`, attempt-qualified origin relative to the run, and matching Content-Digest.
+
+The reference harness reads this stable sentence syntax:
+
+```markdown
+Bei Route `bestanden`: `output/pruefbericht.md -> arbeitsschritt:entscheiden/input/pruefbericht.md`.
+```
+
+The output path is relative to the producer attempt; `arbeitsschritt:entscheiden` is a target ID, not a folder. This reference harness requires exactly one matching handoff per selected route. Its block/sentence syntax is a local reading convention, not Core schema. Other worksteps may need multiple mappings; their harness must implement each declared mapping before adoption.
+
+Producer `ausgabe_hash` and consumer `eingabe_hash` bind different surfaces. Relative paths participate, so hashes are not compared and do not form a hash chain. The general validator does not verify origin/digest claims; a local harness does where the use requires it.
+
+<a id="rückübertragung-in-geschäftsrecords"></a>
+## Record writeback
+
+Writing a run result to a continuing record or source system is a separately permitted effect of the job. The body names target, change scope, required authority and check. The harness or authorized person uses the configured access. Description alone grants no permission. Apply declared freshness/conflict checks before writing. Preserve declared output evidence naming the target record/version and whether the change was actually confirmed. A request or draft does not establish writeback. Resolve an uncertain target state before retrying. Bound definitions and historical run bytes remain unchanged. These rules also apply without an extracted Capability; Core provides no write service.
+
+<a id="signale-und-human-gate"></a>
+## Signals and human gates
+
+`hypothesis` identifies an expected effect and its validation question. `open` retains a focused question without an invented replacement. A warning needs a use restriction, check, question or blocking consequence.
+
+Before opening `gate: human` or preparing a declared action at a `sacred` customer touchpoint for its responsible human, the executing harness checks declared inputs, required control evidence and the body’s permitted effect and actor. A failed prerequisite leaves the previous run state unchanged. Touchpoint classification grants no execution authority. Changing a `sacred` classification separately requires the applicable human review of the Application; a technical success cannot supply it. After human work, `pruefung` evaluates the gate output. Actual `freigegeben`/`abgelehnt` and `freigabe` come exclusively from the responsible human.
+
+Core validation neither enforces that preflight nor authenticates a person. A synthetic walk establishes only that opening writes no route/approval and completion consumes an external decision fixture.
 
 ## Transport
 
-Eine Application ohne Capability-Aufruf wird allein transportiert. Bei einem Capability-Aufruf wird zusätzlich jedes benötigte Verzeichnis `capabilities/<slug>/` aus derselben Fachrepo-Revision an denselben relativen Pfad materialisiert. Vor dem ersten Vorgang muss `git rev-parse <workspace-revision>:capabilities/<slug>` den in der Application gebundenen Tree-OID ergeben. Fehlt der Pfad oder weicht der OID ab, wird die Capability nicht ausgeführt. Dafür entsteht weder ein Package-Manifest noch ein Resolver im Core.
+Transport an Application alone if it has no Capability calls. Otherwise materialize each needed `capabilities/<slug>/` from the same source repository revision at the same relative path. Before the first run, `git rev-parse <workspace-revision>:capabilities/<slug>` must equal the bound tree OID. Missing or mismatching paths prevent execution. No package manifest or Core resolver is introduced.
 
-## Nicht-Ziele
+## Limits
 
-Keine neue Core-Schema-Eigenschaft, Registry, Resolver, Datenbank, Graph, universelle Ontologie, allgemeiner Extraktor, Pflicht-API, Monitoring-Runtime oder automatische Freigabe.
+The optional [computation example](../06_evaluations/computation-walk/CONTEXT.md) demonstrates parameters, partial results, blockers and scenario comparison. Domain formulas remain at their existing home. It defines no universal computation profile, registry, database, extractor, required API, monitoring service or automatic approval.

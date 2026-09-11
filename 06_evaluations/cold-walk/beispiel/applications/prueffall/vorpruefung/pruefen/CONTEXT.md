@@ -3,6 +3,7 @@ type: arbeitsschritt
 id: arbeitsschritt:pruefen
 eingaben:
   - input/antrag.md
+  - input/antrag-herkunft.md
   - input/pruefregeln.md
   - input/pruefregeln-herkunft.md
 ausgaben:
@@ -21,7 +22,7 @@ Aus dem Antrag einen Prüfbericht erzeugen, der jede Pflichtangabe mit Befund ne
 
 ## Eingaben
 
-`input/antrag.md`: der eingereichte Antrag, bei einer Wiederholung mit den nachgereichten Angaben.
+`input/antrag.md`: der eingereichte Antrag, bei einer Wiederholung die vollständige berichtigte Fassung. `input/antrag-herkunft.md` bindet den Eingang beziehungsweise die Übergabe aus dem vorherigen Versuch.
 
 `input/pruefregeln.md`: materialisierter Snapshot. `input/pruefregeln-herkunft.md`: gebundener Herkunfts- und Kontrollnachweis.
 
@@ -57,6 +58,8 @@ Frühere Prüfberichte anderer Vorgänge.
 `output/pruefbericht.md`.
 
 Bei Route `bestanden`: `output/pruefbericht.md -> arbeitsschritt:entscheiden/input/pruefbericht.md`.
+
+Bei Route `klaerung`: `output/pruefbericht.md -> arbeitsschritt:nachfordern/input/pruefbericht.md`.
 
 ## Prüfung
 

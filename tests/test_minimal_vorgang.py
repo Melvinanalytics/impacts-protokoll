@@ -1,13 +1,16 @@
 from pathlib import Path
+import shutil
 import subprocess
 import sys
 from tempfile import TemporaryDirectory
 
+import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from impacts_protocol import init_workspace, surface_hash, validate
+import impacts_protocol.validator as validator
 from tests.support import read_context, replace_context, write_application, write_context
 
 
@@ -89,6 +92,183 @@ def test_unreachable_application_tree_is_rejected():
         replace_context(run / "CONTEXT.md", metadata)
 
         assert "revision.invalid" in _codes(root)
+
+
+def test_invalid_historical_application_reports_bound_revision_and_field(tmp_path):
+    root, run = _prepare_workspace(tmp_path)
+    healthy = run.parent / "video-002"
+    shutil.copytree(run, healthy)
+    metadata = read_context(healthy / "CONTEXT.md")
+    metadata["id"] = "vorgang:video-002"
+    replace_context(healthy / "CONTEXT.md", metadata)
+
+    path = root / "applications/video/produktion/pruefen/CONTEXT.md"
+    original = path.read_bytes()
+    metadata = read_context(path)
+    metadata["pruefung"] = 42
+    replace_context(path, metadata)
+    _git(root, "add", "applications")
+    _git(root, "commit", "-m", "invalid application fixture")
+    revision = "git-tree:" + _git(root, "rev-parse", "HEAD:applications/video")
+    path.write_bytes(original)
+    metadata = read_context(run / "CONTEXT.md")
+    metadata["application_revision"] = revision
+    replace_context(run / "CONTEXT.md", metadata)
+
+    report = validate(root)
+
+    assert len(report.issues) == 1, report.issues
+    error = report.issues[0]
+    assert error.code == "revision.invalid"
+    assert error.path == "vorgaenge/video-001/CONTEXT.md"
+    assert revision in error.message
+    assert "produktion/pruefen/CONTEXT.md: schema.invalid: /pruefung:" in error.message
+    assert "impacts-application-" not in error.message
+
+
+def test_revision_history_is_reused_within_validation_but_rechecked_after_ref_changes(tmp_path, monkeypatch):
+    root, run = _prepare_workspace(tmp_path)
+    for index in (2, 3):
+        duplicate = run.parent / f"video-{index:03}"
+        shutil.copytree(run, duplicate)
+        metadata = read_context(duplicate / "CONTEXT.md")
+        metadata["id"] = f"vorgang:{duplicate.name}"
+        replace_context(duplicate / "CONTEXT.md", metadata)
+
+    commands = []
+    original_git = validator._git
+    def tracked_git(root, *args, **kwargs):
+        commands.append(args)
+        return original_git(root, *args, **kwargs)
+    monkeypatch.setattr(validator, "_git", tracked_git)
+
+    assert validate(root).valid
+    assert commands.count(("rev-list", "--all")) == 1
+    commit = _git(root, "rev-parse", "HEAD")
+    _git(root, "update-ref", "-d", "refs/heads/main")
+    report = validate(root)
+    assert len(report.issues) == 3, report.issues
+    assert all(issue.code == "revision.invalid" for issue in report.issues)
+    assert commands.count(("rev-list", "--all")) == 2
+
+    _git(root, "update-ref", "refs/heads/main", commit)
+    assert validate(root).valid
+    assert commands.count(("rev-list", "--all")) == 3
+
+
+@pytest.mark.parametrize("entry", [
+    "100644 blob {oid}\t/absolute.txt",
+    "100644 blob {oid}\t../outside.txt",
+    "100644 blob {oid}\ta/../../outside.txt",
+    "100644 blob {oid}\tCONTEXT.md ",
+    "100644 blob {oid}\tCONTEXT.md.",
+    "100644 blob {oid}\ta\\CONTEXT.md",
+    "100644 blob {oid}\tCONTEXT.md:stream",
+    "100644 blob {oid}\tNUL.txt",
+    "100644 blob {oid}\tCON .txt",
+    "100644 blob {oid}\tCOM¹",
+    "100644 blob {oid}\tcontrol\x01.md",
+    "120000 blob {oid}\tlink",
+    "160000 commit {oid}\tsubmodule",
+    "malformed",
+])
+def test_unsafe_git_tree_is_rejected_without_writing_outside_target(tmp_path, monkeypatch, entry):
+    target = tmp_path / "extracted"
+    target.mkdir()
+    outside = tmp_path / "outside.txt"
+    outside.write_bytes(b"preserve")
+    listing = entry.format(oid="a" * 40) + "\0"
+    monkeypatch.setattr(validator, "_git", lambda *args, **kwargs: listing)
+
+    assert not validator._materialize_tree(tmp_path, "a" * 40, target)
+    assert list(target.iterdir()) == []
+    assert outside.read_bytes() == b"preserve"
+
+
+@pytest.mark.parametrize("listing", [
+    "100644 blob {oid}\tCONTEXT.md\0" * 2,
+    "100644 blob {oid}\tparent\0" "100644 blob {oid}\tparent/child\0",
+    "100644 blob {oid}\tsafe.txt\0" "120000 blob {oid}\tlink\0",
+])
+def test_conflicting_git_paths_are_rejected_before_materialization(tmp_path, monkeypatch, listing):
+    monkeypatch.setattr(validator, "_git", lambda *args, **kwargs: listing.format(oid="a" * 40))
+    assert not validator._materialize_tree(tmp_path, "a" * 40, tmp_path)
+    assert list(tmp_path.iterdir()) == []
+
+
+def test_reachable_application_with_duplicate_git_paths_is_rejected(tmp_path):
+    root, run = _prepare_workspace(tmp_path)
+    original = _git(root, "rev-parse", "HEAD:applications/video")
+    rows = _git(root, "ls-tree", original).splitlines()
+    context = next(row for row in rows if row.endswith("\tCONTEXT.md"))
+
+    def make_tree(rows):
+        return subprocess.check_output(
+            ["git", "-C", str(root), "mktree"],
+            input="\n".join(rows) + "\n", text=True,
+        ).strip()
+
+    duplicate = make_tree(rows + [context])
+    applications = make_tree([f"040000 tree {duplicate}\tvideo"])
+    root_rows = _git(root, "ls-tree", "HEAD^{tree}").splitlines()
+    root_rows = [row for row in root_rows if not row.endswith("\tapplications")]
+    malformed_root = make_tree(root_rows + [f"040000 tree {applications}\tapplications"])
+    commit = _git(root, "commit-tree", malformed_root, "-p", "HEAD", "-m", "duplicate path fixture")
+    _git(root, "update-ref", "refs/heads/main", commit)
+    metadata = read_context(run / "CONTEXT.md")
+    metadata["application_revision"] = f"git-tree:{duplicate}"
+    replace_context(run / "CONTEXT.md", metadata)
+
+    assert _git(root, "rev-parse", "HEAD:applications/video") == duplicate
+    report = validate(root)
+    assert not report.valid
+    assert "revision.invalid" in {issue.code for issue in report.issues}
+
+
+def test_bound_tree_ignores_archive_attributes_and_preserves_binary_bytes(tmp_path):
+    root, _ = _prepare_workspace(tmp_path)
+    application = root / "applications/video"
+    payload = b"\x00\xffliteral $Format:%H$\n"
+    (application / "payload.bin").write_bytes(payload)
+    (application / ".gitattributes").write_text("payload.bin export-ignore\n*.md export-subst\n")
+    _git(root, "add", "applications")
+    _git(root, "commit", "-m", "archive attributes fixture")
+    oid = _git(root, "rev-parse", "HEAD:applications/video")
+    target = tmp_path / "materialized"
+    target.mkdir()
+
+    assert validator._materialize_tree(root, oid, target)
+    assert (target / "payload.bin").read_bytes() == payload
+    assert (target / "produktion/pruefen/CONTEXT.md").read_bytes() == (application / "produktion/pruefen/CONTEXT.md").read_bytes()
+
+
+def test_unreadable_git_tree_returns_failure_without_writing(tmp_path, monkeypatch):
+    monkeypatch.setattr(validator, "_git", lambda *args, **kwargs: None)
+    assert not validator._materialize_tree(tmp_path, "a" * 40, tmp_path)
+    assert list(tmp_path.iterdir()) == []
+
+
+def test_tree_at_another_application_slug_does_not_authorize_a_run(tmp_path):
+    root, _ = _prepare_workspace(tmp_path)
+    _git(root, "mv", "applications/video", "applications/other")
+    _git(root, "commit", "--amend", "-m", "wrong application location")
+    assert "revision.invalid" in _codes(root)
+
+
+def test_replacement_tree_cannot_change_bound_application_bytes(tmp_path):
+    root, run = _prepare_workspace(tmp_path)
+    oid = read_context(run / "CONTEXT.md")["application_revision"].removeprefix("git-tree:")
+    path = root / "applications/video/produktion/pruefen/CONTEXT.md"
+    metadata = read_context(path)
+    metadata["pruefung"] = 42
+    replace_context(path, metadata)
+    _git(root, "add", "applications")
+    _git(root, "commit", "-m", "invalid replacement fixture")
+    replacement = _git(root, "rev-parse", "HEAD:applications/video")
+    _git(root, "checkout", "HEAD^", "--", "applications")
+    _git(root, "replace", oid, replacement)
+
+    assert validate(root).valid
 
 
 def test_laufpfad_must_start_at_application_entry():
@@ -229,3 +409,124 @@ def test_hash_surface_rejects_a_directory_symlink():
         input_root.symlink_to(external, target_is_directory=True)
 
         assert "structure.symlink" in _codes(root)
+
+
+@pytest.mark.parametrize("language", ["en", "de"])
+@pytest.mark.parametrize("contents", ["empty", "application", "populated"])
+def test_git_clone_preserves_workspace_validation(tmp_path, language, contents):
+    if contents == "populated":
+        root, _ = _prepare_workspace(tmp_path)
+    else:
+        root = init_workspace(tmp_path / "kunde", language=language)
+        if contents == "application":
+            write_application(root / "applications/video")
+        _git(root, "init", "-b", "main")
+        _git(root, "config", "user.email", "test@example.invalid")
+        _git(root, "config", "user.name", "Test")
+    assert validate(root).valid
+    _git(root, "add", ".")
+    _git(root, "commit", "-m", "captured workspace")
+    clone = tmp_path / "clone"
+    _git(tmp_path, "clone", "--quiet", str(root), str(clone))
+    assert validate(clone).valid
+    assert _git(clone, "status", "--porcelain") == ""
+    if contents == "empty":
+        assert not (clone / "applications").exists()
+    if contents != "populated":
+        assert not (clone / "vorgaenge").exists()
+    with pytest.raises(FileExistsError):
+        init_workspace(clone)
+
+
+@pytest.mark.parametrize("collection", ["applications", "vorgaenge"])
+@pytest.mark.parametrize("kind,code", [("file", "structure.invalid"), ("symlink", "structure.symlink"), ("placeholder", "structure.invalid"), ("invalid-child", "routing.missing")])
+def test_empty_collection_rule_preserves_invalid_entry_rejection(tmp_path, collection, kind, code):
+    root = init_workspace(tmp_path / "kunde")
+    path = root / collection
+    if kind in {"file", "symlink"}:
+        path.rmdir()
+        if kind == "file":
+            path.write_text("invalid collection")
+        else:
+            path.symlink_to(tmp_path / "missing", target_is_directory=True)
+    elif kind == "placeholder":
+        (path / ".gitkeep").write_text("")
+    else:
+        (path / "invalid").mkdir()
+    assert code in _codes(root)
+
+
+def test_approval_timestamp_is_a_string_under_the_actual_loader(tmp_path):
+    from impacts_protocol.io import load_frontmatter_and_body
+    from impacts_protocol.generator import template_text
+    path = tmp_path / "CONTEXT.md"
+    path.write_text(template_text("vorgang"))
+    document, _ = load_frontmatter_and_body(path)
+    entry = document['laufpfad'][0]
+    entry.update(status='abgeschlossen', gewaehlte_route='freigegeben', ausgabe_hash='sha256:' + 'b' * 64,
+                 freigabe={'by': 'human:synthetic', 'at': '2026-08-30T10:00:00+02:00'})
+    replace_context(path, document)
+    loaded, _ = load_frontmatter_and_body(path)
+    assert list(validator.SCHEMA_REGISTRY.errors("vorgang", loaded)) == []
+    # PyYAML quotes timestamp-looking strings. Removing those quotes reproduces
+    # the invalid YAML timestamp type without weakening the schema.
+    text = path.read_text().replace("'2026-08-30T10:00:00+02:00'", '2026-08-30T10:00:00+02:00')
+    assert text != path.read_text()
+    path.write_text(text)
+    loaded, _ = load_frontmatter_and_body(path)
+    assert list(validator.SCHEMA_REGISTRY.errors("vorgang", loaded))
+
+
+def test_definition_memo_keeps_snapshots_alive_and_checks_each_run(tmp_path, monkeypatch):
+    root, run = _prepare_workspace(tmp_path)
+    second = run.parent / 'video-002'
+    shutil.copytree(run, second)
+    metadata = read_context(second / 'CONTEXT.md')
+    metadata['id'] = 'vorgang:video-002'
+    replace_context(second / 'CONTEXT.md', metadata)
+    (second / 'start/001/input/auftrag.md').write_text('corruption under a shared definition')
+    targets = []
+    original_materialize = validator._materialize_tree
+    original_resolve = validator._resolve_application
+
+    def materialize(workspace, oid, target):
+        targets.append(target)
+        return original_materialize(workspace, oid, target)
+
+    def resolve(*args, **kwargs):
+        application = original_resolve(*args, **kwargs)
+        assert application.root.is_dir()
+        assert all((path / 'CONTEXT.md').is_file() for path, _ in application.arbeitsschritte.values())
+        return application
+
+    monkeypatch.setattr(validator, '_materialize_tree', materialize)
+    monkeypatch.setattr(validator, '_resolve_application', resolve)
+    report = validate(root)
+    assert len(targets) == 1
+    assert all(not path.exists() for path in targets)
+    assert any(issue.code == 'hash.mismatch' and 'video-002' in issue.path for issue in report.issues)
+    assert all('video-001' not in issue.path for issue in report.issues)
+
+
+def test_invalid_definition_memo_attributes_each_run(tmp_path, monkeypatch):
+    root, run = _prepare_workspace(tmp_path)
+    path = root / 'applications/video/produktion/start/CONTEXT.md'
+    metadata = read_context(path)
+    metadata['pruefung'] = 42
+    replace_context(path, metadata)
+    _git(root, 'add', 'applications')
+    _git(root, 'commit', '-m', 'synthetic invalid definition')
+    metadata = read_context(run / 'CONTEXT.md')
+    metadata['application_revision'] = 'git-tree:' + _git(root, 'rev-parse', 'HEAD:applications/video')
+    replace_context(run / 'CONTEXT.md', metadata)
+    second = run.parent / 'video-002'
+    shutil.copytree(run, second)
+    metadata['id'] = 'vorgang:video-002'
+    replace_context(second / 'CONTEXT.md', metadata)
+    from unittest.mock import patch
+    with patch.object(validator, '_materialize_tree', wraps=validator._materialize_tree) as materialize:
+        report = validate(root)
+    assert materialize.call_count == 1
+    errors = [issue for issue in report.issues if issue.code == 'revision.invalid']
+    assert [issue.path for issue in errors] == ['vorgaenge/video-001/CONTEXT.md', 'vorgaenge/video-002/CONTEXT.md']
+    assert errors[0].message == errors[1].message
