@@ -21,12 +21,6 @@ sys.path.insert(0, str(ROOT / "src"))
 from impacts_protocol import init_workspace, surface_hash, validate
 from impacts_protocol.io import load_frontmatter_and_body
 
-_answer_spec = importlib.util.spec_from_file_location(f"{__name__}_source_answer", Path(__file__).resolve().with_name("answer.py"))
-_answer = importlib.util.module_from_spec(_answer_spec)
-sys.modules[_answer_spec.name] = _answer
-_answer_spec.loader.exec_module(_answer)
-Section, extract = _answer.Section, _answer.extract
-
 DOCUMENT = ROOT / "02_protocol/impacts-architect/references/datenbezug.md"
 # These exact unanchored section names and block kinds are this fixture's source interface.
 SOURCE_BLOCKS = {"Concrete run inputs": "json", "Document blank": "text", "English document blank": "text"}
@@ -43,7 +37,12 @@ TEMPLATE_SHA256 = {
 def block(heading: str, kind: str) -> str:
     if SOURCE_BLOCKS.get(heading) != kind:
         raise ValueError("unsupported fixture section or block kind")
-    section = extract(DOCUMENT.read_bytes(), Section(str(DOCUMENT), heading)).decode("utf-8")
+    # The live source parser belongs to fixture generation, never bound-run checks.
+    spec = importlib.util.spec_from_file_location(f"{__name__}_source_answer", Path(__file__).resolve().with_name("answer.py"))
+    answer = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = answer
+    spec.loader.exec_module(answer)
+    section = answer.extract(DOCUMENT.read_bytes(), answer.Section(str(DOCUMENT), heading)).decode("utf-8")
     # Match whole fences, so a nested example cannot supply the requested block.
     fences = re.finditer(
         r"(?ms)^ {0,3}(`{3,})([^\n]*)\n(.*?)^ {0,3}\1`*[ \t]*$"

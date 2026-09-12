@@ -230,8 +230,48 @@ def test_fixture_parser_ignores_an_unrelated_preloaded_answer_module(monkeypatch
     isolated = importlib.util.module_from_spec(isolated_spec)
     isolated_spec.loader.exec_module(isolated)
     assert isolated.fixture() == walk.fixture()
-    assert Path(isolated.extract.__code__.co_filename) == Path(walk.__file__).resolve().with_name("answer.py")
+    parser = sys.modules[f"{isolated_spec.name}_source_answer"]
+    assert Path(parser.extract.__code__.co_filename) == Path(walk.__file__).resolve().with_name("answer.py")
     assert sys.modules["answer"] is unrelated and sys.path.count(sibling) == prior_lookup_count
+
+
+@pytest.mark.parametrize("language", ["de", "en"])
+@pytest.mark.parametrize("sibling_state", ["changed", "missing", "malicious"])
+def test_historical_checks_and_handoff_do_not_load_the_factory_parser(tmp_path, language, sibling_state):
+    values = walk.fixture()
+    root = walk.open_offer(tmp_path / "offer", values, language)
+    expected, report = walk.checked_offer(root)
+    before = files(root)
+    del values["items"][0]["unit_price"]
+    gap_root = walk.open_offer(tmp_path / "gap", values, language)
+    gap_before = files(gap_root)
+    implementation = tmp_path / "isolated/06_evaluations/offer-walk/run.py"
+    implementation.parent.mkdir(parents=True)
+    implementation.write_bytes(Path(walk.__file__).read_bytes())
+    marker = tmp_path / "factory-parser-executed"
+    if sibling_state == "changed":
+        implementation.with_name("answer.py").write_text("raise RuntimeError('changed factory parser must not execute')\n")
+    elif sibling_state == "malicious":
+        implementation.with_name("answer.py").write_text(
+            f"from pathlib import Path\nPath({str(marker)!r}).write_text('executed')\nraise RuntimeError('malicious factory parser')\n")
+    isolated_spec = importlib.util.spec_from_file_location(f"historical_offer_{language}_{sibling_state}", implementation)
+    isolated = importlib.util.module_from_spec(isolated_spec)
+    isolated_spec.loader.exec_module(isolated)
+    assert implementation.read_bytes() == (root / walk.RUN / "entwerfen/001/input/renderer.py").read_bytes()
+    assert isolated.validate(root).valid and isolated.validate(gap_root).valid
+    assert isolated.checked_offer(root) == (expected, report)
+    with pytest.raises(ValueError, match="no missing price to clarify"):
+        isolated.prepare_gap(root)
+    assert files(root) == before
+    gap = isolated.prepare_gap(gap_root)
+    assert files(gap_root) == {**gap_before, f"{walk.RUN}/entwerfen/001/output/angebot.md": gap.encode()}
+    isolated.handoff(root, expected)
+    assert isolated.validate(root).valid and isolated.validate(gap_root).valid
+    metadata, _ = isolated.load_frontmatter_and_body(root / walk.RUN / "CONTEXT.md")
+    assert metadata["laufpfad"][-1]["status"] == "aktiv" and "gewaehlte_route" not in metadata["laufpfad"][-1]
+    for name in ("angebot.md", "pruefbericht.json"):
+        assert (root / walk.RUN / "freigeben/001/input" / name).read_bytes() == (root / walk.RUN / "entwerfen/001/output" / name).read_bytes()
+    assert not marker.exists() and f"{isolated_spec.name}_source_answer" not in sys.modules
 
 
 @pytest.mark.parametrize("language", ["de", "en"])
