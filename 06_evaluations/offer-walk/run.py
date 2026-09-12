@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 from decimal import Decimal, DecimalException, Inexact, localcontext
 import hashlib
+import importlib.util
 import json
 import os
 from pathlib import Path
@@ -20,7 +21,15 @@ sys.path.insert(0, str(ROOT / "src"))
 from impacts_protocol import init_workspace, surface_hash, validate
 from impacts_protocol.io import load_frontmatter_and_body
 
+_answer_spec = importlib.util.spec_from_file_location(f"{__name__}_source_answer", Path(__file__).resolve().with_name("answer.py"))
+_answer = importlib.util.module_from_spec(_answer_spec)
+sys.modules[_answer_spec.name] = _answer
+_answer_spec.loader.exec_module(_answer)
+Section, extract = _answer.Section, _answer.extract
+
 DOCUMENT = ROOT / "02_protocol/impacts-architect/references/datenbezug.md"
+# These exact unanchored section names and block kinds are this fixture's source interface.
+SOURCE_BLOCKS = {"Concrete run inputs": "json", "Document blank": "text", "English document blank": "text"}
 RUN = "vorgaenge/angebot-001"
 APP = "applications/angebot-erstellen"
 UNITS = {"P-10": {"de": "Stück", "en": "piece"}, "S-20": {"de": "Stunde", "en": "hour"}}
@@ -32,8 +41,18 @@ TEMPLATE_SHA256 = {
 
 
 def block(heading: str, kind: str) -> str:
-    section = DOCUMENT.read_text().split(f"### {heading}\n", 1)[1]
-    return re.search(r"```" + kind + r"\n(.*?)\n```", section, re.S)[1]
+    if SOURCE_BLOCKS.get(heading) != kind:
+        raise ValueError("unsupported fixture section or block kind")
+    section = extract(DOCUMENT.read_bytes(), Section(str(DOCUMENT), heading)).decode("utf-8")
+    # Match whole fences, so a nested example cannot supply the requested block.
+    fences = re.finditer(
+        r"(?ms)^ {0,3}(`{3,})([^\n]*)\n(.*?)^ {0,3}\1`*[ \t]*$"
+        r"|^ {0,3}(~{3,})([^\n]*)\n(.*?)^ {0,3}\4~*[ \t]*$", section)
+    matches = [body.removesuffix("\n") for fence in fences
+               for label, body in ((fence[2], fence[3]), (fence[5], fence[6])) if label == kind]
+    if len(matches) != 1:
+        raise ValueError(f"missing or duplicate {kind} block in {heading}")
+    return matches[0]
 
 
 def fixture() -> dict:
@@ -111,9 +130,9 @@ def fill_offer(template: str, values: dict, *, language: str = "de") -> str:
 
 
 def open_offer(target: Path, values: dict, language: str) -> Path:
-    root = init_workspace(target, language=language)
     de = language == "de"
     template = block("Document blank" if de else "English document blank", "text")
+    root = init_workspace(target, language=language)
     sources = {"data.json": encode(values), "template.md": template,
                "language.md": f"Working language: {language}\n",
                "renderer.py": Path(__file__).read_text(),
@@ -122,13 +141,21 @@ def open_offer(target: Path, values: dict, language: str) -> Path:
         path = root / "grundlagen" / name
         path.parent.mkdir(exist_ok=True)
         path.write_text(text)
-    rule = "Prüfbarer interner Angebotsentwurf; Versand nicht erlaubt." if de else "Reviewable internal offer draft; sending is not permitted."
+    result = "Menschlich freigegebener interner Angebotsentwurf" if de else "Human-approved internal offer draft"
+    scope = f"Ziel: {result}. Versand ist nicht erlaubt." if de else f"Target: {result}. Sending is not permitted."
+    acceptance = [
+        "Die geprüften Fassungen von input/angebot.md und input/pruefbericht.json liegen als gebundene Eingaben bei arbeitsschritt:freigeben vor.",
+        "Die verantwortliche Person hat ihre begründete Entscheidung freigegeben zu diesen gebundenen Eingaben in output/entscheidung.md von arbeitsschritt:freigeben dokumentiert; die gewählte Route freigegeben nach end:entwurf-freigegeben ist aufgezeichnet.",
+    ] if de else [
+        "The checked revisions of input/angebot.md and input/pruefbericht.json are present as bound inputs at arbeitsschritt:freigeben.",
+        "The responsible person's reasoned freigegeben decision on those bound inputs is recorded in output/entscheidung.md at arbeitsschritt:freigeben; the selected freigegeben route to end:entwurf-freigegeben is recorded.",
+    ]
     write_context(root / APP / "CONTEXT.md", {
         "type": "hauptprozess", "id": "hauptprozess:angebot-erstellen",
-        "leistung": {"ergebnis": rule, "kennzahl": "Durchlaufzeit" if de else "Lead time", "abnahme": [rule]},
-        "einstieg_ref": "arbeitsschritt:entwerfen"}, rule)
+        "leistung": {"ergebnis": result, "kennzahl": "Durchlaufzeit" if de else "Lead time", "abnahme": acceptance},
+        "einstieg_ref": "arbeitsschritt:entwerfen"}, scope)
     write_context(root / APP / "ausarbeitung/CONTEXT.md", {
-        "type": "teilprozess", "id": "teilprozess:ausarbeitung", "ergebnis": rule}, rule)
+        "type": "teilprozess", "id": "teilprozess:ausarbeitung", "ergebnis": result}, scope)
     inputs = [f"input/{name}" for name in sources] + ["input/herkunft.json"]
     write_context(root / APP / "ausarbeitung/entwerfen/CONTEXT.md", {
         "type": "arbeitsschritt", "id": "arbeitsschritt:entwerfen", "eingaben": inputs,
@@ -145,8 +172,8 @@ def open_offer(target: Path, values: dict, language: str) -> Path:
          "Check: The local harness executes checked_offer and binds the actual output/pruefbericht.json report to inputs, rules and output.\n"
          "Failure: No handoff; the current step stays active. A later closure through fehlerhaft leads to end:ungeklaert.\n") +
         "Working language: " + language + "\n" +
-        "Route `bestanden`: `output/angebot.md -> arbeitsschritt:freigeben/input/angebot.md`.\n" +
-        "Route `bestanden`: `output/pruefbericht.json -> arbeitsschritt:freigeben/input/pruefbericht.json`.")
+        "Bei Route `bestanden`: `output/angebot.md -> arbeitsschritt:freigeben/input/angebot.md`.\n" +
+        "Bei Route `bestanden`: `output/pruefbericht.json -> arbeitsschritt:freigeben/input/pruefbericht.json`.")
     write_context(root / APP / "ausarbeitung/freigeben/CONTEXT.md", {
         "type": "arbeitsschritt", "id": "arbeitsschritt:freigeben",
         "eingaben": ["input/angebot.md", "input/pruefbericht.json", "input/herkunft.json"],
@@ -216,8 +243,9 @@ def bound_inputs(root: Path) -> tuple[dict, Path, str, str]:
     if f"Working language: {language}\n" not in definition:
         raise ValueError("working language differs from bound Application")
     expected_mappings = {(f"output/{name}", f"arbeitsschritt:freigeben/input/{name}") for name in ("angebot.md", "pruefbericht.json")}
-    actual_mappings = re.findall(r'Route `bestanden`: `(output/[^` ]+) -> ([^` ]+)`', definition)
-    if len(actual_mappings) != 2 or set(actual_mappings) != expected_mappings:
+    mapping_lines = [line for line in definition.splitlines() if 'Route `bestanden`' in line]
+    actual_mappings = re.findall(r'(?m)^Bei Route `bestanden`: `(output/[^` ]+) -> (arbeitsschritt:[^` ]+)`\.$', definition)
+    if len(mapping_lines) != 2 or len(actual_mappings) != 2 or set(actual_mappings) != expected_mappings:
         raise ValueError("unsupported bound handoff mappings")
     # The example supports exactly the published fixed blanks, not arbitrary translated prose.
     blank = (attempt / "input/template.md").read_bytes()

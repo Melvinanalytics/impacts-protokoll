@@ -4,8 +4,8 @@ For an existing definition, follow [Use](02_protocol/ontology.md#use); for missi
 
 | Intent | Authority pointers |
 |---|---|
-| Workstep prompt, tools, data, source binding, processing or new evidence | [Compose an Arbeitsschritt](02_protocol/impacts-method.md#compose-an-arbeitsschritt) · [Snapshot and provenance](02_protocol/capabilities.md#snapshot-und-herkunftsnachweis) · [Work from prerequisites](02_protocol/impacts-method.md#work-from-prerequisites) · [Ontology enforcement](02_protocol/ontology.md#enforcement-and-completion) |
-| Products/services → bounded process and file home | [Reverse-engineer a product or service](02_protocol/impacts-method.md#reverse-engineer-a-product-or-service) · [Native topology and boundaries](02_protocol/impacts-architect/references/formwahl.md#native-topology-and-boundaries) · [Ontology inference](02_protocol/ontology.md#meaning-and-valid-inference) |
-| Filled offer → agreement, delivery or service coverage | [Ontology inference](02_protocol/ontology.md#meaning-and-valid-inference) · [Checkable linked-data questions](02_protocol/impacts-architect/references/datenbezug.md#prüfbare-fragen-und-grenzen) · [Catalog-to-offer example](02_protocol/impacts-architect/references/datenbezug.md#vom-katalog-über-die-pipeline-zum-ausgefüllten-angebot) · [Ontology enforcement](02_protocol/ontology.md#enforcement-and-completion) |
+| Protocol meaning, work design, source binding or a business question | [Protocol task routes](02_protocol/CONTEXT.md#task-routes) |
+| Executable examples and structural limits | [Core evaluations](06_evaluations/CONTEXT.md) |
+| Initialization, templates, hashing or validation | [CLI implementation](src/impacts_protocol/) |
 
-For other concerns, use the [protocol router](02_protocol/CONTEXT.md), [language contract](02_protocol/language.md), [core evaluations](06_evaluations/CONTEXT.md). For initialization or validation use [`src/impacts_protocol/`](src/impacts_protocol/). Do not load unrelated branches or scan the repository to discover a home.
+For customer-readable work, apply the [language contract](02_protocol/language.md). Follow the selected route's conditional links; do not load unrelated branches or scan the repository to discover a home.
