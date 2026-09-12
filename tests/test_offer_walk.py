@@ -21,7 +21,22 @@ def test_actual_run_checks_and_binds_both_outputs_before_pending_human_gate(tmp_
     values = walk.fixture()
     before = copy.deepcopy(values)
     root = walk.open_offer(tmp_path / language, values, language)
+    application, _ = walk.load_frontmatter_and_body(root / walk.APP / "CONTEXT.md")
+    subprocess_definition, _ = walk.load_frontmatter_and_body(root / walk.APP / "ausarbeitung/CONTEXT.md")
+    gate_definition, _ = walk.load_frontmatter_and_body(root / walk.APP / "ausarbeitung/freigeben/CONTEXT.md")
+    assert application["leistung"]["ergebnis"] == subprocess_definition["ergebnis"] == (
+        "Menschlich freigegebener interner Angebotsentwurf" if language == "de" else "Human-approved internal offer draft")
+    draft_condition, decision_condition = application["leistung"]["abnahme"]
+    assert all(gate_definition["id"] in condition for condition in (draft_condition, decision_condition))
+    decision_output, = gate_definition["ausgaben"]
+    assert decision_output == "output/entscheidung.md" and decision_output in decision_condition
+    assert gate_definition["gate"] == "human"
+    assert gate_definition["routen"]["freigegeben"] == "end:entwurf-freigegeben"
+    assert gate_definition["routen"]["freigegeben"] in decision_condition
     _, instruction = walk.load_frontmatter_and_body(root / walk.APP / "ausarbeitung/entwerfen/CONTEXT.md")
+    assert [line for line in instruction.splitlines() if 'Route `bestanden`' in line] == [
+        f'Bei Route `bestanden`: `output/{name} -> arbeitsschritt:freigeben/input/{name}`.'
+        for name in ('angebot.md', 'pruefbericht.json')]
     for label in (("Basis:", "Prüfung:", "Fehlerfolge:") if language == "de" else ("Basis:", "Check:", "Failure:")):
         assert label in instruction
     result, report = walk.checked_offer(root)
@@ -32,8 +47,10 @@ def test_actual_run_checks_and_binds_both_outputs_before_pending_human_gate(tmp_
     assert metadata["laufpfad"][0]["gewaehlte_route"] == "bestanden"
     gate = metadata["laufpfad"][-1]
     assert gate["status"] == "aktiv" and "freigabe" not in gate and "gewaehlte_route" not in gate
+    assert "ausgabe_hash" not in gate and not (root / walk.RUN / "freigeben/001" / decision_output).exists()
     assert ("menschliche entscheidung" if language == "de" else "human decision") in body.lower()
     for name in ("angebot.md", "pruefbericht.json"):
+        assert f"input/{name}" in gate_definition["eingaben"] and f"input/{name}" in draft_condition
         producer = root / walk.RUN / "entwerfen/001/output" / name
         consumer = root / walk.RUN / "freigeben/001/input" / name
         assert producer.read_bytes() == consumer.read_bytes()
@@ -139,6 +156,167 @@ def test_example_source_change_does_not_invalidate_bound_template(tmp_path, monk
     assert result == expected
     walk.handoff(root, result)
     assert walk.validate(root).valid
+
+
+@pytest.mark.parametrize("heading,kind", list(walk.SOURCE_BLOCKS.items()))
+@pytest.mark.parametrize("opening,closing", [("```", "````"), ("~~~~", "~~~~~")])
+def test_fixture_block_preserves_fenced_headings_and_stops_before_next_anchor(tmp_path, monkeypatch, heading, kind, opening, closing):
+    expected = f"### {heading}\nThis heading is block content.\n"
+    source = tmp_path / "example.md"
+    source.write_text(f"### {heading}\n\nEdited explanatory prose.\n\n{opening}{kind}\n{expected}\n{closing}\n\n"
+                      f'<a id="next"></a>\n### Next section\n\n```{kind}\nlater block\n```\n')
+    monkeypatch.setattr(walk, "DOCUMENT", source)
+    assert walk.block(heading, kind) == expected
+
+
+@pytest.mark.parametrize("heading,kind", list(walk.SOURCE_BLOCKS.items()))
+@pytest.mark.parametrize("mutation,error", [
+    ("missing-heading", "missing or duplicate heading"),
+    ("duplicate-heading", "missing or duplicate heading"),
+    ("missing-block", "missing or duplicate .* block"),
+    ("duplicate-block", "missing or duplicate .* block"),
+    ("nested-example", "missing or duplicate .* block"),
+])
+def test_fixture_block_never_falls_through_to_another_section(tmp_path, monkeypatch, heading, kind, mutation, error):
+    selected = f"### {heading}\n\n```{kind}\nselected\n```\n"
+    if mutation == "missing-heading":
+        selected = selected.replace(heading, "Unrelated section")
+    elif mutation == "duplicate-heading":
+        selected += f"\n### {heading}\nDuplicate name.\n"
+    elif mutation == "missing-block":
+        selected = f"### {heading}\n\nOrdinary prose only.\n"
+    elif mutation == "duplicate-block":
+        selected += f"\n```{kind}\nduplicate\n```\n"
+    else:
+        selected = f"### {heading}\n\n~~~~markdown\n```{kind}\nquoted example\n```\n~~~~~\n"
+    # A matching later block must never repair a missing or ambiguous selection.
+    source = tmp_path / "changed-example.md"
+    source.write_text(selected + f'\n<a id="later"></a>\n### Later section\n\n```{kind}\nlater\n```\n')
+    monkeypatch.setattr(walk, "DOCUMENT", source)
+    before = files(tmp_path)
+    with pytest.raises(ValueError, match=error):
+        walk.block(heading, kind)
+    assert files(tmp_path) == before
+
+
+@pytest.mark.parametrize("language", ["de", "en"])
+def test_prose_edits_preserve_fixture_values_and_bound_checks(tmp_path, monkeypatch, language):
+    values = walk.fixture()
+    heading = "Document blank" if language == "de" else "English document blank"
+    blank = walk.block(heading, "text")
+    source = tmp_path / "edited-example.md"
+    source.write_text(walk.DOCUMENT.read_text().replace(
+        f"### {heading}\n", f"### {heading}\n\nRevised explanatory prose; fixture values remain unchanged.\n"))
+    monkeypatch.setattr(walk, "DOCUMENT", source)
+    assert walk.fixture() == values and walk.block(heading, "text") == blank
+    root = walk.open_offer(tmp_path / language, values, language)
+    expected, report = walk.checked_offer(root)
+    source.write_text("# Later source revision\n\nThe old sections have been removed.\n")
+    before = files(root)
+    assert walk.checked_offer(root) == (expected, report)
+    assert files(root) == before
+    walk.handoff(root, expected)
+    assert walk.validate(root).valid
+
+
+def test_fixture_parser_ignores_an_unrelated_preloaded_answer_module(monkeypatch):
+    from types import ModuleType
+
+    unrelated = ModuleType("answer")
+    monkeypatch.setitem(sys.modules, "answer", unrelated)
+    sibling = str(Path(walk.__file__).resolve().parent)
+    prior_lookup_count = sys.path.count(sibling)
+    isolated_spec = importlib.util.spec_from_file_location("isolated_offer_renderer", Path(walk.__file__))
+    isolated = importlib.util.module_from_spec(isolated_spec)
+    isolated_spec.loader.exec_module(isolated)
+    assert isolated.fixture() == walk.fixture()
+    parser = sys.modules[f"{isolated_spec.name}_source_answer"]
+    assert Path(parser.extract.__code__.co_filename) == Path(walk.__file__).resolve().with_name("answer.py")
+    assert sys.modules["answer"] is unrelated and sys.path.count(sibling) == prior_lookup_count
+
+
+@pytest.mark.parametrize("language", ["de", "en"])
+@pytest.mark.parametrize("sibling_state", ["changed", "missing", "malicious"])
+def test_historical_checks_and_handoff_do_not_load_the_factory_parser(tmp_path, language, sibling_state):
+    values = walk.fixture()
+    root = walk.open_offer(tmp_path / "offer", values, language)
+    expected, report = walk.checked_offer(root)
+    before = files(root)
+    del values["items"][0]["unit_price"]
+    gap_root = walk.open_offer(tmp_path / "gap", values, language)
+    gap_before = files(gap_root)
+    implementation = tmp_path / "isolated/06_evaluations/offer-walk/run.py"
+    implementation.parent.mkdir(parents=True)
+    implementation.write_bytes(Path(walk.__file__).read_bytes())
+    marker = tmp_path / "factory-parser-executed"
+    if sibling_state == "changed":
+        implementation.with_name("answer.py").write_text("raise RuntimeError('changed factory parser must not execute')\n")
+    elif sibling_state == "malicious":
+        implementation.with_name("answer.py").write_text(
+            f"from pathlib import Path\nPath({str(marker)!r}).write_text('executed')\nraise RuntimeError('malicious factory parser')\n")
+    isolated_spec = importlib.util.spec_from_file_location(f"historical_offer_{language}_{sibling_state}", implementation)
+    isolated = importlib.util.module_from_spec(isolated_spec)
+    isolated_spec.loader.exec_module(isolated)
+    assert implementation.read_bytes() == (root / walk.RUN / "entwerfen/001/input/renderer.py").read_bytes()
+    assert isolated.validate(root).valid and isolated.validate(gap_root).valid
+    assert isolated.checked_offer(root) == (expected, report)
+    with pytest.raises(ValueError, match="no missing price to clarify"):
+        isolated.prepare_gap(root)
+    assert files(root) == before
+    gap = isolated.prepare_gap(gap_root)
+    assert files(gap_root) == {**gap_before, f"{walk.RUN}/entwerfen/001/output/angebot.md": gap.encode()}
+    isolated.handoff(root, expected)
+    assert isolated.validate(root).valid and isolated.validate(gap_root).valid
+    metadata, _ = isolated.load_frontmatter_and_body(root / walk.RUN / "CONTEXT.md")
+    assert metadata["laufpfad"][-1]["status"] == "aktiv" and "gewaehlte_route" not in metadata["laufpfad"][-1]
+    for name in ("angebot.md", "pruefbericht.json"):
+        assert (root / walk.RUN / "freigeben/001/input" / name).read_bytes() == (root / walk.RUN / "entwerfen/001/output" / name).read_bytes()
+    assert not marker.exists() and f"{isolated_spec.name}_source_answer" not in sys.modules
+
+
+@pytest.mark.parametrize("language", ["de", "en"])
+def test_historical_run_remains_core_valid_but_cannot_execute_with_a_new_renderer(tmp_path, language):
+    root = walk.open_offer(tmp_path / language, walk.fixture(), language)
+    candidate, _ = walk.checked_offer(root)
+    before = files(root)
+    implementation = tmp_path / "updated/06_evaluations/offer-walk/run.py"
+    implementation.parent.mkdir(parents=True)
+    implementation.with_name("answer.py").write_bytes(Path(walk.__file__).with_name("answer.py").read_bytes())
+    # Load a different trusted executing implementation, never the bound evidence.
+    implementation.write_text(Path(walk.__file__).read_text().replace(
+        "result = template\n", 'result = template + "\\nChanged renderer output."\n'))
+    updated_spec = importlib.util.spec_from_file_location("updated_offer_renderer", implementation)
+    updated = importlib.util.module_from_spec(updated_spec)
+    updated_spec.loader.exec_module(updated)
+    assert implementation.read_bytes() != (root / walk.RUN / "entwerfen/001/input/renderer.py").read_bytes()
+    assert updated.validate(root).valid
+    for operation in (updated.checked_offer, updated.prepare_gap, lambda path: updated.handoff(path, candidate)):
+        with pytest.raises(ValueError, match="bound renderer differs from executing implementation"):
+            operation(root)
+        assert files(root) == before and updated.validate(root).valid
+
+
+@pytest.mark.parametrize("language", ["de", "en"])
+@pytest.mark.parametrize("reseal_input_hash", [False, True])
+def test_malicious_bound_renderer_is_detected_without_execution(tmp_path, language, reseal_input_hash):
+    root = walk.open_offer(tmp_path / language, walk.fixture(), language)
+    candidate, _ = walk.checked_offer(root)
+    marker = tmp_path / "bound-code-executed"
+    attempt = root / walk.RUN / "entwerfen/001"
+    (attempt / "input/renderer.py").write_text(f"from pathlib import Path\nPath({str(marker)!r}).write_text('executed')\n")
+    if reseal_input_hash:
+        # Even a structurally valid input hash does not replace source provenance.
+        run = root / walk.RUN / "CONTEXT.md"
+        metadata, body = walk.load_frontmatter_and_body(run)
+        definition, _ = walk.load_frontmatter_and_body(root / walk.APP / "ausarbeitung/entwerfen/CONTEXT.md")
+        metadata["laufpfad"][0]["eingabe_hash"] = walk.surface_hash(attempt, definition["eingaben"])
+        walk.write_context(run, metadata, body)
+    assert walk.validate(root).valid is reseal_input_hash
+    before = files(root)
+    for operation in (walk.checked_offer, lambda path: walk.handoff(path, candidate)):
+        with pytest.raises(ValueError, match="source binding mismatch" if reseal_input_hash else "invalid bound run"):
+            operation(root)
+        assert files(root) == before and not marker.exists()
 
 
 @pytest.mark.parametrize("language", ["de", "en"])
@@ -608,17 +786,26 @@ def test_reviewed_positioning_repoint_changes_future_binding_only(tmp_path):
     assert any(i.code == 'hash.mismatch' and 'campaign-001' in i.path for i in validate(repo).issues)
 
 
-def test_missing_successor_input_blocks_handoff_and_preserves_prior_state(tmp_path, monkeypatch):
+@pytest.mark.parametrize("language", ["de", "en"])
+@pytest.mark.parametrize("mutation", ["missing", "duplicate", "prefix", "suffix", "missing-period", "old-label", "wrong-target", "extra-malformed"])
+def test_invalid_successor_mapping_blocks_handoff_and_preserves_prior_state(tmp_path, monkeypatch, language, mutation):
     original = walk.write_context
 
-    def omit_mapping(path, metadata, body):
+    def change_mapping(path, metadata, body):
         if metadata.get('id') == 'arbeitsschritt:entwerfen':
-            body = body.replace('Route `bestanden`: `output/pruefbericht.json -> arbeitsschritt:freigeben/input/pruefbericht.json`.', '')
+            mapping = 'Bei Route `bestanden`: `output/pruefbericht.json -> arbeitsschritt:freigeben/input/pruefbericht.json`.'
+            replacement = {"missing": "", "duplicate": mapping + "\n" + mapping,
+                           "prefix": "Example: " + mapping, "suffix": mapping + " Extra prose.",
+                           "missing-period": mapping[:-1], "old-label": mapping.removeprefix("Bei "),
+                           "wrong-target": mapping.replace("input/pruefbericht.json", "input/angebot.md"),
+                           "extra-malformed": mapping + "\n" + mapping.removeprefix("Bei ")}[mutation]
+            body = body.replace(mapping, replacement)
         return original(path, metadata, body)
 
     # Change the fixture definition before its commit and before any attempt opens.
-    monkeypatch.setattr(walk, 'write_context', omit_mapping)
-    root = walk.open_offer(tmp_path / 'offer', walk.fixture(), 'en')
+    monkeypatch.setattr(walk, 'write_context', change_mapping)
+    root = walk.open_offer(tmp_path / 'offer', walk.fixture(), language)
+    assert walk.validate(root).valid
     before = files(root)
     with pytest.raises(ValueError, match='unsupported bound handoff mappings'):
         walk.handoff(root, 'An unchecked candidate')

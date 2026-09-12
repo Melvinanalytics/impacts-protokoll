@@ -41,7 +41,7 @@ A wait is a `wartend` Laufpfad entry with `wiedereinstieg` (`ausloeser`, `contin
 
 ## Loops
 
-A rejection routes back to the step that produced the rejected input, not to the entry. Every loop leaves through a `pruefung` outcome that reaches an end; the validator rejects a loop without exit.
+For a declared rework loop, route rejection to the step that produced the rejected input. A declared final rejection follows its negative end. Every loop leaves through a `pruefung` outcome that reaches an end; the validator rejects a loop without exit.
 
 ## Automation boundary
 

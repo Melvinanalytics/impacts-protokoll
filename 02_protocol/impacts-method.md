@@ -148,7 +148,7 @@ git add applications/<slug>
 git commit -m "import applications/<slug> from <source>@<commit> (tree <oid>)"
 ```
 
-The tree oid is content-addressed, so `git rev-parse HEAD:applications/<slug>` yields the same value in both repositories; that equality is the proof of origin. Provenance lives in the commit message, never inside the tree: one changed byte changes the oid. Running Vorgänge keep their oid after a later import; new Vorgänge bind the new one.
+Matching tree OIDs establish content identity with the named source tree. Check the source repository and commit separately; an OID or a self-reported commit message authenticates neither origin nor approval. Record the import reference outside the copied tree, in the import commit message, so the tree retains its OID. Running Vorgänge keep their OID after a later import; new Vorgänge bind the new one.
 
 If the imported Application has Capability calls, materialize each referenced `capabilities/<slug>/` tree separately from the same source-repository commit at the same relative path. Commit it, then require `git rev-parse HEAD:capabilities/<slug>` to equal the Application's bound Capability Tree-OID before the first Vorgang. An Application-only import remains valid only when it has no Capability call. The cold walk proves both the missing-Capability rejection and the executable import.
 

@@ -2,7 +2,7 @@
 
 IMPACTS is a small public contract for file-native customer work. It designs work from the prerequisites of an accepted result, then represents it as human-readable Applications and revision-bound runs. HP/TP/AS keeps scope and handoffs visible; permitted preparation can proceed when its inputs and authority are available. See [Work from prerequisites](02_protocol/impacts-method.md#work-from-prerequisites) for the boundary between useful initiative, declared routes and human decisions.
 
-Start with the [protocol router](02_protocol/CONTEXT.md). The [five schemas](02_protocol/schemas/) define machine contracts; the [complete-path invariant](02_protocol/invariants/complete-process-paths.md) defines route closure. The [method](02_protocol/impacts-method.md) and [Capability contract](02_protocol/capabilities.md) own work design and execution boundaries.
+Start with the [root router](CONTEXT.md). The [five schemas](02_protocol/schemas/) define machine contracts; the [complete-path invariant](02_protocol/invariants/complete-process-paths.md) defines route closure. The [method](02_protocol/impacts-method.md) and [Capability contract](02_protocol/capabilities.md) own work design and execution boundaries.
 
 ## Start with your task
 
