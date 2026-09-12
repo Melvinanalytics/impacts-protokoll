@@ -8,7 +8,7 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 
-# One export contract, also referenced by the private release procedure.
+# One allowlist for the release surface.
 PUBLIC_PATHS = (
     '.gitignore', 'AGENTS.md', 'CONTEXT.md', 'LICENSE', 'README.md', 'pyproject.toml',
     '02_protocol/', '06_evaluations/', 'src/', 'tests/',
@@ -27,7 +27,7 @@ def export_files(root):
                 continue
             relative = candidate.relative_to(root).as_posix()
             files[relative] = candidate.read_text(encoding='utf-8')
-    # Remove the private source checkout’s design-record navigation row on export.
+    # Remove the source-only design-record navigation row on export.
     files['CONTEXT.md'] = '\n'.join(line for line in files['CONTEXT.md'].splitlines() if '| Design record:' not in line)
     return files
 

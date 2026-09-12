@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "impacts-protocol"
-version = "0.3.1"
-description = "File-native IMPACTS protocol contracts"
+version = "0.3.2"
+description = "File-based process design and reliable work for people and agents"
 readme = "README.md"
 requires-python = ">=3.11"
 license = "Apache-2.0"

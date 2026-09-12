@@ -16,6 +16,8 @@ from impacts_protocol.validator import SCHEMA_REGISTRY, validate
 
 PAIRS = [(f"02_protocol/templates/{kind}.md", f"02_protocol/templates/de/{kind}.md") for kind in (*TEMPLATE_KINDS, "workspace")]
 PAIRS += [("02_protocol/language.md", "02_protocol/translations/de.md"),
+          ("README.md", "02_protocol/translations/de.md"),
+          ("02_protocol/impacts-method.md", "02_protocol/translations/de.md"),
           ("02_protocol/impacts-architect/templates/ist-prozess.md", "02_protocol/impacts-architect/templates/de/ist-prozess.md")]
 
 

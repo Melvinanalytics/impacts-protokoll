@@ -107,6 +107,8 @@ Remove work that does not contribute to the Leistung. Challenge handoffs, waits,
 
 Combine or remove work only while preserving the identified authority and customer boundaries. Reduce avoidable waiting around required human decisions by preparing usable evidence and a workable handoff; do not erase the decision to make the diagram shorter. Actual availability remains a feasibility constraint even when current role boundaries are challenged. Before removing or combining a handoff, list each successor’s declared inputs and show where each is still produced with its required evidence and authority; [Test](#test) checks that downstream effort and backlog have not merely moved.
 
+Minimize applies to the whole solution, including IMPACTS itself. Prefer correcting, deleting or reconnecting what exists before adding a step, field, link, document, tool or component. Add one only when it resolves a concrete difficulty or supplies a necessary quality or authority, and explicitly justify its customer effort, review, maintenance and downstream work against the smallest existing alternative. Fewer components alone is not success. A valid result may be clearer work, less avoidable effort or an informed decision to keep the work manual. Keep the expected reduction or quality improvement `hypothesis` until a representative check supports it.
+
 ## Perfect
 
 Close the remaining path. Every Arbeitsschritt receives declared inputs, visible outputs, one verification rule and complete routes. Each step must contribute to its Teilprozess and the Hauptprozess must end at its Leistung.
@@ -166,7 +168,7 @@ This procedure applies to every form. On one demonstrated defect or consequentia
 
 Prepare the concrete edit with its evidence, affected consumers, one important non-applicable case and required check. The same review names the responsible owner and who observes the next comparable case, with its trigger. Repeated evidence updates that proposal; duplicate or rejected proposals close there. Obtain the review or decision required by the affected scope before adopting changed operating meaning. A written attribution does not authenticate a person.
 
-Correct or delete at that single home, repair its referrers and exercise the original failure, the nearby exception and a new related question not used to design the correction. Preserve previously valid results. A fresh consumer follows ordinary routes with no injected lesson; record its actual result separately from the expected outcome. Execute deterministic fixtures for computational conditions. Recheck affected uses before binding the reviewed revision in future runs; earlier definitions and bound inputs remain unchanged. A known serious defect in active work follows its existing pause, escalation or restart route with the evidence intact.
+Correct or delete at that single home, repair its referrers and exercise the original failure, the nearby exception and a new related question not used to design the correction. Apply [Minimize](#minimize) to that choice. Preserve previously valid results. A fresh consumer follows ordinary routes with no injected lesson; record its actual result separately from the expected outcome. Execute deterministic fixtures for computational conditions. Recheck affected uses before binding the reviewed revision in future runs; earlier definitions and bound inputs remain unchanged. A known serious defect in active work follows its existing pause, escalation or restart route with the evidence intact.
 
 Transfer only where the assumptions hold, binding the target’s own sources and permissions. The named observer checks recurrence, quality and review burden at the declared comparable-case trigger; revise or remove a contradicted change. Publication alone proves neither adoption nor improvement. This uses existing files, tests and revision review; it adds no phase, learning store or automatic promotion rule.
 
@@ -224,13 +226,13 @@ Stable material stays at one source home. A run materializes the smallest profes
 
 Name the protocol revision actually used before assessing compatibility. Check its machine-readable structure against that revision; do not treat a successful check against an older pin as compatibility with this one. Select the applicable [Walk test](impacts-architect/SKILL.md#walk-test): Process Walk for Applications, Knowledge Walk for records and domain foundations, both for mixed forms. Exercise domain processing and outcome checks separately where required. Legitimately missing evidence produces a focused question; unreachable existing evidence requires a routing repair.
 
-A later nodes-and-edges view is a disposable projection, not a second authority. Containment comes from folders, execution edges from `einstieg_ref` and routes, and knowledge links from their source files. Preserve these different meanings and the source revision; do not infer execution order or causal influence from an ordinary hyperlink. Graph construction is not a prerequisite for reading, validating or transferring a repository.
+Any later nodes-and-edges view follows the single [Tooling stop](impacts-architect/references/formwahl.md#tooling-stopp): it is a disposable projection, not a second authority. Folders, explicit links, source references and routes already make a needed path traversable when they expose the relevant context to a person or agent. Preserve containment, execution order and knowledge navigation as different meanings and retain the source revision; do not infer execution order or causal influence from an ordinary hyperlink. A graph projection is optional and never a prerequisite for reading, validating or transferring a repository.
 
 ## Readability and processing
 
 Apply these acceptance questions to existing surfaces at capture, processing, verification, change and handoff:
 
-- UX: Can the responsible person understand what is needed, why, and the consequences of their decision?
+- UX: Can the responsible person understand what is needed, why, and the consequences of their decision? Maintainer vocabulary such as Git, schemas, hashes or graph semantics is not a prerequisite for stating a business problem, reviewing a proposal or understanding the result.
 - AX: Can the agent find unambiguous inputs and sources, permitted actions and boundaries, or ask the specific unresolved question?
 - DX: Can a developer locate the authoritative contract, responsible implementation and applicable verification and change path?
 

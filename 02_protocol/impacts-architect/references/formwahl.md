@@ -70,9 +70,7 @@ That state describes only the captured collection. A claim of business absence r
 <a id="tooling-stopp"></a>
 ## Tooling stop
 
-Initialization and knowledge navigation require no new script. No graph runner, context-pack generator, mandatory ID or universal edge contract, generated second index, API, vector store or graph database belongs in the starting architecture.
-
-A later projection requires three independent real questions that repeatedly need a full scan despite repaired native links. It must remain entirely removable and reproducible from Markdown facts. Domain calculation and consistency checkers must never become prerequisites for knowledge navigation.
+Initialization and knowledge navigation require no new script. Files, folders and explicit links are sufficient when a person or agent can follow the needed path through them. A graph representation remains optional: consider adding one only when observed real questions repeatedly still need a full scan after repairing native links. Apply [Minimize](../../impacts-method.md#minimize) to its total burden and keep the projection removable and reproducible from the source Markdown. No graph runner, context-pack generator, mandatory ID or universal edge contract, generated second index, API, vector store or graph database belongs in the starting architecture. Domain calculation and consistency checkers must never become prerequisites for knowledge navigation.
 
 ## Knowledge Walk
 

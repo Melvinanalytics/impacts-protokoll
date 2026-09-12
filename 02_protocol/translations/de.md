@@ -6,6 +6,12 @@ Diese Bedienhilfe übersetzt den [englischen Sprachvertrag](../language.md). Die
 
 ## Einstieg
 
+<!-- Translation source: README.md; sha256: 406cbab6554dd8f3cfbf41788c5fc242d75a3fb4c5c56c22b18983894fc05464 -->
+Das [Ziel von IMPACTS](../../README.md) ist, kleinen und mittleren Unternehmen zu helfen, ihr Geschäft besser zu verstehen, ihre Arbeit zu vereinfachen und KI sowie Data Science zu nutzen, ohne dafür Experten werden zu müssen. Ein passendes Ergebnis kann eine geklärte Kennzahl, ein entfallender Abstimmungsschritt, eine verlässliche Zusage oder die begründete Entscheidung sein, nichts zu automatisieren. Das ist eine Zielaussage; ein nachgewiesener Nutzen braucht Beobachtungen im eigenen Betrieb.
+
+<!-- Translation source: 02_protocol/impacts-method.md; sha256: e368815b13f50cf15f5254299153f2cfebc5c30fa2a50e6998bc8ad512b2e69a -->
+Für die fachliche Nutzung erläutern Unternehmensverantwortliche Problem, Ergebnis, Quellen und nötige Entscheidungen; Betreibende richten den technischen Arbeitsbereich mit den folgenden Befehlen ein. Die englische [Methode](../impacts-method.md#readability-and-processing) erklärt diese Rollen- und Verständlichkeitsgrenze.
+
 ```sh
 impacts init ../mein-arbeitsbereich --language de
 impacts template application --language de
