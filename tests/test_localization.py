@@ -89,3 +89,71 @@ def test_german_template_commands_select_german_instead_of_default_english():
         text = (ROOT / target).read_text()
         for match in re.finditer(r"impacts template (?:application|hauptprozess|teilprozess|arbeitsschritt|vorgang|<art>)", text):
             assert text[match.end():].startswith(" --language de"), target
+
+
+@pytest.mark.parametrize(
+    "kind,headings",
+    [
+        (
+            "hauptprozess",
+            (
+                "Ergebnis und Geltungsbereich",
+                "Relevantes Umfeld",
+                "Wertfluss",
+                "Zielgröße und Leitplanken",
+                "Kundenkontaktpunkte",
+                "Automationsgrenze",
+                "Weg zur Leistung",
+                "Durchsatz und Durchlaufzeit",
+                "Engpass",
+                "Einrichtungsabschluss",
+            ),
+        ),
+        ("teilprozess", ("Beitrag zur Leistung", "Eingaben und Grenzen", "Zusammenspiel der Arbeitsschritte", "Einrichtungsabschluss")),
+        ("arbeitsschritt", ("Ein Job", "Eingaben", "Nicht laden", "Verarbeitung", "Ausgaben", "Prüfung", "Menschliche Prüfung", "Einrichtungsabschluss")),
+    ],
+)
+def test_german_generated_definitions_keep_role_specific_setup_sections(kind, headings):
+    body = template_text(kind, language="de")
+    positions = [body.index(f"## {heading}") for heading in headings]
+
+    assert positions == sorted(positions)
+    assert "Die Definitionseinrichtung ist abgeschlossen" in body
+    assert "belegen weder Einsatzbereitschaft" in body or "belegen keine Einsatzbereitschaft" in body
+    _assert_german_design_execution_boundary(body)
+
+
+def _assert_german_design_execution_boundary(body):
+    assert "Vor dem Kandidaten-Commit" in body
+    assert re.search(r"fehlend(?:e|er) oder widersprüchlich(?:e|er) Voraussetzung", body)
+    assert re.search(r"plausibl(?:e|er) unzulässige", body)
+    assert "Nach dem Commit" in body
+    assert "Harness" in body
+    assert "diese Revision" in body
+
+
+@pytest.mark.parametrize("kind", ("hauptprozess", "teilprozess", "arbeitsschritt"))
+def test_german_setup_boundary_rejects_missing_post_commit_harness_evidence(kind):
+    body = template_text(kind, language="de")
+    start = body.index("Nach dem Commit")
+    broken = body[:start] + body[body.index(".", start) + 1 :]
+
+    with pytest.raises(AssertionError):
+        _assert_german_design_execution_boundary(broken)
+
+
+def test_german_subprocess_preserves_terminal_and_negative_case_meaning():
+    body = template_text("teilprozess", language="de")
+
+    assert "Bei einer internen Übergabe auf die vom Producer deklarierte Übergabe" in body
+    assert "An einer terminalen Grenze" in body
+    assert "fehlender oder widersprüchlicher Voraussetzung" in body
+    assert "plausibler unzulässiger Schlussfolgerung" in body
+    assert "voraussetzungsarmen" not in body
+
+
+def test_german_workstep_keeps_waiting_separate_from_completed_routes():
+    body = template_text("arbeitsschritt", language="de")
+
+    assert "jedes abgeschlossene Ergebnis eine deklarierte Arbeitsschritt- oder Endroute wählt" in body
+    assert "Ein wartender Versuch bleibt ohne Routenwahl im aktuellen Schritt" in body

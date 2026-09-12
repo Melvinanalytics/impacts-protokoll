@@ -14,7 +14,7 @@ routen:
 customer_touchpoint: sacred  # fehlend, standard oder sacred
 ---
 
-<!-- Translation source: 02_protocol/templates/arbeitsschritt.md; sha256: 2b467e3d7624b7c8172b955655785e145463520bc8979cfbbc79589f8de06de7 -->
+<!-- Translation source: 02_protocol/templates/arbeitsschritt.md; sha256: 4fef831bf216ec4573f6aca3efed2c0c967ef41eeac7816edc9776aae29d87f3 -->
 
 # Entscheiden
 
@@ -81,3 +81,7 @@ Vor Kundennutzung die Arbeitssprache und fachliche Bedeutung prüfen, einschlie�
 ## Menschliche Prüfung
 
 Nur an einer erklärten menschlichen Grenze: Wer entscheidet was, auf welcher Evidenz und mit welcher erlaubten Folge? Die Anfrage in der Arbeitssprache des Kunden verständlich formulieren. Gegenstand und Stand der Entscheidung benennen; bei einer Änderung ihre Deckung erneut prüfen. Verfügbarkeit beziehungsweise erwartete Wartezeit nur mit passender Quelle oder als offen angeben. Der benannte Mensch liefert die tatsächliche Entscheidung; der Agent bereitet Evidenz vor. Das Öffnen des Gates erzeugt weder eine Entscheidung noch `freigabe`.
+
+## Einrichtungsabschluss
+
+Die Definitionseinrichtung ist abgeschlossen, wenn `Ein Job` Ergebnis, Empfänger und erlaubte Nutzung festlegt, jeder Pfad in `eingaben` und `ausgaben` im passenden Abschnitt erklärt ist, die Verarbeitung benötigte Beiträge, Werkzeuge, Wirkungen und Blockadenbehandlung in ausführbarer Reihenfolge nennt, `pruefung` das beobachtbare Kriterium, den tatsächlichen Prüfer und die Fehlerroute festlegt und jedes abgeschlossene Ergebnis eine deklarierte Arbeitsschritt- oder Endroute wählt. Ein wartender Versuch bleibt ohne Routenwahl im aktuellen Schritt und nennt seine Fortsetzung nach dem Vorgangsvertrag. Jeden Platzhalter und jede offene Abhängigkeit auflösen oder mit nächster Aktion und Nutzungsgrenze kennzeichnen. Vor dem Kandidaten-Commit einen gestützten Fall, eine fehlende oder widersprüchliche Voraussetzung und eine plausible unzulässige Anweisung oder Schlussfolgerung prüfen; Voraussetzungen, erwartete Ergebnisse und offene Lücken festhalten. Nach dem Commit führt das verantwortliche Harness der Test-Phase den Arbeitsschritt gegen diese Revision aus. Strukturelle Gültigkeit, Designprüfung und eine nicht ausgeführte Prüfung belegen keine Einsatzbereitschaft.

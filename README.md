@@ -1,8 +1,8 @@
 # IMPACTS Protocol
 
-IMPACTS is a small public contract for file-native customer work. It designs work from the prerequisites of an accepted result, then represents it as human-readable Applications and revision-bound runs. HP/TP/AS keeps scope and handoffs visible; permitted preparation can proceed when its inputs and authority are available. See [Work from prerequisites](02_protocol/impacts-method.md#work-from-prerequisites) for the boundary between useful initiative, declared routes and human decisions.
+IMPACTS organizes work as folders and Markdown, starting from the prerequisites of an accepted result. [Select the smallest suitable form](02_protocol/impacts-architect/references/formwahl.md#select-the-form): records and stable knowledge keep their existing homes; an Application defines a bounded, repeatable process with an accepted result, and revision-bound runs record its executions. [Work from prerequisites](02_protocol/impacts-method.md#work-from-prerequisites) defines the boundary between permitted preparation, declared routes and human decisions.
 
-Start with the [protocol router](02_protocol/CONTEXT.md). The [five schemas](02_protocol/schemas/) define machine contracts; the [complete-path invariant](02_protocol/invariants/complete-process-paths.md) defines route closure. The [method](02_protocol/impacts-method.md) and [Capability contract](02_protocol/capabilities.md) own work design and execution boundaries.
+Start with the [root router](CONTEXT.md). The [five schemas](02_protocol/schemas/) define Core file interfaces; the [complete-path invariant](02_protocol/invariants/complete-process-paths.md) defines route closure. The [method](02_protocol/impacts-method.md) owns work design; the [Capability contract](02_protocol/capabilities.md) defines optional reusable operations and their source, handoff and authority boundaries.
 
 ## Start with your task
 
@@ -44,6 +44,8 @@ python3 06_evaluations/offer-walk/run.py --language en --discovery --keep ../imp
 Expected final status: `PASS: handoff checked; human decision pending.` The `Artifacts:` line names the retained workspace. Open its `CONTEXT.md`, then `vorgaenge/angebot-001/CONTEXT.md` and the linked draft/report. The optional discovery case shows why increasing preparation from 6 to 18 cases per day can leave reviewed output at 6 and grow the downstream queue. Its assumptions, sensitivity and simulated decision stay in `grundlagen/discovery.md`; they establish no real approval or business improvement.
 
 Use a new `--keep` path for each run. For takeover, follow the [Process Walk](02_protocol/impacts-architect/SKILL.md#walk-test); the [cold-walk writer](06_evaluations/cold-walk/check.py) is the executable reference for attempts and `laufpfad`. Real execution still needs the domain’s sources, configured harness and decision authority.
+
+In an English synthetic file-work pilot on 12 September 2026 (protocol `cc6445e`), all six initial episodes ended at provider limits. With a separately registered corrected tool setup, useful completion with fresh-session resume was 3/3 for plain folders and 2/3 for IMPACTS; one IMPACTS episode produced correct drafts but wrote outside its permitted workspace. All three second-case attempts also stopped at provider limits before completion. These model-run observations establish no acceleration, human usability, production readiness or organizational benefit; the five Core schemas and run machinery were not exercised by the completed case.
 
 ## Core boundary
 
