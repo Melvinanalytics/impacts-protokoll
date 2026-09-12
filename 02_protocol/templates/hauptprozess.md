@@ -14,6 +14,10 @@ einstieg_ref: arbeitsschritt:pruefen
 
 The main process is the Application root at `applications/<slug>/CONTEXT.md`. Its subfolders are subprocesses, whose subfolders are worksteps. It defines the complete path to the embedded result. `einstieg_ref` names the first workstep; each workstep owns its routes. This body carries Identify context for people and harnesses, not another schema. Replace example values in the customer's working language.
 
+## Result and scope
+
+State the accepted result, recipient, intended use and process boundary in one compact passage. Make `leistung.ergebnis`, `kennzahl` and every `abnahme` condition observable. Keep requested, offered, agreed and delivered results distinct; cite their existing definitions and evidence.
+
 ## Relevant environment
 
 Recipient, participants, dependencies and result boundaries. Include market, demand or intermediary relationships only when relevant to the decision.
@@ -45,3 +49,7 @@ Expected throughput, work in progress and elapsed time. Define start and accepte
 ## Bottleneck
 
 Which evidenced constraint currently limits the result or lead time, and what observation would refute that assumption? Capacity, missing input or a pending decision may constrain it. Faster isolated work does not establish improvement of the whole process. Preserve required human boundaries during redesign.
+
+## Setup completion
+
+Definition setup is complete when every `abnahme` component maps to a producing workstep output and applicable check, `einstieg_ref` and every workstep route can reach a declared end, each material claim has its source and evidence state, and every unresolved dependency names its next action and use restriction. Before the candidate commit, review a supported path, a missing or conflicting prerequisite and a plausible forbidden inference; record premises, expected outcomes and open gaps. After commit, the Test phase supplies observed harness evidence against that revision. Structural validity and design review do not establish execution readiness or the process result.

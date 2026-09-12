@@ -1,8 +1,10 @@
 # IMPACTS Protocol
 
-IMPACTS is a small public contract for file-native customer work. It designs work from the prerequisites of an accepted result, then represents it as human-readable Applications and revision-bound runs. HP/TP/AS keeps scope and handoffs visible; permitted preparation can proceed when its inputs and authority are available. See [Work from prerequisites](02_protocol/impacts-method.md#work-from-prerequisites) for the boundary between useful initiative, declared routes and human decisions.
+IMPACTS helps small and medium-sized businesses understand their business, simplify their work and use AI and data science without having to become experts in either. Its means are files, links, analytical methods, AI and integrations; the intended gain is a business that can explain its result, constraints, trusted information and necessary work more clearly. A useful outcome can be a clarified metric, a removed handoff, a dependable commitment or a decision to automate nothing. This mission states product intent; the examples and evaluations below record what has actually been demonstrated.
 
-Start with the [root router](CONTEXT.md). The [five schemas](02_protocol/schemas/) define machine contracts; the [complete-path invariant](02_protocol/invariants/complete-process-paths.md) defines route closure. The [method](02_protocol/impacts-method.md) and [Capability contract](02_protocol/capabilities.md) own work design and execution boundaries.
+IMPACTS organizes work as folders and Markdown, starting from the prerequisites of an accepted result. [Select the smallest suitable form](02_protocol/impacts-architect/references/formwahl.md#select-the-form): records and stable knowledge keep their existing homes; an Application defines a bounded, repeatable process with an accepted result, and revision-bound runs record its executions. [Work from prerequisites](02_protocol/impacts-method.md#work-from-prerequisites) defines the boundary between permitted preparation, declared routes and human decisions.
+
+Start with the [root router](CONTEXT.md). The [five schemas](02_protocol/schemas/) define Core file interfaces; the [complete-path invariant](02_protocol/invariants/complete-process-paths.md) defines route closure. The [method](02_protocol/impacts-method.md) owns work design; the [Capability contract](02_protocol/capabilities.md) defines optional reusable operations and their source, handoff and authority boundaries.
 
 ## Start with your task
 
@@ -45,6 +47,8 @@ Expected final status: `PASS: handoff checked; human decision pending.` The `Art
 
 Use a new `--keep` path for each run. For takeover, follow the [Process Walk](02_protocol/impacts-architect/SKILL.md#walk-test); the [cold-walk writer](06_evaluations/cold-walk/check.py) is the executable reference for attempts and `laufpfad`. Real execution still needs the domain’s sources, configured harness and decision authority.
 
+These examples and tests establish only the stated file, route and calculation checks. They do not establish acceleration, human usability, production readiness or business benefit.
+
 ## Core boundary
 
 ```bash
@@ -82,7 +86,7 @@ python3 06_evaluations/offer-walk/run.py --language de
 python3 06_evaluations/offer-walk/run.py --language en
 ```
 
-The public repository contains the protocol, examples, implementation and tests. Private planning, specifications, research, audits and handovers are excluded from distribution.
+The repository contains the protocol, examples, implementation and tests.
 
 ## Contributing
 

@@ -286,6 +286,18 @@ def test_skill_names_the_core_commands():
         assert command in body, command
 
 
+def test_build_mode_requires_role_specific_context_setup_completion():
+    body = _body()
+    build = body[body.index("## Build mode") : body.index("## Restructure mode")]
+
+    assert "Build mode is incomplete until every Hauptprozess, Teilprozess and Arbeitsschritt" in build
+    assert "localized setup-completion section" in build
+    assert "../impacts-method.md#maintain-agent-instructions" in build
+    assert "this review does not execute an Arbeitsschritt or establish readiness" in build
+    assert "Test phase's responsible harness exercises" in build
+    assert "Never require" not in build and "never exercise" not in build
+
+
 def test_skill_never_lets_an_agent_write_human_attribution():
     assert "human:<id>" in _body()
 
