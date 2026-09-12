@@ -20,6 +20,7 @@ SCHEMA_KINDS = ("hauptprozess", "teilprozess", "arbeitsschritt", "vorgang")
 SECTIONS = {
     "application": ("Tree", "Rules", "Example"),
     "hauptprozess": (
+        "Result and scope",
         "Relevant environment",
         "Value flow",
         "Objective",
@@ -28,8 +29,15 @@ SECTIONS = {
         "Path to the result",
         "Throughput",
         "Bottleneck",
+        "Setup completion",
     ),
-    "teilprozess": ("Contribution", "Leading indicator"),
+    "teilprozess": (
+        "Contribution to the result",
+        "Inputs and boundaries",
+        "Workstep composition",
+        "Setup completion",
+        "Leading indicator",
+    ),
     "arbeitsschritt": (
         "One job",
         "Inputs",
@@ -38,6 +46,7 @@ SECTIONS = {
         "Outputs",
         "Check",
         "Human check",
+        "Setup completion",
     ),
     "vorgang": ("Subject", "Progress"),
 }
@@ -80,6 +89,43 @@ def test_template_body_names_its_method_sections(kind):
 
     for section in SECTIONS[kind]:
         assert section in body, f"{kind} template lacks section {section!r}"
+
+
+@pytest.mark.parametrize("kind", ("hauptprozess", "teilprozess", "arbeitsschritt"))
+def test_generated_definition_orders_every_structural_setup_section(kind):
+    body = template_text(kind)
+    headings = [f"## {section}" for section in SECTIONS[kind]]
+
+    positions = [body.index(heading) for heading in headings]
+    assert positions == sorted(positions)
+    assert "Definition setup is complete when" in body
+    assert "not establish execution readiness" in body
+
+
+def test_subprocess_setup_supports_internal_and_terminal_consumers_without_copying_handoffs():
+    body = template_text("teilprozess")
+
+    assert "For an internal handoff, reference the producer's declared handoff" in body
+    assert "At a terminal boundary, name the final recipient, accepted result and applicable end" in body
+    assert "producer-output → consumer-input" not in body
+    assert "do not copy its content into this subprocess contract" in body
+
+
+@pytest.mark.parametrize("kind", ("hauptprozess", "teilprozess", "arbeitsschritt"))
+def test_definition_setup_separates_design_review_from_execution_evidence(kind):
+    body = template_text(kind)
+
+    assert "Before the candidate commit" in body
+    assert "missing or conflicting prerequisite" in body
+    assert "plausible forbidden" in body
+    assert "After commit, the Test phase" in body
+
+
+def test_workstep_setup_keeps_waiting_separate_from_completed_routes():
+    body = template_text("arbeitsschritt")
+
+    assert "every completed outcome selects a declared workstep or end route" in body
+    assert "A waiting attempt retains the current step without selecting a route" in body
 
 
 def test_cli_template_prints_the_packaged_text():

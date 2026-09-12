@@ -10,11 +10,15 @@ leistung:
 einstieg_ref: arbeitsschritt:pruefen
 ---
 
-<!-- Translation source: 02_protocol/templates/hauptprozess.md; sha256: 4038b053203621693a2ee370e856049d7fd1aac6d7cf2374cc426344f6cf3bcd -->
+<!-- Translation source: 02_protocol/templates/hauptprozess.md; sha256: 9856c52c24df71971e81ddc76a9aff1113f6ed43cfb1e9b4a5e036c53a3e9058 -->
 
 # Prüffall entscheiden
 
 Der Hauptprozess ist die Wurzel der Application: `applications/<slug>/CONTEXT.md`. Seine Teilprozesse sind seine Unterordner, deren Arbeitsschritte wiederum deren Unterordner. Er ist der vollständige Weg bis zur eingebetteten Leistung. `einstieg_ref` nennt den ersten Arbeitsschritt. Die Routen stehen an den Arbeitsschritten. Dieser Body trägt das Identify-Ergebnis der IMPACTS-Methode; er ist Kontext für Mensch und Harness, kein Schema. Beispielwerte ersetzen.
+
+## Ergebnis und Geltungsbereich
+
+Akzeptiertes Ergebnis, Empfänger, beabsichtigte Nutzung und Prozessgrenze in einem kompakten Abschnitt festhalten. `leistung.ergebnis`, `kennzahl` und jede `abnahme`-Bedingung beobachtbar machen. Angefragte, angebotene, vereinbarte und gelieferte Ergebnisse unterscheiden; ihre bestehenden Definitionen und Evidenz referenzieren.
 
 ## Relevantes Umfeld
 
@@ -47,3 +51,7 @@ Erwarteter Durchsatz, Work in Progress und Durchlaufzeit. Für den Zeitvergleich
 ## Engpass
 
 Welche belegte Begrenzung bestimmt derzeit die Leistung oder Durchlaufzeit, und welche Beobachtung würde diese Annahme widerlegen? Das kann Verarbeitungskapazität, eine fehlende Eingabe oder eine wartende Entscheidung sein. Kürzere Einzelarbeit allein belegt keine Verbesserung des Gesamtprozesses. Erforderliche menschliche Grenzen bleiben bei einer Umgestaltung erhalten.
+
+## Einrichtungsabschluss
+
+Die Definitionseinrichtung ist abgeschlossen, wenn jeder Bestandteil von `abnahme` einer erzeugenden Arbeitsschrittausgabe und anwendbaren Prüfung zugeordnet ist, `einstieg_ref` und jede Arbeitsschrittroute ein erklärtes Ende erreichen kann, jede wesentliche Aussage Quelle und Evidenzstand trägt und jede ungeklärte Abhängigkeit nächste Aktion und Nutzungsgrenze nennt. Vor dem Kandidaten-Commit einen gestützten Pfad, eine fehlende oder widersprüchliche Voraussetzung und eine plausible unzulässige Schlussfolgerung prüfen; Voraussetzungen, erwartete Ergebnisse und offene Lücken festhalten. Nach dem Commit liefert die Test-Phase beobachtete Harness-Evidenz für genau diese Revision. Strukturelle Gültigkeit und Designprüfung belegen weder Einsatzbereitschaft noch Prozessergebnis.
