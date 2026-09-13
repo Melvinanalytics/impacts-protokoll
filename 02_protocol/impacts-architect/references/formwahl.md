@@ -8,11 +8,11 @@ Apply [Author or change](../../ontology.md#author-or-change) for missing or chan
 
 | Unit | ICM form | Home |
 |---|---|---|
-| Repeatable run with an accepted result | Pipeline | `applications/` and `vorgaenge/` |
+| Repeatable work with an accepted result | Pipeline | Existing process/case home; `applications/` and `vorgaenge/` when choosing Core contracts |
 | Accumulating domain instance | Record Library | `records/` when real content needs it |
 | Navigable stable knowledge | Knowledge Bundle | Existing domain and source files |
 | Observed organization, work and data handoffs | Context Map | Links between records and observed processes |
-| Several independent Pipelines | Umbrella | Small router to independent Applications |
+| Several independent Pipelines | Umbrella | Small router to independent process homes; selected Core Pipelines use Applications |
 | Repository that agents modify | System Map | Existing repository routers and files |
 
 <a id="arbeitsbericht-vor-baumvorschlag"></a>
@@ -30,7 +30,7 @@ This report is conversational, not a repository artifact, file or frontmatter fi
 <a id="kompositionsregel"></a>
 ## Composition
 
-Forms compose while retaining their responsibilities. A Record Library plus Knowledge Bundle alone is not an Umbrella. Other forms compose without one. Select an Umbrella only when several independent Pipelines already exist. Only Pipelines become Applications; each Pipeline is exactly one Application.
+Forms compose while retaining their responsibilities. A Record Library plus Knowledge Bundle alone is not an Umbrella. Other forms compose without one. Select an Umbrella only when several independent Pipelines already exist. When Core contracts are selected, only Pipelines become Applications; each selected Pipeline is exactly one Application.
 
 <a id="native-topologie-und-schnitt"></a>
 ## Native topology and boundaries
@@ -47,11 +47,11 @@ The `CONTEXT.md` created by `impacts init` is the Core workspace's root router. 
 | Customer orientation and working language | Customer root `CONTEXT.md`; direct links explain each selected area's purpose |
 | Domain meaning, source mappings, reusable rules, document blanks | Existing domain/source home; populated `grundlagen/` files only where needed |
 | Continuing business instances | Authoritative source system or maintained `records/`; runs bind excerpts |
-| Reusable process and local prompt | Application HP/TP/AS `CONTEXT.md` bodies; no code, data or prompt subfolders inside a workstep |
+| Reusable process and local prompt | Existing process/domain home; selected Core Applications use HP/TP/AS `CONTEXT.md` bodies with no code, data or prompt subfolders inside a workstep |
 | Executable operation | Existing dependency or tool implementation; earned `capabilities/<slug>/` outside the Application |
-| Actual work and evidence | [Exact attempt paths](../../ontology.md#protocol-vocabulary) own `input/` and `output/`; only `laufpfad` owns run state |
+| Actual work and evidence | Existing case/record home; selected Core Runs use [exact attempt paths](../../ontology.md#protocol-vocabulary) for `input/` and `output/`, with only `laufpfad` owning run state |
 
-For a new Core workspace, `impacts init PATH --language en|de` creates only the root router, `applications/` and `vorgaenge/`. Initialize Git at that root before version binding; `init` neither creates Git nor installs a harness or source access. Resolve the protocol/Architect links, working language and selected domain homes before capture. Before a real run, the chosen harness must support the bound operations, source reads, checks, handoffs and human boundaries. Record its actual setup/dependency reference in the existing root body; placeholders or structural validity alone do not establish readiness. Existing repositories follow Restructure mode instead of running `init` over them.
+For a new Core workspace, `impacts init PATH --language en|de` creates only the root router, `applications/` and `vorgaenge/`. Before binding a historical Core Run, initialize Git at that root; `init` neither creates Git nor installs a harness or source access. Resolve the protocol/Architect links, working language and selected domain homes before capture. Before a real run, the chosen harness must support the bound operations, source reads, checks, handoffs and human boundaries. Record its actual setup/dependency reference in the existing root body; placeholders or structural validity alone do not establish readiness. Existing repositories follow Restructure mode instead of running `init` over them.
 
 - Routers hold identity, boundaries and links, not domain payload. Each claim and its evidence status have one fact home.
 - Navigate through relative Markdown links without copying claims. Domain keys connect table rows under [Tables and relationships](../../capabilities.md#tabellen-und-beziehungen).
@@ -69,6 +69,12 @@ That state describes only the captured collection. A claim of business absence r
 
 <a id="tooling-stopp"></a>
 ## Tooling stop
+
+Ordinary files, folders and readable instructions support complete useful method use, including process guidance. Reuse existing domain, process, case and record homes for supported work, sources, open questions and continuation. This use needs neither Git, Python nor a harness and does not claim machine-validated Core Run conformance. Choosing a particular check selects only its actual contract: Application-only structural validation and hashing need Python without Git; existing historical Core Run validation additionally requires its Git-bound Application and attempt surfaces. Git binding preserves a definition revision; it proves neither execution nor authenticated approval.
+
+Invoke machine validation only when the task needs its specific condition and a capable checker is available for the known scope and inputs. Existing task authorization or configuration can select that check; routine authorized read-only checks need no fresh human approval. Tool availability creates no new gate or installation obligation. The [design-time check decision](zuschnitt.md#required-checks-and-review) fixes essential checks and their consequences before execution; the writer cannot demote a binding check to advisory.
+
+A missing tool or check execution error means **not performed**, visible where the result matters; preserve the technical diagnostic. A failed check retains its actual finding. A required dependent claim or action remains restricted until its applicable condition is established, while independent permitted preparation remains usable and resumable. Passing establishes only the checked condition on those inputs. Explain outcomes to the user in order: progress made, consequence for the intended use, next action. Retain actual calculation, truth and authority requirements under [ontology enforcement](../../ontology.md#enforcement-and-completion) and the [Capability authority boundary](../../capabilities.md#rückübertragung-in-geschäftsrecords).
 
 Initialization and knowledge navigation require no new script. Files, folders and explicit links are sufficient when a person or agent can follow the needed path through them. A graph representation remains optional: consider adding one only when observed real questions repeatedly still need a full scan after repairing native links. Apply [Minimize](../../impacts-method.md#minimize) to its total burden and keep the projection removable and reproducible from the source Markdown. No graph runner, context-pack generator, mandatory ID or universal edge contract, generated second index, API, vector store or graph database belongs in the starting architecture. Domain calculation and consistency checkers must never become prerequisites for knowledge navigation.
 

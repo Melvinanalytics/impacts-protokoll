@@ -16,6 +16,8 @@ customer_touchpoint: sacred  # absent, standard or sacred
 
 # Decide
 
+This template applies to selected Core contracts under `02_protocol/impacts-architect/references/formwahl.md`, "Tooling stop", in the recorded protocol source/revision.
+
 A workstep declares inputs, visible outputs, a check and complete routes. Paths are relative to the attempt folder. With `gate: human`, routes are exactly `freigegeben` and `abgelehnt`. Replace example values. Resolve every `02_protocol/` reference against the protocol source/revision recorded by the workspace router, not against this generated Application. Use the customer's bound working language for instructions and human-readable outputs; machine identifiers remain unchanged.
 
 ## One job

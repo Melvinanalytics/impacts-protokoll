@@ -10,7 +10,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 # One allowlist for the release surface.
 PUBLIC_PATHS = (
-    '.gitignore', 'AGENTS.md', 'CONTEXT.md', 'LICENSE', 'README.md', 'pyproject.toml',
+    '.gitignore', 'AGENTS.md', 'CONTEXT.md', 'LICENSE', 'README.md', 'FIRST-WIN.md', 'pyproject.toml',
     '02_protocol/', '06_evaluations/', 'src/', 'tests/',
 )
 
@@ -100,4 +100,4 @@ def test_export_excludes_all_private_documentation_and_handovers():
     paths = export_files(ROOT)
     assert all(not p.startswith('docs/') for p in paths)
     assert all(not p.startswith('v03_') for p in paths)
-    assert set(PUBLIC_PATHS) == {'.gitignore', 'AGENTS.md', 'CONTEXT.md', 'LICENSE', 'README.md', 'pyproject.toml', '02_protocol/', '06_evaluations/', 'src/', 'tests/'}
+    assert set(PUBLIC_PATHS) == {'.gitignore', 'AGENTS.md', 'CONTEXT.md', 'LICENSE', 'README.md', 'FIRST-WIN.md', 'pyproject.toml', '02_protocol/', '06_evaluations/', 'src/', 'tests/'}

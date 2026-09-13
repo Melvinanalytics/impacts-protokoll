@@ -1,6 +1,8 @@
-<!-- Translation source: 02_protocol/templates/application.md; sha256: 2df1a511a3211a6c3f9c9021a99a4d70d66a49872b7c5950b460150b81026dcb -->
+<!-- Translation source: 02_protocol/templates/application.md; sha256: 27950b7b0bf2d0c9c60c9e77146396b950328ff203ba6b135404c5fb3ec8dc3b -->
 
 # Schablone einer Application
+
+Diese Vorlage gilt für gewählte Core-Verträge gemäß `02_protocol/impacts-architect/references/formwahl.md`, Abschnitt „Tooling stop“, in der benannten Protokollquelle und Revision.
 
 Eine Application ist ein Hauptprozess mit seiner Leistung, seinen Teilprozessen und Arbeitsschritten. Die Ordner tragen die fachlichen Namen des Prozesses; die Rolle jeder `CONTEXT.md` steht in ihrem `type`. Diese Schablone zeigt, wo jede Datei liegt und welche Vorlage sie erzeugt. Sie ist kein Router und wird nicht als `CONTEXT.md` gespeichert.
 
@@ -23,6 +25,7 @@ vorgaenge/<vorgang>/
 
 ## Regeln
 
+- Ein Blockskalarwert im Frontmatter darf keine alleinstehende `---`-Zeile enthalten.
 - `<hauptprozess>`, `<teilprozess>`, `<arbeitsschritt>` und `<vorgang>` sind Slugs: `[a-z0-9]+(?:-[a-z0-9]+)*`. Die ID jeder `CONTEXT.md` ist `<type>:<ordnername>`.
 - Der Application-Baum enthält nur `CONTEXT.md`-Dateien und Ordner. Jeder Hauptprozess hat mindestens einen Teilprozess, jeder Teilprozess mindestens einen Arbeitsschritt; ein Arbeitsschritt hat keine Unterordner.
 - Arbeitsschritt-IDs sind in der ganzen Application eindeutig. Routen zeigen auf `arbeitsschritt:<slug>` oder `end:<slug>`; jeder Schritt erreicht ein Ende.
@@ -44,4 +47,4 @@ applications/prueffall/
     └── entscheiden/CONTEXT.md  # arbeitsschritt:entscheiden
 ```
 
-`impacts validate .` prüft den Baum vor jedem Commit.
+Erforderliche Core-Strukturkonformität mit `impacts validate` im gewählten Umfang feststellen; fehlgeschlagene oder nicht ausgeführte Prüfbedingungen unter der gebundenen Werkzeuggrenze festhalten.

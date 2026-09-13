@@ -1,6 +1,6 @@
 # Process decomposition: from observed work to the five objects
 
-Read this at the method's [Perfect](../../impacts-method.md#perfect) and [Augment](../../impacts-method.md#augment) phases. Each rule names the test that decides a cut.
+Read this at the method's [Perfect](../../impacts-method.md#perfect) and [Augment](../../impacts-method.md#augment) phases. Each rule names the test that decides a cut. Core fields, trees and attempt contracts apply when selected under [Tooling stop](formwahl.md#tooling-stopp); source and evidence requirements apply to every form.
 
 ## Leistung
 
@@ -53,7 +53,19 @@ Use the human constraints established in [Identify](../../impacts-method.md#iden
 | Agent | Variable language, interpretation and proposals | States uncertainty and stays within permitted actions; a proposal is not authority |
 | Human | Required interaction, accountable judgement or authorization | Decision scope and permitted consequence must be understandable |
 
-These are not exclusive step classes. Input variance, tolerance, harm, reversibility and detectability inform the mix and required checks; frequency informs whether implementation effort is worthwhile, not who has authority. Record the choice in the existing processing body. Gate and touchpoint semantics remain as declared above.
+These are not exclusive step classes. Frequency informs whether implementation effort is worthwhile, not who has authority. Record the execution mix in the existing processing body. Gate and touchpoint semantics remain as declared above.
+
+### Required checks and review
+
+At design time, the responsible human determines which checks and reviews are essential for the intended result and which are optional, using the method's established constraints. Assess result tolerance together with input variation:
+
+- What harm could a wrong result cause?
+- Would the mistake be discovered before that harm occurs?
+- Could the result or effect be reversed, and at what cost?
+
+Consider how inputs can vary or violate the assumed premises; variable inputs need applicable source controls and exception handling. Declare the required conditions, permitted use and failure consequence in the existing criterion/body before execution. This qualitative decision adds no numerical score, field or mandatory form. Reuse an already authorized design decision or configuration for routine checks; no fresh approval ceremony is needed. If consequential premises change, the responsible human reassesses the design. The executing agent applies the declared choice within assigned authority and cannot guess or demote essential checks. An undeclared consequence stays a design question; independent permitted preparation continues.
+
+Low result tolerance does not automatically require Git. Fixed calculations need actual deterministic calculation checking; that establishes neither input truth nor permission. Variable inputs do not justify probabilistic money calculations. This assessment can underestimate harm; passing declared checks does not repair a mistaken assessment. Files declare the requirements and guide the agent; mechanical enforcement can be claimed only for conditions actually enforced by an available checker or harness.
 
 ## Naming
 

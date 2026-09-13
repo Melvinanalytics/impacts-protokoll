@@ -10,7 +10,7 @@ These meanings remain stable across domains and languages. The existing [five sc
 
 | Machine term | English meaning | Boundary |
 |---|---|---|
-| `workspace` | Customer work and its root router | Git-root home for selected Applications and runs; domain knowledge and continuing records keep their own homes. The protocol repository supplies the method and Core, not customer facts. |
+| `workspace` | Customer work and its root router | Domain knowledge and continuing records keep their own homes; selected Core Runs require a Git-root workspace. The protocol repository supplies the method and Core, not customer facts. |
 | `leistung` | Accepted process result | Embedded, ID-less result contract: end state, metric and acceptance. A commercial offering has its own domain definition. |
 | `hauptprozess` | Main process | Root of one Application at `applications/<slug>/CONTEXT.md`; positive completion achieves its result. |
 | `teilprozess` | Subprocess | A coherent context section of that main process, in a domain-named subfolder. |
@@ -22,9 +22,9 @@ An **Application** is the reusable main-process tree, not an additional object a
 
 Folder containment means **membership**; `einstieg_ref` and `routen` mean **execution order**; a Markdown link provides **knowledge navigation**; a domain key connects **record instances**. Each reference retains its stated meaning. A knowledge link alone establishes neither an execution route nor a business relationship.
 
-Definitions live at `applications/<hauptprozess>/<teilprozess>/<arbeitsschritt>/CONTEXT.md`. Run files live at `vorgaenge/<vorgang>/<arbeitsschritt>/<versuch>/input/` or `output/`; attempts start at `001`. Reference the actual file and revision carrying a claim, not just its run folder. Use the [run template](templates/vorgang.md).
+Selected Core definitions live at `applications/<hauptprozess>/<teilprozess>/<arbeitsschritt>/CONTEXT.md`. Run files live at `vorgaenge/<vorgang>/<arbeitsschritt>/<versuch>/input/` or `output/`; attempts start at `001`. Reference the actual file and revision carrying a claim, not just its run folder. Use the [run template](templates/vorgang.md).
 
-Generate Core files from existing [templates](templates/) through `impacts template <kind>`. Preserve field names, types and ID prefixes; domain details belong in the body. Without template or validator access, provide an explicitly unvalidated sketch. Before adoption, run `impacts validate` on the resulting tree and correct failures. A model's assertion of validity cannot replace execution.
+For selected Core contracts, use the existing [templates](templates/) and preserve field names, types and ID prefixes; domain details belong in the body. Apply the [ordinary-use and machine-validation boundary](impacts-architect/references/formwahl.md#tooling-stopp). Core conformance requires actual applicable validation; a model's assertion cannot replace execution.
 
 ## Author or change
 
@@ -89,7 +89,7 @@ Keep these claims distinct: a policy **was adopted**; its predicted benefit **is
 | Domain use | Workstep's named checker executes required identity, relationship, validity, unit and calculation checks. | Does not establish untested conditions or source truth. |
 | Action | Executing harness checks required results and applicable authority before the dependent transition/effect. | A label, document hash or agent consensus does not authenticate a decision. |
 
-`pruefung` names the observable criterion. The body references the actual checker or accountable person and failure route. The existing declared output or bound upstream input carries **input/rule/output revision, checked condition and scope, observed result, remaining gap and use consequence**. The harness executes the check or validates an applicable result from its trusted execution path; model-written success text is insufficient. A failed, missing, stale or inapplicable required check blocks the transition/effect that requires it to pass. A declared failure route can carry that finding into recovery or a negative end; otherwise retain the appropriate wait. Independent permitted work continues. Check output and action authority remain separate.
+`pruefung` names the observable criterion. The body references the actual checker or accountable person and failure route. The existing declared output or bound upstream input carries **input/rule/output revision, checked condition and scope, observed result, remaining gap and use consequence**. For harness-executed operations, the harness executes the check or validates an applicable result from its trusted execution path; model-written success text is insufficient. A failed, missing, stale or inapplicable required check blocks the transition/effect that requires it to pass. A declared failure route can carry that finding into recovery or a negative end; otherwise retain the appropriate wait. Independent permitted work continues. Check output and action authority remain separate.
 
 The Core does not interpret this Markdown convention. Implement only checks needed by the application, at its existing boundaries; no universal ontology engine is required. A bound snapshot supports reproducibility. An external write also needs the declared current-state/conflict check at the action boundary, as specified in [record writeback](capabilities.md#rückübertragung-in-geschäftsrecords).
 
