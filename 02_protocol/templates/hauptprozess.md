@@ -12,6 +12,8 @@ einstieg_ref: arbeitsschritt:pruefen
 
 # Decide a review case
 
+This template applies to selected Core contracts under `02_protocol/impacts-architect/references/formwahl.md`, "Tooling stop", in the recorded protocol source/revision.
+
 The main process is the Application root at `applications/<slug>/CONTEXT.md`. Its subfolders are subprocesses, whose subfolders are worksteps. It defines the complete path to the embedded result. `einstieg_ref` names the first workstep; each workstep owns its routes. This body carries Identify context for people and harnesses, not another schema. Replace example values in the customer's working language.
 
 ## Result and scope

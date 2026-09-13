@@ -10,9 +10,11 @@ leistung:
 einstieg_ref: arbeitsschritt:pruefen
 ---
 
-<!-- Translation source: 02_protocol/templates/hauptprozess.md; sha256: 9856c52c24df71971e81ddc76a9aff1113f6ed43cfb1e9b4a5e036c53a3e9058 -->
+<!-- Translation source: 02_protocol/templates/hauptprozess.md; sha256: 80bf2e1a3ddcc1f7f70981dd05172b38aef76e92e5ba0ccde8a503ae779e284f -->
 
 # Prüffall entscheiden
+
+Diese Vorlage gilt für gewählte Core-Verträge gemäß `02_protocol/impacts-architect/references/formwahl.md`, Abschnitt „Tooling stop“, in der benannten Protokollquelle und Revision.
 
 Der Hauptprozess ist die Wurzel der Application: `applications/<slug>/CONTEXT.md`. Seine Teilprozesse sind seine Unterordner, deren Arbeitsschritte wiederum deren Unterordner. Er ist der vollständige Weg bis zur eingebetteten Leistung. `einstieg_ref` nennt den ersten Arbeitsschritt. Die Routen stehen an den Arbeitsschritten. Dieser Body trägt das Identify-Ergebnis der IMPACTS-Methode; er ist Kontext für Mensch und Harness, kein Schema. Beispielwerte ersetzen.
 

@@ -713,7 +713,8 @@ def test_answer_N15_mechanics_cannot_establish_task_selection(bound_answer):
     repo, rev, _, args, _ = bound_answer
     wrong = answer.bind(repo, rev, (answer.Section('02_protocol/impacts-method.md', 'Minimize'),), **args)
     assert answer.deliver(wrong, candidate_for(wrong))['sha256']
-    # Independent fixture obligation; a real B run retains the frozen full rubric.
+    # Independent fixture obligation; the historical B rubric remains unavailable.
+    # Separately authored audit rubric: 06_evaluations/frozen-rubrics.md.
     assert b'## Snapshot and provenance' not in wrong.target.read_bytes()
 
 

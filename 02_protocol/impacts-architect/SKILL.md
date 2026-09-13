@@ -5,7 +5,7 @@ description: Use when customer initialization or knowledge topology needs a file
 
 # IMPACTS Architect
 
-This skill selects the smallest fitting ICM form, then produces only the files that form needs. For a Pipeline, the core validates an Application tree of `CONTEXT.md` files. Other forms use the workspace's native routers, `grundlagen/` and `records/` where real content requires them. The skill never executes an Arbeitsschritt, never writes `human:<id>`, and never introduces a schema, field or folder kind the core does not have.
+This skill selects the smallest fitting ICM form, then produces only the files that form needs. For a Pipeline using Core contracts, the core validates an Application tree of `CONTEXT.md` files. Other forms use the workspace's native routers, `grundlagen/` and `records/` where real content requires them. The skill never executes an Arbeitsschritt, never writes `human:<id>`, and never introduces a schema, field or folder kind the core does not have.
 
 Start with the [formwahl work report](references/formwahl.md#arbeitsbericht-vor-baumvorschlag), including its business-capture branch. For a Pipeline, load the [capture/build method](../impacts-method.md#capture-business-meaning) and the phase section in use; load the [decomposition rules](references/zuschnitt.md#arbeitsschritt) when cutting work and the [automation boundary](references/zuschnitt.md#automation-boundary) when assigning contributions. Load the [Capability contract](../capabilities.md) and its relevant [extraction/call rules](../capabilities.md#wann-extrahieren) plus [source](../capabilities.md#snapshot-und-herkunftsnachweis), [handoff](../capabilities.md#sichtbare-ausgabe-und-übergabe), [writeback](../capabilities.md#rückübertragung-in-geschäftsrecords) or [Gate](../capabilities.md#signale-und-human-gate) rules only when that branch is present, including work without an extracted Capability. For every form, use the linked [evidence labels](references/zuschnitt.md#evidence) and [UX/AX/DX acceptance](../impacts-method.md#readability-and-processing). Use this skill with the protocol checkout; a standalone folder copy omits its sibling references.
 
@@ -15,18 +15,20 @@ Resolve the customer’s [working language](../language.md#select-and-bind) befo
 
 ## Invariants
 
+Application/Run-specific invariants apply to selected Core contracts under the [ordinary-use boundary](references/formwahl.md#tooling-stopp).
+
 1. One Application holds one Hauptprozess with one embedded process Leistung. Two independently bounded process results mean two Applications; catalog items are not Application boundaries.
 2. Arbeitsschritte own their routes, the Hauptprozess owns the entry, every step reaches a named end.
 3. The Application tree holds only `CONTEXT.md` files. Reference material lives in `grundlagen/`; continuing business instances stay in their designated systems or maintained records. Reusable processing lives in Fachrepo- or Workspace-level `capabilities/<slug>/`, code otherwise in dependencies.
-4. The workspace root is the git root. A Vorgang binds a committed Application tree.
+4. For Core Runs, the workspace root is the Git root. A Vorgang binds a committed Application tree.
 5. `gate: human` marks an authority, risk or legal boundary and nothing else. `customer_touchpoint` marks where the customer is in the interaction.
 6. Factory and run stay apart: no Vorgang changes the Application.
 7. Every claim carries its source and the evidence label defined in [zuschnitt.md](references/zuschnitt.md#evidence); a confirmed document does not confirm every interpretation of it.
-8. `impacts validate .` validates Applications and Vorgänge, not non-process knowledge topology. Run it before every commit when those core objects are present.
+8. `impacts validate .` checks the selected Core Applications and Vorgänge, not non-process knowledge topology or arbitrary domain meaning. Apply it for the needed condition under the [machine-validation boundary](references/formwahl.md#tooling-stopp).
 
 ## Form selection
 
-Before proposing a tree, complete the work-report recipe in [formwahl.md](references/formwahl.md#arbeitsbericht-vor-baumvorschlag). Then select the smallest fitting form from the units that grow or repeat: Pipeline, Record Library, Knowledge Bundle, Context Map, Umbrella or System Map. Enter Build mode only when the selected form is a Pipeline that will become an Application. For a non-process form, build only its native Markdown topology and use the applicable walk branch below.
+Before proposing a tree, complete the work-report recipe in [formwahl.md](references/formwahl.md#arbeitsbericht-vor-baumvorschlag). Then select the smallest fitting form from the units that grow or repeat: Pipeline, Record Library, Knowledge Bundle, Context Map, Umbrella or System Map. Enter Build mode only when the selected form is a Pipeline using Core Application contracts. Ordinary process guidance reuses existing homes under [Tooling stop](references/formwahl.md#tooling-stopp); it does not require Build mode. For a non-process form, build only its native Markdown topology and use the applicable walk branch below.
 
 ## Choose a mode
 
@@ -39,21 +41,21 @@ Before proposing a tree, complete the work-report recipe in [formwahl.md](refere
 
 For a newly described Record Library, Knowledge Bundle or Context Map, create only populated native Markdown homes and links under its rules. Run its Knowledge Walk when the topology uses `records/` or domain `grundlagen/`; if a Context Map links only Applications, run the Process Walk for each linked Application. Add no checker or runtime.
 
-For an Umbrella, create a small router to multiple independent Pipeline Applications, then run the Process Walk for each Application.
+For an Umbrella, create a small router to multiple independent Pipelines; selected Core Applications use their Process Walks.
 
 For a System Map, use the existing repository map and files, then select and test its child forms through their applicable walk branches.
 
 ## Build mode
 
-Follow the method's phases in order; load each linked section when doing that work. Reuse the form-selection evidence and fill the existing Application template sections.
+For selected Core Application/Run contracts, follow the method's phases in order; load each linked section when doing that work. Reuse the form-selection evidence and fill the existing Application template sections.
 
 1. [Identify](../impacts-method.md#identify). Use [reverse engineering](../impacts-method.md#reverse-engineer-a-product-or-service) for supplied products/services. For new observations without a suitable home, use [ist-prozess.md](templates/ist-prozess.md) or its [German counterpart](templates/de/ist-prozess.md) under `grundlagen/ist-prozesse/`.
 2. [Minimize](../impacts-method.md#minimize). Record proposed removals and their consequences in `Value flow`.
 3. [Perfect](../impacts-method.md#perfect). Use [Leistung and decomposition](references/zuschnitt.md#leistung) to cut the supported work into the existing tree.
 4. [Augment](../impacts-method.md#augment). Select contributions through the [automation boundary](references/zuschnitt.md#automation-boundary); load Capability [extraction](../capabilities.md#wann-extrahieren) and [call](../capabilities.md#capability-aufruf) rules only when applicable.
-5. [Construct](../impacts-method.md#construct). Generate each object with `impacts template <kind>` under `applications/<slug>/`. Build mode is incomplete until every Hauptprozess, Teilprozess and Arbeitsschritt retains its role-specific sections and satisfies its localized setup-completion section under [Maintain agent instructions](../impacts-method.md#maintain-agent-instructions). Complete [workstep composition](../impacts-method.md#compose-an-arbeitsschritt) and the [workspace/harness setup](references/formwahl.md#native-topologie-und-schnitt). Before the candidate commit, record the semantic design cases with their premises, expected outcomes and open gaps; this review does not execute an Arbeitsschritt or establish readiness. Run `impacts validate applications/<slug>` until exit 0, then commit the candidate. `git rev-parse HEAD:applications/<slug>` identifies the tree that the Test phase's responsible harness exercises and new Vorgänge bind.
-6. [Test](../impacts-method.md#test). Apply the walk branches below. The Architect prepares and reviews; the responsible harness exercises representative Vorgänge within their declared authority.
-7. [Scale](../impacts-method.md#scale). Commit the tested revision. Follow [Reviewed correction](../impacts-method.md#reviewed-correction) for subsequent changes in any form.
+5. [Construct](../impacts-method.md#construct). Use `impacts template <kind>` or its existing template under `applications/<slug>/`. Build mode is incomplete until every Hauptprozess, Teilprozess and Arbeitsschritt retains its role-specific sections and satisfies its localized setup-completion section under [Maintain agent instructions](../impacts-method.md#maintain-agent-instructions). Complete [workstep composition](../impacts-method.md#compose-an-arbeitsschritt) and the [workspace/harness setup](references/formwahl.md#native-topologie-und-schnitt). Before the candidate commit, record the semantic design cases with their premises, expected outcomes and open gaps; this review does not execute an Arbeitsschritt or establish readiness. Before claiming Core structural conformance, run `impacts validate applications/<slug>` and correct failures under [Tooling stop](references/formwahl.md#tooling-stopp). For historical Core Run use, commit the candidate. `git rev-parse HEAD:applications/<slug>` identifies the tree that the Test phase's responsible harness exercises and new Vorgänge bind.
+6. [Test](../impacts-method.md#test). Apply the selected walk branches below. The Architect prepares and reviews; when Core Run execution is selected, the responsible harness exercises representative Vorgänge within their declared authority.
+7. [Scale](../impacts-method.md#scale). For historical Core Run use, commit the tested revision. Follow [Reviewed correction](../impacts-method.md#reviewed-correction) for subsequent changes in any form.
 
 ## Restructure mode
 
@@ -63,7 +65,7 @@ Follow the method's phases in order; load each linked section when doing that wo
 4. Reference check before any move: in-repo links, sibling paths, symlinks, and consumers outside the repo such as scripts, jobs and other repositories. Ask the owner for the outside ones. A file with a live referrer is held, or moved together with its referrers in one change.
 5. Migration map for human approval: old path, new path, role, referrers found.
 6. Migrate by copy, verify, remove: copy, compare file count and hashes, only then remove. Check case-folded destination collisions first.
-7. Route every found form: Build mode only for Applications and Topology path for non-process forms. Run `impacts validate .` for Applications and Vorgänge present, then run the applicable walk-test branch for every form.
+7. Route every found form: Build mode only for Applications and Topology path for non-process forms. Apply needed Core checks under [Tooling stop](references/formwahl.md#tooling-stopp), then the applicable walk-test branch for each selected form.
 
 ## Import mode
 
@@ -73,7 +75,7 @@ Follow the method's phases in order; load each linked section when doing that wo
 
 ## Walk test
 
-Choose the branch established by form selection. For a Pipeline/Application, a cold agent with no memory performs the Process Walk:
+Choose the branch established by form selection. For a selected Core Pipeline/Application, a cold agent with no memory performs the Process Walk:
 
 1. Open the root `CONTEXT.md`. Can it say where it is and how to advance a Vorgang from this one file?
 2. Validate the selected workspace or Application directory with `impacts validate`. Record the target and protocol revision; a different repository root is not automatically a Core workspace.

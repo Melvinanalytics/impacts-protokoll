@@ -126,6 +126,8 @@ The reference harness reads this stable sentence syntax:
 Bei Route `bestanden`: `output/pruefbericht.md -> arbeitsschritt:entscheiden/input/pruefbericht.md`.
 ```
 
+The mapping sentence is a parser-consumed label under [Preserve meaning](language.md#preserve-meaning): it keeps this exact form in every working language, German words included, while the surrounding instruction is translated. A workspace that declares a different sentence form supplies a harness that reads that form; translating the label breaks the reference harness's mapping check.
+
 The output path is relative to the producer attempt; `arbeitsschritt:entscheiden` is a target ID, not a folder. This reference harness requires exactly one matching handoff per selected route. Its block/sentence syntax is a local reading convention, not Core schema. Other worksteps may need multiple mappings; their harness must implement each declared mapping before adoption.
 
 Producer `ausgabe_hash` and consumer `eingabe_hash` bind different surfaces. Relative paths participate, so hashes are not compared and do not form a hash chain. The general validator does not verify origin/digest claims; a local harness does where the use requires it.

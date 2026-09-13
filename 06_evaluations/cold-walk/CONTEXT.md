@@ -25,6 +25,6 @@ python3 -m pip install -e .
 python3 06_evaluations/cold-walk/check.py
 ```
 
-Without the install, `PYTHONPATH=src python3 06_evaluations/cold-walk/check.py` also works. The example Application validates on its own with `impacts validate 06_evaluations/cold-walk/beispiel/applications/prueffall`.
+Without the install, `PYTHONPATH=src python3 06_evaluations/cold-walk/check.py` also works, provided the runtime dependencies (`jsonschema`, `referencing`, `PyYAML`) are importable; the editable install supplies them. The example Application validates on its own with `impacts validate 06_evaluations/cold-walk/beispiel/applications/prueffall`.
 
 Exit 0 only when every state validates as expected and the mutation is detected.
