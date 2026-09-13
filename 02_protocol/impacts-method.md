@@ -1,10 +1,10 @@
 # IMPACTS build method
 
-IMPACTS designs the necessary work backwards from an accepted result. Observed customer work supplies evidence about information, dependencies and protective functions. The Application becomes the reusable target process for new Vorgänge.
+IMPACTS designs the necessary work backwards from an accepted result. Observed customer work supplies evidence about information, dependencies and protective functions. When Core contracts are selected, the Application becomes the reusable target process for new Vorgänge.
 
 The protocol is domain- and use-case-agnostic. It defines the result boundary, process topology, local orientation and where verification belongs. Domain rules and calculations stay in their existing Fachrepo or workspace homes; the Application references them rather than making them protocol requirements. A commercial funnel, valuation method or feasibility criterion is not a universal process model.
 
-First use the Architect's [work report and form selection](impacts-architect/references/formwahl.md#arbeitsbericht-vor-baumvorschlag). The seven phases below apply only after selecting a Pipeline that will become an Application; Record Libraries, Knowledge Bundles, Context Maps and other non-process forms do not enter Identify. Every form uses [Reviewed correction](#reviewed-correction) when an observed defect or repeated friction needs a change.
+First use the Architect's [work report and form selection](impacts-architect/references/formwahl.md#arbeitsbericht-vor-baumvorschlag) and [ordinary-use boundary](impacts-architect/references/formwahl.md#tooling-stopp). The seven phases below guide selected process work; Construct and Scale's technical procedures apply when choosing Core Application/Run contracts. Record Libraries, Knowledge Bundles, Context Maps and other non-process forms do not enter Identify. Every form uses [Reviewed correction](#reviewed-correction) when an observed defect or repeated friction needs a change.
 
 ```text
 Identify -> Minimize -> Perfect -> Augment -> Construct -> Test -> Scale
@@ -48,9 +48,11 @@ Use a supplied catalog, service description, agreement, finished artifact or obs
 Accepted result -> required component/effect -> producing job -> inputs + rule + resources + authority -> actual source or decision
 ```
 
-Put this trace in the existing Application `Value flow` and workstep input/processing sections; before a Pipeline is justified, keep it at the selected source/domain home. Apply capture's completion condition to every required component. Execution readiness additionally requires the prerequisites and declared checks to be available; a complete diagram alone does not supply them.
+Keep this trace at the selected source/domain home; selected Core Applications use their existing `Value flow` and workstep input/processing sections. Apply capture's completion condition to every required component. Execution readiness additionally requires the prerequisites and declared checks to be available; a complete diagram alone does not supply them.
 
 ## Compose an Arbeitsschritt
+
+This section owns selected Core workstep composition; ordinary process guidance follows the [existing-home boundary](impacts-architect/references/formwahl.md#tooling-stopp).
 
 First resolve the roles and paths in [Protocol vocabulary](ontology.md#protocol-vocabulary). Prompt, tools and data then have distinct jobs inside the existing step contract:
 
@@ -66,11 +68,13 @@ Inputs, outputs, `pruefung`, routes and authority delimit all three; they add no
 
 ## Work from prerequisites
 
-HP → TP → AS provides understandable scope, ownership and auditable handoffs. Design execution around the information, applicable rules, resources and authority each contribution actually requires. A department's historical queue is not automatically a dependency. Independent contributions can be prepared together inside one coherent Arbeitsschritt; separate results, checks or authority boundaries still earn separate steps.
+For selected Core Applications, HP → TP → AS provides understandable scope, ownership and auditable handoffs. Design execution around the information, applicable rules, resources and authority each contribution actually requires. A department's historical queue is not automatically a dependency. Independent contributions can be prepared together inside one coherent job; separate results, checks or authority boundaries still earn separate steps.
 
-Within the current declared job, perform useful permitted work as soon as its prerequisites hold. If one contribution is blocked, preserve the usable results and name the missing evidence or decision, its responsible party and the next allowed action. The existing processing body defines permitted preparation, acquisition and effects; the Vorgang's `Stand` explains progress using its Laufpfad and linked outputs. A reply draft may help while waiting; sending it requires its own applicable permission. Data availability alone grants neither a decision nor an external action.
+Within the current declared job, perform useful permitted work as soon as its prerequisites hold. If one contribution is blocked, preserve the usable results and name the missing evidence or decision, its responsible party and the next allowed action. The existing processing body defines permitted preparation, acquisition and effects. Ordinary guidance records progress, evidence, blockers and continuation in the existing process/case/record home; selected Core Runs use the Vorgang's `Stand`, its Laufpfad and linked outputs. A reply draft may help while waiting; sending it requires its own applicable permission. Data availability alone grants neither a decision nor an external action.
 
-For example, prepare an offer's supported content while its delivery confirmation is outstanding. Mark the missing confirmation and retain any required review before a commitment. Preparation needs sufficient inputs for that contribution; a file recording an unknown value proves the gap, not the missing value. If a declared input file cannot yet be materialized, acquire it through the preceding job or a permitted preparation path before opening that attempt. Intermediate transformations of bound inputs stay within the job; they need no extra step merely because a tool was called. Newly acquired source evidence becomes declared output with provenance and then input to the next designated attempt before dependent processing. Never replace already bound input bytes. A relevant change requires rechecking affected drafts; a new input set belongs to a new routed attempt. If the required return route is absent, a necessary restart begins at the entry of a new Vorgang with an explicit reference to the old one.
+For example, prepare an offer's supported content while its delivery confirmation is outstanding. Mark the missing confirmation and retain any required review before a commitment. Preparation needs sufficient inputs for that contribution; a file recording an unknown value proves the gap, not the missing value.
+
+The following binding mechanics apply to selected Core Runs. If a declared input file cannot yet be materialized, acquire it through the preceding job or a permitted preparation path before opening that attempt. Intermediate transformations of bound inputs stay within the job; they need no extra step merely because a tool was called. Newly acquired source evidence becomes declared output with provenance and then input to the next designated attempt before dependent processing. Never replace already bound input bytes. A relevant change requires rechecking affected drafts; a new input set belongs to a new routed attempt. If the required return route is absent, a necessary restart begins at the entry of a new Vorgang with an explicit reference to the old one.
 
 The current Core has one sequential Laufpfad: the last entry identifies the current step and attempt. Within it, independent operations may be organized by the harness; the Core does not schedule them. An `aktiv` or `wartend` attempt may hold permitted, uncompleted drafts under its declared `output/`; those drafts do not select a route, close the step or release a Gate. Resume follows the declared route. Starting another Arbeitsschritt early, bypassing a Gate or opening concurrent Laufpfad branches is not implied. Recurring waits may justify a reviewed change to future Applications, not a silent rewrite of the running definition.
 
@@ -93,7 +97,7 @@ Keep metric meaning with its existing definition: what is counted or assessed, u
 
 A Customer-Touchpoint creates trust, advice, commitment or experience. `standard` keeps the interaction human and prepares it with better information. `sacred` protects the interaction until a human approves a changed classification. For the declared action, responsible human and execution preflight, apply [Signals and human gates](capabilities.md#signale-und-human-gate).
 
-A Human Gate controls risk or authority. The agent prepares short, inspectable evidence. The human decision remains in the Vorgang.
+A Human Gate controls risk or authority. The agent prepares short, inspectable evidence. For Core Runs, the human decision remains in the Vorgang.
 
 Before redesign, identify where a person must interact, judge or authorize, why that boundary exists and who may change it. Distinguish a required boundary from a current staffing habit or temporary lack of data or tools. An unresolved permission does not authorize automation across that boundary. Preparing evidence can be automated without transferring the decision itself.
 
@@ -123,11 +127,11 @@ Every calculation has a sanctioned rule even when it remains local. A Capability
 
 ## Construct
 
-Write one Application as `CONTEXT.md` files from the existing templates. The folder tree carries containment; `einstieg_ref` and routes carry execution order. Fill each workstep's [prompt, tools and data contract](#compose-an-arbeitsschritt), including source acquisition and required check. Keep code, shared reference content and run bytes in their [existing homes](impacts-architect/references/formwahl.md#native-topologie-und-schnitt). An unresolved input, operation or check remains an explicit execution blocker, even when the tree validates.
+For selected Core contracts, write one Application as `CONTEXT.md` files from the existing templates. The folder tree carries containment; `einstieg_ref` and routes carry execution order. Fill each workstep's [prompt, tools and data contract](#compose-an-arbeitsschritt), including source acquisition and required check. Keep code, shared reference content and run bytes in their [existing homes](impacts-architect/references/formwahl.md#native-topologie-und-schnitt). An unresolved input, operation or check remains an explicit execution blocker, even when the tree validates.
 
 ## Test
 
-Run representative Vorgänge against a baseline. Compare the primary outcome, guardrails, throughput and failure cases. Treat a leading indicator as a hypothesis until observed runs support its relation to the outcome.
+Exercise representative cases against a baseline; selected Core Run execution uses representative Vorgänge. Compare the primary outcome, guardrails, throughput and failure cases. Treat a leading indicator as a hypothesis until observed runs support its relation to the outcome.
 
 Keep structural validity, correct domain processing and observed benefit separate. A successful validator run proves only its declared checks. For a shorter-process claim, use Identify's time boundary, include preparation, review and rework, and check whether waiting or backlog merely moved to another participant. Report labor savings separately and retain the agreed guardrails. Without a defensible comparison, leave the effect unproven; a consistency repair does not require a business-time improvement unless it claims one.
 
@@ -135,7 +139,7 @@ For a context-efficiency claim, compare the same representative questions and so
 
 ## Scale
 
-Commit the tested Application revision and use it for new Vorgänge. Existing Vorgänge remain bound to their historical revision. A later improvement produces another reviewable Application revision.
+For selected Core Runs, commit the tested Application revision and use it for new Vorgänge. Existing Vorgänge remain bound to their historical revision. A later improvement produces another reviewable Application revision.
 
 Transfer only within the demonstrated domain and operating assumptions. Reusing the protocol in another Fachrepo does not transfer its predecessor's business rules, approvals or effect claims. Reassess the limiting dependency after a change; a faster step may merely move the constraint.
 
@@ -185,7 +189,7 @@ Treat an instruction change as a change to observable product and protocol behav
 | Linked protocol, domain or policy home | Own reusable meaning or a conditional rule once. A pointer states the branch that requires it. |
 | Executable check or representative evaluation | Observe the declared condition. Passing establishes only that condition for the tested inputs and configuration. |
 
-At Application setup, each typed `CONTEXT.md` closes its own level without copying child detail:
+For selected Core Application setup, each typed `CONTEXT.md` closes its own level without copying child detail:
 
 | Type | Required setup coverage |
 |---|---|
@@ -193,9 +197,9 @@ At Application setup, each typed `CONTEXT.md` closes its own level without copyi
 | Teilprozess | One coherent contribution and consumer; required upstream inputs and exclusions; workstep responsibilities and handoffs; acceptance of the section result; setup completion and open gaps. |
 | Arbeitsschritt | One job and permitted use; declared inputs and excluded context; ordered human, model and deterministic processing; permitted tools/effects; visible outputs; observable check, routes and blocker handling; setup completion and open gaps. |
 
-Generate each surface with `impacts template <hauptprozess|teilprozess|arbeitsschritt>`. Preserve the template's required setup sections or equivalent explicit headings in the customer's working language. The headings organize the readable contract; they add no Core fields. `impacts validate` checks Core structure and routes, while the setup-completion section and representative cases check the body meaning.
+For these Core surfaces, use `impacts template <hauptprozess|teilprozess|arbeitsschritt>` or the existing templates directly. Preserve the template's required setup sections or equivalent explicit headings in the customer's working language. The headings organize the readable contract; they add no Core fields. `impacts validate` checks Core structure and routes, while the setup-completion section and representative cases check the body meaning.
 
-Setup completion establishes definition completeness, not execution readiness or the business result. Before committing a candidate definition, review the applicable cases and record their premises and expected outcomes in the existing design/review evidence. After committing, the responsible harness exercises representative Vorgänge and records observed results against that exact revision. An agent-written scenario or expected result is not execution evidence.
+Core setup completion establishes definition completeness, not execution readiness or the business result. Before committing a candidate Core definition, review the applicable cases and record their premises and expected outcomes in the existing design/review evidence. After committing, the responsible harness exercises representative Vorgänge and records observed results against that exact revision. An agent-written scenario or expected result is not execution evidence.
 
 Use this maintenance path:
 
@@ -216,15 +220,15 @@ External research is ingestion. Use it only when the local path exposes a real e
 
 ## Where the context lives
 
-The Application body explains the relevant environment, value flow and optimization contract. The embedded Leistung holds the result, its main metric and acceptance conditions. A Teilprozess body explains its contribution; a leading indicator is included only under Identify's decision-use criterion. An Arbeitsschritt owns inputs, outputs, verification, routes and optional human markers.
+For selected Core Applications, the Application body explains the relevant environment, value flow and optimization contract. The embedded Leistung holds the result, its main metric and acceptance conditions. A Teilprozess body explains its contribution; a leading indicator is included only under Identify's decision-use criterion. An Arbeitsschritt owns inputs, outputs, verification, routes and optional human markers.
 
 These are human-readable instructions in existing files. They add no schema, state machine or execution engine.
 
-Stable material stays at one source home. A run materializes the smallest professionally sufficient source or projection plus separate provenance under attempt `input/`. A step handoff declares `output -> input`; the run binds byte content, attempt-qualified origin and content digest. Follow the [snapshot/provenance contract](capabilities.md#snapshot-und-herkunftsnachweis) and [visible handoff contract](capabilities.md#sichtbare-ausgabe-und-übergabe) for those details.
+Stable material stays at one source home; ordinary guidance retains work and evidence in its existing process/case/record home. For selected Core Runs, a run materializes the smallest professionally sufficient source or projection plus separate provenance under attempt `input/`. A step handoff declares `output -> input`; the run binds byte content, attempt-qualified origin and content digest. Follow the [snapshot/provenance contract](capabilities.md#snapshot-und-herkunftsnachweis) and [visible handoff contract](capabilities.md#sichtbare-ausgabe-und-übergabe) for those Core binding details.
 
 ## Review another Fachrepo
 
-Name the protocol revision actually used before assessing compatibility. Check its machine-readable structure against that revision; do not treat a successful check against an older pin as compatibility with this one. Select the applicable [Walk test](impacts-architect/SKILL.md#walk-test): Process Walk for Applications, Knowledge Walk for records and domain foundations, both for mixed forms. Exercise domain processing and outcome checks separately where required. Legitimately missing evidence produces a focused question; unreachable existing evidence requires a routing repair.
+Name the protocol revision actually used before assessing compatibility. For selected Core compatibility, check its machine-readable structure against that revision; do not treat a successful check against an older pin as compatibility with this one. Select the applicable [Walk test](impacts-architect/SKILL.md#walk-test): Process Walk for Applications, Knowledge Walk for records and domain foundations, both for mixed forms. Exercise domain processing and outcome checks separately where required. Legitimately missing evidence produces a focused question; unreachable existing evidence requires a routing repair.
 
 Any later nodes-and-edges view follows the single [Tooling stop](impacts-architect/references/formwahl.md#tooling-stopp): it is a disposable projection, not a second authority. Folders, explicit links, source references and routes already make a needed path traversable when they expose the relevant context to a person or agent. Preserve containment, execution order and knowledge navigation as different meanings and retain the source revision; do not infer execution order or causal influence from an ordinary hyperlink. A graph projection is optional and never a prerequisite for reading, validating or transferring a repository.
 

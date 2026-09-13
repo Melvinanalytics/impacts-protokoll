@@ -14,9 +14,11 @@ routen:
 customer_touchpoint: sacred  # fehlend, standard oder sacred
 ---
 
-<!-- Translation source: 02_protocol/templates/arbeitsschritt.md; sha256: 4fef831bf216ec4573f6aca3efed2c0c967ef41eeac7816edc9776aae29d87f3 -->
+<!-- Translation source: 02_protocol/templates/arbeitsschritt.md; sha256: 1d1eacd34d57eeec2c3329ea87bea5509d18f1f2fad8f18961af34a286c80045 -->
 
 # Entscheiden
+
+Diese Vorlage gilt für gewählte Core-Verträge gemäß `02_protocol/impacts-architect/references/formwahl.md`, Abschnitt „Tooling stop“, in der benannten Protokollquelle und Revision.
 
 Ein Arbeitsschritt hat deklarierte Eingaben, sichtbare Ausgaben, eine Prüfregel und vollständige Routen. Pfade gelten relativ zum Versuchsordner. Mit `gate: human` heißen die Routen genau `freigegeben` und `abgelehnt`. Beispielwerte ersetzen. Jeden `02_protocol/`-Verweis gegen die im Workspace-Router benannte Protokollquelle/Revision auflösen, nicht gegen diese erzeugte Application. Arbeitsanweisungen und lesbare Ausgaben verwenden die gebundene Arbeitssprache; Maschinenkennungen bleiben unverändert.
 

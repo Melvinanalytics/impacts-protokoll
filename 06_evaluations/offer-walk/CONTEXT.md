@@ -4,6 +4,9 @@ A synthetic, local two-step Application demonstrates the [ontology boundary](../
 
 Run from the repository root:
 
+Use the [README developer setup](../../README.md) or an equivalent dependency
+installation before running this walk; the runner requires `jsonschema` and `yaml`.
+
 ```sh
 python3 06_evaluations/offer-walk/run.py --language de
 python3 06_evaluations/offer-walk/run.py --language en
@@ -32,7 +35,7 @@ Operational findings cover only declared fixture files: a trusted synthetic acce
 
 The return value `local_inputs_pass` describes those local checks only. It grants no business permission and opens no attempt. Missing access produces a diagnostic while the dependent business step remains unopened. An optional same-revision check models one declared freshness rule; real actions require their own current-state and authority checks. Correct reproduction of an incorrectly selected section still passes mechanically. The guarantee is limited to trusted-contract preservation, not source truth, complete answers to arbitrary questions, authentication or business effectiveness.
 
-P1–P4 exercise a fixture-local two-step Application: committed body supplies selection and destination; preparation binds the request, produces source bytes/provenance, and opens the answer step only after local checks. Missing access leaves the real preparation entry active with a diagnostic. A declared retry opens answer attempt 002 on a new bound source request, rechecks the edited draft and preserves 001. The fixture harness checks Core validation, the complete declared input surfaces and the current attempt before actual delivery; request/provenance changes and added or removed files block output writes. The helper alone grants no run transition. The P1–P4 and N1–N16 cases live in [test_offer_walk.py](../../tests/test_offer_walk.py). The Q1 counterexample retains the distinction between a narrow explanation and the original full question; it is not a substitute for a fresh-reader evaluation.
+P1–P4 exercise a fixture-local two-step Application: committed body supplies selection and destination; preparation binds the request, produces source bytes/provenance, and opens the answer step only after local checks. Missing access leaves the real preparation entry active with a diagnostic. A declared retry opens answer attempt 002 on a new bound source request, rechecks the edited draft and preserves 001. The fixture harness checks Core validation, the complete declared input surfaces and the current attempt before actual delivery; request/provenance changes and added or removed files block output writes. The helper alone grants no run transition. The P1–P4 and N1–N16 cases live in [test_offer_walk.py](../../tests/test_offer_walk.py). The historical B rubric referenced by the N15 fixture was unavailable at the v0.3.2 audit. The separately authored [frozen audit rubric](../frozen-rubrics.md) preserves its own v0.3.2 questions and scoring; it does not recover that historical artifact. For a smaller-model reading evaluation, use the [unexecuted procedure](../smaller-model-procedure.md). The Q1 counterexample retains the distinction between a narrow explanation and the original full question; it carries no fresh-reader score.
 
 ## Reviewed correction case
 

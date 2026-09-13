@@ -9,9 +9,11 @@ laufpfad:
     eingabe_hash: sha256:0000000000000000000000000000000000000000000000000000000000000000
 ---
 
-<!-- Translation source: 02_protocol/templates/vorgang.md; sha256: 7e4504f4cbfce0ef5c9bebb7e7cde29593d6b2be1eeb7a8aa3441abde8415baa -->
+<!-- Translation source: 02_protocol/templates/vorgang.md; sha256: 04f0f287fbaaba90d31848af48cbebc6718cbde89fb69564ef185cef16ca2607 -->
 
 # Prüffall 001
+
+Diese Vorlage gilt für gewählte Core-Verträge gemäß `02_protocol/impacts-architect/references/formwahl.md`, Abschnitt „Tooling stop“, in der benannten Protokollquelle und Revision.
 
 Ein Vorgang ist ein konkreter Lauf einer committeten Application. `application_revision` kommt aus `git rev-parse HEAD:applications/<slug>`. Der Laufpfad ist die einzige Zustandsautorität; jeder Eintrag besitzt seinen Versuchsordner unter `<arbeitsschritt>/<versuch>/`. Hashes liefert `impacts hash`. Beispielwerte ersetzen.
 

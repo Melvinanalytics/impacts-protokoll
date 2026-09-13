@@ -11,6 +11,8 @@ laufpfad:
 
 # Review case 001
 
+This template applies to selected Core contracts under `02_protocol/impacts-architect/references/formwahl.md`, "Tooling stop", in the recorded protocol source/revision.
+
 A run executes a committed Application. Obtain `application_revision` from `git rev-parse HEAD:applications/<slug>`. `laufpfad` alone owns execution state; each entry has an attempt folder at `<arbeitsschritt>/<versuch>/`. Use `impacts hash` for hashes. Replace example values and explain the run in the customer's bound working language.
 
 ## Subject

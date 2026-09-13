@@ -123,7 +123,7 @@ def test_non_editable_install_contains_only_five_schemas_and_minimal_api(
                 "files=resources.files('impacts_protocol.schemas'); "
                 "names=sorted(p.name for p in files.iterdir() if p.name.endswith('.json')); "
                 "assert set(impacts_protocol.__all__)=={'HashSurfaceError','Issue','ValidationReport','init_workspace','surface_hash','validate'}; "
-                "assert metadata.version('impacts-protocol')=='0.3.2'; "
+                "assert metadata.version('impacts-protocol')=='0.3.3'; "
                 "assert 'referencing>=0.28.4' in metadata.requires('impacts-protocol'); "
                 "assert names==['arbeitsschritt.schema.json','hauptprozess.schema.json','leistung.schema.json','teilprozess.schema.json','vorgang.schema.json'], names"
             ),
@@ -147,7 +147,7 @@ def test_distribution_declares_and_contains_apache_license(installed_environment
                 "distribution=metadata.distribution('impacts-protocol'); "
                 "assert distribution.metadata['License-Expression']=='Apache-2.0'; "
                 "names={str(path) for path in distribution.files}; "
-                "assert 'impacts_protocol-0.3.2.dist-info/licenses/LICENSE' in names, names"
+                "assert 'impacts_protocol-0.3.3.dist-info/licenses/LICENSE' in names, names"
             ),
         ],
         cwd=tmp_path,

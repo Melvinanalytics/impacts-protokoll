@@ -110,12 +110,13 @@ def test_topology_path_routes_non_process_forms_without_new_tooling():
     assert "System Map" in topology and "repository map" in topology
 
 
-def test_umbrella_routes_only_multiple_independent_pipeline_applications():
+def test_umbrella_routes_independent_pipelines_with_core_walks_when_selected():
     body = _body()
     topology = body[body.index("## Topology path") : body.index("## Build mode")]
     umbrella = next(line for line in topology.splitlines() if line.startswith("For an Umbrella"))
 
-    assert "multiple independent Pipeline Applications" in umbrella
+    assert "multiple independent Pipelines" in umbrella
+    assert "selected Core Applications use their Process Walks" in umbrella
     assert "child forms" not in umbrella
 
 
@@ -153,8 +154,8 @@ def test_form_selection_reference_does_not_promote_composition_to_umbrella():
     assert "Record Library plus Knowledge Bundle alone is not an Umbrella" in composition
     assert "several independent Pipelines already exist" in composition
     assert "Other forms compose without one" in composition
-    assert "Only Pipelines become Applications" in composition
-    assert "each Pipeline is exactly one Application" in composition
+    assert "When Core contracts are selected, only Pipelines become Applications" in composition
+    assert "each selected Pipeline is exactly one Application" in composition
     assert "Nur eine Pipeline wird als Application gebaut" not in composition
     assert "Kindformen" not in composition
 
@@ -227,12 +228,14 @@ def test_build_mode_runs_the_seven_phases_in_order():
     assert positions == sorted(positions)
 
 
-def test_method_gates_seven_phases_behind_pipeline_selection():
+def test_method_scopes_process_phases_and_optional_core_procedures():
     text = METHOD.read_text(encoding="utf-8")
     before_identify = text[: text.index("## Identify")]
 
     assert "seven phases" in before_identify
-    assert "only after selecting a Pipeline" in before_identify
+    assert "guide selected process work" in before_identify
+    assert "technical procedures apply when choosing Core Application/Run contracts" in before_identify
+    assert "other non-process forms do not enter Identify" in before_identify
 
 
 def test_protocol_router_sends_initialization_and_topology_to_form_selection():

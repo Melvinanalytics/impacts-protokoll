@@ -4,9 +4,11 @@ id: teilprozess:vorpruefung
 ergebnis: Prüffähiger Prüfbericht
 ---
 
-<!-- Translation source: 02_protocol/templates/teilprozess.md; sha256: 513c1d49baa1d97fedc45ff8d93b43e1ba51c7039c0c507fcb6ea19ea95949a5 -->
+<!-- Translation source: 02_protocol/templates/teilprozess.md; sha256: 4ec7c2e7648a3ef68dc392670a2ef140a08c34a7e8f53d2668d0ea3f2b1c2196 -->
 
 # Vorprüfung
+
+Diese Vorlage gilt für gewählte Core-Verträge gemäß `02_protocol/impacts-architect/references/formwahl.md`, Abschnitt „Tooling stop“, in der benannten Protokollquelle und Revision.
 
 Ein Teilprozess ist ein fachlich geschlossener Abschnitt des Hauptprozesses. Seine Arbeitsschritte sind seine Unterordner; der Ordnername ist der Slug seiner ID. Beispielwerte ersetzen.
 
