@@ -1,4 +1,4 @@
-<!-- Translation source: 02_protocol/templates/application.md; sha256: 27950b7b0bf2d0c9c60c9e77146396b950328ff203ba6b135404c5fb3ec8dc3b -->
+<!-- Translation source: 02_protocol/templates/application.md; sha256: 8039d02846c9e75935d303020f5ace23d7baf0c2d7d02a99bd4faaeaf392b6cd -->
 
 # Schablone einer Application
 
@@ -31,7 +31,7 @@ vorgaenge/<vorgang>/
 - Arbeitsschritt-IDs sind in der ganzen Application eindeutig. Routen zeigen auf `arbeitsschritt:<slug>` oder `end:<slug>`; jeder Schritt erreicht ein Ende.
 - `<versuch>` ist dreistellig, `versuch: 1` heißt `001`. Nur im Laufpfad erreichte Arbeitsschritte und Versuche besitzen Ordner.
 
-Der Arbeitsschritt-Body enthält Prompt und Werkzeugaufrufvertrag. Gemeinsame Regeln, Promptbausteine und Dokumentvorlagen behalten ihre bestehende fachliche Heimat außerhalb dieses Baums und gelangen mit Herkunftsnachweisen als deklarierte Eingaben in den Versuch. Werkzeugimplementierungen bleiben Abhängigkeiten oder begründete Capabilities; konkrete Werte, Zwischenergebnisse und Ergebnisnachweise gehören zum Vorgang. Den Vertrag mit der Arbeitsschrittvorlage und `impacts-method.md`, Abschnitt „Compose an Arbeitsschritt“, aus der gebundenen Protokollrevision ausfüllen.
+Der Arbeitsschritt-Body enthält Prompt und Werkzeugaufrufvertrag. Gemeinsame Regeln, Promptbausteine und Dokumentvorlagen behalten ihre bestehende fachliche Heimat außerhalb dieses Baums und gelangen mit Herkunftsnachweisen als deklarierte Eingaben in den Versuch. Werkzeugimplementierungen bleiben Abhängigkeiten oder begründete Capabilities; konkrete Werte, Zwischenergebnisse und Ergebnisnachweise gehören zum Vorgang. Den Vertrag mit der Arbeitsschrittvorlage und `impacts-method.md`, Abschnitt „Compose an Arbeitsschritt“, aus der benannten Protokollrevision ausfüllen.
 
 ## Beispiel
 

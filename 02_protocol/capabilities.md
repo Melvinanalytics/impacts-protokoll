@@ -62,7 +62,21 @@ Capability call -> Visible output -> pruefung -> Route
 
 ## Data Governance
 
-The Application specifies expected origin, acquisition and minimum control for each source input, with or without a Capability call. The domain home owns the reusable source mapping. The workstep supplies the local selection: identity, purpose, time, needed fields/relationships, configured reader or responsible provider, and destination input. A tool name or URL alone is not an acquisition contract. Use the existing body and these stable parser labels:
+### Source descriptions
+
+Describe needed sources in their existing domain/source homes, including ordinary files without a selected Application or live connection. A documented source/interface, acquired data, verified access and permission for the intended use are separate findings; apply [ontology evidence and obligations](ontology.md#evidence-and-obligations).
+
+For each relevant attribute/domain and effective period, identify its authoritative factual source, the responsible decision-maker for meaning and allowed changes, and the duties of its maintainer and data provider. One person may perform several duties; unknown actual owners stay `open`. Distinguish stable master definitions, transaction observations and derived KPI values within existing descriptions, without new record types.
+
+Use [Tables and relationships](#tables-and-relationships) and [ontology inference](ontology.md#meaning-and-valid-inference) to describe units, row meaning/grain, selection/validity time, identity and namespace, relationships and source-field semantics needed for the intended result. Document sources need the same relevant distinctions without becoming tables.
+
+Record the known source form: file, export, report, manual input or API. Retain provenance and, for documentation actually read, its URL/path, version/date and read date; describe possible endpoints, schemas, authentication and access conditions only when known. Retrieve locally first; discover sources for explicit gaps. Unknown details remain questions, not fabricated interfaces.
+
+An interface being publicly documented does not by itself establish customer-data access, current values, factual authority or permission for the intended use; retain applicable access/use terms when known. A source description requires no API probe, credentials or live integration. Reuse existing valid source/identity mappings and their fact/domain homes; clarify only mappings missing or conflicting for the intended use. Source equivalence or selection among competing masters needs evidence of their applicable scope/mapping. Preserve unresolved choices with their responsible decision-maker and unknown ownership at their homes, restricting only dependent uses.
+
+### Source inputs for Core Applications
+
+For selected Core Applications, the Application specifies expected origin, acquisition and minimum control for each source input, with or without a Capability call. The domain home owns the reusable source mapping. The workstep supplies the local selection: identity, purpose, time, needed fields/relationships, configured reader or responsible provider, and destination input. A tool name or URL alone is not an acquisition contract. Use the existing body and these stable parser labels:
 
 ```markdown
 ### Quellenanforderung
@@ -149,6 +163,10 @@ Core validation neither enforces that preflight nor authenticates a person. A sy
 ## Transport
 
 Transport an Application alone if it has no Capability calls. Otherwise materialize each needed `capabilities/<slug>/` from the same source repository revision at the same relative path. Before the first run, `git rev-parse <workspace-revision>:capabilities/<slug>` must equal the bound tree OID. Missing or mismatching paths prevent execution. No package manifest or Core resolver is introduced.
+
+Transporting an Application preserves its definition bytes; destination source applicability and authority follow [Data Governance](#data-governance), reusing valid local mappings and permissions while unresolved questions go to their responsible decision-maker.
+Claim destination execution only after a destination `vorgang` has actually reached the stated test endpoint with its applicable prerequisites and checks; copying or checking links alone does not establish this, and independent permitted preparation remains useful while dependent execution is restricted.
+Apply [Reviewed correction](impacts-method.md#reviewed-correction) at the changed home's revision boundary: changed Application definitions require a new Application binding, while changed external mappings stay at their source home and require the corresponding source binding and affected checks, preserving earlier bound inputs.
 
 ## Limits
 

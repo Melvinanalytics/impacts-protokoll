@@ -10,6 +10,32 @@ IMPACTS helps small and medium-sized businesses understand their business, simpl
 
 **Flexible in how it thinks. Uncompromising in what counts.** Agents may interpret and draft; checked calculations need actual deterministic checks, and human decisions remain human. Missing facts stay missing. A hash, Git history or structural check supplies neither business truth nor authenticated approval. The mission describes intended benefit; examples establish only their stated conditions, with no acceleration, usability or universal harness compatibility claim.
 
+## Get the protocol
+
+For new work, get the complete source archive from the [v0.3.4 release](https://github.com/Melvinanalytics/impacts-protokoll/releases/tag/v0.3.4), or clone that tag:
+
+```bash
+git clone --branch v0.3.4 --depth 1 https://github.com/Melvinanalytics/impacts-protokoll.git
+cd impacts-protokoll
+```
+
+Keep the complete source together: method, Architect, references, templates and examples. Reading the archive needs no installation. A copied Architect folder is incomplete even when its `references/` folder is present: it also depends on parent protocol files and root guidance. The wheel contains the CLI, schemas and templates; using its generated workspace with the method requires the matching complete source.
+
+## Version and entry points
+
+The source edition is `[project].version` in the root [pyproject.toml](pyproject.toml). For an installed package, run `python -m pip show impacts-protocol` in the Python environment that supplies `impacts` and read `Version`. Published package version `X` corresponds to release tag `vX`. This identifies the package edition; it does not identify an exact source revision or establish compatibility.
+
+Record the actual source location and identity in the customer's existing root `CONTEXT.md`. In a Git checkout, use `git rev-parse HEAD` and `git status --short` to record the commit and any local changes; retain a release tag only when it identifies that source. Without Git, record the archive's actual origin, tag or filename and local source location; retain an available checksum and describe local changes. An archive filename alone is not proof of its contents. Keep unavailable identity or conflicting versions explicit; obtain the corresponding source before applying a rule whose version cannot be resolved. A checkout beyond a release or modified files must be identified as such, even if the edition in `pyproject.toml` is unchanged.
+
+| Starting surface | Entry and completion |
+|---|---|
+| Complete protocol source | Read this protocol's root [CONTEXT.md](CONTEXT.md), then the selected task route. Keep customer work in its own folder. |
+| New or existing customer folder | Read that folder's `CONTEXT.md`; record or follow its actual protocol source/revision and working language. Resolve `02_protocol/` paths against that source. |
+| Existing Core Run | Start at its `vorgaenge/<id>/CONTEXT.md` and declared inputs. Preserve its bound Application, sources and language; a newer installed package or protocol does not upgrade them. |
+| Wheel or copied skill with missing source | Recover the source/revision from provenance: published versions from [releases](https://github.com/Melvinanalytics/impacts-protokoll/releases), unreleased revisions from the recorded original repository or file snapshot. Resolve the needed links there before applying their rules. |
+
+Entry is resolved when the task's router, source identity and required links are reachable without substituting `main`, another release or model memory. If something is missing, retain the gap and next action; independent permitted preparation can continue. Changes to existing definitions follow [Reviewed correction](02_protocol/impacts-method.md#reviewed-correction), while earlier bound work retains its revisions.
+
 ## Follow your task
 
 | You have… | Start here |
@@ -28,20 +54,29 @@ Call machine validation for a needed check when a suitable checker is available.
 
 The CLI supplies `init`, `template`, `validate` and `hash`. Application-only validation checks implemented structure, references and paths without Git. Current historical Run validation needs Git and committed Application binding. Neither establishes definition completeness or execution; a configured harness executes structured Runs.
 
-For the CLI, use Python 3.11+ in the protocol checkout:
+For the CLI, use Python 3.11+. In your chosen working folder, create and activate a virtual environment (shown for macOS/Linux):
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-python -m pip install -e .
+```
+
+Choose one installation source:
+
+- **Complete checkout:** from its root, run `python -m pip install -e .`.
+- **Release wheel:** download the wheel and `SHA256SUMS` from the release above into one folder. From that folder, verify with `shasum -a 256 -c SHA256SUMS` (macOS/Linux), then install with `python -m pip install ./impacts_protocol-0.3.4-py3-none-any.whl` only if the checksum matches.
+
+Follow [Version and entry points](#version-and-entry-points) to identify the installed package and obtain its complete source. Then, outside the intended new customer folder:
+
+```bash
 impacts init ../impacts-demo
 impacts validate ../impacts-demo
 impacts template arbeitsschritt
 ```
 
-`init` creates an empty Core workspace (`CONTEXT.md`, `applications/`, `vorgaenge/`), refuses an existing target and creates no Git repository or runnable process. Keep it beside the checkout. Add `--language de` to `init` or `template` for German. Initialize Git at the Core root before committing an Application for Run binding.
+`init` creates an empty Core workspace (`CONTEXT.md`, `applications/`, `vorgaenge/`), refuses an existing target and creates no Git repository or runnable process. Keep the customer workspace separate from the protocol source. Add `--language de` to `init` or `template` for German. Initialize Git at the Core root before committing an Application for Run binding.
 
-Explore the [Application template](02_protocol/templates/application.md), [schemas](02_protocol/schemas/), [Capabilities](02_protocol/capabilities.md) and [Architect skill](02_protocol/impacts-architect/SKILL.md); keep the skill's sibling references together. The programmed [offer walk](06_evaluations/offer-walk/CONTEXT.md) retains checked synthetic preparation at a pending human gate; the [cold walk](06_evaluations/cold-walk/CONTEXT.md) exercises loops, waits, synthetic gates and transport.
+Explore the [Application template](02_protocol/templates/application.md), [schemas](02_protocol/schemas/), [Capabilities](02_protocol/capabilities.md) and [Architect skill](02_protocol/impacts-architect/SKILL.md). The programmed [offer walk](06_evaluations/offer-walk/CONTEXT.md) retains checked synthetic preparation at a pending human gate; the [cold walk](06_evaluations/cold-walk/CONTEXT.md) exercises loops, waits, synthetic gates and transport.
 
 ## Develop and contribute
 

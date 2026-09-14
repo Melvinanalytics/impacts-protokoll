@@ -34,6 +34,61 @@ The customer's foundations hold definitions and source mappings. An Application 
 
 Use the [Author or change](ontology.md#author-or-change) branch for new or changing meaning and the [Use](ontology.md#use) branch for existing definitions. Define meaning once; declare each operation’s needed conditions at its boundary. Routine use does not refill the model. Customer-readable work follows the bound [working language](language.md#enforce-at-use-boundaries), including its actual check before use. The [worked company example](impacts-architect/references/datenbezug.md#from-catalog-through-pipeline-to-a-filled-offer) connects catalog, pipelines, document blanks and run instances.
 
+For a question about the customer's market structure, follow [Market relationships](#market-relationships); ordinary process capture need not expand into a market inventory.
+
+## Market relationships
+
+Describe the participants and relationships relevant to the requested result: who requests, delivers, uses, pays for or authorizes what, for whom and under which conditions. This scoped structure is the customer's market topology. [Ontology](ontology.md#domain-definition-pattern) governs the meaning and evidence of these customer relationships as well as protocol terms. Use the existing domain/process home under [Formwahl](impacts-architect/references/formwahl.md#native-topology-and-boundaries); a short account, relationship table or sketch can suffice.
+
+For commercial analysis, choose the relevant offering and, where present, its agreement, version and period. Distinguish who exchanges what, what is promised and paid for, and how that promise is fulfilled. A business may combine several offerings; its industry label does not establish the dynamics or obligations of a particular service or contract.
+
+Use only questions whose answers could change the intended use. These six perspectives overlap; they are neither an exhaustive taxonomy nor a required questionnaire:
+
+| Perspective | Question for the relevant source or case |
+|---|---|
+| Participants | Who requests, receives, supplies and pays? Which groups interact through the business? Roles and group counts alone do not establish platform sides or network effects. |
+| Demand | What creates the need, how does it reach the business, and what turns it into an accepted request? Trace the actual channel and decision instead of assuming a funnel from the industry. |
+| Delivery and money | What is promised or delivered to whom; who owes or pays whom, for what and when? Preserve the difference between an agreement, actual delivery and receipt of payment. |
+| Scale | What would one more accepted result require: staff time, physical capacity, reusable work or coordination? Claimed network effects or scalable margins need their own evidence. |
+| Constraint | Which dependency limits the intended outcome? A queue or long duration does not by itself establish the cause; capacity also depends on resources, workload, routing and demand. |
+| Authority | Which qualification, permission or decision is required before which action, under the actual rule? Preserve the declared human boundary; a sector label does not establish one. |
+
+Retain each relevant relationship's direction, scope and source under [Use](ontology.md#use); link its required contribution to the producing work when a process is being designed. Keep observed work and proposed alternatives distinct. An actor appearing in another business's case supplies evidence of that interaction, not its entire business model. The agent prepares the account and asks only what changes the next useful action; [capture's completion condition](#capture-business-meaning) allows a bounded useful result with named gaps. A topology file, graph, archetype label or completed set of perspectives is not required.
+
+**Synthetic contrasts — stated premises, not observations of customers:**
+
+| Premise | Useful relationship account and limit |
+|---|---|
+| A publisher agrees to place a sponsor's message for an agreed fee; readers receive the publication. | Sponsor → publisher: agreed payment; publisher → readers: content. Actual payment and the effect of readership on sponsor demand need evidence; network effects do not follow automatically. |
+| An employer buys ongoing support for device D-1, including a daily backup check; an employee requests a visit and the provider uses a parts supplier. Today no ticket is open, but the activity record says the check was not performed. | Distinguish payer, requester, recipient and supplier. The stated daily obligation remains unmet despite the empty queue. Link a visit to its agreement and covered object; coverage of D-1 does not establish coverage of D-2, and four roles do not establish four platform sides. |
+| A manufacturer owes a batch; the agreement requires a named person's release before dispatch. | Production, release and dispatch are distinct contributions. Preparing release evidence does not perform the human decision; the requirement comes from this agreement, not an assumed industry rule. |
+
+### Ongoing service and demand
+
+When ongoing responsibility or recurring contacts matter, ask what remains owed while no ticket is open. Resolve the applicable agreement/version, validity period, covered object, requested action and fulfillment evidence at their existing homes. Monthly billing, a shared service kind or ticket closure alone establishes neither coverage nor fulfillment. Bound recurring work by the relevant case or period under [Reverse-engineer a product or service](#reverse-engineer-a-product-or-service). A one-off order with no ongoing obligation needs no service inventory.
+
+A ticket can record requested work, an incident, scheduled maintenance or a monitoring-triggered action. Inspect its actual trigger and obligation. Where earlier failure to provide needed or correct service may create additional contacts or rework (failure demand), trace that explanation to evidence; a ticket or fault alone proves neither cause nor avoidability. Keep uncertain causes as `hypothesis` with the observation needed to distinguish them.
+
+Before accelerating responses, compare the proposed handling improvement with correcting the evidenced cause or preventing recurrence under [Identify](#identify) and [Minimize](#minimize). A chatbot can contribute supported answers or triage; closing contacts faster does not itself fix the cause. Under [Test](#test), assess the promised result and relevant recurrence, unmet obligations and total effort, including escalation and rework. Fewer tickets alone may reflect unrecorded or displaced work. Preserve required response, service and human boundaries while a causal hypothesis is investigated; useful design does not require a live connection, deployment or a proven benefit.
+
+### Scenario use
+
+For a “what if” question, separate observed relationships and parameters from assumptions about their effects. A sketch is not a forecast. Early scenarios may use explicit assumptions or ranges; keep the calculation and conclusion conditional. Before relying on predictions, assess fit to relevant observations and sensitivity to uncertain premises under the intended use's required checks. Simulation, when needed, is an external consumer of the files. Its purpose, available evidence and required checks determine its scope, not a fixed number of months or a mandatory sequence of modeling stages. Operations supply only the measurements actually recorded; missing coverage or parameters remain gaps.
+
+For example, under compatible stable-flow assumptions, [Little's law](https://pubsonline.informs.org/doi/abs/10.1287/opre.9.3.383) relates long-run averages: `L = λ × W`, where `L` is the mean number in the system, `λ` the mean entry rate (equal to the exit rate for that stable population), and `W` the mean time spent inside it. Match boundary, population, units and measurement basis; a current queue count and duration of selected completed cases alone are insufficient. Execute fixed arithmetic under [Perfect](#perfect). The relation does not itself predict the effect of accelerating a step, identify the bottleneck or establish that the required observations exist.
+
+## Design a KPI and calculation model
+
+Use ordinary files and explicit links at the existing domain homes; Core, a gateway or tool installation is not a prerequisite. This task designs the model and documents possible sources without connecting live data.
+
+1. **Start with the intended decision or Leistung.** Name the recipient, scope and dependent use; select only the needed KPIs and guardrails under [Identify](#identify), including its metric-definition and leading-indicator rules.
+2. **Reuse the domain model and trace calculations.** Link each metric to its definition, applicable calculation rule, dependencies and input variables. Follow [Use](ontology.md#use) for existing definitions and [Author or change](ontology.md#author-or-change) for missing or changing meaning. Keep each definition at one home and separate rules from case values, observations and assumptions; an unapproved proposed rule remains a proposal.
+3. **Outline sources and responsibility.** Follow [Data Governance](capabilities.md#data-governance) for source mappings, master-data authority, ownership and controls. Link documented files, fields or possible APIs to the needed inputs, retaining scope, units and source revision where relevant; distinguish documented availability from usable access and actual acquired data.
+4. **Expose consequential questions.** Keep missing inputs, unclear meaning and conflicting rules reachable with their source, responsible party, question or decision, next action and effect on dependent use. Continue independent design work; do not invent values, authority or a competing master to close a gap.
+5. **Exercise the linked design.** Apply [Use's intended-use check](ontology.md#use) for existing definitions; exercise valid, missing/conflicting and forbidden-inference cases under [Author or change](ontology.md#author-or-change) for missing or changing meaning. Retain expected outcomes separately from actual checks. Formula implementation need not be built or run to complete the design; a verified calculation result requires the actual deterministic check under [ontology enforcement](ontology.md#enforcement-and-completion).
+
+**Stop when** every needed result has an inspectable path to its definition, rule, inputs and documented sources—or explicit gaps with next actions and use restrictions—and its dependent decision or output. This establishes a useful linked design with check cases, not closed unknowns, execution readiness or verified business results; no new fixed format is required.
+
 ## Reverse-engineer a product or service
 
 Use a supplied catalog, service description, agreement, finished artifact or observed case as evidence for [capture](#capture-business-meaning), even when no workflow is documented. A promise describes an intended result; it does not prove how work currently happens or that delivery is feasible. Preserve the observed process separately from the proposed target.
@@ -101,6 +156,8 @@ A Human Gate controls risk or authority. The agent prepares short, inspectable e
 
 Before redesign, identify where a person must interact, judge or authorize, why that boundary exists and who may change it. Distinguish a required boundary from a current staffing habit or temporary lack of data or tools. An unresolved permission does not authorize automation across that boundary. Preparing evidence can be automated without transferring the decision itself.
 
+In option-generation work, distinguish regulatory or physical constraints from habits using evidence and scope; a current capacity limit does not establish that its allocation or configuration cannot change. Keep each benefit claim's evidence separate from authority to test, adopt or execute the option under [Evidence and obligations](ontology.md#evidence-and-obligations).
+
 For each Arbeitsschritt, distinguish the human contribution, agent reasoning and deterministic system processing that are actually needed. These are composable contributions, not three mandatory actors, three new steps or exclusive step types. Identify sets their constraints; Augment selects the execution mix within them. Rule-based processing still needs correct inputs and a valid rule; an agent proposal does not supply missing authority.
 
 Define the start and accepted end of the process-time comparison. Separate active work from waiting for inputs, queues, handoffs, decisions and rework where relevant. Use existing traces or explicitly reported ranges; unknown timing can require a small observation first. Do not obtain end-to-end duration by adding overlapping activities or confuse elapsed duration with total labor effort.
@@ -112,6 +169,16 @@ Remove work that does not contribute to the Leistung. Challenge handoffs, waits,
 Combine or remove work only while preserving the identified authority and customer boundaries. Reduce avoidable waiting around required human decisions by preparing usable evidence and a workable handoff; do not erase the decision to make the diagram shorter. Actual availability remains a feasibility constraint even when current role boundaries are challenged. Before removing or combining a handoff, list each successor’s declared inputs and show where each is still produced with its required evidence and authority; [Test](#test) checks that downstream effort and backlog have not merely moved.
 
 Minimize applies to the whole solution, including IMPACTS itself. Prefer correcting, deleting or reconnecting what exists before adding a step, field, link, document, tool or component. Add one only when it resolves a concrete difficulty or supplies a necessary quality or authority, and explicitly justify its customer effort, review, maintenance and downstream work against the smallest existing alternative. Fewer components alone is not success. A valid result may be clearer work, less avoidable effort or an informed decision to keep the work manual. Keep the expected reduction or quality improvement `hypothesis` until a representative check supports it.
+
+**Synthetic example — expected behavior, not an executed result.** An owner needs a current internal case view; the existing source provides it with sufficient provenance, while a weekly copied report and forwarding round have no additional recipient use or retention/review duty in this defined case.
+
+| User request or changed premise | Agent contribution | What the result establishes |
+|---|---|---|
+| Describe today's process; some details are missing. | Record the copy and forwarding round with sources and gaps; ask only what changes the next useful step. | A useful description; redesign, installation and machine validation are not entry requirements. |
+| Help improve the process. | Trace the needed view to its source and propose removing the duplicate work; assess total effort before investing in automating the copy. | A reasoned proposal; the description remains useful and actual benefit is unproven. |
+| Nearby case: a dated review by an authorized person is required. | Preserve that review and its evidence; a current live view does not perform it. | The protective contribution survives; the draft supplies no approval. |
+
+The agent does the analysis. The user supplies consequential missing facts or decisions; no full redesign, fixed number of options or proof of necessary reduction is required to continue permitted work.
 
 ## Perfect
 
