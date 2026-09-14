@@ -5,7 +5,7 @@ description: Use when customer initialization or knowledge topology needs a file
 
 # IMPACTS Architect
 
-For first use or unresolved source identity or links, follow [Version and entry points](../../README.md#version-and-entry-points). Use the complete corresponding protocol source; this skill folder alone lacks required parent protocol files and root guidance.
+For first use or unresolved source identity or links, follow [Version and entry points](../../README.md#version-and-entry-points). Use the complete corresponding protocol source; this skill folder alone lacks required parent protocol files and root guidance. If that README is missing, recover the original source/revision from the copy's provenance and obtain that complete source from [releases](https://github.com/Melvinanalytics/impacts-protokoll/releases). If provenance is unknown, keep the revision open and resolve the source before applying missing rules; do not select the latest release as a substitute.
 
 This skill selects the smallest fitting ICM form, then produces only the files that form needs. For a Pipeline using Core contracts, the core validates an Application tree of `CONTEXT.md` files. Other forms use the workspace's native routers, `grundlagen/` and `records/` where real content requires them. The skill never executes an Arbeitsschritt, never writes `human:<id>`, and never introduces a schema, field or folder kind the core does not have.
 

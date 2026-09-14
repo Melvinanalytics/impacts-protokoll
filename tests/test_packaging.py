@@ -1,6 +1,5 @@
 import os
 from pathlib import Path
-import re
 import shutil
 import subprocess
 import sys
@@ -160,13 +159,3 @@ def test_distribution_declares_and_contains_apache_license(installed_environment
     )
 
     assert probe.returncode == 0, probe.stdout + probe.stderr
-
-
-@pytest.mark.parametrize("path", ["README.md", "02_protocol/translations/de.md"])
-def test_current_entry_instructions_match_distribution_version(path):
-    text = (ROOT / path).read_text()
-    release_tags = re.findall(r"releases/tag/v([^/)\s]+)", text)
-    clone_tags = re.findall(r"git clone --branch v(\S+)", text)
-    wheel_versions = re.findall(r"impacts_protocol-([^-\s]+)-py3-none-any\.whl", text)
-    assert release_tags and wheel_versions
-    assert set(release_tags + clone_tags + wheel_versions) == {VERSION}

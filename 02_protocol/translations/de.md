@@ -4,13 +4,15 @@
 
 Diese Bedienhilfe übersetzt den [englischen Sprachvertrag](../language.md). Die englische Protokolldefinition bleibt maßgeblich für die Technik; die Arbeitsunterlagen Ihres Unternehmens bleiben Deutsch. Eine englische Quelle, Werkzeugmeldung oder importierte Application ändert diese Arbeitssprache nicht.
 
+<!-- Translation source: README.md; sha256: 28195669d78636b06e38b3faa73b6574e05c8941af1b6fd873b8a056c77ba965 -->
+
 ## Protokoll beziehen
 
 Für neue Arbeit das vollständige Quellarchiv des [Releases v0.3.4](https://github.com/Melvinanalytics/impacts-protokoll/releases/tag/v0.3.4) oder den zugehörigen Tag-Checkout verwenden. Der Clone-Befehl steht unter [Get the protocol](../../README.md#get-the-protocol). Methode, Architect, Referenzen, Vorlagen und Beispiele zusammenhalten; Lesen braucht keine Installation. Ein kopierter Architect-Ordner bleibt auch mit `references/` unvollständig: Er benötigt übergeordnete Protokolldateien und die Root-Anleitung. Das Wheel enthält CLI, Schemas und Vorlagen. Für die methodische Nutzung seines erzeugten Arbeitsbereichs ist die passende vollständige Quelle nötig.
 
 ## Version und Einstiegspunkte
 
-Die Quellausgabe steht in `[project].version` der Root-[pyproject.toml](../../pyproject.toml). Für ein installiertes Paket `python -m pip show impacts-protocol` in der Python-Umgebung von `impacts` ausführen und `Version` lesen. Die Paketversion bezeichnet die Ausgabe; sie identifiziert weder eine genaue Quellenrevision noch belegt sie Kompatibilität.
+Die Quellausgabe steht in `[project].version` der Root-[pyproject.toml](../../pyproject.toml). Für ein installiertes Paket `python -m pip show impacts-protocol` in der Python-Umgebung von `impacts` ausführen und `Version` lesen. Die veröffentlichte Paketversion `X` gehört zum Release-Tag `vX`. Die Paketversion bezeichnet die Ausgabe; sie identifiziert weder eine genaue Quellenrevision noch belegt sie Kompatibilität.
 
 Tatsächlichen Quellenort und Identität im vorhandenen Kunden-Root `CONTEXT.md` festhalten. Im Git-Checkout mit `git rev-parse HEAD` und `git status --short` Commit und lokale Änderungen feststellen; einen Release-Tag nur erhalten, wenn er diese Quelle bezeichnet. Ohne Git tatsächliche Archivherkunft, Tag oder Dateinamen und lokalen Quellenort benennen; eine verfügbare Prüfsumme erhalten und lokale Änderungen beschreiben. Der Archivname allein belegt seinen Inhalt nicht. Fehlende Identität oder widersprüchliche Versionen bleiben ausdrücklich offen; die zugehörige Quelle beschaffen, bevor eine Regel mit ungeklärter Version angewendet wird. Ein Checkout nach einem Release oder geänderte Dateien werden entsprechend benannt, auch bei unveränderter Ausgabe in `pyproject.toml`.
 
@@ -25,7 +27,6 @@ Der Einstieg ist geklärt, wenn Aufgabenrouter, Quellenidentität und benötigte
 
 ## Einstieg mit vorhandenen Dateien
 
-<!-- Translation source: README.md; sha256: d4731b2f18451b1f08a0036fb83204a58a48afe007595d0044d184d213a263ac -->
 **Machen Sie Ihr Unternehmen für Menschen und KI leichter verständlich und bearbeitbar.** Das [Ziel von IMPACTS](../../README.md) ist, kleinen und mittleren Unternehmen zu helfen, ihr Geschäft besser zu verstehen, Arbeit zu vereinfachen und KI sowie Data Science zu nutzen, ohne selbst Fachleute dafür werden zu müssen. Das ist eine Zielaussage; ein nachgewiesener Nutzen braucht Beobachtungen im eigenen Betrieb.
 
 Gewöhnliche Dateien und Ordner sind eine vollständige Möglichkeit, IMPACTS anzuwenden. IMPACTS ist Handbuch, Ausführungsprotokoll und Struktur; das Framework führt selbst keine Arbeit aus. Menschen können die Dateien lesen und bearbeiten. Ein unterstützender Agent braucht Dateizugriff und die passenden Lese- und Schreibrechte. Dafür sind weder Git noch Python oder eine Installation nötig.
@@ -144,7 +145,7 @@ Die [Methode](../impacts-method.md) und [Formwahl](../impacts-architect/referenc
 
 Ist Git bei der Vorbereitung eines Git-gebundenen Laufs nicht verfügbar, bleiben Entwurf, Quellen, Fragen und Definitionsentwurf erhalten und fortsetzbar. Die historische Laufvalidierung wurde nicht durchgeführt; die Vorbereitung bleibt ungebunden und ist kein validierter Lauf. Nächster Schritt: an einem Rechner mit Git und Python-CLI den Application-Vertrag samt erforderlichen Setup-Fällen vervollständigen, die Application am Core-Root committen, den Lauf anhand der [Laufvorlage](../templates/vorgang.md) an den tatsächlichen committed Tree binden und `impacts validate` auf dem Arbeitsbereich ausführen. Das wirkliche Ergebnis erhalten und Fehler vor einer Behauptung validierter Bindung korrigieren. Keine Tree-ID, keinen Hash, keinen Verlauf und keine Freigabe erfinden. Validierung allein beweist weder Ausführung noch fachlichen Erfolg.
 
-Das Release-Wheel und `SHA256SUMS` herunterladen, das Wheel gegen die Prüfsummendatei prüfen und in der virtuellen Umgebung mit `python -m pip install ./impacts_protocol-0.3.4-py3-none-any.whl` installieren. Die [technische Anleitung](../../README.md#optional-technical-use) zeigt auch die Installation aus dem vollständigen Checkout. Paket und zugehörige Quelle nach [Version und Einstiegspunkte](#version-und-einstiegspunkte) identifizieren.
+Mit Python 3.11+ im gewählten Arbeitsordner eine virtuelle Umgebung anlegen und aktivieren: `python3 -m venv .venv`, anschließend `source .venv/bin/activate` (macOS/Linux). Eine Installationsquelle wählen: Im vollständigen Checkout `python -m pip install -e .` ausführen; oder das Wheel und `SHA256SUMS` vom oben verlinkten Release in einen gemeinsamen Ordner herunterladen. Dort mit `shasum -a 256 -c SHA256SUMS` (macOS/Linux) prüfen und nur bei passender Prüfsumme mit `python -m pip install ./impacts_protocol-0.3.4-py3-none-any.whl` installieren. Paket und zugehörige vollständige Quelle nach [Version und Einstiegspunkte](#version-und-einstiegspunkte) identifizieren. Die folgenden Befehle außerhalb des vorgesehenen neuen Kundenordners ausführen.
 
 Für eine ausgewählte Core-Nutzung erläutert die [technische Anleitung](../../README.md#optional-technical-use) die Python-Installation. Die folgenden Befehle erzeugen oder prüfen Dateien; sie führen keine Kundenarbeit aus:
 
