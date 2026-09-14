@@ -4,7 +4,7 @@
 
 Diese Bedienhilfe übersetzt den [englischen Sprachvertrag](../language.md). Die englische Protokolldefinition bleibt maßgeblich für die Technik; die Arbeitsunterlagen Ihres Unternehmens bleiben Deutsch. Eine englische Quelle, Werkzeugmeldung oder importierte Application ändert diese Arbeitssprache nicht.
 
-<!-- Translation source: README.md; sha256: 28195669d78636b06e38b3faa73b6574e05c8941af1b6fd873b8a056c77ba965 -->
+<!-- Translation source: README.md; sha256: 150b0b7ab6fea482cf6669335ef39f8a53081dccd8622f2118e64ada06f856ba -->
 
 ## Protokoll beziehen
 
@@ -147,7 +147,7 @@ Ist Git bei der Vorbereitung eines Git-gebundenen Laufs nicht verfügbar, bleibe
 
 Mit Python 3.11+ im gewählten Arbeitsordner eine virtuelle Umgebung anlegen und aktivieren: `python3 -m venv .venv`, anschließend `source .venv/bin/activate` (macOS/Linux). Eine Installationsquelle wählen: Im vollständigen Checkout `python -m pip install -e .` ausführen; oder das Wheel und `SHA256SUMS` vom oben verlinkten Release in einen gemeinsamen Ordner herunterladen. Dort mit `shasum -a 256 -c SHA256SUMS` (macOS/Linux) prüfen und nur bei passender Prüfsumme mit `python -m pip install ./impacts_protocol-0.3.4-py3-none-any.whl` installieren. Paket und zugehörige vollständige Quelle nach [Version und Einstiegspunkte](#version-und-einstiegspunkte) identifizieren. Die folgenden Befehle außerhalb des vorgesehenen neuen Kundenordners ausführen.
 
-Für eine ausgewählte Core-Nutzung erläutert die [technische Anleitung](../../README.md#optional-technical-use) die Python-Installation. Die folgenden Befehle erzeugen oder prüfen Dateien; sie führen keine Kundenarbeit aus:
+Die Befehle erzeugen oder prüfen Dateien; sie führen keine Kundenarbeit aus:
 
 ```sh
 impacts init ../mein-arbeitsbereich --language de
