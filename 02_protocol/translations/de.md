@@ -4,7 +4,7 @@
 
 Diese Bedienhilfe übersetzt den [englischen Sprachvertrag](../language.md). Die englische Protokolldefinition bleibt maßgeblich für die Technik; die Arbeitsunterlagen Ihres Unternehmens bleiben Deutsch. Eine englische Quelle, Werkzeugmeldung oder importierte Application ändert diese Arbeitssprache nicht.
 
-<!-- Translation source: README.md; sha256: 150b0b7ab6fea482cf6669335ef39f8a53081dccd8622f2118e64ada06f856ba -->
+<!-- Translation source: README.md; sha256: 03ce1f9862fa5764d1e60529df73e6b8811903c42c7b1e47e315e1c635a63410 -->
 
 ## Protokoll beziehen
 
@@ -21,7 +21,7 @@ Tatsächlichen Quellenort und Identität im vorhandenen Kunden-Root `CONTEXT.md`
 | Vollständige Protokollquelle | Root-[CONTEXT.md](../../CONTEXT.md) dieses Protokolls und anschließend den gewählten Aufgabenpfad lesen. Kundenarbeit in einem eigenen Ordner halten. |
 | Neuer oder vorhandener Kundenordner | Dessen `CONTEXT.md` lesen; tatsächliche Protokollquelle/Revision und Arbeitssprache benennen oder der vorhandenen Angabe folgen. `02_protocol/`-Pfade gegen diese Quelle auflösen. |
 | Vorhandener Core-Lauf | Bei dessen `vorgaenge/<id>/CONTEXT.md` und deklarierten Eingaben beginnen. Gebundene Application, Quellen und Sprache erhalten; ein neueres Paket oder Protokoll aktualisiert sie nicht. |
-| Wheel oder kopierter Skill mit fehlender Quelle | Vollständige zugehörige Quelle von den [Releases](https://github.com/Melvinanalytics/impacts-protokoll/releases) beziehen. Benötigte Links dort auflösen, bevor deren Regeln angewendet werden. |
+| Wheel oder kopierter Skill mit fehlender Quelle | Quelle/Revision aus der Herkunft ermitteln: veröffentlichte Versionen von den [Releases](https://github.com/Melvinanalytics/impacts-protokoll/releases), unveröffentlichte Revisionen aus dem benannten ursprünglichen Repository oder Dateisnapshot. Benötigte Links dort auflösen, bevor deren Regeln angewendet werden. |
 
 Der Einstieg ist geklärt, wenn Aufgabenrouter, Quellenidentität und benötigte Links erreichbar sind, ohne `main`, eine andere Ausgabe oder Modellwissen einzusetzen. Bei einer Lücke diese samt nächster Handlung erhalten; unabhängige erlaubte Vorbereitung geht weiter. Änderungen vorhandener Definitionen folgen [Reviewed correction](../impacts-method.md#reviewed-correction); früher gebundene Arbeit behält ihre Revisionen. Maßgeblicher englischer Abschnitt: [Version and entry points](../../README.md#version-and-entry-points).
 

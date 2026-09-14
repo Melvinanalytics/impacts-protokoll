@@ -32,7 +32,7 @@ Record the actual source location and identity in the customer's existing root `
 | Complete protocol source | Read this protocol's root [CONTEXT.md](CONTEXT.md), then the selected task route. Keep customer work in its own folder. |
 | New or existing customer folder | Read that folder's `CONTEXT.md`; record or follow its actual protocol source/revision and working language. Resolve `02_protocol/` paths against that source. |
 | Existing Core Run | Start at its `vorgaenge/<id>/CONTEXT.md` and declared inputs. Preserve its bound Application, sources and language; a newer installed package or protocol does not upgrade them. |
-| Wheel or copied skill with missing source | Obtain the complete corresponding source from [releases](https://github.com/Melvinanalytics/impacts-protokoll/releases). Resolve the needed links there before applying their rules. |
+| Wheel or copied skill with missing source | Recover the source/revision from provenance: published versions from [releases](https://github.com/Melvinanalytics/impacts-protokoll/releases), unreleased revisions from the recorded original repository or file snapshot. Resolve the needed links there before applying their rules. |
 
 Entry is resolved when the task's router, source identity and required links are reachable without substituting `main`, another release or model memory. If something is missing, retain the gap and next action; independent permitted preparation can continue. Changes to existing definitions follow [Reviewed correction](02_protocol/impacts-method.md#reviewed-correction), while earlier bound work retains its revisions.
 
