@@ -23,7 +23,7 @@ Keep the complete source together: method, Architect, references, templates and 
 
 ## Version and entry points
 
-The source edition is `[project].version` in the root [pyproject.toml](pyproject.toml). For an installed package, run `python -m pip show impacts-protocol` in the Python environment that supplies `impacts` and read `Version`. This identifies the package edition; it does not identify an exact source revision or establish compatibility.
+The source edition is `[project].version` in the root [pyproject.toml](pyproject.toml). For an installed package, run `python -m pip show impacts-protocol` in the Python environment that supplies `impacts` and read `Version`. Published package version `X` corresponds to release tag `vX`. This identifies the package edition; it does not identify an exact source revision or establish compatibility.
 
 Record the actual source location and identity in the customer's existing root `CONTEXT.md`. In a Git checkout, use `git rev-parse HEAD` and `git status --short` to record the commit and any local changes; retain a release tag only when it identifies that source. Without Git, record the archive's actual origin, tag or filename and local source location; retain an available checksum and describe local changes. An archive filename alone is not proof of its contents. Keep unavailable identity or conflicting versions explicit; obtain the corresponding source before applying a rule whose version cannot be resolved. A checkout beyond a release or modified files must be identified as such, even if the edition in `pyproject.toml` is unchanged.
 
@@ -54,18 +54,25 @@ Call machine validation for a needed check when a suitable checker is available.
 
 The CLI supplies `init`, `template`, `validate` and `hash`. Application-only validation checks implemented structure, references and paths without Git. Current historical Run validation needs Git and committed Application binding. Neither establishes definition completeness or execution; a configured harness executes structured Runs.
 
-For the CLI, use Python 3.11+ in the protocol checkout:
+For the CLI, use Python 3.11+. In your chosen working folder, create and activate a virtual environment (shown for macOS/Linux):
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-python -m pip install -e .
+```
+
+Choose one installation source:
+
+- **Complete checkout:** from its root, run `python -m pip install -e .`.
+- **Release wheel:** download the wheel and `SHA256SUMS` from the release above into one folder. From that folder, verify with `shasum -a 256 -c SHA256SUMS` (macOS/Linux), then install with `python -m pip install ./impacts_protocol-0.3.4-py3-none-any.whl` only if the checksum matches.
+
+Follow [Version and entry points](#version-and-entry-points) to identify the installed package and obtain its complete source. Then, outside the intended new customer folder:
+
+```bash
 impacts init ../impacts-demo
 impacts validate ../impacts-demo
 impacts template arbeitsschritt
 ```
-
-Alternatively, download the wheel and `SHA256SUMS` from the release above, verify the wheel against that checksum file, and install it in the virtual environment with `python -m pip install ./impacts_protocol-0.3.4-py3-none-any.whl`. Follow [Version and entry points](#version-and-entry-points) to identify the installed package and obtain its complete source.
 
 `init` creates an empty Core workspace (`CONTEXT.md`, `applications/`, `vorgaenge/`), refuses an existing target and creates no Git repository or runnable process. Keep it beside the checkout. Add `--language de` to `init` or `template` for German. Initialize Git at the Core root before committing an Application for Run binding.
 

@@ -2,6 +2,7 @@
 from pathlib import Path, PurePosixPath
 import posixpath
 import re
+import tomllib
 from urllib.parse import unquote, urlsplit
 
 import pytest
@@ -101,3 +102,14 @@ def test_export_excludes_all_private_documentation_and_handovers():
     assert all(not p.startswith('docs/') for p in paths)
     assert all(not p.startswith('v03_') for p in paths)
     assert set(PUBLIC_PATHS) == {'.gitignore', 'AGENTS.md', 'CONTEXT.md', 'LICENSE', 'README.md', 'FIRST-WIN.md', 'pyproject.toml', '02_protocol/', '06_evaluations/', 'src/', 'tests/'}
+
+
+@pytest.mark.parametrize("path", ["README.md", "02_protocol/translations/de.md"])
+def test_current_entry_instructions_match_distribution_version(path):
+    version = tomllib.loads((ROOT / "pyproject.toml").read_text())["project"]["version"]
+    text = (ROOT / path).read_text()
+    release_tags = re.findall(r"releases/tag/v([^/)\s]+)", text)
+    clone_tags = re.findall(r"git clone --branch v(\S+)", text)
+    wheel_versions = re.findall(r"impacts_protocol-([^-\s]+)-py3-none-any\.whl", text)
+    assert release_tags and wheel_versions
+    assert set(release_tags + clone_tags + wheel_versions) == {version}
