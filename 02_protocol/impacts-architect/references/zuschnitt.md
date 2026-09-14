@@ -27,6 +27,8 @@ One coherent job with a visible, verifiable result. Cut a new step when a separa
 - `gate: human` only where a person must carry authority, risk or a legal act. Then the routes are exactly `freigegeben` and `abgelehnt`.
 - `customer_touchpoint`: `standard` when a person leads the interaction and the harness prepares it; `sacred` when the interaction is protected and a reclassification needs human review of the Application. Declare the effect and responsible human; apply the [execution preflight](../../capabilities.md#signale-und-human-gate).
 
+For source mappings needed by this workstep, apply [Data Governance](../../capabilities.md#data-governance).
+
 The body follows the template: One job, Inputs, Excluded context, Processing, Outputs, Check, Human check. [Workstep composition](../../impacts-method.md#compose-an-arbeitsschritt) defines how its prompt, tools and data form one executable job; every input has a source/acquisition or producer handoff, every output a check and permitted use.
 
 When the Arbeitsschritt calls reusable processing, apply the [Capability extraction criteria](../../capabilities.md#wann-extrahieren) and [local call contract](../../capabilities.md#capability-aufruf). The Arbeitsschritt names only the local call tuple, inputs, expected output and minimum check; it does not duplicate the Capability contract.

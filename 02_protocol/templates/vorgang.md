@@ -22,3 +22,5 @@ Who or what this run concerns. Link the existing business record at its local ho
 ## Progress
 
 Explain the execution path for people: current step and attempt, usable results, restricted drafts, missing evidence or decision, responsible person and next permitted work. Link the files; derive status from `laufpfad` rather than maintaining another status. A prepared draft establishes neither sending nor approval. For a wait, name the expected event or deadline and the responsible follow-up; if it does not arrive, use the declared fallback route or escalate the missing decision. An event alone authorizes no transition.
+
+A `wartend` entry with its declared continuation is a correct, resumable pause: preserve usable preparation while the required decision or evidence remains open; it is neither failure nor a completed outcome.

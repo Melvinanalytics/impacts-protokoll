@@ -9,7 +9,7 @@ laufpfad:
     eingabe_hash: sha256:0000000000000000000000000000000000000000000000000000000000000000
 ---
 
-<!-- Translation source: 02_protocol/templates/vorgang.md; sha256: 04f0f287fbaaba90d31848af48cbebc6718cbde89fb69564ef185cef16ca2607 -->
+<!-- Translation source: 02_protocol/templates/vorgang.md; sha256: 8006122821d6c7731b1bacd2b8dc222cff4337000feedd4bf9a27081427591c5 -->
 
 # Prüffall 001
 
@@ -24,3 +24,5 @@ Wer oder was Gegenstand dieses Vorgangs ist. Vorhandenen Geschäftsrecord über 
 ## Stand
 
 Erklärung des Laufpfads für Menschen: aktueller Schritt und Versuch, verwendbare Ergebnisse, noch begrenzte Entwürfe, fehlende Evidenz oder Entscheidung, zuständiger Mensch und nächste erlaubte Arbeit. Auf die jeweiligen Dateien verlinken; keinen zweiten Status pflegen. Die Zustandshoheit bleibt beim Laufpfad im Frontmatter. Ein vorbereiteter Entwurf bedeutet weder Versand noch Freigabe. Bei Warten das erwartete Ereignis oder die Frist und die zuständige Nachverfolgung benennen; bleibt es aus, den erklärten Ausweichweg nutzen oder die fehlende Entscheidung eskalieren. Ein Ereignis allein erlaubt keinen Übergang.
+
+Ein `wartend`-Eintrag mit seiner erklärten Fortsetzung ist eine korrekte, fortsetzbare Pause: verwendbare Vorbereitung bleibt erhalten, während die erforderliche Entscheidung oder Evidenz offen ist; das ist weder ein Fehler noch ein abgeschlossenes Ergebnis.
