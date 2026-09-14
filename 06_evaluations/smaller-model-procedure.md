@@ -48,6 +48,6 @@ Expectations come from the frozen rubrics (derived from the authoritative source
 
 ---
 
-## Editorial publication context — v0.3.3
+## Editorial publication context (added in v0.3.3)
 
 The procedure above is preserved from the supplied audit material and remains **UNEXECUTED**. Its questions and scoring use the separately authored [frozen audit rubric](frozen-rubrics.md) at the original v0.3.2 commit pin. Publication establishes neither a model-suitability result nor recovery of the missing historical B rubric. The audit-environment and shared-context statements describe the supplied procedure's origin; they are not current environment findings or protocol authority. An operator must supply and record the runtime, driver, thresholds and actual transcripts before reporting results.

@@ -32,7 +32,7 @@ For acquisition, name the configured reader or responsible provider, starting id
 
 ### Source requirement
 
-For each stable source input; preceding-step inputs use the producer's handoff mapping instead. These labels follow `02_protocol/capabilities.md` in the bound protocol revision:
+For each stable source input; preceding-step inputs use the producer's handoff mapping instead. These labels follow `02_protocol/capabilities.md` in the recorded protocol revision:
 
 - Quell-Eingabe: `input/<file>.md`
 - Herkunft:
@@ -74,7 +74,7 @@ Only for reusable processing. The following labels are stable parser vocabulary;
 
 Files under `output/`. Drafts are readable edit surfaces. Bound or completed results require a traceable new revision; retain their original bytes.
 
-Declare an optional handoff mapping and route once at the producer, following `02_protocol/capabilities.md`, “Visible output and handoff”, in the bound protocol checkout. The run adds attempt-qualified origin and Content-Digest in `input/<target>-herkunft.md`.
+Declare an optional handoff mapping and route once at the producer, following `02_protocol/capabilities.md`, “Visible output and handoff”, in the recorded protocol source. The run adds attempt-qualified origin and Content-Digest in `input/<target>-herkunft.md`.
 
 ## Check
 

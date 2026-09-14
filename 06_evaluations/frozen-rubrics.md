@@ -209,7 +209,7 @@ ACTIONS: <commands actually executed, with exit codes>
 
 ---
 
-## Editorial publication context — v0.3.3
+## Editorial publication context (added in v0.3.3)
 
 The material above is preserved from the supplied audit rubric. Its questions, expected answers, scoring and source quotations target the original v0.3.2 commit pin; they are not a rubric for the current checkout. Audit-time statements about author checks, dispatch status, history searches and setup observations are `reported` from that supplied material. The referenced `audit-logs/`, baseline results and `level1-3-selfrun.md` are not included in this public artifact, so publication does not make those execution claims independently inspectable.
 
