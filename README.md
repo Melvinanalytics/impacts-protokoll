@@ -28,6 +28,15 @@ Call machine validation for a needed check when a suitable checker is available.
 
 The CLI supplies `init`, `template`, `validate` and `hash`. Application-only validation checks implemented structure, references and paths without Git. Current historical Run validation needs Git and committed Application binding. Neither establishes definition completeness or execution; a configured harness executes structured Runs.
 
+Get the complete protocol at a published tag so the method, Architect references and examples share one revision:
+
+```bash
+git clone --branch v0.3.4 --depth 1 https://github.com/Melvinanalytics/impacts-protokoll.git
+cd impacts-protokoll
+```
+
+For file-only use, the matching source archive on the [release page](https://github.com/Melvinanalytics/impacts-protokoll/releases/tag/v0.3.4) also supplies the complete protocol. Keep its files together and start at `CONTEXT.md`. For CLI-only use, the release wheel and `SHA256SUMS` supply the installable package; the wheel omits the method and examples.
+
 For the CLI, use Python 3.11+ in the protocol checkout:
 
 ```bash
