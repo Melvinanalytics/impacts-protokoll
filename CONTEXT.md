@@ -4,6 +4,7 @@ For an existing definition, follow [Use](02_protocol/ontology.md#use); for missi
 
 | Intent | Authority pointers |
 |---|---|
+| First use, source version, installed package or an unresolved entry point | [Version and entry points](README.md#version-and-entry-points) |
 | `AGENTS.md`, `CONTEXT.md`, workstep prompt, prompt fragment or instruction-debt correction | [Maintain agent instructions](02_protocol/impacts-method.md#maintain-agent-instructions) |
 | Protocol meaning, work design, source binding or a business question | [Protocol task routes](02_protocol/CONTEXT.md#task-routes) |
 | Executable examples and structural limits | [Core evaluations](06_evaluations/CONTEXT.md) |

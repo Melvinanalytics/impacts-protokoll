@@ -1,13 +1,16 @@
 import os
 from pathlib import Path
+import re
 import shutil
 import subprocess
 import sys
+import tomllib
 
 import pytest
 
 
 ROOT = Path(__file__).resolve().parents[1]
+VERSION = tomllib.loads((ROOT / "pyproject.toml").read_text())["project"]["version"]
 pytestmark = pytest.mark.skipif(
     subprocess.run(
         [sys.executable, "-m", "pip", "--version"],
@@ -123,7 +126,7 @@ def test_non_editable_install_contains_only_five_schemas_and_minimal_api(
                 "files=resources.files('impacts_protocol.schemas'); "
                 "names=sorted(p.name for p in files.iterdir() if p.name.endswith('.json')); "
                 "assert set(impacts_protocol.__all__)=={'HashSurfaceError','Issue','ValidationReport','init_workspace','surface_hash','validate'}; "
-                "assert metadata.version('impacts-protocol')=='0.3.4'; "
+                f"assert metadata.version('impacts-protocol')=={VERSION!r}; "
                 "assert 'referencing>=0.28.4' in metadata.requires('impacts-protocol'); "
                 "assert names==['arbeitsschritt.schema.json','hauptprozess.schema.json','leistung.schema.json','teilprozess.schema.json','vorgang.schema.json'], names"
             ),
@@ -147,7 +150,7 @@ def test_distribution_declares_and_contains_apache_license(installed_environment
                 "distribution=metadata.distribution('impacts-protocol'); "
                 "assert distribution.metadata['License-Expression']=='Apache-2.0'; "
                 "names={str(path) for path in distribution.files}; "
-                "assert 'impacts_protocol-0.3.4.dist-info/licenses/LICENSE' in names, names"
+                f"assert 'impacts_protocol-{VERSION}.dist-info/licenses/LICENSE' in names, names"
             ),
         ],
         cwd=tmp_path,
@@ -157,3 +160,13 @@ def test_distribution_declares_and_contains_apache_license(installed_environment
     )
 
     assert probe.returncode == 0, probe.stdout + probe.stderr
+
+
+@pytest.mark.parametrize("path", ["README.md", "02_protocol/translations/de.md"])
+def test_current_entry_instructions_match_distribution_version(path):
+    text = (ROOT / path).read_text()
+    release_tags = re.findall(r"releases/tag/v([^/)\s]+)", text)
+    clone_tags = re.findall(r"git clone --branch v(\S+)", text)
+    wheel_versions = re.findall(r"impacts_protocol-([^-\s]+)-py3-none-any\.whl", text)
+    assert release_tags and wheel_versions
+    assert set(release_tags + clone_tags + wheel_versions) == {VERSION}

@@ -4,9 +4,28 @@
 
 Diese Bedienhilfe übersetzt den [englischen Sprachvertrag](../language.md). Die englische Protokolldefinition bleibt maßgeblich für die Technik; die Arbeitsunterlagen Ihres Unternehmens bleiben Deutsch. Eine englische Quelle, Werkzeugmeldung oder importierte Application ändert diese Arbeitssprache nicht.
 
+## Protokoll beziehen
+
+Für neue Arbeit das vollständige Quellarchiv des [Releases v0.3.4](https://github.com/Melvinanalytics/impacts-protokoll/releases/tag/v0.3.4) oder den zugehörigen Tag-Checkout verwenden. Der Clone-Befehl steht unter [Get the protocol](../../README.md#get-the-protocol). Methode, Architect, Referenzen, Vorlagen und Beispiele zusammenhalten; Lesen braucht keine Installation. Ein kopierter Architect-Ordner bleibt auch mit `references/` unvollständig: Er benötigt übergeordnete Protokolldateien und die Root-Anleitung. Das Wheel enthält CLI, Schemas und Vorlagen. Für die methodische Nutzung seines erzeugten Arbeitsbereichs ist die passende vollständige Quelle nötig.
+
+## Version und Einstiegspunkte
+
+Die Quellausgabe steht in `[project].version` der Root-[pyproject.toml](../../pyproject.toml). Für ein installiertes Paket `python -m pip show impacts-protocol` in der Python-Umgebung von `impacts` ausführen und `Version` lesen. Die Paketversion bezeichnet die Ausgabe; sie identifiziert weder eine genaue Quellenrevision noch belegt sie Kompatibilität.
+
+Tatsächlichen Quellenort und Identität im vorhandenen Kunden-Root `CONTEXT.md` festhalten. Im Git-Checkout mit `git rev-parse HEAD` und `git status --short` Commit und lokale Änderungen feststellen; einen Release-Tag nur erhalten, wenn er diese Quelle bezeichnet. Ohne Git tatsächliche Archivherkunft, Tag oder Dateinamen und lokalen Quellenort benennen; eine verfügbare Prüfsumme erhalten und lokale Änderungen beschreiben. Der Archivname allein belegt seinen Inhalt nicht. Fehlende Identität oder widersprüchliche Versionen bleiben ausdrücklich offen; die zugehörige Quelle beschaffen, bevor eine Regel mit ungeklärter Version angewendet wird. Ein Checkout nach einem Release oder geänderte Dateien werden entsprechend benannt, auch bei unveränderter Ausgabe in `pyproject.toml`.
+
+| Ausgangspunkt | Einstieg und Abschluss |
+|---|---|
+| Vollständige Protokollquelle | Root-[CONTEXT.md](../../CONTEXT.md) dieses Protokolls und anschließend den gewählten Aufgabenpfad lesen. Kundenarbeit in einem eigenen Ordner halten. |
+| Neuer oder vorhandener Kundenordner | Dessen `CONTEXT.md` lesen; tatsächliche Protokollquelle/Revision und Arbeitssprache benennen oder der vorhandenen Angabe folgen. `02_protocol/`-Pfade gegen diese Quelle auflösen. |
+| Vorhandener Core-Lauf | Bei dessen `vorgaenge/<id>/CONTEXT.md` und deklarierten Eingaben beginnen. Gebundene Application, Quellen und Sprache erhalten; ein neueres Paket oder Protokoll aktualisiert sie nicht. |
+| Wheel oder kopierter Skill mit fehlender Quelle | Vollständige zugehörige Quelle von den [Releases](https://github.com/Melvinanalytics/impacts-protokoll/releases) beziehen. Benötigte Links dort auflösen, bevor deren Regeln angewendet werden. |
+
+Der Einstieg ist geklärt, wenn Aufgabenrouter, Quellenidentität und benötigte Links erreichbar sind, ohne `main`, eine andere Ausgabe oder Modellwissen einzusetzen. Bei einer Lücke diese samt nächster Handlung erhalten; unabhängige erlaubte Vorbereitung geht weiter. Änderungen vorhandener Definitionen folgen [Reviewed correction](../impacts-method.md#reviewed-correction); früher gebundene Arbeit behält ihre Revisionen. Maßgeblicher englischer Abschnitt: [Version and entry points](../../README.md#version-and-entry-points).
+
 ## Einstieg mit vorhandenen Dateien
 
-<!-- Translation source: README.md; sha256: 29526c84be051fd7afd36044301e7707dea5c147e5973184c39b10bcd2a2e4c6 -->
+<!-- Translation source: README.md; sha256: d4731b2f18451b1f08a0036fb83204a58a48afe007595d0044d184d213a263ac -->
 **Machen Sie Ihr Unternehmen für Menschen und KI leichter verständlich und bearbeitbar.** Das [Ziel von IMPACTS](../../README.md) ist, kleinen und mittleren Unternehmen zu helfen, ihr Geschäft besser zu verstehen, Arbeit zu vereinfachen und KI sowie Data Science zu nutzen, ohne selbst Fachleute dafür werden zu müssen. Das ist eine Zielaussage; ein nachgewiesener Nutzen braucht Beobachtungen im eigenen Betrieb.
 
 Gewöhnliche Dateien und Ordner sind eine vollständige Möglichkeit, IMPACTS anzuwenden. IMPACTS ist Handbuch, Ausführungsprotokoll und Struktur; das Framework führt selbst keine Arbeit aus. Menschen können die Dateien lesen und bearbeiten. Ein unterstützender Agent braucht Dateizugriff und die passenden Lese- und Schreibrechte. Dafür sind weder Git noch Python oder eine Installation nötig.
@@ -26,8 +45,10 @@ Eine neue Sitzung startet nur bei `CONTEXT.md`, findet Entwurf und Quellen und b
 
 **Flexibel im Denken. Unnachgiebig darin, was zählt.** Ein Agent darf interpretieren und entwerfen. Eine geprüfte Berechnung braucht die tatsächliche deterministische Ausführung nach der maßgeblichen Regel; eine menschliche Entscheidung kommt vom zuständigen Menschen. Unbekannte Fakten bleiben unbekannt.
 
+## Arbeitsschritte und Prüfhinweise
+
 <!-- Translation source: 02_protocol/impacts-architect/references/zuschnitt.md; sha256: 458fc4a003447f5517616910f9936a6c2342c614395a385c9253d3ba6eb80f24 -->
-Für die Quellenzuordnungen dieses Arbeitsschritts [Data Governance](../capabilities.md#data-governance) anwenden.
+Beim Entwurf eines Arbeitsschritts für seine Quellenzuordnungen [Data Governance](../capabilities.md#data-governance) anwenden.
 
 <!-- Translation source: 02_protocol/impacts-architect/references/formwahl.md; sha256: ae6865c3a3ad6e6d0cdb5b7bf77d9b6d4fabee4348f64cdb3b31dfa5cb99591a -->
 Wenn mehrere offene Entscheidungen koordiniert werden müssen, eine datierte Liste in der vorhandenen Fall- oder Record-Heimat verwenden, die jede Frage mit zuständiger Entscheidungsperson, benötigten Eingaben und Folge bis zur Entscheidung verknüpft; sie koordiniert, ist keine Faktenheimat und leitet einen etwaigen Laufstatus aus `laufpfad` ab.
@@ -123,7 +144,7 @@ Die [Methode](../impacts-method.md) und [Formwahl](../impacts-architect/referenc
 
 Ist Git bei der Vorbereitung eines Git-gebundenen Laufs nicht verfügbar, bleiben Entwurf, Quellen, Fragen und Definitionsentwurf erhalten und fortsetzbar. Die historische Laufvalidierung wurde nicht durchgeführt; die Vorbereitung bleibt ungebunden und ist kein validierter Lauf. Nächster Schritt: an einem Rechner mit Git und Python-CLI den Application-Vertrag samt erforderlichen Setup-Fällen vervollständigen, die Application am Core-Root committen, den Lauf anhand der [Laufvorlage](../templates/vorgang.md) an den tatsächlichen committed Tree binden und `impacts validate` auf dem Arbeitsbereich ausführen. Das wirkliche Ergebnis erhalten und Fehler vor einer Behauptung validierter Bindung korrigieren. Keine Tree-ID, keinen Hash, keinen Verlauf und keine Freigabe erfinden. Validierung allein beweist weder Ausführung noch fachlichen Erfolg.
 
-Das vollständige Protokoll für v0.3.4 gibt es als Checkout des veröffentlichten Tags oder als Quellarchiv auf der [Release-Seite](https://github.com/Melvinanalytics/impacts-protokoll/releases/tag/v0.3.4). Dateien zusammenhalten und bei `CONTEXT.md` beginnen; so bleiben Methode, Architect-Verweise und Beispiele auf demselben Stand. Die Befehle stehen in der [technischen Anleitung](../../README.md#optional-technical-use). Das Release-Wheel samt `SHA256SUMS` liefert nur das installierbare CLI-Paket, ohne Methode und Beispiele.
+Das Release-Wheel und `SHA256SUMS` herunterladen, das Wheel gegen die Prüfsummendatei prüfen und in der virtuellen Umgebung mit `python -m pip install ./impacts_protocol-0.3.4-py3-none-any.whl` installieren. Die [technische Anleitung](../../README.md#optional-technical-use) zeigt auch die Installation aus dem vollständigen Checkout. Paket und zugehörige Quelle nach [Version und Einstiegspunkte](#version-und-einstiegspunkte) identifizieren.
 
 Für eine ausgewählte Core-Nutzung erläutert die [technische Anleitung](../../README.md#optional-technical-use) die Python-Installation. Die folgenden Befehle erzeugen oder prüfen Dateien; sie führen keine Kundenarbeit aus:
 

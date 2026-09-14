@@ -14,7 +14,7 @@ routen:
 customer_touchpoint: sacred  # fehlend, standard oder sacred
 ---
 
-<!-- Translation source: 02_protocol/templates/arbeitsschritt.md; sha256: 396c7e749710d36da462646bdf517104d7390b07f6420cbcabc06e14a90959cf -->
+<!-- Translation source: 02_protocol/templates/arbeitsschritt.md; sha256: 4f38655c15c8fff698e3f3caf389508db2d7698cb13f948c189cc86710c6b32f -->
 
 # Entscheiden
 
@@ -34,7 +34,7 @@ Für die Beschaffung eingerichteten Reader oder liefernde Person, Objektbezug, A
 
 ### Quellenanforderung
 
-Für jede stabile Quelleingabe; Eingaben aus vorangegangenen Schritten verwenden stattdessen die Übergabeabbildung des Producers. Diese Kennungen folgen `02_protocol/capabilities.md` in der gebundenen Protokollrevision:
+Für jede stabile Quelleingabe; Eingaben aus vorangegangenen Schritten verwenden stattdessen die Übergabeabbildung des Producers. Diese Kennungen folgen `02_protocol/capabilities.md` in der benannten Protokollrevision:
 
 - Quell-Eingabe: `input/<datei>.md`
 - Herkunft:
@@ -76,7 +76,7 @@ Nur bei einer wiederverwendbaren Verarbeitung; die folgenden Bezeichnungen sind 
 
 Dateien unter `output/`. Vorläufige Ausgaben sind lesbare, bearbeitbare Editierflächen. Änderungen an bereits gebundenen oder abgeschlossenen Ergebnissen erfordern eine neue nachvollziehbare Revision; die ursprünglichen Bytes bleiben erhalten.
 
-Optionale Schrittübergabe: Abbildung und Route genau einmal beim Producer nach `02_protocol/capabilities.md`, Abschnitt „Sichtbare Ausgabe und Übergabe“, im gebundenen Protokollcheckout deklarieren. Der Vorgang ergänzt versuchsqualifizierten Ursprung und Content-Digest in `input/ziel-herkunft.md`.
+Optionale Schrittübergabe: Abbildung und Route genau einmal beim Producer nach `02_protocol/capabilities.md`, Abschnitt „Sichtbare Ausgabe und Übergabe“, in der benannten Protokollquelle deklarieren. Der Vorgang ergänzt versuchsqualifizierten Ursprung und Content-Digest in `input/ziel-herkunft.md`.
 
 ## Prüfung
 
