@@ -1,0 +1,5 @@
+# Consumer inventory
+
+Derived navigation view captured at method revision `m4`. Its declared coverage is the three synthetic roots, two reported installed aliases and one outside-job lead. It is not a second authority for the relationships maintained at the dependent definitions.
+
+The [`customer` / `delivery-promise` relationship](../../customer/grundlagen/lieferzusage.md#relationship-delivery-promise-uses-estimator) uses `method` / `delivery-estimate`. Two installed skill aliases are reported to target `skills/delivery-estimate/SKILL.md`; their current targets have not been checked. The [`sales` / `offer-delivery-commitment` relationships](../../sales/grundlagen/offer-terms.md#relationship-offer-delivery-inputs) consume `method` / `delivery-estimate` and separate `method` / `availability-check` evidence. An outside scheduled job may execute the old estimator path; its owner, configuration, source namespace, item reference and revision are unresolved. This is a specific lead, not proof of a live execution. Other consumers may exist outside the declared coverage.

@@ -10,12 +10,8 @@ from hashlib import sha256
 from pathlib import Path
 import json
 import subprocess
-import sys
-
-import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "src"))
 
 from impacts_protocol import init_workspace, surface_hash, validate
 from tests.c_owner_support import (

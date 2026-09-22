@@ -1,0 +1,3 @@
+# Method folder entry
+
+Stable source namespace: `urn:impacts:example:cross-repository:method`. Captured symbolic revision: `m4`. The shorthand `method@m4` names this fixture and revision for the reading case; neither part is the stable source identity. Agents maintain this folder's router and skills. This is a map of reusable operations, not a declared customer Pipeline. Route the delivery question to the [estimator](skills/delivery-estimate/SKILL.md), its separate [availability check](skills/availability-check/SKILL.md), the [consumer inventory](records/consumers.md) and the [dated audit](records/audit.md).

@@ -2,7 +2,7 @@
 
 from collections import deque
 from contextlib import ExitStack
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import datetime
 from importlib import resources
 import json
@@ -142,7 +142,16 @@ def _validate_workspace(root: Path, issues: list[Issue]) -> None:
             if path.is_symlink():
                 _add(issues, "structure.symlink", path, root, "Application is a symlink")
             elif path.is_dir():
+                before = len(issues)
                 _validate_application(path, issues)
+                prefix = path.relative_to(root)
+                issues[before:] = [
+                    replace(
+                        issue,
+                        path=(prefix if issue.path == "." else prefix / issue.path).as_posix(),
+                    )
+                    for issue in issues[before:]
+                ]
             else:
                 _add(issues, "structure.invalid", path, root, "Applications contains a non-directory")
     runs = root / "vorgaenge"
@@ -471,7 +480,10 @@ def _resolve_application(
         details = "; ".join(
             f"{issue.path}: {issue.code}: {issue.message}" for issue in _ordered(nested)
         )
-        message = f"Application {revision} violates the V1 contract"
+        message = (
+            f"Application {revision} does not satisfy the Core contract; "
+            "preserve existing historical bindings and use a corrected Application tree for a new Run"
+        )
         reject(f"{message}: {details}" if details else message)
         return None
     slug = application.hauptprozess["id"].removeprefix("hauptprozess:")

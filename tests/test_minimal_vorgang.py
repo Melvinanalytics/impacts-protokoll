@@ -1,34 +1,26 @@
 from pathlib import Path
 import shutil
 import subprocess
-import sys
 from tempfile import TemporaryDirectory
 
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "src"))
 
 from impacts_protocol import init_workspace, surface_hash, validate
 import impacts_protocol.validator as validator
-from tests.support import read_context, replace_context, write_application, write_context
-
-
-def _git(root: Path, *args: str) -> str:
-    return subprocess.check_output(
-        ["git", "-C", str(root), *args], text=True
-    ).strip()
+from tests.support import codes, git, read_context, replace_context, write_application, write_context
 
 
 def _prepare_workspace(base: Path) -> tuple[Path, Path]:
     root = init_workspace(base / "kunde")
     write_application(root / "applications" / "video")
-    _git(root, "init", "-b", "main")
-    _git(root, "config", "user.email", "test@example.invalid")
-    _git(root, "config", "user.name", "Test")
-    _git(root, "add", ".")
-    _git(root, "commit", "-m", "application v1")
-    revision = _git(root, "rev-parse", "HEAD:applications/video")
+    git(root, "init", "-b", "main")
+    git(root, "config", "user.email", "test@example.invalid")
+    git(root, "config", "user.name", "Test")
+    git(root, "add", ".")
+    git(root, "commit", "-m", "application v1")
+    revision = git(root, "rev-parse", "HEAD:applications/video")
 
     run = root / "vorgaenge" / "video-001"
     entries = []
@@ -71,10 +63,6 @@ def _prepare_workspace(base: Path) -> tuple[Path, Path]:
     return root, run
 
 
-def _codes(root: Path) -> set[str]:
-    return {issue.code for issue in validate(root).issues}
-
-
 def test_committed_revision_and_complete_run_are_valid():
     with TemporaryDirectory() as directory:
         root, _ = _prepare_workspace(Path(directory))
@@ -91,7 +79,7 @@ def test_unreachable_application_tree_is_rejected():
         metadata["application_revision"] = "git-tree:" + "a" * 40
         replace_context(run / "CONTEXT.md", metadata)
 
-        assert "revision.invalid" in _codes(root)
+        assert "revision.invalid" in codes(root)
 
 
 def test_invalid_historical_application_reports_bound_revision_and_field(tmp_path):
@@ -107,9 +95,9 @@ def test_invalid_historical_application_reports_bound_revision_and_field(tmp_pat
     metadata = read_context(path)
     metadata["pruefung"] = 42
     replace_context(path, metadata)
-    _git(root, "add", "applications")
-    _git(root, "commit", "-m", "invalid application fixture")
-    revision = "git-tree:" + _git(root, "rev-parse", "HEAD:applications/video")
+    git(root, "add", "applications")
+    git(root, "commit", "-m", "invalid application fixture")
+    revision = "git-tree:" + git(root, "rev-parse", "HEAD:applications/video")
     path.write_bytes(original)
     metadata = read_context(run / "CONTEXT.md")
     metadata["application_revision"] = revision
@@ -144,14 +132,14 @@ def test_revision_history_is_reused_within_validation_but_rechecked_after_ref_ch
 
     assert validate(root).valid
     assert commands.count(("rev-list", "--all")) == 1
-    commit = _git(root, "rev-parse", "HEAD")
-    _git(root, "update-ref", "-d", "refs/heads/main")
+    commit = git(root, "rev-parse", "HEAD")
+    git(root, "update-ref", "-d", "refs/heads/main")
     report = validate(root)
     assert len(report.issues) == 3, report.issues
     assert all(issue.code == "revision.invalid" for issue in report.issues)
     assert commands.count(("rev-list", "--all")) == 2
 
-    _git(root, "update-ref", "refs/heads/main", commit)
+    git(root, "update-ref", "refs/heads/main", commit)
     assert validate(root).valid
     assert commands.count(("rev-list", "--all")) == 3
 
@@ -198,8 +186,8 @@ def test_conflicting_git_paths_are_rejected_before_materialization(tmp_path, mon
 
 def test_reachable_application_with_duplicate_git_paths_is_rejected(tmp_path):
     root, run = _prepare_workspace(tmp_path)
-    original = _git(root, "rev-parse", "HEAD:applications/video")
-    rows = _git(root, "ls-tree", original).splitlines()
+    original = git(root, "rev-parse", "HEAD:applications/video")
+    rows = git(root, "ls-tree", original).splitlines()
     context = next(row for row in rows if row.endswith("\tCONTEXT.md"))
 
     def make_tree(rows):
@@ -210,16 +198,16 @@ def test_reachable_application_with_duplicate_git_paths_is_rejected(tmp_path):
 
     duplicate = make_tree(rows + [context])
     applications = make_tree([f"040000 tree {duplicate}\tvideo"])
-    root_rows = _git(root, "ls-tree", "HEAD^{tree}").splitlines()
+    root_rows = git(root, "ls-tree", "HEAD^{tree}").splitlines()
     root_rows = [row for row in root_rows if not row.endswith("\tapplications")]
     malformed_root = make_tree(root_rows + [f"040000 tree {applications}\tapplications"])
-    commit = _git(root, "commit-tree", malformed_root, "-p", "HEAD", "-m", "duplicate path fixture")
-    _git(root, "update-ref", "refs/heads/main", commit)
+    commit = git(root, "commit-tree", malformed_root, "-p", "HEAD", "-m", "duplicate path fixture")
+    git(root, "update-ref", "refs/heads/main", commit)
     metadata = read_context(run / "CONTEXT.md")
     metadata["application_revision"] = f"git-tree:{duplicate}"
     replace_context(run / "CONTEXT.md", metadata)
 
-    assert _git(root, "rev-parse", "HEAD:applications/video") == duplicate
+    assert git(root, "rev-parse", "HEAD:applications/video") == duplicate
     report = validate(root)
     assert not report.valid
     assert "revision.invalid" in {issue.code for issue in report.issues}
@@ -231,9 +219,9 @@ def test_bound_tree_ignores_archive_attributes_and_preserves_binary_bytes(tmp_pa
     payload = b"\x00\xffliteral $Format:%H$\n"
     (application / "payload.bin").write_bytes(payload)
     (application / ".gitattributes").write_text("payload.bin export-ignore\n*.md export-subst\n")
-    _git(root, "add", "applications")
-    _git(root, "commit", "-m", "archive attributes fixture")
-    oid = _git(root, "rev-parse", "HEAD:applications/video")
+    git(root, "add", "applications")
+    git(root, "commit", "-m", "archive attributes fixture")
+    oid = git(root, "rev-parse", "HEAD:applications/video")
     target = tmp_path / "materialized"
     target.mkdir()
 
@@ -250,9 +238,9 @@ def test_unreadable_git_tree_returns_failure_without_writing(tmp_path, monkeypat
 
 def test_tree_at_another_application_slug_does_not_authorize_a_run(tmp_path):
     root, _ = _prepare_workspace(tmp_path)
-    _git(root, "mv", "applications/video", "applications/other")
-    _git(root, "commit", "--amend", "-m", "wrong application location")
-    assert "revision.invalid" in _codes(root)
+    git(root, "mv", "applications/video", "applications/other")
+    git(root, "commit", "--amend", "-m", "wrong application location")
+    assert "revision.invalid" in codes(root)
 
 
 def test_replacement_tree_cannot_change_bound_application_bytes(tmp_path):
@@ -262,11 +250,11 @@ def test_replacement_tree_cannot_change_bound_application_bytes(tmp_path):
     metadata = read_context(path)
     metadata["pruefung"] = 42
     replace_context(path, metadata)
-    _git(root, "add", "applications")
-    _git(root, "commit", "-m", "invalid replacement fixture")
-    replacement = _git(root, "rev-parse", "HEAD:applications/video")
-    _git(root, "checkout", "HEAD^", "--", "applications")
-    _git(root, "replace", oid, replacement)
+    git(root, "add", "applications")
+    git(root, "commit", "-m", "invalid replacement fixture")
+    replacement = git(root, "rev-parse", "HEAD:applications/video")
+    git(root, "checkout", "HEAD^", "--", "applications")
+    git(root, "replace", oid, replacement)
 
     assert validate(root).valid
 
@@ -278,7 +266,7 @@ def test_laufpfad_must_start_at_application_entry():
         metadata["laufpfad"] = metadata["laufpfad"][1:]
         replace_context(run / "CONTEXT.md", metadata)
 
-        assert "run.invalid" in _codes(root)
+        assert "run.invalid" in codes(root)
 
 
 def test_malformed_laufpfad_entry_fails_closed_without_exception():
@@ -288,10 +276,10 @@ def test_malformed_laufpfad_entry_fails_closed_without_exception():
         metadata["laufpfad"] = ["invalid"]
         replace_context(run / "CONTEXT.md", metadata)
 
-        codes = _codes(root)
+        issue_codes = codes(root)
 
-        assert "schema.invalid" in codes
-        assert "run.invalid" in codes
+        assert "schema.invalid" in issue_codes
+        assert "run.invalid" in issue_codes
 
 
 def test_malformed_selected_route_fails_closed_without_exception():
@@ -301,10 +289,10 @@ def test_malformed_selected_route_fails_closed_without_exception():
         metadata["laufpfad"][0]["gewaehlte_route"] = ["weiter"]
         replace_context(run / "CONTEXT.md", metadata)
 
-        codes = _codes(root)
+        issue_codes = codes(root)
 
-        assert "schema.invalid" in codes
-        assert "run.invalid" in codes
+        assert "schema.invalid" in issue_codes
+        assert "run.invalid" in issue_codes
 
 
 def test_changed_input_bytes_break_hash_binding():
@@ -314,7 +302,7 @@ def test_changed_input_bytes_break_hash_binding():
             "verändert", encoding="utf-8"
         )
 
-        assert "hash.mismatch" in _codes(root)
+        assert "hash.mismatch" in codes(root)
 
 
 def test_changed_output_bytes_break_hash_binding():
@@ -324,7 +312,7 @@ def test_changed_output_bytes_break_hash_binding():
             "verändert", encoding="utf-8"
         )
 
-        assert "hash.mismatch" in _codes(root)
+        assert "hash.mismatch" in codes(root)
 
 
 def test_human_gate_rejects_agent_approval():
@@ -334,7 +322,7 @@ def test_human_gate_rejects_agent_approval():
         metadata["laufpfad"][1]["freigabe"]["by"] = "agent:codex"
         replace_context(run / "CONTEXT.md", metadata)
 
-        assert "trust.invalid" in _codes(root)
+        assert "trust.invalid" in codes(root)
 
 
 def test_missing_attempt_directory_is_rejected():
@@ -345,7 +333,7 @@ def test_missing_attempt_directory_is_rejected():
             path.unlink() if path.is_file() else path.rmdir()
         attempt.rmdir()
 
-        assert "run.invalid" in _codes(root)
+        assert "run.invalid" in codes(root)
 
 
 def test_waiting_entry_needs_reentry_contract():
@@ -359,7 +347,7 @@ def test_waiting_entry_needs_reentry_contract():
         metadata["laufpfad"] = [waiting]
         replace_context(run / "CONTEXT.md", metadata)
 
-        assert "run.invalid" in _codes(root)
+        assert "run.invalid" in codes(root)
 
 
 def test_completed_entry_must_not_carry_reentry_contract():
@@ -372,7 +360,7 @@ def test_completed_entry_must_not_carry_reentry_contract():
         }
         replace_context(run / "CONTEXT.md", metadata)
 
-        assert "run.invalid" in _codes(root)
+        assert "run.invalid" in codes(root)
 
 
 def test_hash_surface_rejects_a_directory_symlink():
@@ -386,11 +374,11 @@ def test_hash_surface_rejects_a_directory_symlink():
             metadata["eingaben"] = ["input"]
             metadata["ausgaben"] = ["output"]
             replace_context(path, metadata)
-        _git(root, "add", "applications/video")
-        _git(root, "commit", "-m", "directory surfaces")
+        git(root, "add", "applications/video")
+        git(root, "commit", "-m", "directory surfaces")
 
         metadata = read_context(run / "CONTEXT.md")
-        metadata["application_revision"] = "git-tree:" + _git(
+        metadata["application_revision"] = "git-tree:" + git(
             root, "rev-parse", "HEAD:applications/video"
         )
         for entry in metadata["laufpfad"]:
@@ -408,7 +396,7 @@ def test_hash_surface_rejects_a_directory_symlink():
         input_root.rmdir()
         input_root.symlink_to(external, target_is_directory=True)
 
-        assert "structure.symlink" in _codes(root)
+        assert "structure.symlink" in codes(root)
 
 
 @pytest.mark.parametrize("language", ["en", "de"])
@@ -420,16 +408,16 @@ def test_git_clone_preserves_workspace_validation(tmp_path, language, contents):
         root = init_workspace(tmp_path / "kunde", language=language)
         if contents == "application":
             write_application(root / "applications/video")
-        _git(root, "init", "-b", "main")
-        _git(root, "config", "user.email", "test@example.invalid")
-        _git(root, "config", "user.name", "Test")
+        git(root, "init", "-b", "main")
+        git(root, "config", "user.email", "test@example.invalid")
+        git(root, "config", "user.name", "Test")
     assert validate(root).valid
-    _git(root, "add", ".")
-    _git(root, "commit", "-m", "captured workspace")
+    git(root, "add", ".")
+    git(root, "commit", "-m", "captured workspace")
     clone = tmp_path / "clone"
-    _git(tmp_path, "clone", "--quiet", str(root), str(clone))
+    git(tmp_path, "clone", "--quiet", str(root), str(clone))
     assert validate(clone).valid
-    assert _git(clone, "status", "--porcelain") == ""
+    assert git(clone, "status", "--porcelain") == ""
     if contents == "empty":
         assert not (clone / "applications").exists()
     if contents != "populated":
@@ -453,7 +441,7 @@ def test_empty_collection_rule_preserves_invalid_entry_rejection(tmp_path, colle
         (path / ".gitkeep").write_text("")
     else:
         (path / "invalid").mkdir()
-    assert code in _codes(root)
+    assert code in codes(root)
 
 
 def test_approval_timestamp_is_a_string_under_the_actual_loader(tmp_path):
@@ -514,10 +502,10 @@ def test_invalid_definition_memo_attributes_each_run(tmp_path, monkeypatch):
     metadata = read_context(path)
     metadata['pruefung'] = 42
     replace_context(path, metadata)
-    _git(root, 'add', 'applications')
-    _git(root, 'commit', '-m', 'synthetic invalid definition')
+    git(root, 'add', 'applications')
+    git(root, 'commit', '-m', 'synthetic invalid definition')
     metadata = read_context(run / 'CONTEXT.md')
-    metadata['application_revision'] = 'git-tree:' + _git(root, 'rev-parse', 'HEAD:applications/video')
+    metadata['application_revision'] = 'git-tree:' + git(root, 'rev-parse', 'HEAD:applications/video')
     replace_context(run / 'CONTEXT.md', metadata)
     second = run.parent / 'video-002'
     shutil.copytree(run, second)
@@ -530,3 +518,6 @@ def test_invalid_definition_memo_attributes_each_run(tmp_path, monkeypatch):
     errors = [issue for issue in report.issues if issue.code == 'revision.invalid']
     assert [issue.path for issue in errors] == ['vorgaenge/video-001/CONTEXT.md', 'vorgaenge/video-002/CONTEXT.md']
     assert errors[0].message == errors[1].message
+    assert 'preserve existing historical bindings' in errors[0].message
+    assert 'new Run' in errors[0].message
+    assert 're-bind' not in errors[0].message

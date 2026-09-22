@@ -8,9 +8,12 @@ from pathlib import Path
 import re
 import shutil
 import subprocess
+import sys
 from tempfile import TemporaryDirectory
 
 import yaml
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 
 from impacts_protocol import init_workspace, surface_hash, validate
 from impacts_protocol.io import load_frontmatter

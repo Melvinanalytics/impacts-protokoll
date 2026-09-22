@@ -1,11 +1,9 @@
 from pathlib import Path
-import sys
 from tempfile import TemporaryDirectory
 
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "src"))
 
 import impacts_protocol
 from impacts_protocol.cli import main
