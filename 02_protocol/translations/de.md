@@ -4,7 +4,7 @@
 
 Diese Bedienhilfe übersetzt den [englischen Sprachvertrag](../language.md). Die englische Protokolldefinition bleibt maßgeblich für die Technik; die Arbeitsunterlagen Ihres Unternehmens bleiben Deutsch. Eine englische Quelle, Werkzeugmeldung oder importierte Application ändert diese Arbeitssprache nicht.
 
-<!-- Translation source: README.md; sha256: e2aa229700e8c7b85186a544aff2f72c10f0649d5fde14360e416901bbf868f6 -->
+<!-- Translation source: README.md; sha256: 6ac1f540626d52205ec596fdb5ad01de6d8bd1534bda948f3d23854a7ea4c11c -->
 
 ## Protokoll beziehen
 
@@ -186,7 +186,7 @@ Die [Methode](../impacts-method.md) und [Formwahl](../impacts-architect/referenc
 
 Ist Git bei der Vorbereitung eines Git-gebundenen Laufs nicht verfügbar, bleiben Entwurf, Quellen, Fragen und Definitionsentwurf erhalten und fortsetzbar. Die historische Laufvalidierung wurde nicht durchgeführt; die Vorbereitung bleibt ungebunden und ist kein validierter Lauf. Nächster Schritt: an einem Rechner mit Git und Python-CLI den Application-Vertrag samt erforderlichen Setup-Fällen vervollständigen, die Application am Core-Root committen, den Lauf anhand der [Laufvorlage](../templates/vorgang.md) an den tatsächlichen committed Tree binden und `impacts validate` auf dem Arbeitsbereich ausführen. Das wirkliche Ergebnis erhalten und Fehler vor einer Behauptung validierter Bindung korrigieren. Keine Tree-ID, keinen Hash, keinen Verlauf und keine Freigabe erfinden. Validierung allein beweist weder Ausführung noch fachlichen Erfolg.
 
-Mit Python 3.11+ im gewählten Arbeitsordner eine virtuelle Umgebung anlegen und aktivieren: `python3 -m venv .venv`, anschließend `source .venv/bin/activate` (macOS/Linux). Eine Installationsquelle wählen: Im vollständigen Checkout `python -m pip install -e .` ausführen; oder das Wheel und `SHA256SUMS` vom oben verlinkten Release in einen gemeinsamen Ordner herunterladen. Dort mit `shasum -a 256 -c SHA256SUMS` (macOS/Linux) prüfen und nur bei passender Prüfsumme mit `python -m pip install ./impacts_protocol-0.3.5-py3-none-any.whl` installieren. Paket und zugehörige vollständige Quelle nach [Version und Einstiegspunkte](#version-und-einstiegspunkte) identifizieren. Die folgenden Befehle außerhalb des vorgesehenen neuen Kundenordners ausführen.
+Mit Python 3.11+ im gewählten Arbeitsordner eine virtuelle Umgebung anlegen und aktivieren: `python3 -m venv .venv`, anschließend `source .venv/bin/activate` (macOS/Linux). Eine Installationsquelle wählen: Im vollständigen Checkout `python -m pip install -e .` ausführen; oder das Wheel, das vollständige Quellarchiv und `SHA256SUMS` vom oben verlinkten Release in einen gemeinsamen Ordner herunterladen. Dort jedes aufgeführte Artefakt mit `shasum -a 256 -c SHA256SUMS` (macOS/Linux) prüfen und nur bei vollständig bestandener Prüfung mit `python -m pip install ./impacts_protocol-0.3.5-py3-none-any.whl` installieren. Paket und zugehörige vollständige Quelle nach [Version und Einstiegspunkte](#version-und-einstiegspunkte) identifizieren. Die folgenden Befehle außerhalb des vorgesehenen neuen Kundenordners ausführen.
 
 Die Befehle erzeugen oder prüfen Dateien; sie führen keine Kundenarbeit aus:
 

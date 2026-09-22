@@ -113,3 +113,18 @@ def test_current_entry_instructions_match_distribution_version(path):
     wheel_versions = re.findall(r"impacts_protocol-([^-\s]+)-py3-none-any\.whl", text)
     assert release_tags and wheel_versions
     assert set(release_tags + clone_tags + wheel_versions) == {version}
+
+
+@pytest.mark.parametrize(
+    ("path", "required_terms"),
+    [
+        ("README.md", ("wheel", "complete source archive", "`SHA256SUMS`")),
+        ("02_protocol/translations/de.md", ("Wheel", "vollständige Quellarchiv", "`SHA256SUMS`")),
+    ],
+)
+def test_checksum_recipe_downloads_every_listed_release_asset(path, required_terms):
+    text = (ROOT / path).read_text()
+    paragraph = next(section for section in text.split("\n\n") if "shasum -a 256 -c SHA256SUMS" in section)
+
+    assert all(term in paragraph for term in required_terms)
+    assert "every listed asset" in paragraph or "jedes aufgeführte Artefakt" in paragraph

@@ -109,7 +109,7 @@ source .venv/bin/activate
 Choose one installation source:
 
 - **Complete checkout:** from its root, run `python -m pip install -e .`.
-- **Release wheel:** download the wheel and `SHA256SUMS` from the release above into one folder. From that folder, verify with `shasum -a 256 -c SHA256SUMS` (macOS/Linux), then install with `python -m pip install ./impacts_protocol-0.3.5-py3-none-any.whl` only if the checksum matches.
+- **Release wheel:** download the wheel, complete source archive and `SHA256SUMS` from the release above into one folder. From that folder, verify every listed asset with `shasum -a 256 -c SHA256SUMS` (macOS/Linux), then install with `python -m pip install ./impacts_protocol-0.3.5-py3-none-any.whl` only if the complete check passes.
 
 Follow [Version and entry points](#version-and-entry-points) to identify the installed package and obtain its complete source. Then, outside the intended new customer folder:
 
