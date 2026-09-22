@@ -1,0 +1,134 @@
+{
+  "baseline": {
+    "edition": "0.3.6",
+    "revision": "5ad90cd42b792ef2919ebcfaf558bb11cb80ec3a"
+  },
+  "baseline_median": {
+    "answer_bytes": 849,
+    "cached_input_tokens": 105216,
+    "input_tokens": 129479,
+    "output_tokens": 1011,
+    "reasoning_output_tokens": 268,
+    "tool_calls": 4,
+    "tool_output_bytes": 39143
+  },
+  "baseline_runs": [
+    {
+      "answer_bytes": 849,
+      "answer_sha256": "1e8d0961a22bfa50d52724539ee55ba45feb260f4e5c51d18f791da5583c9c07",
+      "cached_input_tokens": 105216,
+      "input_tokens": 129479,
+      "jsonl_sha256": "f215ed659cfd6d08123b2cbc4243d4d26c184a28858645625dfd412d8012cb7f",
+      "output_tokens": 927,
+      "reasoning_output_tokens": 268,
+      "tool_calls": 4,
+      "tool_output_bytes": 39143
+    },
+    {
+      "answer_bytes": 1004,
+      "answer_sha256": "406cdf451c188def76cb655062fcc1ed7e3a3ec5247e208ec850d8367c92e96e",
+      "cached_input_tokens": 128128,
+      "input_tokens": 143970,
+      "jsonl_sha256": "001c640808b157218bbcbaf6e7140f7c17bc4829f35315938ffb22ed9976fded",
+      "output_tokens": 1011,
+      "reasoning_output_tokens": 156,
+      "tool_calls": 5,
+      "tool_output_bytes": 25416
+    },
+    {
+      "answer_bytes": 748,
+      "answer_sha256": "6dcd9dfe0462f73ca4ed6ddc39e09712cc645b004beaf8af200afa3c5800ccfd",
+      "cached_input_tokens": 71040,
+      "input_tokens": 102612,
+      "jsonl_sha256": "fa40e5366b0fa6856b8de8ecd3d0393ff607fe71866284ddb8a5cdf47f511168",
+      "output_tokens": 1079,
+      "reasoning_output_tokens": 454,
+      "tool_calls": 3,
+      "tool_output_bytes": 46655
+    }
+  ],
+  "blind_answer_scoring": {
+    "baseline": {
+      "pass": 3,
+      "route_discipline_full": 2,
+      "total": 3
+    },
+    "candidate": {
+      "pass": 3,
+      "route_discipline_full": 3,
+      "total": 3
+    },
+    "limit": "Declared paths were scored; actual file reads were not independently reconstructed by the scorer.",
+    "rubric": "decision, repair, evidence boundary, route discipline, unsupported inference, material omission",
+    "scorer": "independent agent; labels randomized; repository and mapping unavailable"
+  },
+  "candidate": {
+    "edition": "0.3.7 candidate",
+    "revision": "441d066"
+  },
+  "candidate_median": {
+    "answer_bytes": 1019,
+    "cached_input_tokens": 84608,
+    "input_tokens": 92362,
+    "output_tokens": 924,
+    "reasoning_output_tokens": 295,
+    "tool_calls": 3,
+    "tool_output_bytes": 17509
+  },
+  "candidate_runs": [
+    {
+      "answer_bytes": 940,
+      "answer_sha256": "9193bf44a054aa4dbc54805947d4f8dda288636832373ce1725897ed9f4ba499",
+      "cached_input_tokens": 84608,
+      "input_tokens": 91949,
+      "jsonl_sha256": "acde9bbba3c6ed02121a86116d7b4bf66b46fd1467155af28c47314ffbcb43aa",
+      "output_tokens": 898,
+      "reasoning_output_tokens": 278,
+      "tool_calls": 3,
+      "tool_output_bytes": 16547
+    },
+    {
+      "answer_bytes": 1060,
+      "answer_sha256": "e6356a788ff0d534dce30e0d76b4e87c1fec3470a1fdc45fb6ddae5176f0ea41",
+      "cached_input_tokens": 91392,
+      "input_tokens": 117776,
+      "jsonl_sha256": "cd6c8dd14ed4f7fbae3b900edfcbbec4c431e81a47c7bcea0141898029388d32",
+      "output_tokens": 1302,
+      "reasoning_output_tokens": 398,
+      "tool_calls": 4,
+      "tool_output_bytes": 17533
+    },
+    {
+      "answer_bytes": 1019,
+      "answer_sha256": "287a2bd35daad8bf9427dfd36eb89fc529bb8851f4ae4225a43cc260a0951edf",
+      "cached_input_tokens": 66688,
+      "input_tokens": 92362,
+      "jsonl_sha256": "2f52f5ae558e5831cf313e8b29696d06b9d2e9cae538423c4d62bda702c494fc",
+      "output_tokens": 924,
+      "reasoning_output_tokens": 295,
+      "tool_calls": 3,
+      "tool_output_bytes": 17509
+    }
+  ],
+  "harness": {
+    "codex_cli": "0.155.1",
+    "connector_diagnostic": "Context7 MCP authentication diagnostic occurred before both baseline and candidate runs; each measured agent turn completed with exit 0.",
+    "model": "gpt-5.6-sol",
+    "model_reasoning_effort": "low",
+    "repetitions_per_revision": 3,
+    "sandbox": "read-only",
+    "session": "ephemeral"
+  },
+  "measured_at": "2026-09-23 Europe/Berlin",
+  "question_sha256": "1dc657c74fc150f8a61221edcfae1cd89d181563059893f1480286f899b32e8c",
+  "reduction_percent": {
+    "answer_bytes": -20.02,
+    "cached_input_tokens": 19.59,
+    "input_tokens": 28.67,
+    "output_tokens": 8.61,
+    "reasoning_output_tokens": -10.07,
+    "tool_calls": 25.0,
+    "tool_output_bytes": 55.27
+  },
+  "status": "candidate evidence; one frozen synthetic question, not a general token-efficiency claim"
+}
