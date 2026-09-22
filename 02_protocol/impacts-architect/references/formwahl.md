@@ -15,6 +15,10 @@ Apply [Author or change](../../ontology.md#author-or-change) for missing or chan
 | Several independent Pipelines | Umbrella | Small router to independent process homes; selected Core Pipelines use Applications |
 | Repository that agents modify | System Map | Existing repository routers and files |
 
+Selected Core Pipeline contracts fit bounded, repeatable work whose next permitted step can be expressed through declared inputs, visible outputs, checks and routes. Human review belongs only at an identified customer, authority, risk, acceptance or required quality boundary; file stages alone do not earn Human Gates.
+
+Core has one sequential `laufpfad`. It does not supply concurrent-user queues, runtime state isolation, real-time multi-agent messaging, deployment or undeclared model-selected branching. Keep those operations in their existing external system or configured harness and describe only the bounded interfaces, results and evidence needed by the selected form. If the intended runtime depends on those capabilities and no declared sequential boundary exists, do not present a folder pipeline as its orchestrator.
+
 When several open decisions need coordination, use a dated list in the existing case or record home linking each question to its responsible decider, needed inputs and consequence until decided; it coordinates, is not a fact home, and derives any run status from `laufpfad`.
 
 <a id="arbeitsbericht-vor-baumvorschlag"></a>

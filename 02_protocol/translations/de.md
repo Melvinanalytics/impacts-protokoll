@@ -85,7 +85,11 @@ Minimize und Perfect können Arbeit entfernen und ordnen. In Wissensarbeit wird 
 
 In einer ausgewählten Process-Leistung bleibt `kennzahl` die lesbare Aussage zur Ergebniskennzahl; Bedingungen oder Schwellen der Abnahme stehen in `abnahme`. Eine eigenständig gepflegte fachliche Kennzahldefinition wird nur verlinkt. Beobachtete Werte bleiben Fallevidenz. Eine Kennzahl ohne belegten Prozess bleibt Fachwissen und erzeugt keine Application.
 
-<!-- Translation source: 02_protocol/impacts-architect/references/formwahl.md; sha256: 6f9b9e18b45a9545901787c9bb70116ed4652d51288523927cf6a09cba3fe978 -->
+<!-- Translation source: 02_protocol/impacts-architect/references/formwahl.md; sha256: fff47d20e413ab285ed53f84a341250c2a1f45eaafc4bb41cc6bc2263207375d -->
+Ausgewählte Core-Pipeline-Verträge passen zu abgegrenzter, wiederholbarer Arbeit, deren nächster erlaubter Schritt über deklarierte Eingaben, sichtbare Ausgaben, Prüfungen und Routen ausgedrückt werden kann. Menschliche Prüfung gehört nur an eine erkannte Kunden-, Befugnis-, Risiko-, Abnahme- oder erforderliche Qualitätsgrenze; Dateistufen allein erzeugen kein Human Gate.
+
+Core besitzt einen sequentiellen `laufpfad`. Gleichzeitige Nutzerwarteschlangen, Isolation von Laufzeitzuständen, Echtzeit-Nachrichten zwischen Agenten, Deployment und nicht deklarierte modellgewählte Verzweigungen bleiben beim vorhandenen externen System oder eingerichteten Harness. Die gewählte Form beschreibt nur ihre benötigten abgegrenzten Schnittstellen, Ergebnisse und Nachweise. Ohne erklärbare sequentielle Grenze ist eine Ordnerpipeline nicht der Laufzeitorchestrator.
+
 Wenn mehrere offene Entscheidungen koordiniert werden müssen, eine datierte Liste in der vorhandenen Fall- oder Record-Heimat verwenden, die jede Frage mit zuständiger Entscheidungsperson, benötigten Eingaben und Folge bis zur Entscheidung verknüpft; sie koordiniert, ist keine Faktenheimat und leitet einen etwaigen Laufstatus aus `laufpfad` ab.
 
 Ein Beziehungslabel, eine kompakte Tabelle oder ein angrenzender Satz genügt nur, wenn Richtung, Endpunkte, maßgeblicher Geltungsbereich und Evidenz sowie relevante Zeit- oder Gültigkeitsbedingungen enthalten sind. Jede gepflegte Beziehung steht einmal an der Heimat des abhängigen Eintrags oder an genau einer abgegrenzten Mapping-Heimat; andere Stellen verlinken sie.
@@ -99,7 +103,21 @@ Eine Quellenbeschreibung kann berichtet oder offen sein; sie belegt für sich we
 
 Bei einer benötigten, nicht durchgeführten Prüfung die fehlende Prüfung, ihre Folge und die nächste Handlung beim betroffenen Ergebnis verständlich machen; eine gleichwertige vorhandene Notiz genügt. Beispiel: `Entwurf bereit — <Prüfung> nicht durchgeführt; <Folge>; als Nächstes: <Handlung>`. Vorhandene Rohdiagnosen erhalten und aus Übersichten auf die Notiz verlinken, statt sie doppelt zu pflegen.
 
-<!-- Translation source: 02_protocol/impacts-method.md; sha256: b5f69a1bc361fb7667a2c4ea31751f70fc05997135899fe2b5295854dbf9868e -->
+<!-- Translation source: 02_protocol/impacts-method.md; sha256: 2bb5abd9e81539ea7e7bee354d5416094d78c4de6ac98f906d8fb273d13e07c0 -->
+### Kontext direkt routen
+
+Beim nächstgelegenen `CONTEXT.md` beginnen. Für jeden unterstützten Zweck benennt der zuständige Router die Auswahlbedingung, verlinkt direkt den nächsten zuständigen Router, die maßgebliche Anweisung oder Faktenheimat und benennt oder verlinkt die Abschlussprüfung. Mögliche Verwechslungen mit einem benachbarten Zweig als Ausschluss nennen; kein Verzeichnis aller denkbaren Ausschlüsse pflegen. Ein Dateiname, allgemeiner Ordnerhinweis oder Suchtreffer ersetzt den benötigten Link nicht.
+
+Benötigte Referenzen in der Fläche prüfen, die der tatsächliche Verbraucher verwendet. Ein Ziel kann im Quellbaum erreichbar und in einer Kopie, Projektion oder zusammengestellten Arbeitsfläche trotzdem fehlen. Benötigte Bedeutung und Evidenz am maßgeblichen Stand über die vorhandene Quellenbindung, den Snapshot, die Übergabe oder den Projektionsweg auflösen. Ein gültiger erhaltener Snapshot darf ohne Live-Link funktionieren. Eine fehlende Abhängigkeit bleibt sichtbar und sperrt nur ihre abhängige Nutzung.
+
+Der gewöhnliche Pfad braucht keinen Repository-Scan, kein Erraten von Dateinamen und kein Modellgedächtnis. Suche und breiteres Inventar dienen der Diagnose einer defekten Route, der ausdrücklichen Entdeckung bisher nicht erfassten Materials oder einer angeforderten Restrukturierung. Den bestehenden Router, Link oder die Quellenbindung reparieren, statt eine zweite Zusammenfassung oder breitere Laderegel anzulegen.
+
+Nur den kleinsten professionell ausreichenden Aufgabeninhalt laden. Sobald Evidenz und Abschlussbedingung der Frage erreicht sind, stoppen und ausgehende Links nicht vollständig ablaufen. Identitäten, Bedingungen, Widersprüche, Herkunft und Befugnisse werden nicht für eine kleinere Tokenzahl entfernt. Weniger Tokens, Suchaufwand oder Fehler sind erst nach einem Vergleich derselben repräsentativen Fragen und desselben Quellenstands unter vergleichbaren Modell- und Harnessbedingungen belegt.
+
+Ein Link trägt nicht mehrere Bedeutungen zugleich. Ein Router-Link macht eine zuständige Heimat navigierbar; eine fachliche Beziehung hält Bedeutung und Geltungsbereich fest; eine deklarierte Eingabe oder Übergabe bindet Material für einen Job; eine Route steuert Ausführung; Quellenautorität folgt eigener Evidenz und Revision. Ein Hyperlink kann jede dieser Stellen auffindbar machen, erfüllt aber keine der anderen Bedingungen.
+
+Bei der Zusammensetzung die maßgeblichen Anweisungen und Arbeitsmaterialien über den realisierten Zweig auswählen. Eine maßgebliche Anweisung gilt nur in ihrem erklärten Geltungsbereich; Referenzmaterial und Fallevidenz behalten Quelle und erlaubte Nutzung. Installation, Auflistung oder Lesbarkeit eines Skills oder Werkzeugs ist Verfügbarkeit, kein Auslöser. Der Arbeitsschritt benennt Auslöser, Operation, auflösbare Implementierung und Version, erlaubte Wirkungen, erwartete Evidenz und Fehlerbehandlung. Geänderte Eingaben oder Referenzen erfordern nur für Entwürfe und nachgelagerte Ergebnisse mit erklärter oder belegter Abhängigkeit eine erneute Prüfung; unverbundene Arbeit wird nicht ohne Evidenz entwertet.
+
 ### Kennzahlen- und Berechnungsmodelle entwerfen
 
 Der [Entwurfsweg](../impacts-method.md#design-a-kpi-and-calculation-model) nutzt gewöhnliche Dateien und explizite Links an den bestehenden fachlichen Heimaten. Core, Gateway, Installation und Verbindung zu Live-Daten sind keine Voraussetzung.

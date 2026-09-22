@@ -394,3 +394,51 @@ def test_router_replaces_empty_null_state_with_links_and_walk_can_stop_there():
     assert "replace or extend" in text
     assert "empty state with direct links" in text
     assert "knowledge walk may stop at an explicit empty state" in text
+
+
+def test_method_requires_direct_intent_routes_without_search_or_guessing():
+    text = METHOD.read_text(encoding="utf-8")
+    section = text[text.index("## Load context locally first") : text.index("## Where the context lives")]
+
+    for phrase in (
+        "states the selection condition",
+        "directly links the next responsible router",
+        "names or links the completion check",
+        "surface actually used by the consumer",
+        "no repository scan, filename guessing or model memory",
+        "do not exhaust outgoing links",
+    ):
+        assert phrase in section
+    assert "search and broader inventory are diagnosis" in section.lower()
+
+
+def test_method_keeps_link_meanings_and_efficiency_claims_separate():
+    text = METHOD.read_text(encoding="utf-8")
+    section = text[text.index("## Load context locally first") : text.index("## Where the context lives")]
+
+    for meaning in (
+        "router link",
+        "domain relationship",
+        "declared input or handoff",
+        "route governs execution",
+        "source authority",
+    ):
+        assert meaning in section
+    assert "establishes none of the other conditions" in section
+    assert "same representative questions and source state" in section
+    assert "comparable model and harness conditions" in section
+
+
+def test_form_selection_states_file_orchestration_applicability_boundary():
+    text = FORM_SELECTION.read_text(encoding="utf-8")
+    selection = text[text.index("## Select the form") : text.index("## Work report before proposing a tree")]
+
+    assert "Human review belongs only at an identified" in selection
+    assert "Core has one sequential `laufpfad`" in selection
+    for unsupported_runtime in (
+        "concurrent-user queues",
+        "runtime state isolation",
+        "real-time multi-agent messaging",
+        "undeclared model-selected branching",
+    ):
+        assert unsupported_runtime in selection
