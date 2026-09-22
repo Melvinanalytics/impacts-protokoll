@@ -16,6 +16,7 @@ This is the answer key for the [synthetic Augment walk](CONTEXT.md), not a secon
 | Shared source, two recipients | Keep one maintained source revision. Derive a cited comparison for the human and route the required structured subset to the agent, each with its own intended use and check. Do not create two rule masters or force both recipients to consume identical representations. |
 | Wrong scope | Reject the annual group average for this dependent use. Matching units do not repair population, granularity or time mismatch. Acquire the plant-level daily value or keep the decision `open`. |
 | Independent preparation | Prepare the evidence table and decision question with their sources and checks. Keep approval and every dependent external action blocked. Missing context blocks only the contribution that requires it. |
+| Recurrent cross-source context | The recurrence, cross-source complexity, measured delay and stable interfaces can justify a maintained deterministic calculation, index or knowledge service. It binds the three source identities and revisions, sanctioned rule, checks and destination for every answer. The service reduces repeated acquisition and keeps meaning independent of the acting agent; it does not become the authority for its inputs or rule. Compare its total acquisition and review burden with the prior path before retaining it. |
 
 ## Completion rubric
 

@@ -26,5 +26,6 @@ For each case, state:
 | Shared source, two recipients | A human reviewer needs a short cited comparison; an agent needs the structured rows behind it. Both uses depend on the same maintained source revision. |
 | Wrong scope | A checked annual group average is available. The decision requires a current plant-level daily value. Units happen to match. |
 | Independent preparation | One decisive approval is missing, while the permitted evidence table and draft decision question can be prepared without it. |
+| Recurrent cross-source context | The same checked answer is needed in 600 monthly cases. It combines three maintained systems and one sanctioned calculation. Repeating manual collection causes measured delay and review errors; source APIs and stable keys exist. |
 
 Write the result before opening [EXPECTED.md](EXPECTED.md). A correct answer distinguishes source facts from derived context, design from live availability and context sufficiency from execution permission.
