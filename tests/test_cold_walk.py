@@ -2,6 +2,8 @@ from contextlib import redirect_stdout
 from importlib.util import module_from_spec, spec_from_file_location
 from io import StringIO
 from pathlib import Path
+import shutil
+import subprocess
 import sys
 from tempfile import TemporaryDirectory
 
@@ -9,7 +11,6 @@ import pytest
 
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "src"))
 COLD_WALK = ROOT / "06_evaluations" / "cold-walk"
 CHECK_PATH = COLD_WALK / "check.py"
 BEISPIEL = COLD_WALK / "beispiel" / "applications" / "prueffall"
@@ -78,6 +79,33 @@ def test_walk_main_prints_the_router_chain_and_passes(main_result):
     assert "ROUTER applications/prueffall/vorpruefung/pruefen/CONTEXT.md" in output
     assert "STOP" in output
     assert output.rstrip().endswith("PASS cold walk")
+
+
+def test_cold_walk_script_binds_its_checkout_source(tmp_path):
+    checkout = tmp_path / "checkout"
+    shutil.copytree(COLD_WALK, checkout / "06_evaluations" / "cold-walk")
+    shutil.copytree(ROOT / "02_protocol", checkout / "02_protocol")
+    shutil.copytree(ROOT / "src", checkout / "src")
+    hashing = checkout / "src" / "impacts_protocol" / "hashing.py"
+    source = hashing.read_text(encoding="utf-8")
+    hashing.write_text(
+        source.replace(
+            '    attempt_root = Path(attempt_root)\n',
+            '    return "sha256:" + "0" * 64\n',
+            1,
+        ),
+        encoding="utf-8",
+    )
+
+    result = subprocess.run(
+        [sys.executable, str(checkout / "06_evaluations" / "cold-walk" / "check.py")],
+        cwd=tmp_path,
+        text=True,
+        capture_output=True,
+    )
+
+    assert result.returncode == 1
+    assert "FAIL cold walk" in result.stdout
 
 
 def test_walk_imports_the_application_into_a_second_repository_with_equal_oid(walk_result):

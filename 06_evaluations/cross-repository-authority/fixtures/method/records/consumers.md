@@ -1,0 +1,3 @@
+# Consumer inventory
+
+Captured at `method@m4`. The [customer definition](../../customer/grundlagen/lieferzusage.md#definition) links the estimator. Two installed skill aliases are reported to target `skills/delivery-estimate/SKILL.md`; their current targets have not been checked. The [sales delivery rule](../../sales/grundlagen/offer-terms.md#delivery) consumes the estimate and separate availability evidence. An outside scheduled job may execute the old path; its owner, configuration and actual reference are unresolved. This is a specific lead, not proof of a live execution. Other consumers may exist outside these three folders.

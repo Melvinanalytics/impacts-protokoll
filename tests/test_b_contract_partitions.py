@@ -14,9 +14,7 @@ Run from a checkout root:  python -m pytest tests/test_b_contract_partitions.py
 """
 import os
 from pathlib import Path
-import subprocess
 import sys
-from tempfile import TemporaryDirectory
 
 import pytest
 
@@ -28,18 +26,11 @@ from impacts_protocol import init_workspace, surface_hash, validate
 from impacts_protocol.io import DuplicateKeyError, load_frontmatter_and_body
 from impacts_protocol.validator import SCHEMA_REGISTRY
 from tests.support import (
-    read_context, replace_context, write_application, write_context, write_workstep,
+    codes, git, read_context, replace_context, write_application, write_context,
+    write_workstep,
 )
 
 H64 = "sha256:" + "b" * 64
-
-
-def _git(root: Path, *args: str) -> str:
-    return subprocess.check_output(["git", "-C", str(root), *args], text=True).strip()
-
-
-def _codes(root: Path) -> set[str]:
-    return {issue.code for issue in validate(root).issues}
 
 
 # ---------------------------------------------------------------- io layer
@@ -77,7 +68,7 @@ def test_utf8_bom_hides_frontmatter_and_validator_still_fails_closed(tmp_path):
         b"\xef\xbb\xbf---\ntype: workspace\n---\n\n# Body\n"
     )
     # BOM makes the router unreadable as frontmatter; validation must reject.
-    assert "routing.type" in _codes(root)
+    assert "routing.type" in codes(root)
 
 
 def test_block_scalar_with_bare_dashes_line_is_silently_truncated(tmp_path):
@@ -129,12 +120,12 @@ def test_versuch_1000_is_rejected_by_schema_and_run_validation(tmp_path):
     assert not _schema_valid("vorgang", doc)
     root = init_workspace(tmp_path / "kunde")
     write_application(root / "applications" / "video")
-    _git(root, "init", "-b", "main")
-    _git(root, "config", "user.email", "t@example.invalid")
-    _git(root, "config", "user.name", "T")
-    _git(root, "add", ".")
-    _git(root, "commit", "-m", "app")
-    revision = _git(root, "rev-parse", "HEAD:applications/video")
+    git(root, "init", "-b", "main")
+    git(root, "config", "user.email", "t@example.invalid")
+    git(root, "config", "user.name", "T")
+    git(root, "add", ".")
+    git(root, "commit", "-m", "app")
+    revision = git(root, "rev-parse", "HEAD:applications/video")
     attempt = root / "vorgaenge/video-x/start/1000"
     (attempt / "input").mkdir(parents=True)
     (attempt / "input/auftrag.md").write_text("E", encoding="utf-8")
@@ -161,12 +152,12 @@ def test_freigabe_at_invalid_shape_is_rejected_by_schema_and_run_validation(tmp_
 
     root = init_workspace(tmp_path / "kunde")
     write_application(root / "applications" / "video")
-    _git(root, "init", "-b", "main")
-    _git(root, "config", "user.email", "t@example.invalid")
-    _git(root, "config", "user.name", "T")
-    _git(root, "add", ".")
-    _git(root, "commit", "-m", "app")
-    revision = _git(root, "rev-parse", "HEAD:applications/video")
+    git(root, "init", "-b", "main")
+    git(root, "config", "user.email", "t@example.invalid")
+    git(root, "config", "user.name", "T")
+    git(root, "add", ".")
+    git(root, "commit", "-m", "app")
+    revision = git(root, "rev-parse", "HEAD:applications/video")
     entries = []
     for index, (slug, route) in enumerate((("start", "weiter"), ("pruefen", "freigegeben")), 1):
         attempt = root / f"vorgaenge/video-x/{slug}/001"
@@ -200,7 +191,7 @@ def app_root(tmp_path):
 
 def test_unreachable_step_rejected(app_root):
     write_workstep(app_root / "applications/video/produktion", "verwaist")
-    assert "process.unreachable" in _codes(app_root)
+    assert "process.unreachable" in codes(app_root)
 
 
 def test_loop_without_exit_rejected(app_root):
@@ -209,7 +200,7 @@ def test_loop_without_exit_rejected(app_root):
     metadata["routen"] = {"freigegeben": "arbeitsschritt:start",
                           "abgelehnt": "arbeitsschritt:start"}
     replace_context(path, metadata)
-    assert "process.no_end" in _codes(app_root)
+    assert "process.no_end" in codes(app_root)
 
 
 def test_self_loop_with_exit_remains_valid(app_root):
@@ -234,7 +225,7 @@ def test_cross_application_step_route_rejected(app_root):
     metadata["routen"] = {"weiter": "arbeitsschritt:pruefen",
                           "extern": "arbeitsschritt:fremd"}
     replace_context(path, metadata)
-    assert "reference.unresolved" in _codes(app_root)
+    assert "reference.unresolved" in codes(app_root)
 
 
 def test_human_gate_route_set_is_exact(app_root):
@@ -244,7 +235,7 @@ def test_human_gate_route_set_is_exact(app_root):
                           "abgelehnt": "arbeitsschritt:start",
                           "vielleicht": "end:unklar"}
     replace_context(path, metadata)
-    assert "process.gate" in _codes(app_root)
+    assert "process.gate" in codes(app_root)
 
 
 # ------------------------------------- ontology distinction counterexamples
@@ -287,12 +278,12 @@ def test_continuation_ref_is_not_an_execution_route(tmp_path):
     validator must not treat it as a transition even when it looks like one."""
     root = init_workspace(tmp_path / "kunde")
     write_application(root / "applications" / "video")
-    _git(root, "init", "-b", "main")
-    _git(root, "config", "user.email", "t@example.invalid")
-    _git(root, "config", "user.name", "T")
-    _git(root, "add", ".")
-    _git(root, "commit", "-m", "app")
-    revision = _git(root, "rev-parse", "HEAD:applications/video")
+    git(root, "init", "-b", "main")
+    git(root, "config", "user.email", "t@example.invalid")
+    git(root, "config", "user.name", "T")
+    git(root, "add", ".")
+    git(root, "commit", "-m", "app")
+    revision = git(root, "rev-parse", "HEAD:applications/video")
     attempt = root / "vorgaenge/video-x/start/001"
     (attempt / "input").mkdir(parents=True)
     (attempt / "input/auftrag.md").write_text("E", encoding="utf-8")
