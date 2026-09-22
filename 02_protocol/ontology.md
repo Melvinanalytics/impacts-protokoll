@@ -122,7 +122,7 @@ Within this synthetic scenario, revision 3 is **reported** as the prescribed rul
 <a id="example-evidence-note-o17"></a>
 ### Synthetic evidence excerpt `case-note-o17`
 
-> On 2026-09-18, a case worker reported that a personal workbook displayed 12 calendar days for synthetic offer O-17. The workbook formula was not inspected.
+> On 2026-09-18, a case worker reported that a personal workbook displayed an estimated delivery time of 12 calendar days for synthetic offer O-17 as of 2026-09-16. The workbook formula was not inspected.
 
 This excerpt is the evidence artifact for the report below. It does not establish the formula, input truth, compliance, acceptance or actual use.
 
@@ -140,8 +140,8 @@ This excerpt is the evidence artifact for the report below. It does not establis
 | Recording time | Observation entered on 2026-09-21. |
 | Evidence origin and label | [`case-note-o17`](#example-evidence-note-o17); `reported` for the person's statement |
 | Roles | Reporter: case worker. Data provider, calculator, maintainer, rule owner and decision authority: `open`. |
-| Rule relationship | Reports on [`rechenweg:lieferzeit-angebot`](#example-rechenweg-lieferzeit-angebot); actual workbook formula and compliance are `open`. |
-| Metric relationship | Reports a displayed value for [`kennzahl:geschaetzte-lieferzeit`](#example-kennzahl-geschaetzte-lieferzeit); the value is not a delivery promise. |
+| Rule relationship | Comparison candidate: [`rechenweg:lieferzeit-angebot`](#example-rechenweg-lieferzeit-angebot). Whether the workbook used or complied with that rule is `open`. |
+| Metric relationship | Comparison candidate: [`kennzahl:geschaetzte-lieferzeit`](#example-kennzahl-geschaetzte-lieferzeit). Whether the displayed field conforms to that definition is `open`; the value is not a delivery promise. |
 | Check, acceptance and use | `open`; none follows from the report. |
 
 The observation may later inform more than one process boundary, such as determining an estimate and preparing an offer. This example defines no Application, so those candidate jobs remain open descriptions rather than invented `arbeitsschritt:` addresses. Conversely, a later resolved workstep may cite several observations. This many-to-many mapping does not convert an observation into a workstep.
