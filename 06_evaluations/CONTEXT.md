@@ -7,6 +7,7 @@ This directory contains optional deterministic Core checks and a reading evaluat
 - [Offer walk](offer-walk/CONTEXT.md): fixed German/English output, controlled source handover and reviewed-correction fixtures; commercial claims route to the ontology/example.
 - [Business operations wave](business-operations-wave/CONTEXT.md): frozen v0.3.5 feature coverage plus v0.3.6 cross-department, calculation, migration, coordination and context cases.
 - [ICM context architecture](icm-context-architecture/CONTEXT.md): frozen cases for layered context, triggered skills, editable handoffs, dependency-directed rechecks and the boundary of file-based orchestration. After answering, read its [candidate execution record](icm-context-architecture/COVERAGE.md).
+- [Context-efficiency measurement](context-efficiency/CONTEXT.md): matched v0.3.6 and v0.3.7-candidate runs for one frozen direct-routing question, with a reusable JSONL measurement script and explicit claim limits.
 - [Complexity budget](complexity-budget/CONTEXT.md): declared structural metrics.
 - [Cross-repository authority walk](cross-repository-authority/CONTEXT.md): synthetic owner, consumer, revision and unsafe-retirement questions; this is a reading case, not an executable check.
 - [Result-work and coordination walk](result-work-coordination/CONTEXT.md): synthetic Ist classification, Minimize and execution-selection cases; this is a reading case, not a classifier or runtime check.

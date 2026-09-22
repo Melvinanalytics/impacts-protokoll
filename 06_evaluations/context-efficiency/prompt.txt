@@ -1,0 +1,3 @@
+Start at the repository root CONTEXT.md. Answer this one synthetic operating question from protocol authority. Do not read EXPECTED.md, COVERAGE.md, sibling evaluations, Git history, or files unrelated to the selected route. Read only what the repository route makes necessary. Do not edit files.
+
+A consumer task needs the authoritative current calculation rule. Its source router contains a valid direct link, but the consumer's delivered knowledge bundle contains the router and omits the linked rule. The consumer cannot access the source repository. May the consumer answer from the router? State the smallest repair, the evidence boundary, and the exact repository paths you loaded. Stop when the question is supported.
