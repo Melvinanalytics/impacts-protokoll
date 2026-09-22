@@ -16,7 +16,7 @@ touchpoint: standard
 evidence_status: reported
 ---
 
-<!-- Translation source: 02_protocol/impacts-architect/templates/ist-prozess.md; sha256: 6b5bdb1965d9e499d30ae65b9e0a1cf7cd4e514a5adf2c8b98e5103b009c333c -->
+<!-- Translation source: 02_protocol/impacts-architect/templates/ist-prozess.md; sha256: f649a0d95683225fdfcffa44623bfb2bdb893a0d833d7463cd19cee5e4285a79 -->
 
 # Antrag prüfen und entscheiden
 
@@ -26,11 +26,18 @@ Das beispielhafte Feld `owner` ordnet diese Aufnahme der genannten Rolle zu. Es 
 
 ## Ablauf heute
 
-1. Antrag geht per E-Mail ein und wird erfasst.
-2. Sachbearbeitung prüft Vollständigkeit.
-3. Bei Lücken Rückfrage beim Antragsteller, Vorgang bleibt liegen.
-4. Prüfbericht, dann Entscheidung durch die Leitung.
-5. Bescheid geht raus.
+Für jede relevante Tätigkeit die beiden unabhängigen Fragen „Result work and coordination“ aus `02_protocol/impacts-method.md` der festgehaltenen Protokollrevision anwenden. Die synthetischen Zeilen durch beobachtete Formulierungen, Quellen und offene Fragen ersetzen. Jede Frage mit Ja, Nein oder `open` beantworten und Evidenz beziehungsweise nächste Aktion für jede Antwort getrennt nennen. Ein „Ja“ ist ein begrenzter Befund mit Evidenzlabel; es weist keine Ausführungsform zu und erteilt keine Befugnis.
+
+| Beobachtete Tätigkeit | Ergebnisarbeit? Welches Ergebnis oder welche notwendige Bedingung? | Koordination? Welche Abhängigkeit? | Evidenz oder offene Frage je Antwort |
+|---|---|---|---|
+| Per E-Mail eingegangenen Antrag erfassen. | `open`; unveränderter Antragsinhalt belegt nicht, ob die Erfassung ein erforderliches Ergebnis oder eine Abnahmebedingung liefert. | Ja; verbindet den Eingang mit der Fallbearbeitung. | Ergebnis: Ergebnisgrenze klären. Koordination: synthetische `reported`-Prämisse durch tatsächliche Quelle ersetzen. |
+| Vollständigkeit prüfen. | Ja; erzeugt den vor der Entscheidung benötigten Befund. | Unter der genannten Prämisse nein. | Ergebnis: `hypothesis`; Abnahmeregel und tatsächliche Nutzung bestätigen. Koordination: `hypothesis`; getrennte Abhängigkeit prüfen. |
+| Fehlende Information beim Antragsteller anfragen. | Unter der genannten Ergebnisgrenze nein; die Frage selbst erzeugt die fehlende Angabe nicht. | Ja; beschafft eine Eingabe vom Antragsteller. | Ergebnis: `hypothesis`; Grenze bestätigen. Koordination: `reported`; fehlende Eingabe, Kontaktbefugnis und mögliche Beseitigung der Abhängigkeit durch bessere Erfassung klären. |
+| Prüfbericht erstellen. | Ja; liefert den für die Entscheidung benötigten Nachweis. | Unter der genannten Prämisse nein. | Ergebnis: `hypothesis`; Nutzung durch Empfänger und geltende Grundlage bestätigen. Koordination: `hypothesis`; getrennte Abhängigkeit prüfen. |
+| Zuständige Leitung entscheidet. | Ja; die autorisierte Entscheidung ändert den Fallzustand. | Nein, sofern keine getrennten Entscheidungsberechtigten abgestimmt werden müssen. | Ergebnis: `hypothesis`; Entscheidungsumfang und Autorität klären. Koordination: `hypothesis`; Abstimmung getrennter Berechtigter prüfen. |
+| Bescheid versenden. | `open`; Zugang oder Zustellung kann zum akzeptierten Ergebnis gehören. | `open`; die Übertragung kann eine Abhängigkeit zum Antragsteller regeln. | Ergebnisgrenze, Übergabeabhängigkeit, Zustellnachweis und Versandbefugnis klären, bevor eine der beiden Fragen beantwortet wird. |
+
+Die vier bekannten Kombinationen sind nur Ergebnisarbeit, nur Koordination, beides und keines. Ungeklärte Antworten offenlassen. „Keines“ ist eine Minimize-Frage, keine Löschbefugnis. Jedes Warten mit fehlender Eingabe oder Entscheidung unter „Wo wird angehalten und geprüft“ außerhalb der Tätigkeitszuordnung erfassen. Für Vergleiche unter einer Ergebnisgrenze, Grundgesamtheit, Periode und Einheit nicht überlappenden beobachteten Aufwand genau einmal seiner Kombination zurechnen. Eine Tätigkeit mit beidem gehört einmal in die Kombination „beides“; nur Messungen über mehrere Tätigkeitszeilen, die sich nicht zuordnen lassen, bleiben ungeteilter Mischaufwand. Wartezeit getrennt halten, statt ein 100-Prozent-Kreisdiagramm zu erzwingen.
 
 ## Wo wird angehalten und geprüft
 

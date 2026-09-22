@@ -24,11 +24,18 @@ The illustrative `owner` attributes this capture to the named role. It establish
 
 ## Current workflow
 
-1. A request arrives by email and is registered.
-2. A case worker checks completeness.
-3. Missing information prompts a question; the case waits.
-4. A check report precedes the responsible manager's decision.
-5. The decision notice is sent.
+For each relevant activity, apply the independent “Result work and coordination” questions from `02_protocol/impacts-method.md` at the recorded protocol revision. Replace the synthetic rows with observed wording, sources and open questions. Answer each question `yes`, `no` or `open`, and cite the evidence or next action for each answer separately. A `yes` states a scoped finding with its evidence label; it assigns no executor and grants no permission.
+
+| Observed activity | Result work? Which result or required condition? | Coordination? Which dependency? | Evidence or open question for each answer |
+|---|---|---|---|
+| Register the emailed request. | `open`; unchanged request content does not establish whether registration supplies a required result or acceptance condition. | Yes; it connects the incoming request to case processing. | Result: establish the result boundary. Coordination: `reported` synthetic premise; replace it with the actual source. |
+| Check completeness. | Yes; it produces the finding required before the decision. | No under the stated premise. | Result: `hypothesis`; confirm the acceptance rule and actual use. Coordination: `hypothesis`; check for a separate dependency. |
+| Ask the requester for missing information. | No under the stated result boundary; the question itself produces no missing fact. | Yes; it obtains an input from the requester. | Result: `hypothesis`; confirm the boundary. Coordination: `reported`; identify the missing input, contact permission and whether better intake removes the dependency. |
+| Prepare the check report. | Yes; it supplies evidence required by the decision. | No under the stated premise. | Result: `hypothesis`; confirm recipient use and applicable basis. Coordination: `hypothesis`; check for a separate dependency. |
+| The responsible manager decides. | Yes; the authorized decision changes the case state. | No unless separate decision owners must be aligned. | Result: `hypothesis`; establish decision scope and authority. Coordination: `hypothesis`; check whether separate owners are aligned. |
+| Send the decision notice. | `open`; receipt or delivery may be part of the accepted result. | `open`; the transfer may manage a dependency to the requester. | Establish result boundary, transfer dependency, delivery evidence and sending authority before answering either question. |
+
+The four known combinations are result work only, coordination only, both and neither. Keep unresolved answers open. `Neither` is a Minimize question, not deletion authority. Record each wait and its missing input or decision under Stops and checks, outside the activity classification. For comparisons under one result boundary, population, period and unit, count non-overlapping observed effort once in its combination. An activity that is both belongs once in the `both` combination; retain only measurements spanning several activity rows that cannot be allocated as unsplit mixed effort. Keep waiting separate rather than forcing a 100 percent pie.
 
 ## Stops and checks
 

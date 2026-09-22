@@ -76,8 +76,10 @@ Eine neue Sitzung startet nur bei `CONTEXT.md`, findet Entwurf und Quellen und b
 
 ## Arbeitsschritte und Prüfhinweise
 
-<!-- Translation source: 02_protocol/impacts-architect/references/zuschnitt.md; sha256: b8854bf1d0d3f2c1ed685141c83920afef791fe02826ba825c9ef1fd051015ee -->
+<!-- Translation source: 02_protocol/impacts-architect/references/zuschnitt.md; sha256: aaaa620ac8f35d2ceafe5de617f54bfd82078cdcc385582d5dbf8643ea18aa1a -->
 Beim Entwurf eines Arbeitsschritts für seine Quellenzuordnungen [Data Governance](../capabilities.md#data-governance) anwenden.
+
+Die Antworten „Ergebnisarbeit?“ und „Koordination?“ beschreiben Beitrag und Abhängigkeit. Sie weisen weder Mensch, Agent noch deterministisches System zu und erteilen keine Befugnis. Feste Regeln, Rechnungen und reproduzierbare Prüfungen passen zu deterministischer Ausführung; erlaubte variable Sprache, Interpretation und Vorbereitung können Agentenbeiträge sein; erforderliche Interaktion, verantwortliches Urteil und Autorisierung bleiben menschlich. Ergebnisarbeit kann daher deterministisch, menschlich oder physisch sein. Nach Minimize verbleibende Routinekoordination kann deterministisch oder agentisch unterstützt werden.
 
 In einer ausgewählten Process-Leistung bleibt `kennzahl` die lesbare Aussage zur Ergebniskennzahl; Bedingungen oder Schwellen der Abnahme stehen in `abnahme`. Eine eigenständig gepflegte fachliche Kennzahldefinition wird nur verlinkt. Beobachtete Werte bleiben Fallevidenz. Eine Kennzahl ohne belegten Prozess bleibt Fachwissen und erzeugt keine Application.
 
@@ -95,7 +97,7 @@ Eine Quellenbeschreibung kann berichtet oder offen sein; sie belegt für sich we
 
 Bei einer benötigten, nicht durchgeführten Prüfung die fehlende Prüfung, ihre Folge und die nächste Handlung beim betroffenen Ergebnis verständlich machen; eine gleichwertige vorhandene Notiz genügt. Beispiel: `Entwurf bereit — <Prüfung> nicht durchgeführt; <Folge>; als Nächstes: <Handlung>`. Vorhandene Rohdiagnosen erhalten und aus Übersichten auf die Notiz verlinken, statt sie doppelt zu pflegen.
 
-<!-- Translation source: 02_protocol/impacts-method.md; sha256: 17e157d96f3ba12dfe7283ce5a95aa86d183b792a45895f5b7b9b0c0692d6a07 -->
+<!-- Translation source: 02_protocol/impacts-method.md; sha256: de8d1afa4ba4e22b0f672bf66c384e871b00e975e76550db732ac49fda4b9409 -->
 ### Kennzahlen- und Berechnungsmodelle entwerfen
 
 Der [Entwurfsweg](../impacts-method.md#design-a-kpi-and-calculation-model) nutzt gewöhnliche Dateien und explizite Links an den bestehenden fachlichen Heimaten. Core, Gateway, Installation und Verbindung zu Live-Daten sind keine Voraussetzung.
@@ -109,6 +111,13 @@ Der [Entwurfsweg](../impacts-method.md#design-a-kpi-and-calculation-model) nutzt
 Der Entwurf ist vollständig, wenn jedes benötigte Ergebnis nachvollziehbar mit Definition, Regel, Eingaben, dokumentierten Quellen oder ausdrücklichen Lücken samt nächster Handlung und Nutzungseinschränkung sowie seiner abhängigen Entscheidung oder Ausgabe verbunden ist. Das belegt einen nützlichen verknüpften Entwurf mit Prüffällen; offene Fragen, Ausführungsbereitschaft und Geschäftsergebnisse sind dadurch nicht bestätigt. Ein neues Pflichtformat entsteht nicht.
 
 ### Prozessaufnahme und Verbesserung
+
+Für jede relevante beobachtete Tätigkeit zwei unabhängige Fragen gegen dieselbe Leistung und denselben Geltungsbereich beantworten:
+
+1. **Ergebnisarbeit?** Erzeugt, verändert oder prüft die Tätigkeit einen benötigten fachlichen Ergebnisbestandteil oder liefert sie einen für Abnahme oder erlaubte Nutzung erforderlichen Nachweis beziehungsweise eine Entscheidung?
+2. **Koordination?** Organisiert sie eine Abhängigkeit zwischen Beiträgen, Beteiligten oder Ressourcen, etwa durch Beschaffung oder Übertragung vorhandener Information, Terminierung, Zuständigkeitsklärung, Entscheidungsanfrage oder Abstimmung getrennter Entscheidungsberechtigter?
+
+Jede Frage mit Ja, Nein oder `open`, dem konkreten Ergebnis/der Bedingung beziehungsweise Abhängigkeit und passender Evidenz beantworten. Fehlende Evidenz ist `open`, nicht Nein. Das Bewegen oder Wiederholen von Information ist nur dann Koordination, wenn es im geprüften Geltungsbereich eine benannte, belegte Abhängigkeit regelt; Bewegung, Benachrichtigung oder das Wort Übergabe allein reichen nicht. Die bekannten Kombinationen ergeben nur Ergebnisarbeit, nur Koordination, beides oder keines; keine Kombination als neues Feld speichern. „Keines“ ist eine Minimize-Frage, kein Löschbefehl. Nicht überlappenden beobachteten Aufwand bei fester Grenze genau einmal der Kombination zurechnen. Wartezeit, offene und ungeteilte Mischanteile getrennt halten; Schrittzahlen und die Addition überlappender Randwerte ergeben keine belastbare Wert- oder Automationsquote.
 
 Die Bedeutung einer Kennzahl umfasst, was gezählt oder beurteilt wird, Einheit, Grundgesamtheit oder Granularität, Zeitbasis sowie jede Quellenauswahl oder Vergleichsbasis, die diese Bedeutung verändert. Einen konkreten Quellenabruf, beobachteten Wert, Vergleichswert, Zielwert oder Schwellwert getrennt halten und bei Bedarf verlinken. Fehlend ist nicht null; eine berichtete Schätzung ist kein beobachtetes Ergebnis.
 
