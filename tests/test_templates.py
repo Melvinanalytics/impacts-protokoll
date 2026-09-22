@@ -2,12 +2,10 @@ from contextlib import redirect_stdout
 from io import StringIO
 import json
 from pathlib import Path
-import sys
 
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "src"))
 
 from impacts_protocol.cli import main
 from impacts_protocol.io import load_frontmatter_and_body

@@ -7,21 +7,15 @@ hash vector.
 """
 
 from pathlib import Path
-import subprocess
 
 from impacts_protocol import surface_hash, validate
-from tests.support import read_context, replace_context, write_application, write_context
+from tests.support import codes as codes
+from tests.support import git, read_context, replace_context, write_application, write_context
 
 
 FROZEN_SURFACE_HASH = (
     "sha256:5cfbcff1a57fb9bc011fd69209052640ae01464aa5213acca911fc51c4a55c7e"
 )
-
-
-def git(root: Path, *args: str) -> str:
-    return subprocess.check_output(
-        ["git", "-C", str(root), *args], text=True
-    ).strip()
 
 
 def committed_workspace(base: Path, name: str = "kunde") -> tuple[Path, str]:
@@ -110,10 +104,6 @@ def write_run(root: Path, name: str, revision: str, entries: list[dict]) -> Path
         f"# {name}",
     )
     return run
-
-
-def codes(root: Path) -> set[str]:
-    return {issue.code for issue in validate(root).issues}
 
 
 def issues_for(root: Path, prefix: str):

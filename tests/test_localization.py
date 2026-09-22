@@ -5,7 +5,6 @@ import re
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "src"))
 
 import pytest
 
@@ -19,6 +18,7 @@ PAIRS += [("02_protocol/language.md", "02_protocol/translations/de.md"),
           ("README.md", "02_protocol/translations/de.md"),
           ("FIRST-WIN.md", "02_protocol/translations/de.md"),
           ("02_protocol/impacts-method.md", "02_protocol/translations/de.md"),
+          ("02_protocol/ontology.md", "02_protocol/translations/de.md"),
           ("02_protocol/capabilities.md", "02_protocol/translations/de.md"),
           ("02_protocol/impacts-architect/references/formwahl.md", "02_protocol/translations/de.md"),
           ("02_protocol/impacts-architect/references/zuschnitt.md", "02_protocol/translations/de.md"),

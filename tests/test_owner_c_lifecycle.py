@@ -11,7 +11,6 @@ import sys
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "src"))
 
 from impacts_protocol import surface_hash, validate
 from tests.c_owner_support import (
@@ -27,7 +26,7 @@ from tests.c_owner_support import (
     rewrite_run,
     write_run,
 )
-from tests.support import read_context, replace_context
+from tests.support import read_context
 
 
 def _write(path: Path, content: str) -> None:

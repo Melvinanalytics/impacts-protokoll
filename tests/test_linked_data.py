@@ -12,13 +12,11 @@ from io import StringIO
 import json
 from pathlib import Path
 import re
-import sys
 
 import pytest
 import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "src"))
 
 from impacts_protocol.validator import SCHEMA_REGISTRY
 

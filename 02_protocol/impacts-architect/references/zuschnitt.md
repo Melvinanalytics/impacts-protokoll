@@ -4,7 +4,7 @@ Read this at the method's [Perfect](../../impacts-method.md#perfect) and [Augmen
 
 ## Leistung
 
-The valued end state that leaves the process. Test: an identified recipient can accept or use it under observable conditions. Payment or movement of an organisational KPI matters only where relevant. `ergebnis` names the state, `kennzahl` its lagging indicator, `abnahme` the conditions under which it counts as reached. One Leistung per Hauptprozess. Two candidates that cannot be merged into one end state are two Applications.
+The valued end state that leaves the process. Test: an identified recipient can accept or use it under observable conditions. Payment or movement of an organisational KPI matters only where relevant. `ergebnis` names the state, `kennzahl` its readable result-metric statement and `abnahme` the conditions or thresholds under which it counts as reached. Link `kennzahl` to an independently maintained domain metric when one is cited, reused or changed; observed values remain case evidence. A metric without an established process remains domain knowledge and does not earn an Application. One Leistung per Hauptprozess. Two process-result candidates that cannot be merged into one end state are two Applications.
 
 ## Hauptprozess
 

@@ -1,6 +1,19 @@
 from pathlib import Path
+import subprocess
 
 import yaml
+
+from impacts_protocol import validate
+
+
+def git(root: Path, *args: str) -> str:
+    return subprocess.check_output(
+        ["git", "-C", str(root), *args], text=True
+    ).strip()
+
+
+def codes(root: Path) -> set[str]:
+    return {issue.code for issue in validate(root).issues}
 
 
 def write_context(path: Path, metadata: dict, body: str = "Arbeitskontext") -> None:

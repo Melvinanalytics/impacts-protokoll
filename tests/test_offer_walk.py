@@ -787,9 +787,10 @@ def test_reviewed_positioning_repoint_changes_future_binding_only(tmp_path):
     assert any(i.code == 'hash.mismatch' and 'campaign-001' in i.path for i in validate(repo).issues)
 
 
-@pytest.mark.parametrize("language", ["de", "en"])
 @pytest.mark.parametrize("mutation", ["missing", "duplicate", "prefix", "suffix", "missing-period", "old-label", "wrong-target", "extra-malformed"])
-def test_invalid_successor_mapping_blocks_handoff_and_preserves_prior_state(tmp_path, monkeypatch, language, mutation):
+def test_invalid_successor_mapping_blocks_handoff_and_preserves_prior_state(tmp_path, monkeypatch, mutation):
+    # Language pairing for this label lives in tests/test_handoff_label_contract.py.
+    language = "de"
     original = walk.write_context
 
     def change_mapping(path, metadata, body):

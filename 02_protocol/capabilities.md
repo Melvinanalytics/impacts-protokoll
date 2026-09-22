@@ -66,7 +66,7 @@ Capability call -> Visible output -> pruefung -> Route
 
 Describe needed sources in their existing domain/source homes, including ordinary files without a selected Application or live connection. A documented source/interface, acquired data, verified access and permission for the intended use are separate findings; apply [ontology evidence and obligations](ontology.md#evidence-and-obligations).
 
-For each relevant attribute/domain and effective period, identify its authoritative factual source, the responsible decision-maker for meaning and allowed changes, and the duties of its maintainer and data provider. One person may perform several duties; unknown actual owners stay `open`. Distinguish stable master definitions, transaction observations and derived KPI values within existing descriptions, without new record types.
+For each relevant attribute/domain and effective period, identify its authoritative factual source, the responsible decision-maker for meaning and allowed changes, and the duties of its maintainer and data provider. One person may perform several duties; unknown actual owners stay `open`. Distinguish stable master definitions, transaction or event records, bounded observations about them and derived KPI values within existing descriptions, without new record types. A transaction record does not by itself prove the real event.
 
 Use [Tables and relationships](#tables-and-relationships) and [ontology inference](ontology.md#meaning-and-valid-inference) to describe units, row meaning/grain, selection/validity time, identity and namespace, relationships and source-field semantics needed for the intended result. Document sources need the same relevant distinctions without becoming tables.
 
