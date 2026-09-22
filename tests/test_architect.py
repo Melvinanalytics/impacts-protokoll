@@ -412,6 +412,22 @@ def test_method_requires_direct_intent_routes_without_search_or_guessing():
     assert "search and broader inventory are diagnosis" in section.lower()
 
 
+def test_protocol_router_sends_context_delivery_and_efficiency_questions_directly_to_method():
+    text = PROTOCOL_ROUTER.read_text(encoding="utf-8")
+    row = next(line for line in text.splitlines() if line.startswith("| Context routing,"))
+
+    for target in (
+        "impacts-method.md#load-context-locally-first",
+        "ontology.md#use",
+        "capabilities.md#snapshot-und-herkunftsnachweis",
+        "../README.md#trust-and-security-boundaries",
+        "impacts-method.md#test",
+    ):
+        assert f"]({target})" in row
+    assert "only the conditional targets whose named condition applies" in text
+    assert "read that bounded set together" in text
+
+
 def test_method_keeps_link_meanings_and_efficiency_claims_separate():
     text = METHOD.read_text(encoding="utf-8")
     section = text[text.index("## Load context locally first") : text.index("## Where the context lives")]
