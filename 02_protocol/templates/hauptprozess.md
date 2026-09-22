@@ -26,7 +26,7 @@ Recipient, participants, dependencies and result boundaries. Include market, dem
 
 ## Value flow
 
-Valued result and recipient; customer, payer and external parties only where relevant. Link each required result component to its producing job, prerequisites and acceptance evidence. Given a product/service, distinguish its promised or agreed scope from this process's result and actual fulfillment. Reference existing definitions/records and observed cases; mark reconstructed work as `hypothesis` and unresolved dependencies as `open` with their next action and use restriction.
+Valued result and recipient; customer, payer and external parties only where relevant. Link each required result component to its producing job, prerequisites and acceptance evidence. For retained coordination, link the dependency it manages and the evidence that the dependency remains necessary after Minimize; do not copy the Ist classification table into the Application. Given a product/service, distinguish its promised or agreed scope from this process's result and actual fulfillment. Reference existing definitions/records and observed cases; mark reconstructed work as `hypothesis` and unresolved dependencies as `open` with their next action and use restriction.
 
 ## Objective and guardrails
 

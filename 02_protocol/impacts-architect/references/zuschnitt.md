@@ -47,7 +47,11 @@ For a declared rework loop, route rejection to the step that produced the reject
 
 ## Automation boundary
 
-Use the human constraints established in [Identify](../../impacts-method.md#identify) to choose only the contributions needed for this job:
+First apply Identify's independent [result-work and coordination questions](../../impacts-method.md#result-work-and-coordination) and Minimize the observed arrangement. Those answers expose contribution and dependency; they do not select an executor, confer authority or create exclusive workstep types.
+
+Before selecting an executor, close [Augment's point-of-use context](../../impacts-method.md#augment) for each retained contribution: minimum required content, recipient and use, source/provider and selection, revision or validity time, acquisition or permitted derivation, required control, destination and missing-context route. Reuse the existing authoritative home. A routed excerpt, calculation, summary or draft retains provenance and cannot manufacture a missing fact or authority. Context that is available but stale, unchecked, late or unreachable at the workstep remains unavailable for the dependent use.
+
+Use the human constraints established in Identify to choose only the contributions needed for the resulting job:
 
 | Contribution | Suitable work | Boundary |
 |---|---|---|
@@ -55,7 +59,7 @@ Use the human constraints established in [Identify](../../impacts-method.md#iden
 | Agent | Variable language, interpretation and proposals | States uncertainty and stays within permitted actions; a proposal is not authority |
 | Human | Required interaction, accountable judgement or authorization | Decision scope and permitted consequence must be understandable |
 
-These are not exclusive step classes. Frequency informs whether implementation effort is worthwhile, not who has authority. Record the execution mix in the existing processing body. Gate and touchpoint semantics remain as declared above.
+These are not exclusive step classes. Result work may require a deterministic calculation, human authorization or physical operation; necessary routine coordination may be deterministic or agent-assisted. Frequency informs whether implementation effort is worthwhile, not who has authority. Record the execution mix in the existing processing body. Gate and touchpoint semantics remain as declared above.
 
 ### Required checks and review
 

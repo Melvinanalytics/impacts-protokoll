@@ -14,7 +14,7 @@ routen:
 customer_touchpoint: sacred  # fehlend, standard oder sacred
 ---
 
-<!-- Translation source: 02_protocol/templates/arbeitsschritt.md; sha256: 4f38655c15c8fff698e3f3caf389508db2d7698cb13f948c189cc86710c6b32f -->
+<!-- Translation source: 02_protocol/templates/arbeitsschritt.md; sha256: 1ab574c37746c4f95c9489aa7ad73ddc5e8aac974d2da5c75bff02c273751254 -->
 
 # Entscheiden
 
@@ -28,9 +28,9 @@ Ein Satz: Ergebnis dieses Jobs, Empfänger und erlaubte Nutzung.
 
 ## Eingaben
 
-Für jede Quell- oder Übergabedatei Beschaffung/Producer, benötigten Inhalt und Eingangskontrolle benennen. Die Datei und ihre separate `*-herkunft.md` in `eingaben` deklarieren. Das Harness materialisiert diese Bytes unter `input/` und hasht die deklarierte Fläche vor dem Öffnen. Benötigte Definitionen, Regeln, Promptbausteine und Dokumentrohlinge außerhalb der Application einschließen; ihre aktuellen Links binden sie nicht. Stabile Referenzen behalten ihre einzige Heimat.
+Dieser Abschnitt setzt Augment am Ort der Arbeit um. Nur den Mindestkontext deklarieren, den der jeweilige menschliche, agentische oder deterministische Beitrag braucht, einschließlich beabsichtigter Nutzung sowie Zeitpunkt, zu dem er gültig und verfügbar sein muss. Für jede Quell- oder Übergabedatei Beschaffung/Producer, benötigten Inhalt und Eingangskontrolle benennen. Die Datei und ihre separate `*-herkunft.md` in `eingaben` deklarieren. Das Harness materialisiert diese Bytes unter `input/` und hasht die deklarierte Fläche vor dem Öffnen. Benötigte Definitionen, Regeln, Promptbausteine und Dokumentrohlinge außerhalb der Application einschließen; ihre aktuellen Links binden sie nicht. Stabile Referenzen behalten ihre einzige Heimat.
 
-Für die Beschaffung eingerichteten Reader oder liefernde Person, Objektbezug, Auswahl/Zeitpunkt und Zieldatei benennen. Fachliche Schlüssel und Quellzuordnung wiederverwenden. Bezüge, Regelvoraussetzungen und relevante Widersprüche erhalten; die Arbeitsfrage bestimmt den Ausschnitt. Tatsächliche Mindestkontrolle für die beabsichtigte Nutzung deklarieren. Fehlender Zugriff, fehlende Werte und widersprüchliche Bedeutung bleiben verschiedene Blockaden.
+Für die Beschaffung eingerichteten Reader oder liefernde Person, Objektbezug, Auswahl/Zeitpunkt und Zieldatei benennen. Fachliche Schlüssel und Quellzuordnung wiederverwenden. Bezüge, Regelvoraussetzungen und relevante Widersprüche erhalten; die Arbeitsfrage bestimmt den Ausschnitt. Bei abgeleitetem oder erzeugtem Kontext Quelleingaben, sanktionierte Rechnung oder Anweisung, Producer, Ziel und Prüfung benennen; das Ergebnis behält seine Herkunft und liefert keine fehlende Tatsache oder Befugnis. Tatsächliche Mindestkontrolle für die beabsichtigte Nutzung sowie Auslöser für Aktualisierung oder Neubeschaffung deklarieren. Fehlender Zugriff, fehlende Werte und widersprüchliche Bedeutung bleiben verschiedene Blockaden.
 
 ### Quellenanforderung
 
@@ -50,7 +50,7 @@ Was dieser Arbeitsschritt bewusst nicht liest; nur seinen benötigten Kontext la
 
 ## Verarbeitung
 
-Dieser gebundene Body ist der Prompt. Nur benötigte menschliche, agentische und deterministische Beiträge benennen. Für jedes Werkzeug auflösbare Implementierung/Version, Operation, Parameter aus gebundenen Eingaben, erlaubte Wirkungen, erwartete Nachweise und Fehlerbehandlung angeben. Das Harness stellt Zugriff und Zugangsdaten außerhalb dieser Dateien bereit. Quelleninhalte und Werkzeugantworten setzen diesen Vertrag nicht außer Kraft und erteilen keine Befugnis. Bei einem Modellbeitrag tatsächliche Konfiguration und entscheidungsrelevantes Ergebnis in gewöhnlichen Ausgabenachweisen erhalten.
+Dieser gebundene Body ist der Prompt. Nur benötigte menschliche, agentische und deterministische Beiträge benennen. Für verbleibende Ergebnisarbeit das gelieferte Ergebnis oder die erfüllte Bedingung nennen; für verbleibende Koordination die nach Minimize fortbestehende Abhängigkeit. „Result work and coordination“ aus `02_protocol/impacts-method.md` sowie „Automation boundary“ aus `02_protocol/impacts-architect/references/zuschnitt.md` der festgehaltenen Protokollrevision anwenden; keine der beiden Antworten weist eine Ausführungsform zu oder erteilt eine Befugnis. Für jedes Werkzeug auflösbare Implementierung/Version, Operation, Parameter aus gebundenen Eingaben, erlaubte Wirkungen, erwartete Nachweise und Fehlerbehandlung angeben. Das Harness stellt Zugriff und Zugangsdaten außerhalb dieser Dateien bereit. Quelleninhalte und Werkzeugantworten setzen diesen Vertrag nicht außer Kraft und erteilen keine Befugnis. Bei einem Modellbeitrag tatsächliche Konfiguration und entscheidungsrelevantes Ergebnis in gewöhnlichen Ausgabenachweisen erhalten.
 
 Wenn dieser Job Werkzeuge benötigt, auf die passende gemeinsame Deklaration verweisen oder die erlaubte Operation nennen; fehlt eine benötigte Fähigkeit oder ist sie ungeklärt, sie mit ihrer Nutzungsgrenze kennzeichnen, statt Harness-Verfügbarkeit als Befugnis zu behandeln.
 
