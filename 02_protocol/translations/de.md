@@ -76,10 +76,12 @@ Eine neue Sitzung startet nur bei `CONTEXT.md`, findet Entwurf und Quellen und b
 
 ## Arbeitsschritte und Prüfhinweise
 
-<!-- Translation source: 02_protocol/impacts-architect/references/zuschnitt.md; sha256: aaaa620ac8f35d2ceafe5de617f54bfd82078cdcc385582d5dbf8643ea18aa1a -->
+<!-- Translation source: 02_protocol/impacts-architect/references/zuschnitt.md; sha256: 85201299f7743ef0ebb34ca7741e185e4c96e1d979957f85bfc232b91b50cf2c -->
 Beim Entwurf eines Arbeitsschritts für seine Quellenzuordnungen [Data Governance](../capabilities.md#data-governance) anwenden.
 
 Die Antworten „Ergebnisarbeit?“ und „Koordination?“ beschreiben Beitrag und Abhängigkeit. Sie weisen weder Mensch, Agent noch deterministisches System zu und erteilen keine Befugnis. Feste Regeln, Rechnungen und reproduzierbare Prüfungen passen zu deterministischer Ausführung; erlaubte variable Sprache, Interpretation und Vorbereitung können Agentenbeiträge sein; erforderliche Interaktion, verantwortliches Urteil und Autorisierung bleiben menschlich. Ergebnisarbeit kann daher deterministisch, menschlich oder physisch sein. Nach Minimize verbleibende Routinekoordination kann deterministisch oder agentisch unterstützt werden.
+
+Minimize und Perfect können Arbeit entfernen und ordnen. In Wissensarbeit wird der verbleibende Beitrag dadurch aber noch nicht entscheidbar: Fallfakten, Varianten, Bedingungen eines Kundenkontaktpunkts, Regeln, Ausnahmen, Evidenz oder Befugnisse können am Arbeitspunkt weiterhin fehlen. **Augment** schließt diese additive Lücke. Es bringt den kleinsten ausreichenden, aktuellen und prüfbaren Kontext rechtzeitig an den Ort der Arbeit, an dem Mensch, Agent oder deterministisches System ihn braucht. Für jeden verbleibenden Beitrag werden benötigter Inhalt, Empfänger und Nutzung, Quelle oder Lieferant, Auswahl und Stand, Beschaffung oder erlaubte Ableitung, Mindestprüfung, Zieleingabe und Verhalten bei fehlendem, veraltetem oder widersprüchlichem Kontext festgelegt. Vorhandene Quellen werden geroutet, statt kopiert zur neuen Wahrheit zu werden. Ein erzeugter Auszug, eine Rechnung, Übersetzung, Zusammenfassung oder ein Entwurf behält seine Herkunft und ersetzt keine fehlende Tatsache, Freigabe oder Befugnis. Construct schreibt diesen Entwurf in den gewählten Vertrag; erst Test belegt die tatsächliche Versorgung und Ergebnisqualität im repräsentativen Lauf.
 
 In einer ausgewählten Process-Leistung bleibt `kennzahl` die lesbare Aussage zur Ergebniskennzahl; Bedingungen oder Schwellen der Abnahme stehen in `abnahme`. Eine eigenständig gepflegte fachliche Kennzahldefinition wird nur verlinkt. Beobachtete Werte bleiben Fallevidenz. Eine Kennzahl ohne belegten Prozess bleibt Fachwissen und erzeugt keine Application.
 
@@ -97,7 +99,7 @@ Eine Quellenbeschreibung kann berichtet oder offen sein; sie belegt für sich we
 
 Bei einer benötigten, nicht durchgeführten Prüfung die fehlende Prüfung, ihre Folge und die nächste Handlung beim betroffenen Ergebnis verständlich machen; eine gleichwertige vorhandene Notiz genügt. Beispiel: `Entwurf bereit — <Prüfung> nicht durchgeführt; <Folge>; als Nächstes: <Handlung>`. Vorhandene Rohdiagnosen erhalten und aus Übersichten auf die Notiz verlinken, statt sie doppelt zu pflegen.
 
-<!-- Translation source: 02_protocol/impacts-method.md; sha256: de8d1afa4ba4e22b0f672bf66c384e871b00e975e76550db732ac49fda4b9409 -->
+<!-- Translation source: 02_protocol/impacts-method.md; sha256: 91641cc1504a42dac2702a98cd29f44433b2c3b86490e3af3e8d666ed7bd450e -->
 ### Kennzahlen- und Berechnungsmodelle entwerfen
 
 Der [Entwurfsweg](../impacts-method.md#design-a-kpi-and-calculation-model) nutzt gewöhnliche Dateien und explizite Links an den bestehenden fachlichen Heimaten. Core, Gateway, Installation und Verbindung zu Live-Daten sind keine Voraussetzung.

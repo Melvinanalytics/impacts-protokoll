@@ -14,7 +14,7 @@ routen:
 customer_touchpoint: sacred  # fehlend, standard oder sacred
 ---
 
-<!-- Translation source: 02_protocol/templates/arbeitsschritt.md; sha256: 85905f17476bb14669c64c9a5a189a8693e1935a6a283e8d16ea551d6b29d12a -->
+<!-- Translation source: 02_protocol/templates/arbeitsschritt.md; sha256: 1ab574c37746c4f95c9489aa7ad73ddc5e8aac974d2da5c75bff02c273751254 -->
 
 # Entscheiden
 
@@ -28,9 +28,9 @@ Ein Satz: Ergebnis dieses Jobs, Empfänger und erlaubte Nutzung.
 
 ## Eingaben
 
-Für jede Quell- oder Übergabedatei Beschaffung/Producer, benötigten Inhalt und Eingangskontrolle benennen. Die Datei und ihre separate `*-herkunft.md` in `eingaben` deklarieren. Das Harness materialisiert diese Bytes unter `input/` und hasht die deklarierte Fläche vor dem Öffnen. Benötigte Definitionen, Regeln, Promptbausteine und Dokumentrohlinge außerhalb der Application einschließen; ihre aktuellen Links binden sie nicht. Stabile Referenzen behalten ihre einzige Heimat.
+Dieser Abschnitt setzt Augment am Ort der Arbeit um. Nur den Mindestkontext deklarieren, den der jeweilige menschliche, agentische oder deterministische Beitrag braucht, einschließlich beabsichtigter Nutzung sowie Zeitpunkt, zu dem er gültig und verfügbar sein muss. Für jede Quell- oder Übergabedatei Beschaffung/Producer, benötigten Inhalt und Eingangskontrolle benennen. Die Datei und ihre separate `*-herkunft.md` in `eingaben` deklarieren. Das Harness materialisiert diese Bytes unter `input/` und hasht die deklarierte Fläche vor dem Öffnen. Benötigte Definitionen, Regeln, Promptbausteine und Dokumentrohlinge außerhalb der Application einschließen; ihre aktuellen Links binden sie nicht. Stabile Referenzen behalten ihre einzige Heimat.
 
-Für die Beschaffung eingerichteten Reader oder liefernde Person, Objektbezug, Auswahl/Zeitpunkt und Zieldatei benennen. Fachliche Schlüssel und Quellzuordnung wiederverwenden. Bezüge, Regelvoraussetzungen und relevante Widersprüche erhalten; die Arbeitsfrage bestimmt den Ausschnitt. Tatsächliche Mindestkontrolle für die beabsichtigte Nutzung deklarieren. Fehlender Zugriff, fehlende Werte und widersprüchliche Bedeutung bleiben verschiedene Blockaden.
+Für die Beschaffung eingerichteten Reader oder liefernde Person, Objektbezug, Auswahl/Zeitpunkt und Zieldatei benennen. Fachliche Schlüssel und Quellzuordnung wiederverwenden. Bezüge, Regelvoraussetzungen und relevante Widersprüche erhalten; die Arbeitsfrage bestimmt den Ausschnitt. Bei abgeleitetem oder erzeugtem Kontext Quelleingaben, sanktionierte Rechnung oder Anweisung, Producer, Ziel und Prüfung benennen; das Ergebnis behält seine Herkunft und liefert keine fehlende Tatsache oder Befugnis. Tatsächliche Mindestkontrolle für die beabsichtigte Nutzung sowie Auslöser für Aktualisierung oder Neubeschaffung deklarieren. Fehlender Zugriff, fehlende Werte und widersprüchliche Bedeutung bleiben verschiedene Blockaden.
 
 ### Quellenanforderung
 

@@ -47,7 +47,11 @@ For a declared rework loop, route rejection to the step that produced the reject
 
 ## Automation boundary
 
-First apply Identify's independent [result-work and coordination questions](../../impacts-method.md#result-work-and-coordination) and Minimize the observed arrangement. Those answers expose contribution and dependency; they do not select an executor, confer authority or create exclusive workstep types. Use the human constraints established in Identify to choose only the contributions needed for the resulting job:
+First apply Identify's independent [result-work and coordination questions](../../impacts-method.md#result-work-and-coordination) and Minimize the observed arrangement. Those answers expose contribution and dependency; they do not select an executor, confer authority or create exclusive workstep types.
+
+Before selecting an executor, close [Augment's point-of-use context](../../impacts-method.md#augment) for each retained contribution: minimum required content, recipient and use, source/provider and selection, revision or validity time, acquisition or permitted derivation, required control, destination and missing-context route. Reuse the existing authoritative home. A routed excerpt, calculation, summary or draft retains provenance and cannot manufacture a missing fact or authority. Context that is available but stale, unchecked, late or unreachable at the workstep remains unavailable for the dependent use.
+
+Use the human constraints established in Identify to choose only the contributions needed for the resulting job:
 
 | Contribution | Suitable work | Boundary |
 |---|---|---|

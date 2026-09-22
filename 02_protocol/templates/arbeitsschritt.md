@@ -26,9 +26,9 @@ One sentence: the result this job produces, its recipient and permitted use.
 
 ## Inputs
 
-For each source or handed-off file, name acquisition/producer, required content and opening control. Declare the file and its separate `*-herkunft.md` in `eingaben`. The harness materializes these bytes under `input/` and hashes the declared surface before opening. Include needed definitions, rules, prompt fragments and document blanks outside the Application; their live links do not bind them. Stable references retain their single home.
+This section implements Augment at the point of use. Declare only the minimum context each human, agent or deterministic contribution needs, its intended use and when it must be valid and available. For each source or handed-off file, name acquisition/producer, required content and opening control. Declare the file and its separate `*-herkunft.md` in `eingaben`. The harness materializes these bytes under `input/` and hashes the declared surface before opening. Include needed definitions, rules, prompt fragments and document blanks outside the Application; their live links do not bind them. Stable references retain their single home.
 
-For acquisition, name the configured reader or responsible provider, starting identity, selection/time and destination file. Reuse the domain's keys and source mapping. Preserve references, rule premises and relevant contradictions; the question determines the excerpt. Declare the actual minimum control for the intended use. Missing access, unavailable values and conflicting meaning remain distinct blockers.
+For acquisition, name the configured reader or responsible provider, starting identity, selection/time and destination file. Reuse the domain's keys and source mapping. Preserve references, rule premises and relevant contradictions; the question determines the excerpt. If the context is derived or generated, name the source inputs, sanctioned calculation or instruction, producer, destination and check; the result retains provenance and supplies no missing fact or authority. Declare the actual minimum control for the intended use and any freshness or reacquisition trigger. Missing access, unavailable values and conflicting meaning remain distinct blockers.
 
 ### Source requirement
 
