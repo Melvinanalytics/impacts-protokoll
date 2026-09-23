@@ -8,6 +8,7 @@ from impacts_protocol.io import load_frontmatter_and_body
 SKILL = ROOT / "02_protocol" / "impacts-architect"
 SKILL_FILE = SKILL / "SKILL.md"
 METHOD = ROOT / "02_protocol" / "impacts-method.md"
+ONTOLOGY = ROOT / "02_protocol" / "ontology.md"
 PROTOCOL_ROUTER = ROOT / "02_protocol" / "CONTEXT.md"
 CAPABILITIES = ROOT / "02_protocol" / "capabilities.md"
 FORM_SELECTION = SKILL / "references/formwahl.md"
@@ -414,7 +415,11 @@ def test_method_requires_direct_intent_routes_without_search_or_guessing():
 
 def test_protocol_router_sends_context_delivery_and_efficiency_questions_directly_to_method():
     text = PROTOCOL_ROUTER.read_text(encoding="utf-8")
-    row = next(line for line in text.splitlines() if line.startswith("| Context routing,"))
+    row = next(
+        line
+        for line in text.splitlines()
+        if line.startswith("|") and "#load-context-locally-first" in line
+    )
 
     for target in (
         "impacts-method.md#load-context-locally-first",
@@ -428,21 +433,48 @@ def test_protocol_router_sends_context_delivery_and_efficiency_questions_directl
     assert "read that bounded set together" in text
 
 
-def test_method_keeps_link_meanings_and_efficiency_claims_separate():
-    text = METHOD.read_text(encoding="utf-8")
-    section = text[text.index("## Load context locally first") : text.index("## Where the context lives")]
+def test_ontology_use_owns_link_meanings_while_method_points_to_it():
+    method = METHOD.read_text(encoding="utf-8")
+    section = method[method.index("## Load context locally first") : method.index("## Where the context lives")]
+    ontology = ONTOLOGY.read_text(encoding="utf-8")
+    use = ontology[ontology.index("## Use") : ontology.index("## Domain definition pattern")]
 
     for meaning in (
+        "Folder containment means membership",
+        "`einstieg_ref` and `routen` mean execution order",
         "router link",
         "domain relationship",
+        "domain key connects record instances",
         "declared input or handoff",
         "route governs execution",
         "source authority",
     ):
-        assert meaning in section
-    assert "establishes none of the other conditions" in section
+        assert meaning in use
+        assert meaning not in section
+    assert "establishes none of the other conditions" in use
+    assert "ontology.md#use" in section
     assert "same representative questions and source state" in section
     assert "comparable model and harness conditions" in section
+
+
+def test_protocol_router_partitions_maintenance_from_route_use_and_diagnosis():
+    text = PROTOCOL_ROUTER.read_text(encoding="utf-8")
+    maintenance = next(
+        line
+        for line in text.splitlines()
+        if line.startswith("|") and "#maintain-agent-instructions" in line
+    )
+    route_use = next(line for line in text.splitlines() if "#load-context-locally-first" in line and line.startswith("|"))
+
+    assert "Instruction maintenance starts at" in text
+    assert "Existing route use or diagnosis starts at" in text
+    assert "A mixed task maintains the instruction first, then exercises the route" in text
+    for phrase in ("route wording", "instruction behavior"):
+        assert phrase in maintenance
+        assert phrase not in route_use
+    for phrase in ("existing route", "projection", "missing linked or delivered material", "context-efficiency claim"):
+        assert phrase in route_use
+        assert phrase not in maintenance
 
 
 def test_form_selection_states_file_orchestration_applicability_boundary():
