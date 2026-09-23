@@ -1,5 +1,7 @@
 """Check the existing release allowlist; this neither exports nor approves a release."""
 from pathlib import Path, PurePosixPath
+import importlib.util
+import os
 import posixpath
 import re
 import tomllib
@@ -11,7 +13,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 # One allowlist for the release surface.
 PUBLIC_PATHS = (
-    '.gitignore', 'AGENTS.md', 'CONTEXT.md', 'LICENSE', 'README.md', 'FIRST-WIN.md', 'pyproject.toml',
+    '.gitignore', '.github/', 'AGENTS.md', 'CONTEXT.md', 'CONTRIBUTING.md', 'LICENSE', 'README.md', 'FIRST-WIN.md', 'pyproject.toml',
     '02_protocol/', '06_evaluations/', 'src/', 'tests/',
 )
 
@@ -101,7 +103,7 @@ def test_export_excludes_all_private_documentation_and_handovers():
     paths = export_files(ROOT)
     assert all(not p.startswith('docs/') for p in paths)
     assert all(not p.startswith('v03_') for p in paths)
-    assert set(PUBLIC_PATHS) == {'.gitignore', 'AGENTS.md', 'CONTEXT.md', 'LICENSE', 'README.md', 'FIRST-WIN.md', 'pyproject.toml', '02_protocol/', '06_evaluations/', 'src/', 'tests/'}
+    assert set(PUBLIC_PATHS) == {'.gitignore', '.github/', 'AGENTS.md', 'CONTEXT.md', 'CONTRIBUTING.md', 'LICENSE', 'README.md', 'FIRST-WIN.md', 'pyproject.toml', '02_protocol/', '06_evaluations/', 'src/', 'tests/'}
 
 
 @pytest.mark.parametrize("path", ["README.md", "02_protocol/translations/de.md"])
@@ -111,8 +113,19 @@ def test_current_entry_instructions_match_distribution_version(path):
     release_tags = re.findall(r"releases/tag/v([^/)\s]+)", text)
     clone_tags = re.findall(r"git clone --branch v(\S+)", text)
     wheel_versions = re.findall(r"impacts_protocol-([^-\s]+)-py3-none-any\.whl", text)
+    edition_versions = re.findall(r"(?:Edition|Ausgabe)\s+v(\d+\.\d+\.\d+)", text)
+    link_label_versions = re.findall(
+        r"\[(?:Releases?\s+)?v(\d+\.\d+\.\d+)(?:\s+release)?\]", text, re.I
+    )
     assert release_tags and wheel_versions
-    assert set(release_tags + clone_tags + wheel_versions) == {version}
+    assert edition_versions and link_label_versions
+    assert set(
+        release_tags
+        + clone_tags
+        + wheel_versions
+        + edition_versions
+        + link_label_versions
+    ) == {version}
 
 
 @pytest.mark.parametrize(
@@ -128,3 +141,49 @@ def test_checksum_recipe_downloads_every_listed_release_asset(path, required_ter
 
     assert all(term in paragraph for term in required_terms)
     assert "every listed asset" in paragraph or "jedes aufgeführte Artefakt" in paragraph
+
+
+def test_tag_workflow_publishes_only_after_remote_asset_verification():
+    workflow = (ROOT / ".github/workflows/release.yml").read_text()
+    assert 'tags:\n      - "v*"' in workflow
+    assert "workflow_dispatch:" in workflow
+    assert "contents: write" in workflow
+    assert "git cat-file -t" in workflow
+    assert "git merge-base --is-ancestor HEAD refs/remotes/origin/main" in workflow
+    assert "--draft --verify-tag" in workflow
+    assert "--release-id" in workflow
+    assert "--expect-draft" in workflow
+    verify = workflow.index("release_guard.py live")
+    publish = workflow.index('gh release edit "${RELEASE_TAG}" --draft=false')
+    assert verify < publish
+    assert "pypi" not in workflow.lower()
+
+
+def test_push_and_manual_runs_share_one_concurrency_key_per_tag():
+    workflow = (ROOT / ".github/workflows/release.yml").read_text()
+    group = next(line.strip() for line in workflow.splitlines() if line.strip().startswith("group:"))
+    assert "github.ref_name" in group
+    assert "inputs.version" in group
+    assert "github.ref ||" not in group
+
+
+def test_live_current_release_contains_required_assets():
+    if os.environ.get("IMPACTS_LIVE_RELEASE_CHECK") != "1":
+        pytest.skip("set IMPACTS_LIVE_RELEASE_CHECK=1 for the GitHub integration check")
+    path = ROOT / ".github/scripts/release_guard.py"
+    spec = importlib.util.spec_from_file_location("release_guard_live", path)
+    assert spec and spec.loader
+    guard = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(guard)
+    version = tomllib.loads((ROOT / "pyproject.toml").read_text())["project"]["version"]
+    payload = guard.fetch_release(
+        guard.REPOSITORY, f"v{version}", os.environ.get("GITHUB_TOKEN")
+    )
+    guard.verify_release_payload(payload, version)
+
+
+# Frozen debt statement. Changing public history needs a separate human decision.
+HISTORICAL_RELEASE_DEBT = {
+    "tags_without_release": ("v0.3.1", "v0.2.0", "v0.1.0"),
+    "source_archive_may_be_absent_before": "v0.3.5",
+}

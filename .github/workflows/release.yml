@@ -1,0 +1,113 @@
+name: Publish tagged release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Existing annotated tag to publish, for example v0.3.9
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'push' && github.ref_name || inputs.version }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      RELEASE_TAG: ${{ github.event_name == 'push' && github.ref_name || inputs.version }}
+      DIST_DIR: release-dist
+    steps:
+      - name: Validate requested tag name
+        run: |
+          set -euo pipefail
+          [[ "${RELEASE_TAG}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]
+
+      - name: Check out the tagged source
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          ref: ${{ env.RELEASE_TAG }}
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: "3.11"
+
+      - name: Verify annotated tag and release claims
+        run: |
+          set -euo pipefail
+          test "$(git cat-file -t "refs/tags/${RELEASE_TAG}")" = tag
+          test "$(git rev-parse "refs/tags/${RELEASE_TAG}^{}")" = "$(git rev-parse HEAD)"
+          git fetch --no-tags origin +refs/heads/main:refs/remotes/origin/main
+          git merge-base --is-ancestor HEAD refs/remotes/origin/main
+          python .github/scripts/release_guard.py source --root . --tag "${RELEASE_TAG}"
+
+      - name: Test the exact tagged source
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check \
+            "build==1.6.1" "pytest==9.1.1" "setuptools==82.0.1" "wheel==0.48.0"
+          python -m pip install --disable-pip-version-check -e .
+          python -m pytest -q
+
+      - name: Build wheel, complete source archive and checksums
+        run: |
+          set -euo pipefail
+          version="${RELEASE_TAG#v}"
+          wheel="impacts_protocol-${version}-py3-none-any.whl"
+          source="impacts-protokoll-${version}-source.tar.gz"
+          export SOURCE_DATE_EPOCH="$(git show -s --format=%ct HEAD)"
+          mkdir -p "${DIST_DIR}"
+          python -m build --wheel --no-isolation --outdir "${DIST_DIR}"
+          test -f "${DIST_DIR}/${wheel}"
+          git archive --format=tar --prefix="impacts-protokoll-${version}/" HEAD \
+            | gzip -n > "${DIST_DIR}/${source}"
+          (
+            cd "${DIST_DIR}"
+            sha256sum "${wheel}" "${source}" > SHA256SUMS
+            sha256sum --check SHA256SUMS
+          )
+          python .github/scripts/release_guard.py artifacts \
+            --root . --dist "${DIST_DIR}" --tag "${RELEASE_TAG}"
+
+      - name: Create hidden draft and upload all assets
+        id: draft
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if gh release view "${RELEASE_TAG}" --json isDraft > /tmp/release.json 2>/dev/null; then
+            test "$(jq -r .isDraft /tmp/release.json)" = true
+            gh release upload "${RELEASE_TAG}" "${DIST_DIR}"/* --clobber
+          else
+            gh release create "${RELEASE_TAG}" "${DIST_DIR}"/* \
+              --draft --verify-tag --title "${RELEASE_TAG}" --generate-notes
+          fi
+          gh release view "${RELEASE_TAG}" \
+            --json databaseId,isDraft,tagName > "${RUNNER_TEMP}/release.json"
+          test "$(jq -r .tagName "${RUNNER_TEMP}/release.json")" = "${RELEASE_TAG}"
+          test "$(jq -r .isDraft "${RUNNER_TEMP}/release.json")" = true
+          release_id="$(jq -r .databaseId "${RUNNER_TEMP}/release.json")"
+          [[ "${release_id}" =~ ^[0-9]+$ ]]
+          echo "release_id=${release_id}" >> "${GITHUB_OUTPUT}"
+
+      - name: Verify uploaded names and digests, then publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          python .github/scripts/release_guard.py live \
+            --repository "${GITHUB_REPOSITORY}" --tag "${RELEASE_TAG}" \
+            --release-id "${{ steps.draft.outputs.release_id }}" --expect-draft \
+            --token "${GH_TOKEN}" --dist "${DIST_DIR}" --retries 12
+          gh release edit "${RELEASE_TAG}" --draft=false
