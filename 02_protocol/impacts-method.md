@@ -318,7 +318,7 @@ The ordinary path should require no repository scan, filename guessing or model 
 
 Minimize loaded task payload by preventing irrelevant instructions, references, tools and prior artifacts from entering the realized branch. Stop when the question's declared evidence and completion condition are reached; do not exhaust outgoing links. This objective never permits removal of identities, conditions, contradictions, provenance or authority needed for a supported result. A token or effort improvement remains unproven until [Test](#test) compares the same representative questions and source state under comparable model and harness conditions.
 
-Do not make one link carry several meanings. A router link makes a responsible home navigable; a domain relationship states business meaning and scope; a declared input or handoff binds material for a job; a route governs execution; source authority follows its own evidence and revision. A hyperlink can locate any of them but establishes none of the other conditions. Use the mechanism whose consequence is intended and keep the other meanings separate.
+Apply [ontology Use](ontology.md#use) when interpreting a link or binding. This section selects context-delivery and routing behavior; it does not redefine the link, relationship, input, handoff, execution-route or source-authority meanings owned there.
 
 External research is ingestion. Use it only when the local path exposes a real evidence gap, the requested freshness exceeds the local source state, or the user explicitly requests new external evidence. Any optional graph projection or database follows the single [Tooling-Stopp](impacts-architect/references/formwahl.md#tooling-stopp).
 

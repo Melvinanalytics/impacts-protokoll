@@ -40,6 +40,24 @@ Create clean checkouts of the two recorded revisions. For each checkout, execute
 
 ```sh
 python3 06_evaluations/context-efficiency/measure.py \
+  --baseline-run baseline-1 <baseline-1.jsonl> <baseline-1.md> \
+  --baseline-run baseline-2 <baseline-2.jsonl> <baseline-2.md> \
+  --baseline-run baseline-3 <baseline-3.jsonl> <baseline-3.md> \
+  --candidate-run candidate-1 <candidate-1.jsonl> <candidate-1.md> \
+  --candidate-run candidate-2 <candidate-2.jsonl> <candidate-2.md> \
+  --candidate-run candidate-3 <candidate-3.jsonl> <candidate-3.md>
+```
+
+Score answers blind before revealing their revision. A lower payload fails as an improvement if required conditions disappear, unsupported conclusions appear or dependent use is no longer blocked. Extend the claim only with additional frozen questions and matched repetitions.
+
+## Historical binding correction, 2026-09-23
+
+The numeric comparison above is supported by the six rows in `measurement.json`; the omitted raw logs prevent independent reconstruction of their tool paths. The earlier diagnostic pair of 241,924 input tokens and 81,698 tool-output bytes is described in prose only. Neither value has a retained row, raw log or log digest in this package, so the pair remains a reported diagnostic rather than a reproducible measurement. The values 129,479 and 39,143 are both the retained baseline medians and the values in the first retained baseline row; that coincidence supplies no evidence for the omitted diagnostic.
+
+The historical measurement used the pre-change positional pairing shown below. It is retained as evidence of that invocation shape, not as a supported v0.3.8 command:
+
+```sh
+python3 06_evaluations/context-efficiency/measure.py \
   --baseline-jsonl <baseline-1.jsonl> --baseline-answer <baseline-1.md> \
   --baseline-jsonl <baseline-2.jsonl> --baseline-answer <baseline-2.md> \
   --baseline-jsonl <baseline-3.jsonl> --baseline-answer <baseline-3.md> \
@@ -48,4 +66,6 @@ python3 06_evaluations/context-efficiency/measure.py \
   --candidate-jsonl <candidate-3.jsonl> --candidate-answer <candidate-3.md>
 ```
 
-Score answers blind before revealing their revision. A lower payload fails as an improvement if required conditions disappear, unsupported conclusions appear or dependent use is no longer blocked. Extend the claim only with additional frozen questions and matched repetitions.
+`measurement.json` names baseline revision `5ad90cd42b792ef2919ebcfaf558bb11cb80ec3a` and candidate revision `441d066`. The first string exactly matches the public v0.3.6 tag commit. The second is deliberately retained as the abbreviated string recorded by the historical measurement; local Git currently resolves it to `441d06637b3f91420f2e528d52f531ca5d2e38b7`, but that resolution does not replace the recorded identity. `measure.py` is absent at both measured source revisions. The pre-change parser first appears locally at `a97da4ea5b57b7b6a5df9e601a946d6c405fd1b7`; its bytes match public v0.3.7 commit `a4bac26d93881a2d08369d744c53f4ab4023daad`. The measured source revisions and parser revision are separate bindings.
+
+The command under [Rerun](#rerun) uses the v0.3.8 hardened interface. Each repeated triple binds one non-empty unique run ID to exactly one JSONL file and one answer. The parser rejects duplicate run IDs, duplicate JSONL content and missing or non-string command output before computing the unchanged metrics. This hardening produces no new performance evidence and does not alter `measurement.json`.

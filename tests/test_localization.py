@@ -17,6 +17,7 @@ PAIRS = [(f"02_protocol/templates/{kind}.md", f"02_protocol/templates/de/{kind}.
 PAIRS += [("02_protocol/language.md", "02_protocol/translations/de.md"),
           ("README.md", "02_protocol/translations/de.md"),
           ("FIRST-WIN.md", "02_protocol/translations/de.md"),
+          ("02_protocol/CONTEXT.md", "02_protocol/translations/de.md"),
           ("02_protocol/impacts-method.md", "02_protocol/translations/de.md"),
           ("02_protocol/ontology.md", "02_protocol/translations/de.md"),
           ("02_protocol/capabilities.md", "02_protocol/translations/de.md"),
