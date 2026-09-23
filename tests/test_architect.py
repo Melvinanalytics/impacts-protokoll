@@ -12,6 +12,7 @@ ONTOLOGY = ROOT / "02_protocol" / "ontology.md"
 PROTOCOL_ROUTER = ROOT / "02_protocol" / "CONTEXT.md"
 CAPABILITIES = ROOT / "02_protocol" / "capabilities.md"
 FORM_SELECTION = SKILL / "references/formwahl.md"
+GERMAN_GUIDE = ROOT / "02_protocol" / "translations" / "de.md"
 LINK = re.compile(r"\]\(([^)]+)\)")
 
 
@@ -55,6 +56,7 @@ def test_skill_frontmatter_starts_with_use_when_and_names_topology_triggers():
     assert description.startswith("Use when")
     assert "customer initialization" in description
     assert "knowledge topology" in description
+    assert "materially redesigning work from an intended result" in description
     assert "Every result must pass impacts validate" not in description
 
 
@@ -235,6 +237,88 @@ def test_method_scopes_process_phases_and_optional_core_procedures():
     assert "guide selected process work" in before_identify
     assert "technical procedures apply when choosing Core Application/Run contracts" in before_identify
     assert "other non-process forms do not enter Identify" in before_identify
+
+
+def test_result_first_setup_has_one_authoritative_method_home_and_preserves_boundaries():
+    text = METHOD.read_text(encoding="utf-8")
+    section = text[
+        text.index("## Reverse-engineer a product or service") :
+        text.index("## Compose an Arbeitsschritt")
+    ]
+
+    for phrase in (
+        "before a form or executor is selected",
+        "job boundary, order, handoff, wait, executor, acceptance or decision authority",
+        "The observed process is evidence, not the default target",
+        "Setup does not supply their authority",
+        "next discriminating evidence action",
+        "source existence, access, technical readiness and allowed use separate",
+        "no structural change is warranted",
+        "Complete the required backward trace under capture's completion condition",
+        "preserve bound definitions and inputs",
+    ):
+        assert phrase in section
+    for target in (
+        "ontology.md#evidence-and-obligations",
+        "#market-relationships",
+        "ontology.md#author-or-change",
+        "capabilities.md#data-governance",
+        "#reviewed-correction",
+    ):
+        assert target in LINK.findall(section)
+    assert text.count("Setup does not supply their authority") == 1
+
+
+def test_capture_form_selection_skill_and_router_reach_result_first_setup_without_core():
+    method = METHOD.read_text(encoding="utf-8")
+    capture = method[method.index("## Capture business meaning") : method.index("## Market relationships")]
+    form = FORM_SELECTION.read_text(encoding="utf-8")
+    skill = _body()
+    router = PROTOCOL_ROUTER.read_text(encoding="utf-8")
+
+    assert "before selecting a form or executor" in capture
+    assert "does not silently reopen the design" in capture
+    assert "work is being set up or materially redesigned" in form
+    assert "This derivation can precede an established repeatable result" in form
+    report = form[form.index("## Work report before proposing a tree") : form.index("## Composition")]
+    assert report.index("derive a provisional result boundary") < report.index("Selected existing forms")
+    skill_selection = skill[skill.index("## Form selection") : skill.index("## Choose a mode")]
+    assert "does not require an established Pipeline or Build mode" in skill_selection
+    assert skill_selection.index("derive the intended result") < skill_selection.index("complete the work-report recipe")
+    build = skill[skill.index("## Build mode") : skill.index("## Restructure mode")]
+    assert "work being set up or materially redesigned from an intended result" in build
+    route = next(line for line in router.splitlines() if "materially redesigned" in line)
+    assert "Reverse-engineer a product or service" in route
+    assert "Market relationships" in route
+    assert "Author or change" in route
+
+
+def test_german_guide_carries_result_first_meaning_and_scope_limits():
+    text = GERMAN_GUIDE.read_text(encoding="utf-8")
+
+    for phrase in (
+        "### Arbeit vom Ergebnis her einrichten oder neu gestalten",
+        "bevor eine Form oder ein Ausführender gewählt",
+        "Der beobachtete Ablauf ist Evidenz und nicht automatisch der Zielablauf",
+        "Die Einrichtung erteilt dafür keine Befugnis",
+        "nächste unterscheidende Evidenzhandlung",
+        "vorgesehenen Verwendungszweck",
+        "keine strukturelle Änderung nötig",
+        "erforderliche Rückwärtsableitung nach der Abschlussbedingung der Aufnahme vollständig",
+        "gebundene Definitionen und Eingaben erhalten",
+        "Reine Aufnahme bleibt Aufnahme",
+    ):
+        assert phrase in text
+
+
+def test_result_first_setup_adds_no_oracle_or_morphological_routine():
+    public_protocol = "\n".join(
+        path.read_text(encoding="utf-8")
+        for path in (METHOD, PROTOCOL_ROUTER, SKILL_FILE, FORM_SELECTION, GERMAN_GUIDE)
+    ).lower()
+
+    assert "oracle" not in public_protocol
+    assert "morpholog" not in public_protocol
 
 
 def test_protocol_router_sends_initialization_and_topology_to_form_selection():
