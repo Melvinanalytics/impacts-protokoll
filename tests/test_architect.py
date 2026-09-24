@@ -281,10 +281,25 @@ def test_target_timing_requires_a_supported_dependency_and_one_minimize_home():
         f"{clause} only when a named, supported dependency "
         "requires that timing or transfer"
     ) in minimize
+    assert (
+        "Use explicitly settled design premises for this derivation unless concrete conflicting "
+        "or changed evidence requires reopening them; actual execution remains subject to "
+        "[Enforcement and completion](ontology.md#enforcement-and-completion)."
+    ) in minimize
+    assert (
+        "Derive the earliest supported start, completion and provision of each contribution from "
+        "its own prerequisites, required processing and acceptance; complete and provide "
+        "independently permitted results at those times."
+    ) in minimize
     for phrase in (
         "named, supported dependency",
         "accepted result, source freshness, capacity, a protective contribution, authority or recipient use",
-        "derive readiness and release from each contribution's prerequisites and acceptance",
+        "earliest supported start, completion and provision of each contribution",
+        "own prerequisites, required processing and acceptance",
+        "complete and provide independently permitted results at those times",
+        "explicitly settled design premises",
+        "concrete conflicting or changed evidence requires reopening them",
+        "actual execution remains subject to [Enforcement and completion](ontology.md#enforcement-and-completion)",
         "actual input and resource availability separately as feasibility constraints",
         "unresolved dependencies keep the affected proposal conditional",
     ):
@@ -297,16 +312,33 @@ def test_target_timing_requires_a_supported_dependency_and_one_minimize_home():
 
 def test_german_guide_carries_supported_target_timing_boundary():
     text = GERMAN_GUIDE.read_text(encoding="utf-8")
+    timing = text[
+        text.index("Bei Einrichtung oder Neugestaltung einen beobachteten Zeitplan") :
+        text.index("Die Bedeutung einer Kennzahl umfasst")
+    ]
 
     for phrase in (
         "beobachteten Zeitplan, eine Warteschlange, Bündelung oder Übergabe nur dann",
         "benannte, belegte Abhängigkeit",
-        "aus den Voraussetzungen und der Abnahme jedes Beitrags ableiten",
+        "frühesten begründeten Zeitpunkte für Beginn, Fertigstellung und Bereitstellung",
+        "Unabhängig erlaubte Ergebnisse sind zu diesen Zeitpunkten fertigzustellen und bereitzustellen",
+        "ausdrücklich geklärte Entwurfsprämissen",
+        "konkreten widersprechenden oder geänderten Belege",
+        "[Enforcement and completion](../ontology.md#enforcement-and-completion)",
         "Verfügbarkeit von Eingaben und Ressourcen getrennt als Machbarkeitsgrenzen",
         "bei ungeklärten Abhängigkeiten bleibt der betroffene Vorschlag bedingt",
         "[Auslösebedingungen](../impacts-method.md#minimize)",
     ):
         assert phrase in text
+    assert (
+        "Die eigenen Voraussetzungen, erforderliche Verarbeitung und Abnahme bestimmen für jeden "
+        "Beitrag die frühesten begründeten Zeitpunkte für Beginn, Fertigstellung und Bereitstellung."
+    ) in timing
+    assert (
+        "Für diese Ableitung gelten ausdrücklich geklärte Entwurfsprämissen, solange keine konkreten "
+        "widersprechenden oder geänderten Belege ihre erneute Klärung erfordern; die tatsächliche "
+        "Ausführung folgt weiterhin [Enforcement and completion](../ontology.md#enforcement-and-completion)."
+    ) in timing
 
 
 def test_capture_form_selection_skill_and_router_reach_result_first_setup_without_core():
@@ -622,6 +654,8 @@ def test_protocol_router_sends_setup_before_bounded_workstep_composition():
 
 def test_market_route_sends_new_meaning_to_author_or_change():
     text = PROTOCOL_ROUTER.read_text(encoding="utf-8")
+    method = METHOD.read_text(encoding="utf-8")
+    german = GERMAN_GUIDE.read_text(encoding="utf-8")
     market = next(
         line
         for line in text.splitlines()
@@ -630,10 +664,27 @@ def test_market_route_sends_new_meaning_to_author_or_change():
 
     assert "new or changed offering or relationship meaning" in market
     assert "](ontology.md#author-or-change)" in market
+    market_method = method[method.index("## Market relationships") : method.index("### Ongoing service and demand")]
+    assert (
+        "Before proposing new or changed offering or relationship meaning, "
+        "including a hypothesis, follow [Author or change](ontology.md#author-or-change)."
+    ) in market_method
+    assert "Apply [Use](ontology.md#use) to existing definitions." in market_method
+    german_market = german[
+        german.index("## Marktbeziehungen bei Bedarf erschließen") :
+        german.index("### Laufender Service und Nachfrage")
+    ]
+    assert (
+        "Vor dem Vorschlagen neuer oder geänderter Angebots- oder Beziehungsbedeutung, auch als "
+        "Hypothese, ist [Author or change](../ontology.md#author-or-change) zu durchlaufen."
+    ) in german_market
+    assert "Für die Anwendung vorhandener Definitionen gilt [Use](../ontology.md#use)." in german_market
 
 
 def test_context_selection_applies_inputs_and_exclusions_before_any_material_read():
     text = METHOD.read_text(encoding="utf-8")
+    ontology = ONTOLOGY.read_text(encoding="utf-8")
+    german = GERMAN_GUIDE.read_text(encoding="utf-8")
     section = text[text.index("## Load context locally first") : text.index("## Where the context lives")]
 
     assert "before reading task material" in section.lower()
@@ -643,6 +694,22 @@ def test_context_selection_applies_inputs_and_exclusions_before_any_material_rea
     compose = text[text.index("## Compose an Arbeitsschritt") : text.index("## Work from prerequisites")]
     assert "](#load-context-locally-first)" in compose
     assert "batch reads, searches and prior artifacts" in compose
+
+    use = ontology[ontology.index("## Use") : ontology.index("## Domain definition pattern")]
+    assert (
+        "Before reading sources for these points, follow "
+        "[Load context locally first](impacts-method.md#load-context-locally-first) "
+        "to select the permitted material."
+    ) in use
+    german_use = german[
+        german.index("<!-- Translation source: 02_protocol/ontology.md;") :
+        german.index("<!-- Translation source: 02_protocol/impacts-method.md;")
+    ]
+    assert (
+        "Vor dem Lesen von Quellen für diese Antwortpunkte ist "
+        "[Kontext direkt routen](../impacts-method.md#load-context-locally-first) "
+        "zur Auswahl des zulässigen Materials anzuwenden."
+    ) in german_use
 
 
 def test_form_selection_states_file_orchestration_applicability_boundary():
