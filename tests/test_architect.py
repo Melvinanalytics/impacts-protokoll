@@ -269,6 +269,46 @@ def test_result_first_setup_has_one_authoritative_method_home_and_preserves_boun
     assert text.count("Setup does not supply their authority") == 1
 
 
+def test_target_timing_requires_a_supported_dependency_and_one_minimize_home():
+    text = METHOD.read_text(encoding="utf-8")
+    minimize = text[text.index("## Minimize") : text.index("## Perfect")]
+    reverse = text[text.index("## Reverse-engineer a product or service") : text.index("## Compose an Arbeitsschritt")]
+    prerequisites = text[text.index("## Work from prerequisites") : text.index("## Identify")]
+    clause = "retain an observed schedule, queue, batch or handoff as a target start or release condition"
+
+    assert text.count(clause) == 1
+    assert (
+        f"{clause} only when a named, supported dependency "
+        "requires that timing or transfer"
+    ) in minimize
+    for phrase in (
+        "named, supported dependency",
+        "accepted result, source freshness, capacity, a protective contribution, authority or recipient use",
+        "derive readiness and release from each contribution's prerequisites and acceptance",
+        "actual input and resource availability separately as feasibility constraints",
+        "unresolved dependencies keep the affected proposal conditional",
+    ):
+        assert phrase in minimize
+    assert "[trigger conditions](#minimize)" in reverse
+    assert "For target timing and handoff conditions, apply [Minimize](#minimize)" in prerequisites
+    assert "Working hours, organizational history and current staffing do not define the target process" not in text
+    assert "Actual availability remains a feasibility constraint even when current role boundaries are challenged" not in text
+
+
+def test_german_guide_carries_supported_target_timing_boundary():
+    text = GERMAN_GUIDE.read_text(encoding="utf-8")
+
+    for phrase in (
+        "beobachteten Zeitplan, eine Warteschlange, Bündelung oder Übergabe nur dann",
+        "benannte, belegte Abhängigkeit",
+        "aus den Voraussetzungen und der Abnahme jedes Beitrags ableiten",
+        "Verfügbarkeit von Eingaben und Ressourcen getrennt als Machbarkeitsgrenzen",
+        "bei ungeklärten Abhängigkeiten bleibt der betroffene Vorschlag bedingt",
+        "[Auslösebedingungen](../impacts-method.md#minimize)",
+    ):
+        assert phrase in text
+
+
 def test_capture_form_selection_skill_and_router_reach_result_first_setup_without_core():
     method = METHOD.read_text(encoding="utf-8")
     capture = method[method.index("## Capture business meaning") : method.index("## Market relationships")]
