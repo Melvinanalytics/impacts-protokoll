@@ -182,6 +182,35 @@ def test_form_selection_reference_binds_reported_claims_to_source_artifacts():
     assert "not a replacement for the actual artifact" in topology
 
 
+def test_tooling_stop_selects_checks_by_claim_and_preserves_relevant_git():
+    text = FORM_SELECTION.read_text(encoding="utf-8")
+    tooling = text[text.index("## Tooling stop") : text.index("## Knowledge Walk")]
+    german = GERMAN_GUIDE.read_text(encoding="utf-8")
+    german_start = german.index(
+        "<!-- Translation source: 02_protocol/impacts-architect/references/formwahl.md;"
+    )
+    german_block = german[german_start : german.index("<!-- Translation source:", german_start + 1)]
+
+    assert "Select each check for the condition required by the task, changed surface or intended claim" in tooling
+    assert (
+        "For ordinary file work with no history, repository-change or revision-binding claim, check the saved "
+        "result, its required sources and continuation links directly"
+        in tooling
+    )
+    assert "Use Git when history, a repository change or a declared revision binding is relevant" in tooling
+    assert "with the intended repository and comparison endpoints established" in tooling
+    assert "Invoke machine validation only when the task needs its specific condition" in tooling
+    assert "dem geänderten Bereich oder der beabsichtigten Aussage" in german_block
+    assert "ohne Aussage zur Historie, Repository-Änderung oder Revisionsbindung" in german_block
+    assert "Git verwenden, wenn Historie, eine Repository-Änderung oder eine erklärte Revisionsbindung relevant ist" in german_block
+    assert "das vorgesehene Repository und die Vergleichsendpunkte feststellen" in german_block
+    assert "Maschinenvalidierung nur aufrufen, wenn die Aufgabe ihre konkrete Bedingung benötigt" in german_block
+    assert "Werkzeugverfügbarkeit erzeugt keine neue Prüfschranke oder Installationspflicht" in german_block
+    assert "nicht zur bloßen Empfehlung herabgestuft werden" in german_block
+    assert "gilt sie als **nicht durchgeführt**" in german_block
+    assert "Anforderungen an tatsächliche Berechnungen, Wahrheit und Befugnis bleiben" in german_block
+
+
 def test_skill_routes_work_report_once_before_mode_selection():
     body = _body()
     selection = body[body.index("## Form selection") : body.index("## Choose a mode")]
