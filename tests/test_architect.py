@@ -561,6 +561,50 @@ def test_protocol_router_partitions_maintenance_from_route_use_and_diagnosis():
         assert phrase not in maintenance
 
 
+def test_protocol_router_sends_setup_before_bounded_workstep_composition():
+    text = PROTOCOL_ROUTER.read_text(encoding="utf-8")
+    compose = next(
+        line
+        for line in text.splitlines()
+        if line.startswith("| Workstep prompt")
+        and "#compose-an-arbeitsschritt" in line
+    )
+    setup = next(
+        line
+        for line in text.splitlines()
+        if line.startswith("|") and "#reverse-engineer-a-product-or-service" in line
+    )
+
+    assert "for an already-bounded workstep" in compose
+    assert "before form or executor selection" in setup
+    assert text.index(setup) < text.index(compose)
+
+
+def test_market_route_sends_new_meaning_to_author_or_change():
+    text = PROTOCOL_ROUTER.read_text(encoding="utf-8")
+    market = next(
+        line
+        for line in text.splitlines()
+        if line.startswith("| Market structure") and "#market-relationships" in line
+    )
+
+    assert "new or changed offering or relationship meaning" in market
+    assert "](ontology.md#author-or-change)" in market
+
+
+def test_context_selection_applies_inputs_and_exclusions_before_any_material_read():
+    text = METHOD.read_text(encoding="utf-8")
+    section = text[text.index("## Load context locally first") : text.index("## Where the context lives")]
+
+    assert "before reading task material" in section.lower()
+    assert "declared inputs, direct links and explicit exclusions" in section
+    assert "Batch reads, searches and prior artifacts obey the same boundary" in section
+
+    compose = text[text.index("## Compose an Arbeitsschritt") : text.index("## Work from prerequisites")]
+    assert "](#load-context-locally-first)" in compose
+    assert "batch reads, searches and prior artifacts" in compose
+
+
 def test_form_selection_states_file_orchestration_applicability_boundary():
     text = FORM_SELECTION.read_text(encoding="utf-8")
     selection = text[text.index("## Select the form") : text.index("## Work report before proposing a tree")]
