@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: Existing annotated tag to publish, for example v0.3.9
+        description: Existing annotated tag to publish, in vMAJOR.MINOR.PATCH form
         required: true
         type: string
 
