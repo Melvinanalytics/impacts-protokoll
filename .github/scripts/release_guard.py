@@ -13,7 +13,7 @@ import subprocess
 import tarfile
 import time
 import tomllib
-from urllib.error import HTTPError
+from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 import zipfile
 
@@ -182,6 +182,10 @@ def _fetch_release_url(url: str, token: str | None = None) -> dict:
     except HTTPError as error:
         raise ReleaseGuardError(
             f"GitHub Release lookup failed for {url}: HTTP {error.code}"
+        ) from error
+    except (URLError, TimeoutError) as error:
+        raise ReleaseGuardError(
+            f"GitHub Release lookup failed for {url}: {error}"
         ) from error
 
 

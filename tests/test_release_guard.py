@@ -3,7 +3,7 @@ import importlib.util
 import io
 import json
 from pathlib import Path
-from urllib.error import HTTPError
+from urllib.error import HTTPError, URLError
 import zipfile
 
 import pytest
@@ -128,6 +128,30 @@ def test_draft_release_is_resolved_by_id_when_published_tag_endpoint_is_404(monk
         expected_tag="v0.3.8",
         expected_draft=True,
     )
+
+
+@pytest.mark.parametrize("network_error", [URLError("dns"), TimeoutError("timeout")])
+def test_live_release_retries_transient_network_errors(monkeypatch, network_error):
+    payload = {
+        "tag_name": "v0.3.8",
+        "draft": False,
+        "assets": [{"name": name} for name in guard.expected_assets("0.3.8")],
+    }
+    attempts = 0
+
+    def fake_urlopen(request, timeout):
+        nonlocal attempts
+        attempts += 1
+        if attempts == 1:
+            raise network_error
+        return _JsonResponse(json.dumps(payload).encode())
+
+    monkeypatch.setattr(guard, "urlopen", fake_urlopen)
+    monkeypatch.setattr(guard.time, "sleep", lambda _seconds: None)
+    guard.verify_live_release(
+        "owner/repo", "v0.3.8", None, None, retries=2
+    )
+    assert attempts == 2
 
 
 def test_release_identity_and_draft_state_must_match():
