@@ -12,6 +12,7 @@ ONTOLOGY = ROOT / "02_protocol" / "ontology.md"
 PROTOCOL_ROUTER = ROOT / "02_protocol" / "CONTEXT.md"
 CAPABILITIES = ROOT / "02_protocol" / "capabilities.md"
 FORM_SELECTION = SKILL / "references/formwahl.md"
+GERMAN_GUIDE = ROOT / "02_protocol" / "translations" / "de.md"
 LINK = re.compile(r"\]\(([^)]+)\)")
 
 
@@ -55,6 +56,7 @@ def test_skill_frontmatter_starts_with_use_when_and_names_topology_triggers():
     assert description.startswith("Use when")
     assert "customer initialization" in description
     assert "knowledge topology" in description
+    assert "materially redesigning work from an intended result" in description
     assert "Every result must pass impacts validate" not in description
 
 
@@ -235,6 +237,160 @@ def test_method_scopes_process_phases_and_optional_core_procedures():
     assert "guide selected process work" in before_identify
     assert "technical procedures apply when choosing Core Application/Run contracts" in before_identify
     assert "other non-process forms do not enter Identify" in before_identify
+
+
+def test_result_first_setup_has_one_authoritative_method_home_and_preserves_boundaries():
+    text = METHOD.read_text(encoding="utf-8")
+    section = text[
+        text.index("## Reverse-engineer a product or service") :
+        text.index("## Compose an Arbeitsschritt")
+    ]
+
+    for phrase in (
+        "before a form or executor is selected",
+        "job boundary, order, handoff, wait, executor, acceptance or decision authority",
+        "The observed process is evidence, not the default target",
+        "Setup does not supply their authority",
+        "next discriminating evidence action",
+        "source existence, access, technical readiness and allowed use separate",
+        "no structural change is warranted",
+        "Complete the required backward trace under capture's completion condition",
+        "preserve bound definitions and inputs",
+    ):
+        assert phrase in section
+    for target in (
+        "ontology.md#evidence-and-obligations",
+        "#market-relationships",
+        "ontology.md#author-or-change",
+        "capabilities.md#data-governance",
+        "#reviewed-correction",
+    ):
+        assert target in LINK.findall(section)
+    assert text.count("Setup does not supply their authority") == 1
+
+
+def test_target_timing_requires_a_supported_dependency_and_one_minimize_home():
+    text = METHOD.read_text(encoding="utf-8")
+    minimize = text[text.index("## Minimize") : text.index("## Perfect")]
+    reverse = text[text.index("## Reverse-engineer a product or service") : text.index("## Compose an Arbeitsschritt")]
+    prerequisites = text[text.index("## Work from prerequisites") : text.index("## Identify")]
+    clause = "retain an observed schedule, queue, batch or handoff as a target start or release condition"
+
+    assert text.count(clause) == 1
+    assert (
+        f"{clause} only when a named, supported dependency "
+        "requires that timing or transfer"
+    ) in minimize
+    assert (
+        "Use explicitly settled design premises for this derivation unless concrete conflicting "
+        "or changed evidence requires reopening them; actual execution remains subject to "
+        "[Enforcement and completion](ontology.md#enforcement-and-completion)."
+    ) in minimize
+    assert (
+        "Derive the earliest supported start, completion and provision of each contribution from "
+        "its own prerequisites, required processing and acceptance; complete and provide "
+        "independently permitted results at those times."
+    ) in minimize
+    for phrase in (
+        "named, supported dependency",
+        "accepted result, source freshness, capacity, a protective contribution, authority or recipient use",
+        "earliest supported start, completion and provision of each contribution",
+        "own prerequisites, required processing and acceptance",
+        "complete and provide independently permitted results at those times",
+        "explicitly settled design premises",
+        "concrete conflicting or changed evidence requires reopening them",
+        "actual execution remains subject to [Enforcement and completion](ontology.md#enforcement-and-completion)",
+        "actual input and resource availability separately as feasibility constraints",
+        "unresolved dependencies keep the affected proposal conditional",
+    ):
+        assert phrase in minimize
+    assert "[trigger conditions](#minimize)" in reverse
+    assert "For target timing and handoff conditions, apply [Minimize](#minimize)" in prerequisites
+    assert "Working hours, organizational history and current staffing do not define the target process" not in text
+    assert "Actual availability remains a feasibility constraint even when current role boundaries are challenged" not in text
+
+
+def test_german_guide_carries_supported_target_timing_boundary():
+    text = GERMAN_GUIDE.read_text(encoding="utf-8")
+    timing = text[
+        text.index("Bei Einrichtung oder Neugestaltung einen beobachteten Zeitplan") :
+        text.index("Die Bedeutung einer Kennzahl umfasst")
+    ]
+
+    for phrase in (
+        "beobachteten Zeitplan, eine Warteschlange, Bündelung oder Übergabe nur dann",
+        "benannte, belegte Abhängigkeit",
+        "frühesten begründeten Zeitpunkte für Beginn, Fertigstellung und Bereitstellung",
+        "Unabhängig erlaubte Ergebnisse sind zu diesen Zeitpunkten fertigzustellen und bereitzustellen",
+        "ausdrücklich geklärte Entwurfsprämissen",
+        "konkreten widersprechenden oder geänderten Belege",
+        "[Enforcement and completion](../ontology.md#enforcement-and-completion)",
+        "Verfügbarkeit von Eingaben und Ressourcen getrennt als Machbarkeitsgrenzen",
+        "bei ungeklärten Abhängigkeiten bleibt der betroffene Vorschlag bedingt",
+        "[Auslösebedingungen](../impacts-method.md#minimize)",
+    ):
+        assert phrase in text
+    assert (
+        "Die eigenen Voraussetzungen, erforderliche Verarbeitung und Abnahme bestimmen für jeden "
+        "Beitrag die frühesten begründeten Zeitpunkte für Beginn, Fertigstellung und Bereitstellung."
+    ) in timing
+    assert (
+        "Für diese Ableitung gelten ausdrücklich geklärte Entwurfsprämissen, solange keine konkreten "
+        "widersprechenden oder geänderten Belege ihre erneute Klärung erfordern; die tatsächliche "
+        "Ausführung folgt weiterhin [Enforcement and completion](../ontology.md#enforcement-and-completion)."
+    ) in timing
+
+
+def test_capture_form_selection_skill_and_router_reach_result_first_setup_without_core():
+    method = METHOD.read_text(encoding="utf-8")
+    capture = method[method.index("## Capture business meaning") : method.index("## Market relationships")]
+    form = FORM_SELECTION.read_text(encoding="utf-8")
+    skill = _body()
+    router = PROTOCOL_ROUTER.read_text(encoding="utf-8")
+
+    assert "before selecting a form or executor" in capture
+    assert "does not silently reopen the design" in capture
+    assert "work is being set up or materially redesigned" in form
+    assert "This derivation can precede an established repeatable result" in form
+    report = form[form.index("## Work report before proposing a tree") : form.index("## Composition")]
+    assert report.index("derive a provisional result boundary") < report.index("Selected existing forms")
+    skill_selection = skill[skill.index("## Form selection") : skill.index("## Choose a mode")]
+    assert "does not require an established Pipeline or Build mode" in skill_selection
+    assert skill_selection.index("derive the intended result") < skill_selection.index("complete the work-report recipe")
+    build = skill[skill.index("## Build mode") : skill.index("## Restructure mode")]
+    assert "work being set up or materially redesigned from an intended result" in build
+    route = next(line for line in router.splitlines() if "materially redesigned" in line)
+    assert "Reverse-engineer a product or service" in route
+    assert "Market relationships" in route
+    assert "Author or change" in route
+
+
+def test_german_guide_carries_result_first_meaning_and_scope_limits():
+    text = GERMAN_GUIDE.read_text(encoding="utf-8")
+
+    for phrase in (
+        "### Arbeit vom Ergebnis her einrichten oder neu gestalten",
+        "bevor eine Form oder ein Ausführender gewählt",
+        "Der beobachtete Ablauf ist Evidenz und nicht automatisch der Zielablauf",
+        "Die Einrichtung erteilt dafür keine Befugnis",
+        "nächste unterscheidende Evidenzhandlung",
+        "vorgesehenen Verwendungszweck",
+        "keine strukturelle Änderung nötig",
+        "erforderliche Rückwärtsableitung nach der Abschlussbedingung der Aufnahme vollständig",
+        "gebundene Definitionen und Eingaben erhalten",
+        "Reine Aufnahme bleibt Aufnahme",
+    ):
+        assert phrase in text
+
+
+def test_result_first_setup_adds_no_oracle_or_morphological_routine():
+    public_protocol = "\n".join(
+        path.read_text(encoding="utf-8")
+        for path in (METHOD, PROTOCOL_ROUTER, SKILL_FILE, FORM_SELECTION, GERMAN_GUIDE)
+    ).lower()
+
+    assert "oracle" not in public_protocol
+    assert "morpholog" not in public_protocol
 
 
 def test_protocol_router_sends_initialization_and_topology_to_form_selection():
@@ -475,6 +631,94 @@ def test_protocol_router_partitions_maintenance_from_route_use_and_diagnosis():
     for phrase in ("existing route", "projection", "missing linked or delivered material", "context-efficiency claim"):
         assert phrase in route_use
         assert phrase not in maintenance
+
+
+def test_protocol_router_sends_setup_before_bounded_workstep_composition():
+    text = PROTOCOL_ROUTER.read_text(encoding="utf-8")
+    compose = next(
+        line
+        for line in text.splitlines()
+        if line.startswith("| Workstep prompt")
+        and "#compose-an-arbeitsschritt" in line
+    )
+    setup = next(
+        line
+        for line in text.splitlines()
+        if line.startswith("|") and "#reverse-engineer-a-product-or-service" in line
+    )
+
+    assert "for an already-bounded workstep" in compose
+    assert "before form or executor selection" in setup
+    assert text.index(setup) < text.index(compose)
+
+
+def test_market_route_sends_new_meaning_to_author_or_change():
+    text = PROTOCOL_ROUTER.read_text(encoding="utf-8")
+    method = METHOD.read_text(encoding="utf-8")
+    german = GERMAN_GUIDE.read_text(encoding="utf-8")
+    market = next(
+        line
+        for line in text.splitlines()
+        if line.startswith("| Market structure") and "#market-relationships" in line
+    )
+
+    assert "new or changed offering or relationship meaning" in market
+    assert "](ontology.md#author-or-change)" in market
+    market_method = method[method.index("## Market relationships") : method.index("### Ongoing service and demand")]
+    assert (
+        "Before proposing new or changed offering or relationship meaning, "
+        "including a hypothesis, follow [Author or change](ontology.md#author-or-change)."
+    ) in market_method
+    assert "Apply [Use](ontology.md#use) to existing definitions." in market_method
+    german_market = german[
+        german.index("## Marktbeziehungen bei Bedarf erschließen") :
+        german.index("### Laufender Service und Nachfrage")
+    ]
+    assert (
+        "Vor dem Vorschlagen neuer oder geänderter Angebots- oder Beziehungsbedeutung, auch als "
+        "Hypothese, ist [Author or change](../ontology.md#author-or-change) zu durchlaufen."
+    ) in german_market
+    assert "Für die Anwendung vorhandener Definitionen gilt [Use](../ontology.md#use)." in german_market
+
+
+def test_context_selection_applies_inputs_and_exclusions_before_any_material_read():
+    text = METHOD.read_text(encoding="utf-8")
+    ontology = ONTOLOGY.read_text(encoding="utf-8")
+    german = GERMAN_GUIDE.read_text(encoding="utf-8")
+    section = text[text.index("## Load context locally first") : text.index("## Where the context lives")]
+
+    assert "before reading task material" in section.lower()
+    assert "declared inputs, direct links and explicit exclusions" in section
+    assert "Batch reads, searches and prior artifacts obey the same boundary" in section
+    assert (
+        "Before reading task material, derive the permitted read set from the selected route's "
+        "declared inputs, direct links and explicit exclusions. Read only that set; when another "
+        "item appears necessary, return to the owning route and resolve the gap before loading it."
+    ) in section
+    assert (
+        "Batch reads, searches and prior artifacts obey the same boundary. An excluded item is "
+        "not fallback context merely because it exists or was used by an earlier step."
+    ) in section
+
+    compose = text[text.index("## Compose an Arbeitsschritt") : text.index("## Work from prerequisites")]
+    assert "](#load-context-locally-first)" in compose
+    assert "batch reads, searches and prior artifacts" in compose
+
+    use = ontology[ontology.index("## Use") : ontology.index("## Domain definition pattern")]
+    assert (
+        "Before reading sources for these points, follow "
+        "[Load context locally first](impacts-method.md#load-context-locally-first) "
+        "to select the permitted material."
+    ) in use
+    german_use = german[
+        german.index("<!-- Translation source: 02_protocol/ontology.md;") :
+        german.index("<!-- Translation source: 02_protocol/impacts-method.md;")
+    ]
+    assert (
+        "Vor dem Lesen von Quellen für diese Antwortpunkte ist "
+        "[Kontext direkt routen](../impacts-method.md#load-context-locally-first) "
+        "zur Auswahl des zulässigen Materials anzuwenden."
+    ) in german_use
 
 
 def test_form_selection_states_file_orchestration_applicability_boundary():

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "impacts-protocol"
-version = "0.3.8"
+version = "0.3.9"
 description = "File-based process design and reliable work for people and agents"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -28,13 +28,16 @@ packages = [
     "impacts_protocol",
     "impacts_protocol.schemas",
     "impacts_protocol.templates",
+    "impacts_protocol.templates.de",
 ]
 
 [tool.setuptools.package-dir]
 impacts_protocol = "src/impacts_protocol"
 "impacts_protocol.schemas" = "02_protocol/schemas"
 "impacts_protocol.templates" = "02_protocol/templates"
+"impacts_protocol.templates.de" = "02_protocol/templates/de"
 
 [tool.setuptools.package-data]
 "impacts_protocol.schemas" = ["*.json"]
-"impacts_protocol.templates" = ["*.md", "de/*.md"]
+"impacts_protocol.templates" = ["*.md"]
+"impacts_protocol.templates.de" = ["*.md"]

@@ -1,6 +1,6 @@
 # ICM form selection
 
-Start with the unit that grows or repeats. For business intake, use [Capture business meaning](../../impacts-method.md#capture-business-meaning); given an offering or finished result, use [Reverse-engineer a product or service](../../impacts-method.md#reverse-engineer-a-product-or-service). Refine the form and populated home as evidence arrives. A provisional form does not confirm a process boundary.
+Start with the unit that grows or repeats. For business intake, use [Capture business meaning](../../impacts-method.md#capture-business-meaning). Given an offering or finished result, or when work is being set up or materially redesigned from an intended result, use [Reverse-engineer a product or service](../../impacts-method.md#reverse-engineer-a-product-or-service) before selecting a form or executor. This derivation can precede an established repeatable result. Refine the form and populated home as evidence arrives. A provisional form does not confirm a process boundary.
 
 Apply [Author or change](../../ontology.md#author-or-change) for missing or changing meaning and [Use](../../ontology.md#use) for existing definitions. This applies to every form, including work without a Pipeline; apply [evidence and obligations](../../ontology.md#evidence-and-obligations) at each use boundary. Customer-facing capture follows the [working language](../../language.md#enforce-at-use-boundaries).
 
@@ -25,6 +25,8 @@ When several open decisions need coordination, use a dated list in the existing 
 ## Work report before proposing a tree
 
 Before any tree proposal, briefly state:
+
+For work being set up or materially redesigned, first apply [Reverse-engineer a product or service](../../impacts-method.md#reverse-engineer-a-product-or-service) to derive a provisional result boundary and necessary contributions. Use that derivation in the report below before selecting a form; it may establish that no repeatable process form exists yet.
 
 1. Observed units that grow or repeat.
 2. [Selected existing forms](#select-the-form) and their rationale.

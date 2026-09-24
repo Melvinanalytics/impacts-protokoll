@@ -1,6 +1,6 @@
 ---
 name: impacts-architect
-description: Use when customer initialization or knowledge topology needs a file home, deriving processes from products/services or observed work, restructuring existing customer folders or linked repositories, moving shared meanings or skills, or importing an approved Application from a Fachrepo.
+description: Use when customer initialization or knowledge topology needs a file home, deriving or materially redesigning work from an intended result, restructuring existing customer folders or linked repositories, moving shared meanings or skills, or importing an approved Application from a Fachrepo.
 ---
 
 # IMPACTS Architect
@@ -30,7 +30,7 @@ Application/Run-specific invariants apply to selected Core contracts under the [
 
 ## Form selection
 
-Before proposing a tree, complete the work-report recipe in [formwahl.md](references/formwahl.md#arbeitsbericht-vor-baumvorschlag). Then select the smallest fitting form from the units that grow or repeat: Pipeline, Record Library, Knowledge Bundle, Context Map, Umbrella or System Map. Enter Build mode only when the selected form is a Pipeline using Core Application contracts. Ordinary process guidance reuses existing homes under [Tooling stop](references/formwahl.md#tooling-stopp); it does not require Build mode. For a non-process form, build only its native Markdown topology and use the applicable walk branch below.
+For work being set up or materially redesigned, first derive the intended result and necessary contributions through [reverse engineering](../impacts-method.md#reverse-engineer-a-product-or-service) before selecting a form or executor; this does not require an established Pipeline or Build mode. Before proposing a tree, complete the work-report recipe in [formwahl.md](references/formwahl.md#arbeitsbericht-vor-baumvorschlag) using that derived boundary. Select the smallest fitting form from the units that grow or repeat: Pipeline, Record Library, Knowledge Bundle, Context Map, Umbrella or System Map. Enter Build mode only when the selected form is a Pipeline using Core Application contracts. Ordinary process guidance reuses existing homes under [Tooling stop](references/formwahl.md#tooling-stopp); it does not require Build mode. For a non-process form, build only its native Markdown topology and use the applicable walk branch below.
 
 ## Choose a mode
 
@@ -51,7 +51,7 @@ For a System Map, use the existing repository map and files, then select and tes
 
 For selected Core Application/Run contracts, follow the method's phases in order; load each linked section when doing that work. Reuse the form-selection evidence and fill the existing Application template sections.
 
-1. [Identify](../impacts-method.md#identify). Use [reverse engineering](../impacts-method.md#reverse-engineer-a-product-or-service) for supplied products/services. For new observations without a suitable home, use [ist-prozess.md](templates/ist-prozess.md) or its [German counterpart](templates/de/ist-prozess.md) under `grundlagen/ist-prozesse/`.
+1. [Identify](../impacts-method.md#identify). Use [reverse engineering](../impacts-method.md#reverse-engineer-a-product-or-service) for supplied products/services and for work being set up or materially redesigned from an intended result. For new observations without a suitable home, use [ist-prozess.md](templates/ist-prozess.md) or its [German counterpart](templates/de/ist-prozess.md) under `grundlagen/ist-prozesse/`.
 2. [Minimize](../impacts-method.md#minimize). Record proposed removals and their consequences in `Value flow`.
 3. [Perfect](../impacts-method.md#perfect). Use [Leistung and decomposition](references/zuschnitt.md#leistung) to cut the supported work into the existing tree.
 4. [Augment](../impacts-method.md#augment). Close the minimum point-of-use context, its acquisition or derivation, freshness/control, destination and missing-context route for each retained contribution; then select contributions through the [automation boundary](references/zuschnitt.md#automation-boundary). Load Capability [extraction](../capabilities.md#wann-extrahieren) and [call](../capabilities.md#capability-aufruf) rules only when applicable.
