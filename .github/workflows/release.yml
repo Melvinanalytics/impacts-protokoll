@@ -130,8 +130,9 @@ jobs:
           test "$(git rev-parse "refs/tags/${RELEASE_TAG}^{}")" = "$(git rev-parse HEAD)"
           git fetch --no-tags origin +refs/heads/main:refs/remotes/origin/main
           git merge-base --is-ancestor HEAD refs/remotes/origin/main
-          python .github/scripts/release_guard.py source --root . --tag "${RELEASE_TAG}"
-          python .github/scripts/release_guard.py artifacts \
+          python3 -c 'import sys; assert sys.version_info >= (3, 11)'
+          python3 .github/scripts/release_guard.py source --root . --tag "${RELEASE_TAG}"
+          python3 .github/scripts/release_guard.py artifacts \
             --root . --dist "${DIST_DIR}" --tag "${RELEASE_TAG}"
 
       - name: Create or reuse exactly one hidden draft
@@ -174,8 +175,8 @@ jobs:
               done
           for path in "${DIST_DIR}"/*; do
             name="$(basename "${path}")"
-            gh api --hostname uploads.github.com --method POST \
-              "repos/${GITHUB_REPOSITORY}/releases/${RELEASE_ID}/assets?name=${name}" \
+            gh api --method POST \
+              "https://uploads.github.com/repos/${GITHUB_REPOSITORY}/releases/${RELEASE_ID}/assets?name=${name}" \
               -H "Content-Type: application/octet-stream" --input "${path}" > /dev/null
           done
 
@@ -184,13 +185,13 @@ jobs:
           RELEASE_ID: ${{ steps.draft.outputs.release_id }}
         run: |
           set -euo pipefail
-          python .github/scripts/release_guard.py live \
+          python3 .github/scripts/release_guard.py live \
             --repository "${GITHUB_REPOSITORY}" --tag "${RELEASE_TAG}" \
             --release-id "${RELEASE_ID}" --expect-draft \
             --dist "${DIST_DIR}" --retries 12
           gh api --method PATCH \
             "repos/${GITHUB_REPOSITORY}/releases/${RELEASE_ID}" \
             -F draft=false > /dev/null
-          python .github/scripts/release_guard.py live \
+          python3 .github/scripts/release_guard.py live \
             --repository "${GITHUB_REPOSITORY}" --tag "${RELEASE_TAG}" \
             --dist "${DIST_DIR}" --retries 12

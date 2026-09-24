@@ -160,6 +160,10 @@ def test_tag_workflow_separates_read_only_build_from_publication():
     assert "git cat-file -t" in workflow
     assert "git merge-base --is-ancestor HEAD refs/remotes/origin/main" in workflow
     assert "Expected zero or one Release" in publish
+    assert "https://uploads.github.com/repos/${GITHUB_REPOSITORY}/releases/${RELEASE_ID}/assets" in publish
+    assert "--hostname" not in publish
+    assert "python3 -c 'import sys; assert sys.version_info >= (3, 11)'" in publish
+    assert "\n          python " not in publish
     assert "--release-id" in workflow
     assert "--expect-draft" in workflow
     draft_verify = publish.index("release_guard.py live")

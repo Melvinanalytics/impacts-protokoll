@@ -29,6 +29,8 @@ IMPACTS_LIVE_RELEASE_CHECK=1 python -m pytest -q \
   tests/test_public_release.py::test_live_current_release_contains_required_assets
 ```
 
+That optional test checks the presence of the named assets. To verify their exact names and bytes, download them and run `release_guard.py live --tag vX.Y.Z --dist <download-directory>`.
+
 An edition does not identify a consumer's bound revision. Customer repositories continue to record the exact commit or verified archive they use.
 
 Historical debt remains historical: tags `v0.3.1`, `v0.2.0` and `v0.1.0` have no GitHub Release, and Releases before `v0.3.5` may omit the complete source archive. Do not delete or rewrite those tags or Releases without an explicit human decision.
