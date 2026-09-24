@@ -149,3 +149,9 @@ def test_release_identity_and_draft_state_must_match():
             "0.3.8",
             expected_tag="v0.3.9",
         )
+
+
+def test_live_command_reads_token_from_environment(monkeypatch):
+    monkeypatch.setenv("GH_TOKEN", "environment-token")
+    args = guard.parser().parse_args(["live", "--tag", "v0.3.8"])
+    assert args.token == "environment-token"

@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 from pathlib import Path
 import re
 import subprocess
@@ -283,7 +284,7 @@ def parser() -> argparse.ArgumentParser:
     live = sub.add_parser("live")
     live.add_argument("--repository", default=REPOSITORY)
     live.add_argument("--tag", required=True)
-    live.add_argument("--token")
+    live.add_argument("--token", default=os.environ.get("GH_TOKEN"))
     live.add_argument("--dist", type=Path)
     live.add_argument("--retries", type=int, default=1)
     live.add_argument("--release-id", type=int)

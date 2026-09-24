@@ -143,19 +143,30 @@ def test_checksum_recipe_downloads_every_listed_release_asset(path, required_ter
     assert "every listed asset" in paragraph or "jedes aufgeführte Artefakt" in paragraph
 
 
-def test_tag_workflow_publishes_only_after_remote_asset_verification():
+def test_tag_workflow_separates_read_only_build_from_publication():
     workflow = (ROOT / ".github/workflows/release.yml").read_text()
     assert 'tags:\n      - "v*"' in workflow
     assert "workflow_dispatch:" in workflow
-    assert "contents: write" in workflow
+    build = workflow[workflow.index("  build:\n") : workflow.index("  publish:\n")]
+    publish = workflow[workflow.index("  publish:\n") :]
+    assert "contents: read" in build
+    assert "contents: write" not in build
+    assert "pip install" in build
+    assert "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a" in build
+    assert "contents: write" in publish
+    assert "pip install" not in publish
+    assert "python -m build" not in publish
+    assert "actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c" in publish
     assert "git cat-file -t" in workflow
     assert "git merge-base --is-ancestor HEAD refs/remotes/origin/main" in workflow
-    assert "--draft --verify-tag" in workflow
+    assert "Expected zero or one Release" in publish
     assert "--release-id" in workflow
     assert "--expect-draft" in workflow
-    verify = workflow.index("release_guard.py live")
-    publish = workflow.index('gh release edit "${RELEASE_TAG}" --draft=false')
-    assert verify < publish
+    draft_verify = publish.index("release_guard.py live")
+    publish_by_id = publish.index("gh api --method PATCH")
+    final_verify = publish.rindex("release_guard.py live")
+    assert draft_verify < publish_by_id < final_verify
+    assert "--token" not in publish
     assert "pypi" not in workflow.lower()
 
 
