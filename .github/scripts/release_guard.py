@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import http.client
 import json
 import os
 from pathlib import Path
@@ -178,7 +179,12 @@ def _fetch_release_url(url: str, token: str | None = None) -> dict:
     )
     try:
         with urlopen(request, timeout=20) as response:
-            return json.load(response)
+            payload = json.load(response)
+            if not isinstance(payload, dict):
+                raise ReleaseGuardError(
+                    "GitHub Release lookup returned JSON that is not an object"
+                )
+            return payload
     except HTTPError as error:
         raise ReleaseGuardError(
             f"GitHub Release lookup failed for {url}: HTTP {error.code}"
@@ -186,6 +192,15 @@ def _fetch_release_url(url: str, token: str | None = None) -> dict:
     except (URLError, TimeoutError) as error:
         raise ReleaseGuardError(
             f"GitHub Release lookup failed for {url}: {error}"
+        ) from error
+    except (
+        OSError,
+        http.client.HTTPException,
+        json.JSONDecodeError,
+        UnicodeDecodeError,
+    ) as error:
+        raise ReleaseGuardError(
+            f"GitHub Release lookup failed for {url}: {type(error).__name__}: {error}"
         ) from error
 
 

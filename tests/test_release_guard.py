@@ -1,8 +1,10 @@
 import hashlib
+import http.client
 import importlib.util
 import io
 import json
 from pathlib import Path
+import ssl
 from urllib.error import HTTPError, URLError
 import zipfile
 
@@ -151,6 +153,103 @@ def test_live_release_retries_transient_network_errors(monkeypatch, network_erro
     guard.verify_live_release(
         "owner/repo", "v0.3.8", None, None, retries=2
     )
+    assert attempts == 2
+
+
+@pytest.mark.parametrize(
+    "network_error",
+    [
+        http.client.RemoteDisconnected("closed"),
+        ConnectionResetError("reset"),
+        ssl.SSLError("tls"),
+        http.client.IncompleteRead(b'{"tag_name":', 1),
+    ],
+)
+def test_live_release_retries_remaining_transport_errors(monkeypatch, network_error):
+    payload = {
+        "tag_name": "v0.3.8",
+        "draft": False,
+        "assets": [{"name": name} for name in guard.expected_assets("0.3.8")],
+    }
+    attempts = 0
+
+    def fake_urlopen(request, timeout):
+        nonlocal attempts
+        attempts += 1
+        if attempts == 1:
+            raise network_error
+        return _JsonResponse(json.dumps(payload).encode())
+
+    monkeypatch.setattr(guard, "urlopen", fake_urlopen)
+    monkeypatch.setattr(guard.time, "sleep", lambda _seconds: None)
+    guard.verify_live_release(
+        "owner/repo", "v0.3.8", None, None, retries=2
+    )
+    assert attempts == 2
+
+
+@pytest.mark.parametrize("bad_payload", [b'{"tag_name":', b"not-json", b"\xff"])
+def test_live_release_retries_response_decoding_errors(monkeypatch, bad_payload):
+    payload = {
+        "tag_name": "v0.3.8",
+        "draft": False,
+        "assets": [{"name": name} for name in guard.expected_assets("0.3.8")],
+    }
+    attempts = 0
+
+    def fake_urlopen(request, timeout):
+        nonlocal attempts
+        attempts += 1
+        if attempts == 1:
+            return _JsonResponse(bad_payload)
+        return _JsonResponse(json.dumps(payload).encode())
+
+    monkeypatch.setattr(guard, "urlopen", fake_urlopen)
+    monkeypatch.setattr(guard.time, "sleep", lambda _seconds: None)
+    guard.verify_live_release(
+        "owner/repo", "v0.3.8", None, None, retries=2
+    )
+    assert attempts == 2
+
+
+@pytest.mark.parametrize("bad_payload", [b"[]", b"null", b'"ok"'])
+def test_live_release_retries_non_object_json(monkeypatch, bad_payload):
+    payload = {
+        "tag_name": "v0.3.8",
+        "draft": False,
+        "assets": [{"name": name} for name in guard.expected_assets("0.3.8")],
+    }
+    attempts = 0
+
+    def fake_urlopen(request, timeout):
+        nonlocal attempts
+        attempts += 1
+        if attempts == 1:
+            return _JsonResponse(bad_payload)
+        return _JsonResponse(json.dumps(payload).encode())
+
+    monkeypatch.setattr(guard, "urlopen", fake_urlopen)
+    monkeypatch.setattr(guard.time, "sleep", lambda _seconds: None)
+    guard.verify_live_release(
+        "owner/repo", "v0.3.8", None, None, retries=2
+    )
+    assert attempts == 2
+
+
+def test_live_release_fails_closed_after_transport_retries(monkeypatch):
+    attempts = 0
+
+    def fake_urlopen(request, timeout):
+        nonlocal attempts
+        attempts += 1
+        raise http.client.RemoteDisconnected("closed")
+
+    monkeypatch.setattr(guard, "urlopen", fake_urlopen)
+    monkeypatch.setattr(guard.time, "sleep", lambda _seconds: None)
+    with pytest.raises(guard.ReleaseGuardError, match="RemoteDisconnected"):
+        guard.verify_live_release(
+            "owner/repo", "v0.3.8", None, None, retries=2
+        )
     assert attempts == 2
 
 
