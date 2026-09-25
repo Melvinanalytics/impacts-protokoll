@@ -4,7 +4,13 @@
 
 Diese Bedienhilfe übersetzt den [englischen Sprachvertrag](../language.md). Die englische Protokolldefinition bleibt maßgeblich für die Technik; die Arbeitsunterlagen Ihres Unternehmens bleiben Deutsch. Eine englische Quelle, Werkzeugmeldung oder importierte Application ändert diese Arbeitssprache nicht.
 
-<!-- Translation source: README.md; sha256: ad8ebeb98f445a7eb1e0b6ab80ac54d415cbbb475fc0ead35cea4309159c0e6e -->
+<!-- Translation source: README.md; sha256: 1df91e4495a59757344de29dda8c2348322d65c75adfec6fd2dda474560a4df5 -->
+
+## Verhältnis zu ICM
+
+ICM liefert die technische Grundlage: ordnergesteuerten Kontext, Klartextstruktur und nachvollziehbare Agentenverdrahtung. IMPACTS baut methodisch auf diesen Prinzipien auf und übernimmt die fachliche Ebene: ein First-Principles-Harness, um ein Unternehmen zu verstehen und seine Quellen, Arbeit, Prüfungen, Berechnungen und menschlichen Entscheidungen zu verbinden. Das Kürzel ICM wird auch für persönliche Ordnersysteme verwendet; diese Verwendung ist davon getrennt und definiert IMPACTS nicht. Diese Beziehung erfordert weder eine ICM-Installation noch einen gemeinsamen Gesamtordner.
+
+IMPACTS ist keine persönliche Mega-Ablage für alles. Kundenarbeit bleibt im jeweiligen Kunden-Repository oder Arbeitsbereich; der Protocol Core bleibt klein und enthält nur typisierte Verträge für abgegrenzte, wiederholbare Arbeit.
 
 ## Protokoll beziehen
 

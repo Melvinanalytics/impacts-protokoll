@@ -12,6 +12,12 @@ Agents may interpret and draft. Required calculations need executed deterministi
 
 > **Agent start:** Resolve the [protocol version and source](#version-and-entry-points), read [CONTEXT.md](CONTEXT.md), and follow one selected route. Keep customer material in its customer workspace.
 
+## Relationship to ICM
+
+ICM supplies the technical foundation: folder-directed context, plain-file structure and inspectable agent wiring. IMPACTS builds methodically on those principles at the business layer: a first-principles harness for understanding a company and connecting its sources, work, checks, calculations and human decisions. The acronym ICM is also used for personal folder systems; that usage is separate and does not define IMPACTS. This relationship requires neither an ICM installation nor one shared folder.
+
+IMPACTS is not a personal mega-folder for everything. Customer work remains in each customer's repository or workspace; the protocol Core stays small and holds only typed contracts for bounded, repeatable work.
+
 ## Follow your task
 
 | You have… | Start here | First completion |
