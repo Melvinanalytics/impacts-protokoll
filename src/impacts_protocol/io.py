@@ -22,28 +22,30 @@ class PathEscapeError(ValueError):
     """A source path resolves outside its declared workspace root."""
 
 
-class _StrictLoader(yaml.SafeLoader):
-    pass
+def _strict_loader(base_loader: type) -> type:
+    """Give either safe parser its own strict mapping constructor."""
+
+    class StrictLoader(base_loader):
+        pass
+
+    def construct_unique_mapping(
+        loader: StrictLoader, node: MappingNode, deep: bool = False
+    ) -> dict[Any, Any]:
+        seen: set[str] = set()
+        for key_node, _ in node.value:
+            key = loader.construct_object(key_node, deep=deep)
+            if not isinstance(key, str):
+                raise ValueError("frontmatter keys must be strings")
+            if key in seen:
+                raise DuplicateKeyError(key)
+            seen.add(key)
+        return base_loader.construct_mapping(loader, node, deep=deep)
+
+    StrictLoader.add_constructor(YAML_MAPPING_TAG, construct_unique_mapping)
+    return StrictLoader
 
 
-def _construct_unique_mapping(
-    loader: _StrictLoader, node: MappingNode, deep: bool = False
-) -> dict[Any, Any]:
-    seen: set[str] = set()
-    for key_node, _ in node.value:
-        key = loader.construct_object(key_node, deep=deep)
-        if not isinstance(key, str):
-            raise ValueError("frontmatter keys must be strings")
-        if key in seen:
-            raise DuplicateKeyError(key)
-        seen.add(key)
-    return yaml.SafeLoader.construct_mapping(loader, node, deep=deep)
-
-
-_StrictLoader.add_constructor(
-    YAML_MAPPING_TAG,
-    _construct_unique_mapping,
-)
+_StrictLoader = _strict_loader(getattr(yaml, "CSafeLoader", yaml.SafeLoader))
 
 
 def load_frontmatter(path: Path, root: Path | None = None) -> dict[str, Any]:
