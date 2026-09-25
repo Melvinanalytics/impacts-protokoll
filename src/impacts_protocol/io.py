@@ -22,28 +22,49 @@ class PathEscapeError(ValueError):
     """A source path resolves outside its declared workspace root."""
 
 
-class _StrictLoader(yaml.SafeLoader):
-    pass
+def _strict_loader(base_loader: type) -> type:
+    """Give either safe parser its own strict mapping constructor."""
+
+    class StrictLoader(base_loader):
+        pass
+
+    def construct_unique_mapping(
+        loader: StrictLoader, node: MappingNode, deep: bool = False
+    ) -> dict[Any, Any]:
+        seen: set[str] = set()
+        for key_node, _ in node.value:
+            key = loader.construct_object(key_node, deep=deep)
+            if not isinstance(key, str):
+                raise ValueError("frontmatter keys must be strings")
+            if key in seen:
+                raise DuplicateKeyError(key)
+            seen.add(key)
+        return base_loader.construct_mapping(loader, node, deep=deep)
+
+    StrictLoader.add_constructor(YAML_MAPPING_TAG, construct_unique_mapping)
+    return StrictLoader
 
 
-def _construct_unique_mapping(
-    loader: _StrictLoader, node: MappingNode, deep: bool = False
-) -> dict[Any, Any]:
-    seen: set[str] = set()
-    for key_node, _ in node.value:
-        key = loader.construct_object(key_node, deep=deep)
-        if not isinstance(key, str):
-            raise ValueError("frontmatter keys must be strings")
-        if key in seen:
-            raise DuplicateKeyError(key)
-        seen.add(key)
-    return yaml.SafeLoader.construct_mapping(loader, node, deep=deep)
+_PythonStrictLoader = _strict_loader(yaml.SafeLoader)
+_C_SAFE_LOADER = getattr(yaml, "CSafeLoader", None)
+_StrictLoader = _strict_loader(_C_SAFE_LOADER) if _C_SAFE_LOADER else _PythonStrictLoader
 
 
-_StrictLoader.add_constructor(
-    YAML_MAPPING_TAG,
-    _construct_unique_mapping,
-)
+def _load_yaml(source: str) -> Any:
+    # LibYAML and PyYAML's Python parser disagree on some valid and invalid
+    # syntax. Keep the Python parser for those syntax families; use C for the
+    # common plain block form, retrying Python if C alone rejects it.
+    if _C_SAFE_LOADER is None or not issubclass(_StrictLoader, _C_SAFE_LOADER):
+        return yaml.load(source, Loader=_PythonStrictLoader)
+    sensitive = "![]{}&*?|>\\'\"%@`#"
+    if any(char in source for char in sensitive) or not source.replace("\n", "").isprintable():
+        return yaml.load(source, Loader=_PythonStrictLoader)
+    try:
+        return yaml.load(source, Loader=_StrictLoader)
+    except DuplicateKeyError:
+        raise
+    except (yaml.YAMLError, ValueError):
+        return yaml.load(source, Loader=_PythonStrictLoader)
 
 
 def load_frontmatter(path: Path, root: Path | None = None) -> dict[str, Any]:
@@ -70,10 +91,7 @@ def load_frontmatter_and_body(
     except StopIteration as error:
         raise ValueError("frontmatter has no closing delimiter") from error
     try:
-        value = yaml.load(
-            "\n".join(lines[1:closing_index]),
-            Loader=_StrictLoader,
-        )
+        value = _load_yaml("\n".join(lines[1:closing_index]))
     except DuplicateKeyError:
         raise
     except yaml.YAMLError as error:
@@ -94,18 +112,3 @@ def _read_text(path: Path, root: Path | None) -> str:
     if root is not None and not resolved.is_relative_to(Path(root).resolve()):
         raise PathEscapeError("source path resolves outside workspace root")
     return resolved.read_text(encoding="utf-8")
-
-
-def _has_symlink_component(path: Path, root: Path) -> bool:
-    try:
-        relative = path.relative_to(root)
-    except ValueError:
-        return True
-    current = root
-    if current.is_symlink():
-        return True
-    for part in relative.parts:
-        current = current / part
-        if current.is_symlink():
-            return True
-    return False

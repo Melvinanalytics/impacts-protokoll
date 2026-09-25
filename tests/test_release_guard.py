@@ -1,8 +1,10 @@
 import hashlib
+import http.client
 import importlib.util
 import io
 import json
 from pathlib import Path
+import ssl
 from urllib.error import HTTPError, URLError
 import zipfile
 
@@ -128,6 +130,15 @@ def test_draft_release_is_resolved_by_id_when_published_tag_endpoint_is_404(monk
         expected_tag="v0.3.8",
         expected_draft=True,
     )
+    guard.verify_live_release(
+        "owner/repo",
+        "v0.3.8",
+        "token",
+        None,
+        retries=1,
+        release_id=12345,
+        expected_draft=True,
+    )
 
 
 @pytest.mark.parametrize("network_error", [URLError("dns"), TimeoutError("timeout")])
@@ -152,6 +163,232 @@ def test_live_release_retries_transient_network_errors(monkeypatch, network_erro
         "owner/repo", "v0.3.8", None, None, retries=2
     )
     assert attempts == 2
+
+
+@pytest.mark.parametrize(
+    "network_error",
+    [
+        http.client.RemoteDisconnected("closed"),
+        ConnectionResetError("reset"),
+        ssl.SSLError("tls"),
+        ssl.SSLEOFError("tls-eof"),
+        http.client.IncompleteRead(b'{"tag_name":', 1),
+    ],
+)
+def test_live_release_retries_remaining_transport_errors(monkeypatch, network_error):
+    payload = {
+        "tag_name": "v0.3.8",
+        "draft": False,
+        "assets": [{"name": name} for name in guard.expected_assets("0.3.8")],
+    }
+    attempts = 0
+
+    def fake_urlopen(request, timeout):
+        nonlocal attempts
+        attempts += 1
+        if attempts == 1:
+            raise network_error
+        return _JsonResponse(json.dumps(payload).encode())
+
+    monkeypatch.setattr(guard, "urlopen", fake_urlopen)
+    monkeypatch.setattr(guard.time, "sleep", lambda _seconds: None)
+    guard.verify_live_release(
+        "owner/repo", "v0.3.8", None, None, retries=2
+    )
+    assert attempts == 2
+
+
+@pytest.mark.parametrize("bad_payload", [b'{"tag_name":', b"not-json", b"\xff"])
+def test_live_release_retries_response_decoding_errors(monkeypatch, bad_payload):
+    payload = {
+        "tag_name": "v0.3.8",
+        "draft": False,
+        "assets": [{"name": name} for name in guard.expected_assets("0.3.8")],
+    }
+    attempts = 0
+
+    def fake_urlopen(request, timeout):
+        nonlocal attempts
+        attempts += 1
+        if attempts == 1:
+            return _JsonResponse(bad_payload)
+        return _JsonResponse(json.dumps(payload).encode())
+
+    monkeypatch.setattr(guard, "urlopen", fake_urlopen)
+    monkeypatch.setattr(guard.time, "sleep", lambda _seconds: None)
+    guard.verify_live_release(
+        "owner/repo", "v0.3.8", None, None, retries=2
+    )
+    assert attempts == 2
+
+
+@pytest.mark.parametrize("bad_payload", [b"[]", b"null", b'"ok"'])
+def test_live_release_rejects_non_object_json_without_retry(monkeypatch, bad_payload):
+    attempts = 0
+    sleeps = []
+
+    def fake_urlopen(request, timeout):
+        nonlocal attempts
+        attempts += 1
+        return _JsonResponse(bad_payload)
+
+    monkeypatch.setattr(guard, "urlopen", fake_urlopen)
+    monkeypatch.setattr(guard.time, "sleep", sleeps.append)
+    with pytest.raises(guard.ReleaseGuardError, match="not an object"):
+        guard.verify_live_release(
+            "owner/repo", "v0.3.8", None, None, retries=3
+        )
+    assert attempts == 1
+    assert sleeps == []
+
+
+@pytest.mark.parametrize("status", [408, 500, 502, 503, 504])
+def test_live_release_retries_selected_http_statuses(monkeypatch, status):
+    payload = {
+        "tag_name": "v0.3.8",
+        "draft": False,
+        "assets": [{"name": name} for name in guard.expected_assets("0.3.8")],
+    }
+    attempts = 0
+    sleeps = []
+
+    def fake_urlopen(request, timeout):
+        nonlocal attempts
+        attempts += 1
+        if attempts == 1:
+            raise HTTPError(request.full_url, status, "transient", {}, None)
+        return _JsonResponse(json.dumps(payload).encode())
+
+    monkeypatch.setattr(guard, "urlopen", fake_urlopen)
+    monkeypatch.setattr(guard.time, "sleep", sleeps.append)
+    guard.verify_live_release(
+        "owner/repo", "v0.3.8", None, None, retries=2
+    )
+    assert attempts == 2
+    assert sleeps == [5]
+
+
+@pytest.mark.parametrize("status", [401, 403, 404, 422, 429])
+def test_live_release_rejects_terminal_http_statuses_without_retry(monkeypatch, status):
+    attempts = 0
+    sleeps = []
+
+    def fake_urlopen(request, timeout):
+        nonlocal attempts
+        attempts += 1
+        raise HTTPError(request.full_url, status, "terminal", {}, None)
+
+    monkeypatch.setattr(guard, "urlopen", fake_urlopen)
+    monkeypatch.setattr(guard.time, "sleep", sleeps.append)
+    with pytest.raises(guard.ReleaseGuardError, match=f"HTTP {status}"):
+        guard.verify_live_release(
+            "owner/repo", "v0.3.8", None, None, retries=3
+        )
+    assert attempts == 1
+    assert sleeps == []
+
+
+def test_live_release_rejects_retry_after_without_scheduling(monkeypatch):
+    attempts = 0
+    sleeps = []
+
+    def fake_urlopen(request, timeout):
+        nonlocal attempts
+        attempts += 1
+        raise HTTPError(
+            request.full_url,
+            503,
+            "retry later",
+            {"Retry-After": "60"},
+            None,
+        )
+
+    monkeypatch.setattr(guard, "urlopen", fake_urlopen)
+    monkeypatch.setattr(guard.time, "sleep", sleeps.append)
+    with pytest.raises(guard.ReleaseGuardError, match="Retry-After"):
+        guard.verify_live_release(
+            "owner/repo", "v0.3.8", None, None, retries=3
+        )
+    assert attempts == 1
+    assert sleeps == []
+
+
+@pytest.mark.parametrize(
+    "certificate_error",
+    [
+        ssl.SSLCertVerificationError(1, "certificate verify failed"),
+        URLError(ssl.SSLCertVerificationError(1, "certificate verify failed")),
+    ],
+)
+def test_live_release_rejects_certificate_failures_without_retry(
+    monkeypatch, certificate_error
+):
+    attempts = 0
+    sleeps = []
+
+    def fake_urlopen(request, timeout):
+        nonlocal attempts
+        attempts += 1
+        raise certificate_error
+
+    monkeypatch.setattr(guard, "urlopen", fake_urlopen)
+    monkeypatch.setattr(guard.time, "sleep", sleeps.append)
+    with pytest.raises(guard.ReleaseGuardError, match="certificate"):
+        guard.verify_live_release(
+            "owner/repo", "v0.3.8", None, None, retries=3
+        )
+    assert attempts == 1
+    assert sleeps == []
+
+
+def test_live_release_rejects_semantic_mismatch_without_retry(monkeypatch):
+    attempts = 0
+    sleeps = []
+    payload = {
+        "tag_name": "v0.3.9",
+        "draft": False,
+        "assets": [{"name": name} for name in guard.expected_assets("0.3.8")],
+    }
+
+    def fake_urlopen(request, timeout):
+        nonlocal attempts
+        attempts += 1
+        return _JsonResponse(json.dumps(payload).encode())
+
+    monkeypatch.setattr(guard, "urlopen", fake_urlopen)
+    monkeypatch.setattr(guard.time, "sleep", sleeps.append)
+    with pytest.raises(guard.ReleaseGuardError, match="Release tag"):
+        guard.verify_live_release(
+            "owner/repo", "v0.3.8", None, None, retries=3
+        )
+    assert attempts == 1
+    assert sleeps == []
+
+
+def test_live_release_fails_closed_after_transport_retries(monkeypatch):
+    attempts = 0
+    sleeps = []
+
+    def fake_urlopen(request, timeout):
+        nonlocal attempts
+        attempts += 1
+        raise http.client.RemoteDisconnected("closed")
+
+    monkeypatch.setattr(guard, "urlopen", fake_urlopen)
+    monkeypatch.setattr(guard.time, "sleep", sleeps.append)
+    with pytest.raises(guard.ReleaseGuardError, match="RemoteDisconnected"):
+        guard.verify_live_release(
+            "owner/repo", "v0.3.8", None, None, retries=2
+        )
+    assert attempts == 2
+    assert sleeps == [5]
+
+
+def test_live_release_requires_at_least_one_attempt():
+    with pytest.raises(guard.ReleaseGuardError, match="at least 1"):
+        guard.verify_live_release(
+            "owner/repo", "v0.3.8", None, None, retries=0
+        )
 
 
 def test_release_identity_and_draft_state_must_match():

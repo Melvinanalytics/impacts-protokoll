@@ -7,7 +7,6 @@ import shlex
 
 from .generator import LANGUAGES, TEMPLATE_KINDS, init_workspace, template_text
 from .hashing import HashSurfaceError, surface_hash
-from .validator import validate
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -57,6 +56,8 @@ def main(argv: list[str] | None = None) -> int:
             print(error, file=sys.stderr)
             return 1
         return 0
+    from .validator import validate
+
     report = validate(Path(args.path))
     for issue in report.issues:
         print(f"{issue.code}: {issue.path}: {issue.message}")

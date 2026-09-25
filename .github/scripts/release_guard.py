@@ -5,10 +5,12 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import http.client
 import json
 import os
 from pathlib import Path
 import re
+import ssl
 import subprocess
 import tarfile
 import time
@@ -24,6 +26,13 @@ DOC_PATHS = ("README.md", "02_protocol/translations/de.md")
 
 class ReleaseGuardError(RuntimeError):
     """A release identity or artifact invariant failed."""
+
+
+class _RetryableReleaseLookupError(ReleaseGuardError):
+    """A read-only GitHub Release lookup may succeed on another attempt."""
+
+
+_RETRYABLE_HTTP_STATUSES = frozenset({408, 500, 502, 503, 504})
 
 
 def project_version(root: Path) -> str:
@@ -178,14 +187,45 @@ def _fetch_release_url(url: str, token: str | None = None) -> dict:
     )
     try:
         with urlopen(request, timeout=20) as response:
-            return json.load(response)
+            payload = json.load(response)
+            if not isinstance(payload, dict):
+                raise ReleaseGuardError(
+                    f"GitHub Release lookup for {url} returned JSON that is not an object"
+                )
+            return payload
     except HTTPError as error:
-        raise ReleaseGuardError(
-            f"GitHub Release lookup failed for {url}: HTTP {error.code}"
-        ) from error
+        message = f"GitHub Release lookup failed for {url}: HTTP {error.code}"
+        retry_after = (
+            error.headers.get("Retry-After") if error.headers is not None else None
+        )
+        if retry_after is not None:
+            raise ReleaseGuardError(
+                f"{message}; Retry-After {retry_after!r} requires a later invocation"
+            ) from error
+        if error.code in _RETRYABLE_HTTP_STATUSES:
+            raise _RetryableReleaseLookupError(message) from error
+        raise ReleaseGuardError(message) from error
     except (URLError, TimeoutError) as error:
-        raise ReleaseGuardError(
+        reason = error.reason if isinstance(error, URLError) else error
+        if isinstance(reason, ssl.SSLCertVerificationError):
+            raise ReleaseGuardError(
+                f"GitHub Release lookup failed for {url}: certificate verification failed: {reason}"
+            ) from error
+        raise _RetryableReleaseLookupError(
             f"GitHub Release lookup failed for {url}: {error}"
+        ) from error
+    except ssl.SSLCertVerificationError as error:
+        raise ReleaseGuardError(
+            f"GitHub Release lookup failed for {url}: certificate verification failed: {error}"
+        ) from error
+    except (
+        OSError,
+        http.client.HTTPException,
+        json.JSONDecodeError,
+        UnicodeDecodeError,
+    ) as error:
+        raise _RetryableReleaseLookupError(
+            f"GitHub Release lookup failed for {url}: {type(error).__name__}: {error}"
         ) from error
 
 
@@ -248,8 +288,10 @@ def verify_live_release(
     release_id: int | None = None,
     expected_draft: bool | None = None,
 ) -> None:
+    if retries < 1:
+        raise ReleaseGuardError("Release lookup retries must be at least 1")
     version = version_from_tag(tag)
-    last_error: Exception | None = None
+    last_error: _RetryableReleaseLookupError | None = None
     for attempt in range(retries):
         try:
             payload = (
@@ -257,20 +299,22 @@ def verify_live_release(
                 if release_id is not None
                 else fetch_release(repository, tag, token)
             )
-            verify_release_payload(
-                payload,
-                version,
-                dist,
-                require_exact=dist is not None,
-                require_digests=dist is not None,
-                expected_tag=tag,
-                expected_draft=expected_draft,
-            )
-            return
-        except ReleaseGuardError as error:
+        except _RetryableReleaseLookupError as error:
             last_error = error
             if attempt + 1 < retries:
                 time.sleep(5)
+                continue
+            break
+        verify_release_payload(
+            payload,
+            version,
+            dist,
+            require_exact=dist is not None,
+            require_digests=dist is not None,
+            expected_tag=tag,
+            expected_draft=expected_draft,
+        )
+        return
     assert last_error is not None
     raise last_error
 

@@ -15,8 +15,6 @@ import json
 from pathlib import Path
 from typing import Sequence
 
-from .io import _has_symlink_component
-
 
 class HashSurfaceError(ValueError):
     """A declared hash surface cannot be bound."""
@@ -85,3 +83,18 @@ def _candidates(source: Path, attempt_root: Path) -> list[Path]:
     if not files:
         raise HashSurfaceError("hash.mismatch", source, "Declared hash surface has no regular file")
     return sorted(files)
+
+
+def _has_symlink_component(path: Path, root: Path) -> bool:
+    try:
+        relative = path.relative_to(root)
+    except ValueError:
+        return True
+    current = root
+    if current.is_symlink():
+        return True
+    for part in relative.parts:
+        current = current / part
+        if current.is_symlink():
+            return True
+    return False

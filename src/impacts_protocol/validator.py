@@ -10,13 +10,13 @@ from pathlib import Path
 import re
 import subprocess
 from tempfile import TemporaryDirectory
-from typing import Any
+from typing import Any, Callable, Iterable
 
 from jsonschema import Draft202012Validator, FormatChecker
 from referencing import Registry, Resource
 
-from .hashing import HashSurfaceError, surface_hash
-from .io import _has_symlink_component, load_frontmatter_and_body
+from .hashing import HashSurfaceError, _has_symlink_component, surface_hash
+from .io import load_frontmatter_and_body
 from .model import Issue, ValidationReport
 from .workspace_contract import WORKSPACE_FOLDERS
 
@@ -157,13 +157,14 @@ def _validate_workspace(root: Path, issues: list[Issue]) -> None:
     runs = root / "vorgaenge"
     # Definitions are immutable; run files and Git refs are rechecked on every call.
     definitions: dict[str, Application | str] = {}
+    reachable = _ReachableApplications(workspace=root)
     with ExitStack() as snapshots:
         if runs.is_dir() and not runs.is_symlink():
             for path in sorted(runs.iterdir(), key=lambda item: item.name):
                 if path.is_symlink():
                     _add(issues, "structure.symlink", path, root, "Vorgang is a symlink")
                 elif path.is_dir():
-                    _validate_vorgang(path, root, issues, definitions, snapshots)
+                    _validate_vorgang(path, root, issues, definitions, snapshots, reachable)
                 else:
                     _add(issues, "structure.invalid", path, root, "Vorgaenge contains a non-directory")
 
@@ -290,6 +291,7 @@ def _validate_graph(application: Application, issues: list[Issue]) -> None:
 def _validate_vorgang(
     run_root: Path, workspace: Path, issues: list[Issue],
     definitions: dict[str, Application | str], snapshots: ExitStack,
+    reachable: "_ReachableApplications",
 ) -> None:
     _reject_symlinks(run_root, workspace, issues)
     document = _load_context(
@@ -303,7 +305,7 @@ def _validate_vorgang(
     if document.get("id") != f"vorgang:{run_root.name}":
         _add(issues, "structure.invalid", run_root, workspace, "Vorgang ID must match folder slug")
     application = _resolve_application(
-        workspace, document.get("application_revision"), run_root, issues, definitions, snapshots
+        workspace, document.get("application_revision"), run_root, issues, definitions, snapshots, reachable
     )
     if application is None:
         return
@@ -446,6 +448,7 @@ def _resolve_application(
     issues: list[Issue],
     definitions: dict[str, Application | str],
     snapshots: ExitStack,
+    reachable: "_ReachableApplications",
 ) -> Application | None:
     if not isinstance(revision, str) or re.fullmatch(r"git-tree:(?:[0-9a-f]{40}|[0-9a-f]{64})", revision) is None:
         _add(issues, "revision.invalid", run_root / "CONTEXT.md", workspace, "Application revision is invalid")
@@ -487,34 +490,168 @@ def _resolve_application(
         reject(f"{message}: {details}" if details else message)
         return None
     slug = application.hauptprozess["id"].removeprefix("hauptprozess:")
-    if not _tree_is_reachable_application(workspace, oid, slug):
+    if not reachable.contains(oid, slug):
         reject("Application tree is missing or unreachable at its declared slug")
         return None
     definitions[revision] = application
     return application
 
 
-def _tree_is_reachable_application(workspace: Path, oid: str, slug: str) -> bool:
-    commits = _git(workspace, "rev-list", "--all")
-    if commits is None:
-        return False
-    for commit in commits.splitlines():
-        listing = _git(workspace, "ls-tree", "-r", "-d", commit, "--", "applications")
-        if listing is None:
+class _GitBatch:
+    """One bounded-lifetime Git process; read exactly one raw object at a time."""
+
+    def __init__(self, root: Path):
+        self.process = subprocess.Popen(
+            ["git", "--no-replace-objects", "-C", str(root), "cat-file", "--batch"],
+            stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+        )
+        self.failed = False
+
+    def read(self, oid: str) -> tuple[str, bytes] | None:
+        if self.failed or not re.fullmatch(r"(?:[0-9a-f]{40}|[0-9a-f]{64})", oid):
+            self.failed = True
+            return None
+        try:
+            assert self.process.stdin is not None and self.process.stdout is not None
+            self.process.stdin.write(oid.encode("ascii") + b"\n")
+            self.process.stdin.flush()
+            header = self.process.stdout.readline()
+            if header == oid.encode("ascii") + b" missing\n":
+                return None
+            match = re.fullmatch(rb"([0-9a-f]{40}|[0-9a-f]{64}) (\w+) ([0-9]+)\n", header)
+            if match is None or match[1].decode("ascii") != oid:
+                self.failed = True
+                return None
+            size = int(match[3])
+            content = self.process.stdout.read(size)
+            if len(content) != size or self.process.stdout.read(1) != b"\n":
+                self.failed = True
+                return None
+            return match[2].decode("ascii"), content
+        except (OSError, UnicodeError, ValueError):
+            self.failed = True
+            return None
+
+    def close(self) -> bool:
+        try:
+            if self.failed:
+                self.process.kill()
+                self.process.wait()
+                return False
+            assert self.process.stdin is not None
+            self.process.stdin.close()
+            return self.process.wait() == 0 and not self.failed
+        except OSError:
+            self.process.kill()
+            self.process.wait()
+            return False
+
+
+def _batch_collect(
+    root: Path, oids: set[str], kind: str,
+    extract: Callable[[str, bytes], Iterable[Any] | None],
+    *, skip_unreadable: bool = False,
+) -> set[Any] | None:
+    if not oids:
+        return set()
+    try:
+        batch = _GitBatch(root)
+    except OSError:
+        return None
+    result: set[Any] = set()
+    count = 0
+    for oid in sorted(oids):
+        item = batch.read(oid)
+        if item is None and skip_unreadable and not batch.failed:
+            count += 1
             continue
-        for line in listing.splitlines():
-            metadata, separator, path = line.partition("\t")
-            parts = metadata.split()
-            path_parts = Path(path).parts
-            if (
-                separator
-                and len(parts) == 3
-                and parts[2] == oid
-                and len(path_parts) == 2
-                and path_parts[1] == slug
-            ):
-                return True
-    return False
+        if item is not None and item[0] != kind and skip_unreadable:
+            count += 1
+            continue
+        if item is None or item[0] != kind:
+            batch.failed = True
+            break
+        values = extract(oid, item[1])
+        if values is None and skip_unreadable:
+            count += 1
+            continue
+        if values is None:
+            batch.failed = True
+            break
+        result.update(values)
+        count += 1
+    return result if batch.close() and count == len(oids) else None
+
+
+def _tree_entries(raw: bytes, oid_length: int) -> list[tuple[bytes, bytes, str]] | None:
+    entries = []
+    position = 0
+    while position < len(raw):
+        end = raw.find(b"\0", position)
+        if end < 0 or end + 1 + oid_length > len(raw):
+            return None
+        mode_name = raw[position:end].split(b" ", 1)
+        if len(mode_name) != 2:
+            return None
+        object_id = raw[end + 1:end + 1 + oid_length].hex()
+        entries.append((mode_name[0], mode_name[1], object_id))
+        position = end + 1 + oid_length
+    return entries
+
+
+class _ReachableApplications:
+    """Per-validation map from reachable commits to applications/<slug> trees."""
+
+    def __init__(self, workspace: Path):
+        self.workspace = workspace
+        self.index: set[tuple[str, str]] | None = None
+
+    def contains(self, oid: str, slug: str) -> bool:
+        if self.index is None:
+            self.index = self._build()
+        return (oid, slug) in self.index
+
+    def _build(self) -> set[tuple[str, str]]:
+        roots_text = _git(self.workspace, "rev-list", "--all", "--format=%T", "--no-commit-header")
+        if roots_text is None:
+            return set()
+        roots = set(roots_text.splitlines())
+        if any(re.fullmatch(r"(?:[0-9a-f]{40}|[0-9a-f]{64})", oid) is None for oid in roots):
+            return set()
+
+        def application_tree(root_oid: str, content: bytes) -> list[str] | None:
+            entries = _tree_entries(content, len(root_oid) // 2)
+            if entries is None:
+                return None
+            return [
+                entry_oid for mode, name, entry_oid in entries
+                if mode in {b"40000", b"040000"} and name == b"applications"
+            ]
+
+        applications = _batch_collect(
+            self.workspace, roots, "tree", application_tree, skip_unreadable=True,
+        )
+        if applications is None:
+            return set()
+
+        def application_entries(app_oid: str, content: bytes) -> list[tuple[str, str]] | None:
+            entries = _tree_entries(content, len(app_oid) // 2)
+            if entries is None:
+                return None
+            found = []
+            for mode, name, tree_oid in entries:
+                if mode in {b"40000", b"040000"}:
+                    try:
+                        slug = name.decode("ascii")
+                    except UnicodeError:
+                        continue
+                    if SLUG.fullmatch(slug):
+                        found.append((tree_oid, slug))
+            return found
+
+        return _batch_collect(
+            self.workspace, applications, "tree", application_entries, skip_unreadable=True,
+        ) or set()
 
 
 def _materialize_tree(workspace: Path, oid: str, target: Path) -> bool:
@@ -550,18 +687,29 @@ def _materialize_tree(workspace: Path, oid: str, target: Path) -> bool:
             for parent in Path(name).parents:
                 if parent != Path(".") and entries.get(parent.as_posix(), (None, None))[1] != "tree":
                     return False
-        for name, (mode, kind, object_id) in entries.items():
-            destination = target / name
-            if kind == "tree":
-                destination.mkdir()
-            else:
-                content = _git(workspace, "cat-file", "blob", object_id, binary=True)
-                if content is None:
-                    return False
-                # Exclusive creation also rejects aliases on case-insensitive or
-                # Unicode-normalizing filesystems instead of overwriting bytes.
-                with destination.open("xb") as output:
-                    output.write(content)
+        batch = _GitBatch(workspace) if any(kind == "blob" for _, kind, _ in entries.values()) else None
+        valid = True
+        try:
+            for name, (mode, kind, object_id) in entries.items():
+                destination = target / name
+                if kind == "tree":
+                    destination.mkdir()
+                else:
+                    assert batch is not None
+                    item = batch.read(object_id)
+                    if item is None or item[0] != "blob":
+                        batch.failed = True
+                        valid = False
+                        break
+                    # Exclusive creation also rejects aliases on case-insensitive or
+                    # Unicode-normalizing filesystems instead of overwriting bytes.
+                    with destination.open("xb") as output:
+                        output.write(item[1])
+        finally:
+            if batch is not None and not batch.close():
+                valid = False
+        if not valid:
+            return False
     except (OSError, ValueError):
         return False
     return True

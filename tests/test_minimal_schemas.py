@@ -37,6 +37,11 @@ def test_exactly_five_schemas_exist():
     }
 
 
+def test_all_schemas_conform_to_the_draft_2020_12_meta_schema():
+    for schema in _schemas().values():
+        Draft202012Validator.check_schema(schema)
+
+
 def test_hauptprozess_embeds_idless_leistung():
     document = {
         "type": "hauptprozess",

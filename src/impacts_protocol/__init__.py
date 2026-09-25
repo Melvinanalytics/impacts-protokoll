@@ -3,7 +3,15 @@
 from .generator import init_workspace
 from .hashing import HashSurfaceError, surface_hash
 from .model import Issue, ValidationReport
-from .validator import validate
+
+
+def __getattr__(name: str):
+    if name != "validate":
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+    from .validator import validate
+
+    globals()[name] = validate
+    return validate
 
 __all__ = [
     "HashSurfaceError",
