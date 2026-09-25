@@ -1,4 +1,6 @@
 from pathlib import Path
+from collections import Counter
+from io import BytesIO
 import shutil
 import subprocess
 from tempfile import TemporaryDirectory
@@ -234,6 +236,118 @@ def test_unreadable_git_tree_returns_failure_without_writing(tmp_path, monkeypat
     monkeypatch.setattr(validator, "_git", lambda *args, **kwargs: None)
     assert not validator._materialize_tree(tmp_path, "a" * 40, tmp_path)
     assert list(tmp_path.iterdir()) == []
+
+
+@pytest.mark.parametrize("commits", [1, 31, 61])
+def test_git_process_count_is_bounded_independently_of_commits(tmp_path, monkeypatch, commits):
+    root, run = _prepare_workspace(tmp_path)
+    marker = root / "applications/video/produktion/start/CONTEXT.md"
+    for number in range(commits - 1):
+        marker.write_text(marker.read_text() + f"\nSynthetic history {number}\n")
+        git(root, "add", "applications")
+        git(root, "commit", "-qm", f"synthetic history {number}")
+
+    commands = Counter()
+    original = subprocess.Popen
+    def tracked(args, *positionals, **keywords):
+        if args[0] == "git":
+            commands[args[4]] += 1
+        return original(args, *positionals, **keywords)
+    monkeypatch.setattr(validator.subprocess, "Popen", tracked)
+    report = validate(root)
+    assert report.valid, report.issues
+    assert commands["rev-list"] == 1
+    assert sum(commands.values()) <= 8, commands
+
+
+@pytest.mark.parametrize("blobs", [1, 81])
+def test_materialization_batches_blobs_independent_of_blob_count(tmp_path, monkeypatch, blobs):
+    root, _ = _prepare_workspace(tmp_path)
+    application = root / "applications/video"
+    for number in range(blobs):
+        (application / f"payload-{number:03}.bin").write_bytes(b"\0raw\n" + bytes([number]))
+    git(root, "add", "applications")
+    git(root, "commit", "-qm", "synthetic blobs")
+    oid = git(root, "rev-parse", "HEAD:applications/video")
+    commands = Counter()
+    original = subprocess.Popen
+    def tracked(args, *positionals, **keywords):
+        if args[0] == "git":
+            commands[args[4]] += 1
+        return original(args, *positionals, **keywords)
+    monkeypatch.setattr(validator.subprocess, "Popen", tracked)
+    target = tmp_path / "materialized"
+    target.mkdir()
+    assert validator._materialize_tree(root, oid, target)
+    assert commands == Counter({"ls-tree": 1, "cat-file": 1})
+    assert (target / f"payload-{blobs-1:03}.bin").read_bytes() == b"\0raw\n" + bytes([blobs-1])
+
+
+def test_distinct_historical_revisions_share_one_reachability_scan(tmp_path, monkeypatch):
+    root, run = _prepare_workspace(tmp_path)
+    marker = root / "applications/video/produktion/start/CONTEXT.md"
+    revisions = [git(root, "rev-parse", "HEAD:applications/video")]
+    for number in range(9):
+        marker.write_text(marker.read_text() + f"\nSynthetic revision {number}\n")
+        git(root, "add", "applications")
+        git(root, "commit", "-qm", f"revision {number}")
+        revisions.append(git(root, "rev-parse", "HEAD:applications/video"))
+    for number, oid in enumerate(revisions[1:], start=2):
+        dest = run.parent / f"video-{number:03}"
+        shutil.copytree(run, dest)
+        metadata = read_context(dest / "CONTEXT.md")
+        metadata["id"] = f"vorgang:{dest.name}"
+        metadata["application_revision"] = f"git-tree:{oid}"
+        replace_context(dest / "CONTEXT.md", metadata)
+
+    commands = Counter()
+    original = subprocess.Popen
+    def tracked(args, *positionals, **keywords):
+        if args[0] == "git":
+            commands[args[4]] += 1
+        return original(args, *positionals, **keywords)
+    monkeypatch.setattr(validator.subprocess, "Popen", tracked)
+    first = validate(root)
+    assert first.valid, first.issues
+    assert commands["rev-list"] == 1
+    assert sum(commands.values()) <= 44, commands
+    assert validate(root) == first
+    assert commands["rev-list"] == 2
+
+
+@pytest.mark.parametrize("response,exit_code,expected", [
+    (b"a" * 40 + b" blob 4\n\0\xff\nX\n", 0, b"\0\xff\nX"),
+    (b"a" * 40 + b" missing\n", 0, None),
+    (b"a" * 40 + b" blob 4\nabc", 0, None),
+    (b"a" * 40 + b" blob 4\nABCD\n", 1, None),
+])
+def test_git_batch_protocol_bytes_missing_truncation_and_exit(tmp_path, monkeypatch, response, exit_code, expected):
+    class Process:
+        stdin = BytesIO()
+        stdout = BytesIO(response)
+        def wait(self):
+            return exit_code
+        def kill(self):
+            pass
+    monkeypatch.setattr(validator.subprocess, "Popen", lambda *args, **kwargs: Process())
+    batch = validator._GitBatch(tmp_path)
+    result = batch.read("a" * 40)
+    success = batch.close()
+    assert (result[1] if result else None) == (b"ABCD" if exit_code else expected)
+    assert success == (expected is not None and exit_code == 0)
+
+
+def test_identical_tree_oid_requires_reachability_in_each_repository(tmp_path):
+    first, run = _prepare_workspace(tmp_path / "first")
+    second = tmp_path / "second"
+    git(tmp_path, "clone", "--quiet", str(first), str(second))
+    shutil.copytree(run, second / "vorgaenge" / run.name)
+    assert validate(first).valid
+    assert validate(second).valid
+    git(second, "update-ref", "-d", "refs/heads/main")
+    git(second, "update-ref", "-d", "refs/remotes/origin/main")
+    assert "revision.invalid" in {issue.code for issue in validate(second).issues}
+    assert validate(first).valid
 
 
 def test_tree_at_another_application_slug_does_not_authorize_a_run(tmp_path):
