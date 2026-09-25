@@ -1,0 +1,4 @@
+event_id,order_no,event_type,event_at,source_system,source_key
+EV-501,O-1042,order-accepted,2026-09-05T09:14:00+02:00,CRM,CRM-588
+EV-877,O-1042,assembly-complete,2026-10-10T16:42:00+02:00,MES,WO-991
+EV-912,O-1043,carrier-handover,2026-10-11T08:20:00+02:00,WMS,SHP-311

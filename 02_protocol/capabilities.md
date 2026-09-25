@@ -99,7 +99,7 @@ Control strength follows volatility, repetition, harm, result tolerance, reprodu
 <a id="tabellen-und-beziehungen"></a>
 ### Tables and relationships
 
-For needed tables, the domain description names row meaning, unique key, source/access and required relationships: source columns, target collection, target key and business meaning. Composite keys include every decision-relevant component, such as tenant or contract version. File path, business identity and source revision differ. Existing schemas stay at their home; local structured metadata describes only missing meaning. Document-based facts have the same meaning/evidence obligations without requiring a table.
+For needed tables, the domain description names row meaning, unique key, source/access and required relationships: source columns, target collection, target key and business meaning. Composite keys include every decision-relevant component, such as tenant or contract version. File path, business identity and source revision differ. A source row number or physical row position locates a record in that source; it is business identity only when a maintained source definition establishes that role. Existing schemas stay at their home; local structured metadata describes only missing meaning. Document-based facts have the same meaning/evidence obligations without requiring a table.
 
 A document link reaches this description; actual rows join through keys, not similar names or shared folders. Automated processing executes needed type, uniqueness, reference and multiplicity checks. A matching foreign key alone establishes neither validity nor authority. No match requires sufficient coverage before claiming absence; multiple valid matches must not collapse to the first.
 
