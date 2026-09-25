@@ -112,18 +112,3 @@ def _read_text(path: Path, root: Path | None) -> str:
     if root is not None and not resolved.is_relative_to(Path(root).resolve()):
         raise PathEscapeError("source path resolves outside workspace root")
     return resolved.read_text(encoding="utf-8")
-
-
-def _has_symlink_component(path: Path, root: Path) -> bool:
-    try:
-        relative = path.relative_to(root)
-    except ValueError:
-        return True
-    current = root
-    if current.is_symlink():
-        return True
-    for part in relative.parts:
-        current = current / part
-        if current.is_symlink():
-            return True
-    return False

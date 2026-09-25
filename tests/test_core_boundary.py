@@ -20,11 +20,24 @@ def test_package_import_does_not_load_validator_dependencies():
         [sys.executable, "-c", "import impacts_protocol, sys, json; "
          "print(json.dumps(sorted(name for name in sys.modules if "
          "name == 'impacts_protocol.validator' or "
-         "name.startswith(('jsonschema', 'referencing')))))"],
+         "name == 'yaml' or name.startswith(('yaml.', 'jsonschema', 'referencing')))))"],
         cwd=ROOT, env=environment, capture_output=True, text=True,
     )
     assert process.returncode == 0, process.stderr
     assert json.loads(process.stdout) == []
+
+
+def test_public_validate_import_loads_yaml():
+    environment = os.environ.copy()
+    environment["PYTHONPATH"] = str(ROOT / "src")
+    process = subprocess.run(
+        [sys.executable, "-c", "from impacts_protocol import validate; "
+         "import json, sys; print(json.dumps(sorted(name for name in sys.modules "
+         "if name in ('impacts_protocol.validator', 'yaml'))))"],
+        cwd=ROOT, env=environment, capture_output=True, text=True,
+    )
+    assert process.returncode == 0, process.stderr
+    assert json.loads(process.stdout) == ["impacts_protocol.validator", "yaml"]
 
 
 def test_public_validate_is_original_callable_and_repeated_results_match():

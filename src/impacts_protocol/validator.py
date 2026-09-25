@@ -15,8 +15,8 @@ from typing import Any, Callable, Iterable
 from jsonschema import Draft202012Validator, FormatChecker
 from referencing import Registry, Resource
 
-from .hashing import HashSurfaceError, surface_hash
-from .io import _has_symlink_component, load_frontmatter_and_body
+from .hashing import HashSurfaceError, _has_symlink_component, surface_hash
+from .io import load_frontmatter_and_body
 from .model import Issue, ValidationReport
 from .workspace_contract import WORKSPACE_FOLDERS
 

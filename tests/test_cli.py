@@ -65,7 +65,8 @@ class CliTests(unittest.TestCase):
                         "\ntry:\n result = main(args)\nexcept SystemExit as error:\n result = error.code\n"
                         "print('MODULES=' + json.dumps(sorted(name for name in sys.modules "
                         "if name == 'impacts_protocol.validator' or "
-                        "name.startswith(('jsonschema', 'referencing')))))\n"
+                        "name == 'yaml' or "
+                        "name.startswith(('yaml.', 'jsonschema', 'referencing')))))\n"
                         "sys.exit(result)"
                     )
                     result = subprocess.run(
@@ -75,6 +76,28 @@ class CliTests(unittest.TestCase):
                     self.assertEqual(2 if arguments[0] == "not-a-command" else 0,
                                      result.returncode, result.stderr)
                     self.assertIn("MODULES=[]", result.stdout)
+
+    def test_validation_command_loads_yaml(self):
+        with TemporaryDirectory() as directory:
+            base = Path(directory)
+            target = base / "workspace"
+            environment = os.environ.copy()
+            environment["PYTHONPATH"] = str(ROOT / "src")
+            environment["PYTHONDONTWRITEBYTECODE"] = "1"
+            code = (
+                "import json, sys; from impacts_protocol.cli import main; "
+                "result = main(['validate', sys.argv[1]]); "
+                "print('MODULES=' + json.dumps(sorted(name for name in sys.modules "
+                "if name in ('impacts_protocol.validator', 'yaml')))); "
+                "sys.exit(result)"
+            )
+            self.assertEqual(0, main(["init", str(target)]))
+            result = subprocess.run(
+                [sys.executable, "-c", code, str(target)], cwd=base,
+                env=environment, capture_output=True, text=True,
+            )
+            self.assertEqual(0, result.returncode, result.stderr)
+            self.assertIn('MODULES=["impacts_protocol.validator", "yaml"]', result.stdout)
 
     def test_init_and_validate_generated_workspace(self):
         with TemporaryDirectory() as directory:
