@@ -133,17 +133,36 @@ def test_revision_history_is_reused_within_validation_but_rechecked_after_ref_ch
     monkeypatch.setattr(validator, "_git", tracked_git)
 
     assert validate(root).valid
-    assert commands.count(("rev-list", "--all")) == 1
+    assert commands.count(("rev-list", "--all", "--format=%T", "--no-commit-header")) == 1
     commit = git(root, "rev-parse", "HEAD")
     git(root, "update-ref", "-d", "refs/heads/main")
     report = validate(root)
     assert len(report.issues) == 3, report.issues
     assert all(issue.code == "revision.invalid" for issue in report.issues)
-    assert commands.count(("rev-list", "--all")) == 2
+    assert commands.count(("rev-list", "--all", "--format=%T", "--no-commit-header")) == 2
 
     git(root, "update-ref", "refs/heads/main", commit)
     assert validate(root).valid
-    assert commands.count(("rev-list", "--all")) == 3
+    assert commands.count(("rev-list", "--all", "--format=%T", "--no-commit-header")) == 3
+
+
+def test_unrelated_reachable_commit_with_missing_root_tree_does_not_invalidate_bound_application(tmp_path):
+    root, _ = _prepare_workspace(tmp_path)
+    blob = subprocess.check_output(
+        ["git", "-C", str(root), "hash-object", "-w", "--stdin"], input=b"unrelated\n",
+    ).decode().strip()
+    tree = subprocess.check_output(
+        ["git", "-C", str(root), "mktree"],
+        input=f"100644 blob {blob}\tunrelated.txt\n".encode(),
+    ).decode().strip()
+    commit = git(root, "commit-tree", tree, "-m", "unrelated reachable commit")
+    git(root, "update-ref", "refs/heads/unrelated", commit)
+    tree_object = root / ".git" / "objects" / tree[:2] / tree[2:]
+    assert tree_object.is_file()
+    tree_object.unlink()
+
+    report = validate(root)
+    assert report.valid, report.issues
 
 
 @pytest.mark.parametrize("entry", [
@@ -334,7 +353,24 @@ def test_git_batch_protocol_bytes_missing_truncation_and_exit(tmp_path, monkeypa
     result = batch.read("a" * 40)
     success = batch.close()
     assert (result[1] if result else None) == (b"ABCD" if exit_code else expected)
-    assert success == (expected is not None and exit_code == 0)
+    assert success == ((response.endswith(b" missing\n") or expected is not None) and exit_code == 0)
+
+
+def test_batch_reachability_skips_missing_object_but_rejects_broken_framing(tmp_path, monkeypatch):
+    oid = "a" * 40
+    response = b"a" * 40 + b" missing\n"
+    class Process:
+        def __init__(self):
+            self.stdin = BytesIO()
+            self.stdout = BytesIO(response)
+        def wait(self):
+            return 0
+        def kill(self):
+            pass
+    monkeypatch.setattr(validator.subprocess, "Popen", lambda *args, **kwargs: Process())
+    assert validator._batch_collect(tmp_path, {oid}, "tree", lambda *_: [], skip_unreadable=True) == set()
+    response = b"a" * 40 + b" tree 4\nabc"
+    assert validator._batch_collect(tmp_path, {oid}, "tree", lambda *_: [], skip_unreadable=True) is None
 
 
 def test_identical_tree_oid_requires_reachability_in_each_repository(tmp_path):

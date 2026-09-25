@@ -516,6 +516,8 @@ class _GitBatch:
             self.process.stdin.write(oid.encode("ascii") + b"\n")
             self.process.stdin.flush()
             header = self.process.stdout.readline()
+            if header == oid.encode("ascii") + b" missing\n":
+                return None
             match = re.fullmatch(rb"([0-9a-f]{40}|[0-9a-f]{64}) (\w+) ([0-9]+)\n", header)
             if match is None or match[1].decode("ascii") != oid:
                 self.failed = True
@@ -548,6 +550,7 @@ class _GitBatch:
 def _batch_collect(
     root: Path, oids: set[str], kind: str,
     extract: Callable[[str, bytes], Iterable[Any] | None],
+    *, skip_unreadable: bool = False,
 ) -> set[Any] | None:
     if not oids:
         return set()
@@ -559,10 +562,19 @@ def _batch_collect(
     count = 0
     for oid in sorted(oids):
         item = batch.read(oid)
+        if item is None and skip_unreadable and not batch.failed:
+            count += 1
+            continue
+        if item is not None and item[0] != kind and skip_unreadable:
+            count += 1
+            continue
         if item is None or item[0] != kind:
             batch.failed = True
             break
         values = extract(oid, item[1])
+        if values is None and skip_unreadable:
+            count += 1
+            continue
         if values is None:
             batch.failed = True
             break
@@ -600,16 +612,11 @@ class _ReachableApplications:
         return (oid, slug) in self.index
 
     def _build(self) -> set[tuple[str, str]]:
-        commits = _git(self.workspace, "rev-list", "--all")
-        if commits is None:
+        roots_text = _git(self.workspace, "rev-list", "--all", "--format=%T", "--no-commit-header")
+        if roots_text is None:
             return set()
-        commit_ids = set(commits.splitlines())
-        def root_tree(_oid: str, content: bytes) -> list[str] | None:
-            match = re.match(rb"tree ([0-9a-f]{40}|[0-9a-f]{64})\n", content)
-            return [match[1].decode("ascii")] if match else None
-
-        roots = _batch_collect(self.workspace, commit_ids, "commit", root_tree)
-        if roots is None:
+        roots = set(roots_text.splitlines())
+        if any(re.fullmatch(r"(?:[0-9a-f]{40}|[0-9a-f]{64})", oid) is None for oid in roots):
             return set()
 
         def application_tree(root_oid: str, content: bytes) -> list[str] | None:
@@ -621,7 +628,9 @@ class _ReachableApplications:
                 if mode in {b"40000", b"040000"} and name == b"applications"
             ]
 
-        applications = _batch_collect(self.workspace, roots, "tree", application_tree)
+        applications = _batch_collect(
+            self.workspace, roots, "tree", application_tree, skip_unreadable=True,
+        )
         if applications is None:
             return set()
 
@@ -640,7 +649,9 @@ class _ReachableApplications:
                         found.append((tree_oid, slug))
             return found
 
-        return _batch_collect(self.workspace, applications, "tree", application_entries) or set()
+        return _batch_collect(
+            self.workspace, applications, "tree", application_entries, skip_unreadable=True,
+        ) or set()
 
 
 def _materialize_tree(workspace: Path, oid: str, target: Path) -> bool:
