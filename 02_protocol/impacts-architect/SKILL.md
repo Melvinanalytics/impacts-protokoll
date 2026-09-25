@@ -1,6 +1,6 @@
 ---
 name: impacts-architect
-description: Use when customer initialization or knowledge topology needs a file home, deriving or materially redesigning work from an intended result, restructuring existing customer folders or linked repositories, moving shared meanings or skills, or importing an approved Application from a Fachrepo.
+description: Use when customer initialization or knowledge topology needs a file home, deriving or materially redesigning work from an intended result, restructuring existing customer folders or linked repositories, moving shared meanings or skills, importing an approved Application from a Fachrepo, or applying an optional typed semantic classifier or selector to those tasks.
 ---
 
 # IMPACTS Architect
@@ -12,6 +12,8 @@ This skill selects the smallest fitting ICM form, then produces only the files t
 Start with the [formwahl work report](references/formwahl.md#arbeitsbericht-vor-baumvorschlag), including its business-capture branch. For a Pipeline, load the [capture/build method](../impacts-method.md#capture-business-meaning) and the phase section in use; load the [decomposition rules](references/zuschnitt.md#arbeitsschritt) when cutting work and the [automation boundary](references/zuschnitt.md#automation-boundary) when assigning contributions. Load the [Capability contract](../capabilities.md) and its relevant [extraction/call rules](../capabilities.md#wann-extrahieren) plus [source](../capabilities.md#snapshot-und-herkunftsnachweis), [handoff](../capabilities.md#sichtbare-ausgabe-und-übergabe), [writeback](../capabilities.md#rückübertragung-in-geschäftsrecords) or [Gate](../capabilities.md#signale-und-human-gate) rules only when that branch is present, including work without an extracted Capability. For every form, use the linked [evidence labels](references/zuschnitt.md#evidence) and [UX/AX/DX acceptance](../impacts-method.md#readability-and-processing).
 
 Before capturing, changing or applying domain meaning in any form, read [Author or change](../ontology.md#author-or-change) or [Use](../ontology.md#use), then apply the ontology's [evidence and obligations](../ontology.md#evidence-and-obligations) and [enforcement/completion](../ontology.md#enforcement-and-completion). Routine use does not recapture the model; Core validity alone does not establish domain correctness. For catalog, pipeline and document-template composition, follow the [worked company example](references/datenbezug.md#from-catalog-through-pipeline-to-a-filled-offer).
+
+When a typed semantic backend is explicitly requested for this task or enabled by an existing job-specific configuration, use [Optional typed classification and selection](references/typed-selection.md) only for an unresolved judgment that could change the current review, proposal or action choice. It binds Jev, Laya or another backend to existing IMPACTS tests; it creates no authority, executor, Core type or runtime dependency. Exact lookups, deterministic checks, known missing premises and one remaining action stay on their existing path.
 
 Resolve the customer’s [working language](../language.md#select-and-bind) before capture or import. Use localized templates (`--language de` for German-only work); keep all customer-readable instructions, drafts and decision requests in that language. Apply the actual [language/meaning check](../language.md#enforce-at-use-boundaries) before customer use. The protocol’s English does not override the customer setting.
 
@@ -60,6 +62,8 @@ For selected Core Application/Run contracts, follow the method's phases in order
 7. [Scale](../impacts-method.md#scale). For historical Core Run use, commit the tested revision. Follow [Reviewed correction](../impacts-method.md#reviewed-correction) for subsequent changes in any form.
 
 ## Restructure mode
+
+When the optional typed branch's [activation rule](references/typed-selection.md) applies, use it only for the relevant unresolved classifications or eligible action choice inside the steps below; every Restructure evidence, authority, migration and verification rule still applies.
 
 1. Inventory, touch nothing. Name each declared repository, its actually bound protocol source/revision and intended comparison revision. Record whether inspected files are committed or explicitly captured working states; preserve others' changes. List the relevant tree and, per area, what it is, when last touched and what refers to it. The declared repositories bound discovery; they do not prove that every outside consumer is known.
 2. Find the hidden forms before hidden Applications. Ask which units grow or repeat and what result is accepted. Select each repository's forms with the [formwahl work report](references/formwahl.md#arbeitsbericht-vor-baumvorschlag), then identify Applications only inside selected Pipelines. For each Pipeline, ask where work enters and leaves; interview the folder the way you would interview the person.
