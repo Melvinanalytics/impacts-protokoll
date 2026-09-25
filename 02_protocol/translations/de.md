@@ -109,10 +109,12 @@ Eine Quellenbeschreibung kann berichtet oder offen sein; sie belegt für sich we
 
 Bei einer benötigten, nicht durchgeführten Prüfung die fehlende Prüfung, ihre Folge und die nächste Handlung beim betroffenen Ergebnis verständlich machen; eine gleichwertige vorhandene Notiz genügt. Beispiel: `Entwurf bereit — <Prüfung> nicht durchgeführt; <Folge>; als Nächstes: <Handlung>`. Vorhandene Rohdiagnosen erhalten und aus Übersichten auf die Notiz verlinken, statt sie doppelt zu pflegen.
 
-<!-- Translation source: 02_protocol/impacts-method.md; sha256: 4b9f76de7fe291485d0a7856fd30d11f836831dfb7c63aff2a577b4502b18f0d -->
+<!-- Translation source: 02_protocol/impacts-method.md; sha256: f3188833b3546dff35fa2e3bccd894ad00e5578afc0c9173e63b5ab5f90f620f -->
 ### Kontext direkt routen
 
 Beim nächstgelegenen `CONTEXT.md` beginnen. Vor dem Lesen von Aufgabenmaterial die zulässige Lesemenge aus den deklarierten Eingaben, direkten Links und ausdrücklichen Ausschlüssen der gewählten Route ableiten. Nur diese Menge lesen; erscheint ein weiterer Eintrag nötig, vor seinem Laden zur zuständigen Route zurückkehren und die Lücke klären. Sammelzugriffe, Suchen und frühere Artefakte unterliegen derselben Grenze. Ein ausgeschlossener Eintrag ist kein Ausweichkontext, nur weil er existiert oder in einem früheren Arbeitsschritt verwendet wurde. Für jeden unterstützten Zweck benennt der zuständige Router die Auswahlbedingung, verlinkt direkt den nächsten zuständigen Router, die maßgebliche Anweisung oder Faktenheimat und benennt oder verlinkt die Abschlussprüfung. Mögliche Verwechslungen mit einem benachbarten Zweig als Ausschluss nennen; kein Verzeichnis aller denkbaren Ausschlüsse pflegen. Ein Dateiname, allgemeiner Ordnerhinweis oder Suchtreffer ersetzt den benötigten Link nicht.
+
+Eine nächste Evidenzhandlung erschließt nur die benannte Schlussfolgerung, deren sämtliche bekannten Blocker sie abdeckt. Andernfalls bleibt der übrige Blocker offen und die behauptete Wirkung der Handlung wird enger gefasst.
 
 <!-- Translation source: 02_protocol/CONTEXT.md; sha256: 7ea3124ba6ae4f36d3ab0b42526bec89f570aca356f4fe64d5058678fb15ebe6 -->
 Die Pflege von `AGENTS.md`, `CONTEXT.md`, Arbeitsschritt-Prompts oder Routingtext beginnt bei [Maintain agent instructions](../impacts-method.md#maintain-agent-instructions). Nutzung oder Diagnose einer vorhandenen Route, Kopie, Projektion oder fehlenden Lieferung beginnt bei [Load context locally first](../impacts-method.md#load-context-locally-first). Eine gemischte Aufgabe pflegt zuerst die Anweisung und übt danach die Route aus.
@@ -178,14 +180,14 @@ Bei der Entwicklung von Möglichkeiten regulatorische oder physische Grenzen anh
 
 Der Agent übernimmt die Analyse. Der Nutzer ergänzt entscheidungsrelevante Fakten oder Entscheidungen; vollständige Neugestaltung, eine feste Zahl von Optionen oder ein verbindlicher Reduktionsnachweis sind keine Voraussetzung für weitere erlaubte Arbeit.
 
-<!-- Translation source: 02_protocol/capabilities.md; sha256: e192ea91d32f4d5e98d241d927fdc2e21759d8c80d198f4326281cf51521c7cb -->
+<!-- Translation source: 02_protocol/capabilities.md; sha256: b3cb0cd08c5c236e8f1f9462170dfa78d4a846c89c5be007dfc2b748cf2c4984 -->
 ### Quellen, Stammdaten und Verantwortung beschreiben
 
 Benötigte Quellen an ihren bestehenden fachlichen Heimaten beschreiben, auch bei gewöhnlicher Dateinutzung ohne Application oder Live-Verbindung. Dokumentierte Quelle oder Schnittstelle, beschaffte Daten, geprüfter Zugriff und Erlaubnis zur vorgesehenen Nutzung bleiben getrennte Befunde.
 
 Für relevante Attribute oder Fachbereiche und ihren Gültigkeitszeitraum die maßgebliche Faktenquelle, die für Bedeutung und erlaubte Änderungen zuständige Entscheidungsperson sowie Aufgaben der pflegenden und bereitstellenden Personen benennen. Eine Person kann mehrere Aufgaben übernehmen; unbekannte tatsächliche Verantwortliche bleiben `open`. Stabile Stammdatendefinitionen, Transaktions- oder Ereignisrecords, begrenzte Beobachtungen darüber und abgeleitete Kennzahlen in vorhandenen Beschreibungen unterscheiden; neue Record-Typen sind dafür nicht nötig. Ein Transaktionsrecord belegt für sich nicht das reale Ereignis.
 
-Benötigte Einheiten, Zeilenbedeutung und Granularität, Auswahl- und Gültigkeitszeit, Identität und Namensraum, Beziehungen und Quellenfeldbedeutungen gemäß [Tables and relationships](../capabilities.md#tables-and-relationships) und [Ontology](../ontology.md#meaning-and-valid-inference) beschreiben. Dokumentquellen brauchen dieselben relevanten Unterscheidungen, aber keine Tabellenform.
+Benötigte Einheiten, Zeilenbedeutung und Granularität, Auswahl- und Gültigkeitszeit, Identität und Namensraum, Beziehungen und Quellenfeldbedeutungen gemäß [Tables and relationships](../capabilities.md#tables-and-relationships) und [Ontology](../ontology.md#meaning-and-valid-inference) beschreiben. Eine Zeilennummer oder physische Zeilenposition lokalisiert einen Record in ihrer Quelle; sie ist nur dann eine Geschäftsidentität, wenn eine gepflegte Quellendefinition diese Rolle festlegt. Dokumentquellen brauchen dieselben relevanten Unterscheidungen, aber keine Tabellenform.
 
 Die bekannte Quellenform festhalten: Datei, Export, Bericht, manuelle Eingabe oder API. Herkunft sowie bei tatsächlich gelesener Dokumentation URL oder Pfad, Fassung oder Datum und Lesedatum erhalten. Mögliche Endpunkte, Schemas, Authentifizierung und Zugangsbedingungen nur beschreiben, soweit bekannt. Zuerst vorhandene lokale Quellen nutzen; bei ausdrücklichen Lücken Quellen erkunden. Unbekanntes bleibt Frage, keine erfundene Schnittstelle.
 
@@ -253,7 +255,7 @@ impacts validate ../mein-arbeitsbereich
 
 `init` erzeugt einen neuen, leeren Arbeitsbereich; es verweigert ein vorhandenes Ziel. Der Root-Router enthält `Working language: de`. Git wird nicht erzeugt und ist für Application-Strukturprüfung ohne Lauf nicht nötig; die aktuelle historische Laufvalidierung benötigt Git und die committed Application-Bindung. Git-Historie oder Hashes belegen weder die Wahrheit einer Quelle noch eine authentifizierte Entscheidung. `setuptools` wird nur für die Entwicklungs-Packagingtests benötigt. Der [programmierte Angebotslauf](../../06_evaluations/offer-walk/CONTEXT.md) ist eine optionale technische Evaluation mit synthetischen Daten, kein Beweis für die Nutzung durch einen Menschen oder einen Agenten allein aus Dateien.
 
-<!-- Translation source: 02_protocol/capabilities.md; sha256: e192ea91d32f4d5e98d241d927fdc2e21759d8c80d198f4326281cf51521c7cb -->
+<!-- Translation source: 02_protocol/capabilities.md; sha256: b3cb0cd08c5c236e8f1f9462170dfa78d4a846c89c5be007dfc2b748cf2c4984 -->
 Die Übernahme einer Application erhält ihre Definitionsbytes; Anwendbarkeit der Quellen und Befugnisse am Ziel folgen [Data Governance](../capabilities.md#data-governance), wobei gültige lokale Zuordnungen und Befugnisse weitergelten und offene Fragen an die dafür zuständige Entscheidungsperson gehen.
 Ausführung am Ziel erst behaupten, wenn dort ein `vorgang` mit seinen anwendbaren Voraussetzungen und Prüfungen tatsächlich den benannten Testendpunkt erreicht hat; Kopieren oder Linkprüfungen allein belegen dies nicht, und unabhängig erlaubte Vorbereitung bleibt bei eingeschränkter abhängiger Ausführung nützlich.
 [Reviewed correction](../impacts-method.md#reviewed-correction) an der Revisionsgrenze der geänderten Heimat anwenden: Geänderte Application-Definitionen benötigen eine neue Application-Bindung, während geänderte externe Zuordnungen in ihrer Quellenheimat bleiben und entsprechende Quellenbindung sowie betroffene Prüfungen benötigen, unter Erhalt früher gebundener Eingaben.
