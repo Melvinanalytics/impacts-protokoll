@@ -26,5 +26,6 @@ For each case:
 | Mixed offer-preparation job | One coherent job interprets a request, calculates a fixed price, asks for a missing delivery input and prepares a draft for a required human commitment. No separate route or independently accepted intermediate result is established. |
 | Appointment coordination as the service | The agreed service is arranging a confirmed appointment between two participants. Confirmation by both participants is the acceptance condition. |
 | Renamed labels | All facts, sources, permissions and boundaries from the delivery-time case stay identical, but a user calls the calculation “coordination.” After calculation, a separate activity transfers the unchanged accepted figure to the offer writer; that transfer manages a required input dependency and is outside the accepted result boundary, but the user calls it “value work.” |
+| Missing result boundary | A person reports filing a report. No accepted result, recipient use, acceptance condition or managed dependency is established. |
 
 Write the result before opening [EXPECTED.md](EXPECTED.md). A correct answer preserves unknowns and authority rather than forcing every row to a permitted execution. Structural validation does not score these semantic answers.

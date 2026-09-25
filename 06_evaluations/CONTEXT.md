@@ -13,5 +13,6 @@ This directory contains optional deterministic Core checks and a reading evaluat
 - [Cross-repository authority walk](cross-repository-authority/CONTEXT.md): synthetic owner, consumer, revision and unsafe-retirement questions; this is a reading case, not an executable check.
 - [Result-work and coordination walk](result-work-coordination/CONTEXT.md): synthetic Ist classification, Minimize and execution-selection cases; this is a reading case, not a classifier or runtime check.
 - [Augment context walk](augment-context/CONTEXT.md): synthetic point-of-use context, acquisition, derivation, freshness and missing-context cases; this is a reading case, not proof of live retrieval.
+- [Typed classification and selection walk](typed-classification/CONTEXT.md): synthetic form, domain-item, process-role, result-work, terminology and adapter-boundary cases; this is a reading case, not an executed backend integration.
 
 Package evaluations live with their package. Customer regression material stays in the customer repository. Do not load sibling walks or exhaust their outgoing links.
