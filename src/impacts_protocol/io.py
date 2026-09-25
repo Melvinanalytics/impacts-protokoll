@@ -45,7 +45,32 @@ def _strict_loader(base_loader: type) -> type:
     return StrictLoader
 
 
-_StrictLoader = _strict_loader(getattr(yaml, "CSafeLoader", yaml.SafeLoader))
+_PythonStrictLoader = _strict_loader(yaml.SafeLoader)
+_C_SAFE_LOADER = getattr(yaml, "CSafeLoader", None)
+_StrictLoader = _strict_loader(_C_SAFE_LOADER) if _C_SAFE_LOADER else _PythonStrictLoader
+
+
+def _load_yaml(source: str) -> Any:
+    # LibYAML and PyYAML's Python parser disagree on some valid and invalid
+    # syntax. Keep the Python parser for those syntax families; use C for the
+    # common plain block form, retrying Python if C alone rejects it.
+    sensitive = "![]{}&*?|>\\'\"%@`#"
+    plain_block = all(
+        char not in sensitive and (char == "\n" or char.isprintable())
+        for char in source
+    )
+    if (
+        _C_SAFE_LOADER is None
+        or not issubclass(_StrictLoader, _C_SAFE_LOADER)
+        or not plain_block
+    ):
+        return yaml.load(source, Loader=_PythonStrictLoader)
+    try:
+        return yaml.load(source, Loader=_StrictLoader)
+    except DuplicateKeyError:
+        raise
+    except (yaml.YAMLError, ValueError):
+        return yaml.load(source, Loader=_PythonStrictLoader)
 
 
 def load_frontmatter(path: Path, root: Path | None = None) -> dict[str, Any]:
@@ -72,10 +97,7 @@ def load_frontmatter_and_body(
     except StopIteration as error:
         raise ValueError("frontmatter has no closing delimiter") from error
     try:
-        value = yaml.load(
-            "\n".join(lines[1:closing_index]),
-            Loader=_StrictLoader,
-        )
+        value = _load_yaml("\n".join(lines[1:closing_index]))
     except DuplicateKeyError:
         raise
     except yaml.YAMLError as error:

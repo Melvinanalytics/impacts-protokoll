@@ -15,6 +15,7 @@ Run from a checkout root:  python -m pytest tests/test_b_contract_partitions.py
 import os
 from datetime import date
 from pathlib import Path
+import subprocess
 import sys
 
 import pytest
@@ -47,7 +48,10 @@ def strict_yaml_path(request, monkeypatch):
     if request.param == "c" and not hasattr(yaml, "CSafeLoader"):
         pytest.skip("PyYAML C extension unavailable")
     base = yaml.CSafeLoader if request.param == "c" else yaml.SafeLoader
-    monkeypatch.setattr(io, "_StrictLoader", io._strict_loader(base))
+    forced = io._strict_loader(base)
+    monkeypatch.setattr(io, "_StrictLoader", forced)
+    if request.param == "python":
+        monkeypatch.setattr(io, "_PythonStrictLoader", forced)
     assert io._StrictLoader.__bases__ == (base,)
     return request.param
 
@@ -119,6 +123,18 @@ def test_safe_yaml_paths_reject_bad_mappings_and_tags(
         assert "frontmatter keys must be strings" in str(caught.value)
 
 
+@pytest.mark.parametrize("source,error", [
+    ("outer: {x: 1, x: 2}", DuplicateKeyError),
+    ("outer: {1: x}", ValueError),
+    ("outer: {<<: {x: 1}}", yaml.YAMLError),
+])
+def test_strict_mapping_constructor_runs_on_each_backend(
+    strict_yaml_path, source, error
+):
+    with pytest.raises(error):
+        yaml.load(source, Loader=io._StrictLoader)
+
+
 def test_safe_yaml_paths_keep_validator_findings(tmp_path, strict_yaml_path):
     root = init_workspace(tmp_path / "kunde")
     path = root / "CONTEXT.md"
@@ -127,6 +143,89 @@ def test_safe_yaml_paths_keep_validator_findings(tmp_path, strict_yaml_path):
     assert [(issue.code, issue.path) for issue in report.issues] == [
         ("format.invalid", "CONTEXT.md")
     ]
+
+
+@pytest.mark.parametrize("source", [
+    "extra: a\tb",                    # C accepts; Python rejects
+    'extra: "\\uD800"',             # Python accepts; C rejects
+    "extra: [a:]",                    # Python accepts; C rejects
+    "extra: !",                       # both accept with different scalar values
+    "extra: {a: 1?}",                 # C accepts; Python rejects
+    "extra: {a: 1, b: true}",         # supported flow mapping
+    "extra: &anchor [one, two]\ncopy: *anchor",
+    "extra: 'quoted # text'",
+    "extra: null",
+    "extra: yes",
+    "extra: 0x2a",
+    "extra: 2026-09-25",
+    "extra:\n  nested:\n    count: 3",
+    "extra:\n  - one\n  - two",
+    "extra: |\n  line one\n  line two",
+    "extra: {a: 1, a: 2}",           # nested duplicate
+    "extra: {1: value}",             # non-string key
+    "extra: {<<: {a: 1}}",           # merge key rejected
+    "extra: !!python/object/apply:os.system ['true']",
+    "extra: [",
+])
+def test_loader_matches_python_contract_in_full_validate(tmp_path, source, monkeypatch):
+    root = init_workspace(tmp_path / "kunde")
+    (root / "CONTEXT.md").write_text(
+        f"---\ntype: workspace\n{source}\n---\n", encoding="utf-8"
+    )
+    monkeypatch.setattr(io, "_StrictLoader", io._PythonStrictLoader)
+    try:
+        expected_metadata, expected_body = load_frontmatter_and_body(root / "CONTEXT.md", root)
+    except ValueError as error:
+        expected_error = (type(error), str(error))
+    else:
+        expected_error = None
+    expected = validate(root)
+    if not hasattr(yaml, "CSafeLoader"):
+        pytest.skip("PyYAML C extension unavailable")
+    monkeypatch.setattr(io, "_StrictLoader", io._strict_loader(yaml.CSafeLoader))
+    if expected_error is None:
+        metadata, body = load_frontmatter_and_body(root / "CONTEXT.md", root)
+        assert _typed(metadata) == _typed(expected_metadata)
+        assert body == expected_body
+    else:
+        with pytest.raises(expected_error[0]) as caught:
+            load_frontmatter_and_body(root / "CONTEXT.md", root)
+        assert str(caught.value) == expected_error[1]
+    assert validate(root) == expected
+
+
+def test_python_fallback_imports_without_c_extension(tmp_path):
+    path = tmp_path / "CONTEXT.md"
+    path.write_text("---\ntype: workspace\n---\n", encoding="utf-8")
+    program = (
+        "import sys, yaml; "
+        "del yaml.CSafeLoader; "
+        "sys.path.insert(0, sys.argv[1]); "
+        "from impacts_protocol import io; "
+        "assert io._StrictLoader.__bases__ == (yaml.SafeLoader,); "
+        "assert io.load_frontmatter(sys.argv[2]) == {'type': 'workspace'}"
+    )
+    check = subprocess.run(
+        [sys.executable, "-c", program, str(ROOT / "src"), str(path)],
+        capture_output=True, text=True,
+    )
+    assert check.returncode == 0, check.stderr
+
+
+def test_c_rejection_retries_python_for_plain_frontmatter(tmp_path, monkeypatch):
+    if not hasattr(yaml, "CSafeLoader"):
+        pytest.skip("PyYAML C extension unavailable")
+    path = tmp_path / "CONTEXT.md"
+    path.write_text("---\ntype: workspace\n---\n", encoding="utf-8")
+    original_load = yaml.load
+
+    def reject_c(source, Loader):
+        if Loader is io._StrictLoader:
+            raise yaml.YAMLError("C parser rejected fixture")
+        return original_load(source, Loader=Loader)
+
+    monkeypatch.setattr(io.yaml, "load", reject_c)
+    assert load_frontmatter_and_body(path, tmp_path) == ({"type": "workspace"}, "")
 
 
 @pytest.mark.parametrize("text", [
