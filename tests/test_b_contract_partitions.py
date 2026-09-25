@@ -254,14 +254,17 @@ def test_c_rejection_retries_python_for_plain_frontmatter(tmp_path, monkeypatch)
     path = tmp_path / "CONTEXT.md"
     path.write_text("---\ntype: workspace\n---\n", encoding="utf-8")
     original_load = yaml.load
+    calls = []
 
     def reject_c(source, Loader):
+        calls.append(Loader)
         if Loader is io._StrictLoader:
             raise yaml.YAMLError("C parser rejected fixture")
         return original_load(source, Loader=Loader)
 
     monkeypatch.setattr(io.yaml, "load", reject_c)
     assert load_frontmatter_and_body(path, tmp_path) == ({"type": "workspace"}, "")
+    assert calls == [io._StrictLoader, io._PythonStrictLoader]
 
 
 @pytest.mark.parametrize("text", [

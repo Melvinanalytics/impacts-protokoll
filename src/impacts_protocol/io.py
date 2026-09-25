@@ -54,16 +54,10 @@ def _load_yaml(source: str) -> Any:
     # LibYAML and PyYAML's Python parser disagree on some valid and invalid
     # syntax. Keep the Python parser for those syntax families; use C for the
     # common plain block form, retrying Python if C alone rejects it.
+    if _C_SAFE_LOADER is None or not issubclass(_StrictLoader, _C_SAFE_LOADER):
+        return yaml.load(source, Loader=_PythonStrictLoader)
     sensitive = "![]{}&*?|>\\'\"%@`#"
-    plain_block = all(
-        char not in sensitive and (char == "\n" or char.isprintable())
-        for char in source
-    )
-    if (
-        _C_SAFE_LOADER is None
-        or not issubclass(_StrictLoader, _C_SAFE_LOADER)
-        or not plain_block
-    ):
+    if any(char in source for char in sensitive) or not source.replace("\n", "").isprintable():
         return yaml.load(source, Loader=_PythonStrictLoader)
     try:
         return yaml.load(source, Loader=_StrictLoader)
