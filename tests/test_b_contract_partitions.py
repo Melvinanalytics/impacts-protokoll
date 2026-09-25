@@ -15,6 +15,7 @@ Run from a checkout root:  python -m pytest tests/test_b_contract_partitions.py
 import os
 from datetime import date
 from pathlib import Path
+import random
 import subprocess
 import sys
 
@@ -194,12 +195,47 @@ def test_loader_matches_python_contract_in_full_validate(tmp_path, source, monke
     assert validate(root) == expected
 
 
+def test_plain_block_fast_path_matches_python_on_seeded_corpus():
+    if not hasattr(yaml, "CSafeLoader"):
+        pytest.skip("PyYAML C extension unavailable")
+    rng = random.Random(52)
+    alphabet = "ab01: ,\n-./()_é"
+    seeds = (
+        "type: workspace",
+        "root: a",
+        "root:\n  a: 1",
+        "root:\n  - a",
+        "- a\n- b",
+    )
+    c_loader = io._strict_loader(yaml.CSafeLoader)
+
+    def outcome(source, loader):
+        try:
+            return ("value", _typed(yaml.load(source, Loader=loader)))
+        except DuplicateKeyError as error:
+            return ("duplicate", error.key)
+        except ValueError as error:
+            return ("value_error", str(error))
+        except yaml.YAMLError:
+            return ("yaml_error",)
+
+    for seed in seeds:
+        for _ in range(120):
+            source = seed
+            for _ in range(rng.randint(1, 4)):
+                position = rng.randrange(len(source) + 1)
+                replacement = rng.choice(alphabet)
+                delete = int(rng.random() < 0.4)
+                source = source[:position] + replacement + source[position + delete:]
+            assert outcome(source, c_loader) == outcome(source, io._PythonStrictLoader), source
+
+
 def test_python_fallback_imports_without_c_extension(tmp_path):
     path = tmp_path / "CONTEXT.md"
     path.write_text("---\ntype: workspace\n---\n", encoding="utf-8")
     program = (
         "import sys, yaml; "
-        "del yaml.CSafeLoader; "
+        "yaml.__dict__.pop('CSafeLoader', None); "
         "sys.path.insert(0, sys.argv[1]); "
         "from impacts_protocol import io; "
         "assert io._StrictLoader.__bases__ == (yaml.SafeLoader,); "
