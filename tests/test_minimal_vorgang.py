@@ -470,6 +470,18 @@ def test_changed_output_bytes_break_hash_binding():
 @pytest.mark.skipif(sys.platform != "linux", reason="Linux permits non-UTF-8 filename bytes")
 def test_validate_rejects_actual_non_utf8_filename_on_linux(tmp_path):
     root, run = _prepare_workspace(tmp_path)
+    application_step = root / "applications/video/produktion/start/CONTEXT.md"
+    step_metadata = read_context(application_step)
+    step_metadata["eingaben"] = ["input"]
+    replace_context(application_step, step_metadata)
+    git(root, "add", "applications/video")
+    git(root, "commit", "-m", "bind input directory")
+    run_metadata = read_context(run / "CONTEXT.md")
+    run_metadata["application_revision"] = "git-tree:" + git(
+        root, "rev-parse", "HEAD:applications/video"
+    )
+    replace_context(run / "CONTEXT.md", run_metadata)
+
     input_directory = run / "start/001/input"
     raw_path = os.fsencode(input_directory) + b"/bad-\xff.md"
     descriptor = os.open(raw_path, os.O_WRONLY | os.O_CREAT, 0o600)
