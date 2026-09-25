@@ -1,6 +1,7 @@
 from contextlib import redirect_stderr
 from io import StringIO
 from pathlib import Path
+import json
 import os
 import subprocess
 import sys
@@ -15,6 +16,41 @@ from impacts_protocol.cli import main
 
 
 class CliTests(unittest.TestCase):
+    def test_non_validation_commands_leave_validator_unloaded(self):
+        with TemporaryDirectory() as directory:
+            base = Path(directory)
+            environment = os.environ.copy()
+            environment["PYTHONPATH"] = str(ROOT / "src")
+            environment["PYTHONDONTWRITEBYTECODE"] = "1"
+            attempt = base / "attempt"
+            attempt.mkdir()
+            (attempt / "input.txt").write_text("synthetic", encoding="utf-8")
+            cases = [
+                ["--help"],
+                ["init", str(base / "new")],
+                ["template", "arbeitsschritt"],
+                ["hash", str(attempt), "input.txt"],
+                ["not-a-command"],
+            ]
+            for arguments in cases:
+                with self.subTest(arguments=arguments):
+                    code = (
+                        "import json, sys; from impacts_protocol.cli import main; "
+                        f"args = {arguments!r}; "
+                        "\ntry:\n result = main(args)\nexcept SystemExit as error:\n result = error.code\n"
+                        "print('MODULES=' + json.dumps(sorted(name for name in sys.modules "
+                        "if name == 'impacts_protocol.validator' or "
+                        "name.startswith(('jsonschema', 'referencing')))))\n"
+                        "sys.exit(result)"
+                    )
+                    result = subprocess.run(
+                        [sys.executable, "-c", code], cwd=base, env=environment,
+                        capture_output=True, text=True,
+                    )
+                    self.assertEqual(2 if arguments[0] == "not-a-command" else 0,
+                                     result.returncode, result.stderr)
+                    self.assertIn("MODULES=[]", result.stdout)
+
     def test_init_and_validate_generated_workspace(self):
         with TemporaryDirectory() as directory:
             target = Path(directory) / "demo"

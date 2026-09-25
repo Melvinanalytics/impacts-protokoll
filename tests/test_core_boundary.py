@@ -1,4 +1,8 @@
 from pathlib import Path
+import json
+import os
+import subprocess
+import sys
 from tempfile import TemporaryDirectory
 
 
@@ -7,6 +11,29 @@ ROOT = Path(__file__).resolve().parents[1]
 import impacts_protocol
 import impacts_protocol.validator as validator
 from impacts_protocol import init_workspace, validate
+
+
+def test_package_import_does_not_load_validator_dependencies():
+    environment = os.environ.copy()
+    environment["PYTHONPATH"] = str(ROOT / "src")
+    process = subprocess.run(
+        [sys.executable, "-c", "import impacts_protocol, sys, json; "
+         "print(json.dumps(sorted(name for name in sys.modules if "
+         "name == 'impacts_protocol.validator' or "
+         "name.startswith(('jsonschema', 'referencing')))))"],
+        cwd=ROOT, env=environment, capture_output=True, text=True,
+    )
+    assert process.returncode == 0, process.stderr
+    assert json.loads(process.stdout) == []
+
+
+def test_public_validate_is_original_callable_and_repeated_results_match():
+    from impacts_protocol.validator import validate as implementation
+
+    assert validate is implementation
+    with TemporaryDirectory() as directory:
+        root = init_workspace(Path(directory) / "workspace")
+        assert validate(root) == validate(root)
 
 
 def test_public_api_contains_only_minimal_contract():
