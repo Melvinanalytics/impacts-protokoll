@@ -6,8 +6,8 @@ UTF-8 JSON with ensure_ascii=False, sorted keys and separators=(",", ":"), then
 append one LF. SHA-256 that payload and prefix its lowercase hex with "sha256:".
 Overlapping declarations include each path once. A symlinked surface fails as
 ``structure.symlink``. Every other unbindable surface (missing, empty, escaping,
-unreadable or non-regular) fails as ``hash.mismatch``, as does a differing
-digest. This content identity does not establish permission.
+unreadable, non-UTF-8 or non-regular) fails as ``hash.mismatch``, as does a
+differing digest. This content identity does not establish permission.
 """
 
 import hashlib
@@ -39,6 +39,14 @@ def surface_hash(attempt_root: Path, declared: Sequence[str]) -> str:
         try:
             for path in _candidates(source, attempt_root):
                 normalized = path.resolve().relative_to(attempt_root.resolve()).as_posix()
+                try:
+                    normalized.encode("utf-8")
+                except UnicodeEncodeError as error:
+                    raise HashSurfaceError(
+                        "hash.mismatch",
+                        attempt_root,
+                        f"Hash surface path is not valid UTF-8: {normalized!r}",
+                    ) from error
                 with path.open("rb") as content:
                     files[normalized] = hashlib.file_digest(content, "sha256").hexdigest()
         except HashSurfaceError:

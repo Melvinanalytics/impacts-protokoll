@@ -1,8 +1,10 @@
 from pathlib import Path
 from collections import Counter
 from io import BytesIO
+import os
 import shutil
 import subprocess
+import sys
 from tempfile import TemporaryDirectory
 
 import pytest
@@ -463,6 +465,44 @@ def test_changed_output_bytes_break_hash_binding():
         )
 
         assert "hash.mismatch" in codes(root)
+
+
+@pytest.mark.skipif(sys.platform != "linux", reason="Linux permits non-UTF-8 filename bytes")
+def test_validate_rejects_actual_non_utf8_filename_on_linux(tmp_path):
+    root, run = _prepare_workspace(tmp_path)
+    attempt = run / "start/001"
+    input_directory = attempt / "input/dokumente"
+    input_directory.mkdir()
+    (attempt / "input/auftrag.md").rename(input_directory / "auftrag.md")
+
+    application_step = root / "applications/video/produktion/start/CONTEXT.md"
+    step_metadata = read_context(application_step)
+    step_metadata["eingaben"] = ["input/dokumente"]
+    replace_context(application_step, step_metadata)
+    git(root, "add", "applications/video")
+    git(root, "commit", "-m", "bind input directory")
+    run_metadata = read_context(run / "CONTEXT.md")
+    run_metadata["application_revision"] = "git-tree:" + git(
+        root, "rev-parse", "HEAD:applications/video"
+    )
+    run_metadata["laufpfad"][0]["eingabe_hash"] = surface_hash(
+        attempt, ["input/dokumente"]
+    )
+    replace_context(run / "CONTEXT.md", run_metadata)
+
+    raw_path = os.fsencode(input_directory) + b"/bad-\xff.md"
+    descriptor = os.open(raw_path, os.O_WRONLY | os.O_CREAT, 0o600)
+    try:
+        os.write(descriptor, b"synthetic")
+    finally:
+        os.close(descriptor)
+
+    report = validate(root)
+
+    assert any(
+        issue.code == "hash.mismatch" and "not valid UTF-8" in issue.message
+        for issue in report.issues
+    )
 
 
 def test_human_gate_rejects_agent_approval():

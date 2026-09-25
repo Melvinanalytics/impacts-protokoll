@@ -50,7 +50,9 @@ _C_SAFE_LOADER = getattr(yaml, "CSafeLoader", None)
 _StrictLoader = _strict_loader(_C_SAFE_LOADER) if _C_SAFE_LOADER else _PythonStrictLoader
 
 
-def _load_yaml(source: str) -> Any:
+def load_yaml_strict(source: str) -> Any:
+    """Load safe YAML while rejecting duplicate mapping keys."""
+
     # LibYAML and PyYAML's Python parser disagree on some valid and invalid
     # syntax. Keep the Python parser for those syntax families; use C for the
     # common plain block form, retrying Python if C alone rejects it.
@@ -91,7 +93,7 @@ def load_frontmatter_and_body(
     except StopIteration as error:
         raise ValueError("frontmatter has no closing delimiter") from error
     try:
-        value = _load_yaml("\n".join(lines[1:closing_index]))
+        value = load_yaml_strict("\n".join(lines[1:closing_index]))
     except DuplicateKeyError:
         raise
     except yaml.YAMLError as error:
@@ -111,4 +113,4 @@ def _read_text(path: Path, root: Path | None) -> str:
         raise ValueError(f"cannot resolve source path: {error}") from error
     if root is not None and not resolved.is_relative_to(Path(root).resolve()):
         raise PathEscapeError("source path resolves outside workspace root")
-    return resolved.read_text(encoding="utf-8")
+    return resolved.read_text(encoding="utf-8-sig")

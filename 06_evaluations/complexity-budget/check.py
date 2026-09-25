@@ -10,6 +10,12 @@ from pathlib import Path
 import yaml
 
 REPO = Path(__file__).resolve().parents[2]
+SOURCE = REPO / "src"
+if str(SOURCE) not in sys.path:
+    sys.path.insert(0, str(SOURCE))
+
+from impacts_protocol.io import load_yaml_strict
+
 HISTORY_REPO = REPO
 BUDGET = Path(__file__).resolve().parent / "budget.yaml"
 IGNORED_ROOT = {
@@ -41,7 +47,7 @@ def accepted_limits(budget: dict) -> dict[str, int]:
     if baseline_tag is None or _version_key(baseline_tag) < _version_key(initial["tag"]):
         return dict(initial["limits"])
     relative = "06_evaluations/complexity-budget/budget.yaml"
-    previous = yaml.safe_load(_git("show", f"{baseline_tag}:{relative}"))
+    previous = load_yaml_strict(_git("show", f"{baseline_tag}:{relative}"))
     limits = previous.get("limits") if isinstance(previous, dict) else None
     _validate_limits(limits, "release-tag limits")
     return {field: int(limits[field]) for field in METRICS}
@@ -49,7 +55,7 @@ def accepted_limits(budget: dict) -> dict[str, int]:
 
 def main() -> int:
     try:
-        budget = yaml.safe_load(BUDGET.read_text(encoding="utf-8"))
+        budget = load_yaml_strict(BUDGET.read_text(encoding="utf-8"))
         if not isinstance(budget, dict) or budget.get("version") != 4:
             raise ValueError("budget.yaml requires version 4")
         if set(budget) != {"version", "limits", "approvals", "initial_release"}:
@@ -60,7 +66,13 @@ def main() -> int:
         if not isinstance(approvals, list):
             raise ValueError("approvals must be a list")
         baseline_limits = accepted_limits(budget)
-    except (OSError, ValueError, json.JSONDecodeError, subprocess.CalledProcessError) as error:
+    except (
+        OSError,
+        ValueError,
+        yaml.YAMLError,
+        json.JSONDecodeError,
+        subprocess.CalledProcessError,
+    ) as error:
         print(f"VIOLATION: Cannot verify budget or release baseline: {error}")
         return 1
     for approval in approvals:

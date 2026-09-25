@@ -79,6 +79,27 @@ def test_budget_rejects_nonhuman_attribution():
     assert "approved_by human:<id>" in output.getvalue()
 
 
+def test_budget_rejects_duplicate_keys():
+    check = _check_module()
+    with TemporaryDirectory() as directory:
+        budget_path = Path(directory) / "budget.yaml"
+        source = BUDGET_PATH.read_text(encoding="utf-8")
+        limits = (
+            "limits:\n"
+            "  root_dirs: 5\n"
+            "  protocol_schemas: 5\n"
+            "  max_total_required_fields_per_schema: 15\n"
+        )
+        assert source.count(limits) == 1
+        budget_path.write_text(source.replace(limits, limits + limits, 1), encoding="utf-8")
+        check.BUDGET = budget_path
+        with redirect_stdout(StringIO()) as output:
+            exit_code = check.main()
+
+    assert exit_code == 1
+    assert "duplicate key" in output.getvalue()
+
+
 def test_joint_budget_and_fallback_increase_cannot_bypass_release_tag():
     check = _check_module()
     with TemporaryDirectory() as directory:

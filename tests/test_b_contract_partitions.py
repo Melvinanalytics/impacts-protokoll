@@ -295,13 +295,12 @@ def test_non_utf8_context_fails_closed(tmp_path):
         load_frontmatter_and_body(path, tmp_path)
 
 
-def test_utf8_bom_hides_frontmatter_and_validator_still_fails_closed(tmp_path):
+def test_utf8_bom_preserves_frontmatter(tmp_path):
     root = init_workspace(tmp_path / "kunde")
     (root / "CONTEXT.md").write_bytes(
         b"\xef\xbb\xbf---\ntype: workspace\n---\n\n# Body\n"
     )
-    # BOM makes the router unreadable as frontmatter; validation must reject.
-    assert "routing.type" in codes(root)
+    assert not codes(root)
 
 
 def test_block_scalar_with_bare_dashes_line_is_silently_truncated(tmp_path):
