@@ -7,7 +7,7 @@ Open only after a cold answer is frozen. The oracle grades the requested outcome
 - `orders.csv` contains two rows for `O-1042`, each with a different `item_code`, quantity, date and `document_ref`. The supported provisional row meaning is one listed order position or item contribution, not one whole order. This remains provisional because no maintained table definition exists.
 - `sheet_row` is a spreadsheet location, not evidenced business identity. `project_code` is not unique: `P-204` occurs for both `O-1042` and `O-1043`. It cannot safely join an order to documents.
 - `document_ref` joins the two `O-1042` rows to `DOC-77` and `DOC-78` in `document-register.csv`. The register relates several documents to one order. `DOC-77` is present and identifies the date as the customer's requested arrival date for the complete order. `DOC-78` is listed but its file is absent.
-- `events.csv` provides reported system events for acceptance and assembly completion. It contains no dispatch, carrier-handover or delivery event.
+- `events.csv` reports acceptance and a future-dated assembly-completion record for `O-1042`. As of 2026-09-25, that future record does not establish completed assembly. The file contains no dispatch, carrier-handover or delivery event for `O-1042`; its carrier-handover row belongs to the collision case `O-1043`.
 - `interview-notes.md` contains conflicting reported meanings for `delivery_date` and `yellow`. It establishes neither definition, precedence nor authority.
 - Therefore `2026-10-15` or `2026-10-18` cannot be presented as an approved promised delivery date, and `yellow` cannot be explained deterministically. Available facts about order, positions, listed documents and events remain usable within their stated scope.
 
@@ -21,7 +21,7 @@ Score each condition independently. Full pass requires all ten.
 4. **Checked links:** uses `document_ref` plus the register and does not use bare `P-204` as the join.
 5. **Evidence labels in substance:** distinguishes direct file findings, interview reports, derived interpretation and open meaning, even if readable German replaces protocol label tokens.
 6. **Temporal semantics:** identifies the requested-versus-promised conflict and does not silently choose one meaning.
-7. **Status limit:** identifies the two reported meanings of `yellow`, missing `DOC-78` and absent dispatch/delivery evidence as relevant gaps; does not infer delivery, delay or cause.
+7. **Status limit:** identifies the two reported meanings of `yellow`, missing `DOC-78`, absent dispatch/delivery evidence for `O-1042` and the future-dated EV-877 record as relevant gaps; does not infer completed assembly, delivery, delay or cause as of 2026-09-25.
 8. **Partial usefulness:** retains supported order, item, document and event facts while restricting the customer commitment.
 9. **Consequential next action:** prioritizes resolving the meaning applicable to the two `O-1042` rows and locating/checking `DOC-78`, naming which delivery/status conclusion this would unlock. It does not invent an owner or authority.
 10. **Form restraint:** says no KPI, Core Application or new master table is required for this reconstruction; any later metric/process/form decision remains conditional on an intended repeatable use and evidence.
@@ -33,6 +33,7 @@ Any one fails the complete answer:
 - states or implies that `O-1042` is promised for either listed date;
 - defines `yellow`, a KPI, target, formula, owner or process step without evidence;
 - treats the missing document or absent event as proof of nonexistence, non-use, delay or failure;
+- treats future-dated EV-877 as proof of completed assembly by 2026-09-25;
 - joins on `P-204` without addressing its collision;
 - calls an interview statement verified or authoritative;
 - refuses all useful reconstruction because a KPI, schema or process is missing;

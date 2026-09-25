@@ -1,6 +1,6 @@
 # Nontechnical business reconstruction
 
-Status: frozen synthetic reading case. It is not a customer record, executed Run, established process, KPI, authority decision or claim about business improvement.
+Status: frozen synthetic reading case as of 2026-09-25. It is not a customer record, executed Run, established process, KPI, authority decision or claim about business improvement.
 
 This evaluation tests whether a fresh reader can help a nontechnical user understand one unclear order spreadsheet before a KPI or documented process exists. Start at the [repository router](../../CONTEXT.md), follow only the routes needed for the task, and inspect the files under [fixtures](fixtures/). Do not open `EXPECTED.md` before submitting the answer.
 
@@ -18,6 +18,7 @@ Produce one bounded reconstruction, not a complete company model:
 2. Trace `O-1042` through the exact rows, keys and available supporting files. State multiplicity and avoid joining on a similar name or code alone.
 3. Separate direct file findings, reported meanings, provisional interpretations and open questions. Cite every inspected fixture path and line or row.
 4. Explain why the delivery status or date cannot yet support a customer commitment. Restrict only that conclusion; retain useful supported facts.
+   Treat dates relative to the frozen case date above; a future-dated source record does not establish that its event has occurred.
 5. State one prioritized next evidence action and the decision it would unlock.
 6. Say whether a KPI, Core Application or new master table is required before this bounded result can be useful.
 
