@@ -2,7 +2,9 @@ from contextlib import redirect_stderr, redirect_stdout
 import hashlib
 from io import StringIO
 import json
+import os
 from pathlib import Path
+import sys
 from tempfile import TemporaryDirectory
 
 import pytest
@@ -124,6 +126,46 @@ def test_cli_hash_reports_invalid_surface_and_exits_one():
 
         assert exit_code == 1
         assert "hash.mismatch" in errors.getvalue()
+
+
+def test_cli_hash_reports_non_utf8_path_and_exits_one(tmp_path, monkeypatch):
+    attempt = _attempt(tmp_path, {"input/auftrag.md": "x"})
+    source = attempt / "input" / "auftrag.md"
+    invalid_resolved = attempt / "input" / "bad-\udcff.md"
+    original_resolve = Path.resolve
+
+    def resolve_with_invalid_name(path, *args, **kwargs):
+        if path == source:
+            return invalid_resolved
+        return original_resolve(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "resolve", resolve_with_invalid_name)
+    errors = StringIO()
+    with redirect_stderr(errors):
+        exit_code = main(["hash", str(attempt), "input/auftrag.md"])
+
+    assert exit_code == 1
+    assert "hash.mismatch" in errors.getvalue()
+    assert "not valid UTF-8" in errors.getvalue()
+
+
+@pytest.mark.skipif(sys.platform != "linux", reason="Linux permits non-UTF-8 filename bytes")
+def test_cli_hash_rejects_actual_non_utf8_filename_on_linux(tmp_path):
+    attempt = _attempt(tmp_path, {"input/auftrag.md": "x"})
+    raw_path = os.fsencode(attempt / "input") + b"/bad-\xff.md"
+    descriptor = os.open(raw_path, os.O_WRONLY | os.O_CREAT, 0o600)
+    try:
+        os.write(descriptor, b"synthetic")
+    finally:
+        os.close(descriptor)
+
+    errors = StringIO()
+    with redirect_stderr(errors):
+        exit_code = main(["hash", str(attempt), "input/"])
+
+    assert exit_code == 1
+    assert "hash.mismatch" in errors.getvalue()
+    assert "not valid UTF-8" in errors.getvalue()
 
 
 @pytest.mark.parametrize("declared", [[], iter(()), 42, True, {"input/"}, "input/", b"input/", [""], [None], ["/input/"]])

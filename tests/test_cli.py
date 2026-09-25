@@ -108,6 +108,15 @@ class CliTests(unittest.TestCase):
             )
             self.assertEqual(0, main(["validate", str(target)]))
 
+    def test_validate_accepts_utf8_bom_before_frontmatter(self):
+        with TemporaryDirectory() as directory:
+            target = Path(directory) / "demo"
+            self.assertEqual(0, main(["init", str(target)]))
+            router = target / "CONTEXT.md"
+            router.write_bytes(b"\xef\xbb\xbf" + router.read_bytes())
+
+            self.assertEqual(0, main(["validate", str(target)]))
+
     def test_init_rejects_existing_target_and_preserves_contents(self):
         with TemporaryDirectory() as directory:
             target = Path(directory) / "demo"
