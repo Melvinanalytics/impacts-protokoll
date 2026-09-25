@@ -17,6 +17,7 @@ from pathlib import Path
 import platform
 import shlex
 import shutil
+import stat
 import statistics
 import subprocess
 import sys
@@ -87,18 +88,23 @@ def _history_fixture(base: Path, commits: int, blobs: int, mode: str) -> Path:
     return root
 
 
-def _yaml_fixture(base: Path) -> tuple[Path, Path]:
-    root = init_workspace(base / "yaml-workspace")
+def _yaml_fixture(base: Path, syntax: str) -> tuple[Path, Path]:
+    if syntax not in {"plain", "sensitive"}:
+        raise ValueError(f"unknown YAML benchmark syntax: {syntax}")
+    root = init_workspace(base / f"yaml-{syntax}-workspace")
     application = write_application(root / "applications" / "video")
-    # Many schema-valid string items exercise YAML mapping and scalar construction.
+    # Same item count and schema-valid values; quoted scalars require Python fallback.
     path = application / "CONTEXT.md"
     lines = path.read_text(encoding="utf-8").splitlines()
-    extra = "\n".join(f"  - 'Acceptance item {index:04}: checked'" for index in range(2000))
+    if syntax == "plain":
+        extra = [f"  - Acceptance item {index:04} checked" for index in range(2000)]
+    else:
+        extra = [f"  - 'Acceptance item {index:04} checked'" for index in range(2000)]
     start = lines.index("  abnahme:")
     end = start + 1
     while end < len(lines) and lines[end].startswith("  - "):
         end += 1
-    lines[start:end] = ["  abnahme:", extra]
+    lines[start:end] = ["  abnahme:", *extra]
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
     return root, path
 
@@ -108,21 +114,50 @@ def _size(root: Path) -> dict:
     return {"files": len(files), "bytes": sum(path.stat().st_size for path in files)}
 
 
+def _tree_manifest(root: Path) -> list[dict]:
+    """Describe init output by relative path and bytes after timed subprocess exits."""
+    if not root.is_dir():
+        return [{"path": ".", "type": "missing"}]
+    entries = []
+    for path in [root, *sorted(root.rglob("*"))]:
+        entry = {"path": "." if path == root else path.relative_to(root).as_posix(),
+                 "mode": stat.S_IMODE(path.lstat().st_mode)}
+        if path.is_symlink():
+            entry.update(type="symlink", target=os.readlink(path))
+        elif path.is_dir():
+            entry["type"] = "directory"
+        elif path.is_file():
+            data = path.read_bytes()
+            entry.update(type="file", bytes=len(data), sha256=hashlib.sha256(data).hexdigest())
+        else:
+            entry["type"] = "other"
+        entries.append(entry)
+    return entries
+
+
 def _cases(base: Path, selected: list[str] | None) -> dict:
     small = init_workspace(base / "small")
     attempt = base / "attempt"
     attempt.mkdir()
     (attempt / "input.txt").write_bytes(b"synthetic benchmark\n")
-    yaml_root, yaml_file = _yaml_fixture(base)
     cases = {
         "help": {"argv": ["--help"], "size": _size(small)},
         "template": {"argv": ["template", "arbeitsschritt"], "size": _size(small)},
         "init": {"argv": ["init", "{target}"], "size": _size(small)},
         "hash": {"argv": ["hash", str(attempt), "input.txt"], "size": _size(attempt)},
         "validate-small": {"argv": ["validate", str(small)], "size": _size(small)},
-        "validate-yaml": {"argv": ["validate", str(yaml_root)], "size": _size(yaml_root)},
-        "yaml-direct": {"yaml": str(yaml_file), "size": _size(yaml_root)},
     }
+    for syntax, eligibility in (("plain", "plain block, C fast path eligible"),
+                                ("sensitive", "quoted scalars, Python fallback required")):
+        root, path = _yaml_fixture(base, syntax)
+        cases[f"validate-yaml-{syntax}"] = {
+            "argv": ["validate", str(root)], "size": _size(root),
+            "yaml_eligibility": eligibility,
+        }
+        cases[f"yaml-direct-{syntax}"] = {
+            "yaml": str(path), "size": _size(root),
+            "yaml_eligibility": eligibility,
+        }
     for commits, blobs, mode in [(21, 0, "old"), (121, 0, "old"),
                                   (121, 0, "same"), (121, 0, "distinct"),
                                   (121, 20, "old"), (121, 20, "distinct")]:
@@ -165,7 +200,8 @@ def _run(source: Path, case: dict, target: Path, trace: Path | None, wrapper: Pa
         normalized = (stdout.replace(str(target), "<TARGET>"), stderr.replace(str(target), "<TARGET>"))
     return {"seconds": elapsed / 1e9, "parser_seconds": json.loads(stdout)["elapsed_ns"] / 1e9 if "yaml" in case and process.returncode == 0 else None,
             "exit": process.returncode, "stdout": normalized[0], "stderr": normalized[1],
-            "command": command}
+            "command": command,
+            "created_tree": _tree_manifest(target) if case.get("argv", [None])[0] == "init" else None}
 
 
 def main() -> None:
@@ -214,7 +250,9 @@ def main() -> None:
                     result = _run(source, case, target, None, None)
                     records[label].append(result)
                 left, right = records["base"][-1], records["candidate"][-1]
-                if (left["exit"], left["stdout"], left["stderr"]) != (right["exit"], right["stdout"], right["stderr"]):
+                if (left["exit"], left["stdout"], left["stderr"], left["created_tree"]) != (
+                    right["exit"], right["stdout"], right["stderr"], right["created_tree"]
+                ):
                     raise AssertionError(f"{name} repetition {index}: behavior differs: {left!r} versus {right!r}")
                 if left["exit"] != 0:
                     raise AssertionError(f"{name}: unexpected exit {left['exit']}: {left['stderr']}")
@@ -222,8 +260,8 @@ def main() -> None:
             for label in ("base", "candidate"):
                 trace = base / f"trace-{name}-{label}.txt"
                 instrumented = _run(getattr(args, label), case, base / f"instrumented-{name}-{label}", trace, wrapper)
-                if (instrumented["exit"], instrumented["stdout"], instrumented["stderr"]) != (
-                    records[label][0]["exit"], records[label][0]["stdout"], records[label][0]["stderr"]
+                if (instrumented["exit"], instrumented["stdout"], instrumented["stderr"], instrumented["created_tree"]) != (
+                    records[label][0]["exit"], records[label][0]["stdout"], records[label][0]["stderr"], records[label][0]["created_tree"]
                 ):
                     raise AssertionError(f"{name}: instrumented behavior differs")
                 commands = trace.read_text().splitlines() if trace.exists() else []
@@ -247,6 +285,7 @@ def main() -> None:
                                     "parser_raw_seconds": parser_timings,
                                     "parser_median_seconds": statistics.median(parser_timings) if parser_timings else None,
                                     "git_processes_instrumented": counts[label],
+                                    "created_tree": records[label][0]["created_tree"],
                                     "exit": records[label][0]["exit"], "stdout_sha256": hashlib.sha256(records[label][0]["stdout"].encode()).hexdigest(),
                                     "command": records[label][0]["command"]}
             evidence["cases"][name] = {"fixture": {key: value for key, value in case.items() if key != "argv" and key != "yaml"}, "results": summaries}

@@ -7,12 +7,37 @@ import subprocess
 import sys
 from tempfile import TemporaryDirectory
 import unittest
+from unittest.mock import patch
 
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from impacts_protocol.cli import main
+
+
+def test_benchmark_yaml_fixtures_validate_and_select_expected_loader(tmp_path):
+    from impacts_protocol import validate
+    from impacts_protocol import io
+    from tests.benchmark_cli import _yaml_fixture
+
+    original_load = io.yaml.load
+    for syntax in ("plain", "sensitive"):
+        root, path = _yaml_fixture(tmp_path, syntax)
+        selected = []
+
+        def record_loader(source, *, Loader):
+            selected.append(Loader)
+            return original_load(source, Loader=Loader)
+
+        with patch.object(io.yaml, "load", side_effect=record_loader):
+            metadata = io.load_frontmatter(path)
+        assert len(metadata["leistung"]["abnahme"]) == 2000
+        assert validate(root).valid
+        if hasattr(io, "_PythonStrictLoader"):
+            expected = (io._StrictLoader if syntax == "plain" and io._C_SAFE_LOADER
+                        else io._PythonStrictLoader)
+            assert selected == [expected]
 
 
 class CliTests(unittest.TestCase):
