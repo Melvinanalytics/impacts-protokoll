@@ -21,6 +21,7 @@ BUDGET = Path(__file__).resolve().parent / "budget.yaml"
 IGNORED_ROOT = {
     ".git",
     ".pytest_cache",
+    ".hypothesis",
     ".ruff_cache",
     ".superpowers",
     ".venv",

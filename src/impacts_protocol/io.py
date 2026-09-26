@@ -83,6 +83,10 @@ def load_frontmatter_and_body(
         text = _read_text(path, root)
     except (OSError, UnicodeError) as error:
         raise ValueError(f"invalid Markdown: {error}") from error
+    if text.startswith("\ufeff"):
+        raise ValueError(
+            "line 1: repeated UTF-8 BOM; remove extra leading BOMs (at most one is allowed)"
+        )
     lines = text.splitlines()
     if not lines or lines[0].strip() != "---":
         return {}, text

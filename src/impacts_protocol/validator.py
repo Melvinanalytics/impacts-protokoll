@@ -191,6 +191,7 @@ def _validate_application(
         _add(issues, "structure.invalid", root, root, "Hauptprozess needs at least one Teilprozess")
 
     steps: dict[str, tuple[Path, dict[str, Any]]] = {}
+    incomplete_steps = False
     for part_root in part_dirs:
         part = _load_context(
             part_root / "CONTEXT.md",
@@ -220,6 +221,7 @@ def _validate_application(
                 require_body=True,
             )
             if step is None or not isinstance(step.get("id"), str):
+                incomplete_steps = True
                 continue
             step_id = step["id"]
             if step_id != f"arbeitsschritt:{step_root.name}":
@@ -230,7 +232,8 @@ def _validate_application(
                 steps[step_id] = (step_root, step)
 
     application = Application(root, process, steps)
-    _validate_graph(application, issues)
+    if not incomplete_steps:
+        _validate_graph(application, issues)
     if len(issues) > before and not steps:
         return None
     return application

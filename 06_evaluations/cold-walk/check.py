@@ -16,7 +16,7 @@ import yaml
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 
 from impacts_protocol import init_workspace, surface_hash, validate
-from impacts_protocol.io import load_frontmatter
+from impacts_protocol.io import load_frontmatter, load_yaml_strict
 
 BEISPIEL_ROOT = Path(__file__).resolve().parent / "beispiel"
 BEISPIEL = BEISPIEL_ROOT / "applications" / "prueffall"
@@ -778,7 +778,7 @@ def walk(base: Path) -> WalkResult:
     if "gewaehlte_route" not in entry and "freigabe" not in entry:
         proofs.add("gate.open_has_no_decision")
 
-    decision = yaml.safe_load(HUMAN_DECISION.read_text(encoding="utf-8"))
+    decision = load_yaml_strict(HUMAN_DECISION.read_text(encoding="utf-8"))
     harness.close_human(entry, decision)
     if (
         entry.get("freigabe") == decision["freigabe"]
@@ -966,7 +966,7 @@ def _frontmatter_and_body(text: str) -> tuple[dict, str]:
         )
     except StopIteration as error:
         raise ProofError("Application frontmatter has no closing delimiter") from error
-    metadata = yaml.safe_load("\n".join(lines[1:closing])) or {}
+    metadata = load_yaml_strict("\n".join(lines[1:closing])) or {}
     if not isinstance(metadata, dict):
         raise ProofError("Application frontmatter is not an object")
     return metadata, "\n".join(lines[closing + 1 :])

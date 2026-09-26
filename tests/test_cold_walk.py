@@ -108,6 +108,41 @@ def test_cold_walk_script_binds_its_checkout_source(tmp_path):
     assert "FAIL cold walk" in result.stdout
 
 
+def test_cold_walk_rejects_duplicate_human_decision_keys_in_subprocess(tmp_path):
+    checkout = tmp_path / "checkout"
+    shutil.copytree(COLD_WALK, checkout / "06_evaluations" / "cold-walk")
+    shutil.copytree(ROOT / "02_protocol", checkout / "02_protocol")
+    shutil.copytree(ROOT / "src", checkout / "src")
+    decision = (
+        checkout
+        / "06_evaluations"
+        / "cold-walk"
+        / "beispiel"
+        / "fixtures"
+        / "human-decision.yaml"
+    )
+    with decision.open("a", encoding="utf-8") as fixture:
+        fixture.write("route: abgelehnt\n")
+
+    check_path = checkout / "06_evaluations" / "cold-walk" / "check.py"
+    code = (
+        "import importlib.util, sys; from pathlib import Path; "
+        "spec = importlib.util.spec_from_file_location('cold_walk_under_test', sys.argv[1]); "
+        "check = importlib.util.module_from_spec(spec); sys.modules[spec.name] = check; "
+        "spec.loader.exec_module(check); check.walk(Path(sys.argv[2])); print('ACCEPTED')"
+    )
+    result = subprocess.run(
+        [sys.executable, "-c", code, str(check_path), str(tmp_path / "walk")],
+        cwd=tmp_path,
+        text=True,
+        capture_output=True,
+    )
+
+    assert result.returncode == 1
+    assert "duplicate key: 'route'" in result.stderr
+    assert "ACCEPTED" not in result.stdout
+
+
 def test_walk_imports_the_application_into_a_second_repository_with_equal_oid(walk_result):
     result = walk_result
 

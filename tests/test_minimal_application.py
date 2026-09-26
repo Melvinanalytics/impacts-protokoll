@@ -37,6 +37,16 @@ def test_application_folder_requires_a_slug():
         assert "structure.invalid" in codes(root)
 
 
+@pytest.mark.parametrize("slug", ["caf\u00e9", "cafe\u0301"])
+def test_application_folder_rejects_non_ascii_slug(tmp_path, slug):
+    root = write_application(tmp_path / slug)
+
+    assert any(
+        issue.code == "structure.invalid" and "slug" in issue.message.lower()
+        for issue in validate(root).issues
+    )
+
+
 def test_application_rejects_an_unknown_runtime_subtree():
     with TemporaryDirectory() as directory:
         root = write_application(Path(directory) / "video")
@@ -164,6 +174,27 @@ def test_workstep_id_matches_its_folder_slug():
         replace_context(path, metadata)
 
         assert "structure.invalid" in codes(root)
+
+
+def test_double_leading_bom_has_one_primary_format_error():
+    with TemporaryDirectory() as directory:
+        root = write_application(Path(directory) / "video")
+        path = root / "produktion" / "start" / "CONTEXT.md"
+        original = path.read_bytes()
+
+        path.write_bytes(b"\xef\xbb\xbf" + original)
+        assert validate(root).valid
+
+        path.write_bytes(b"\xef\xbb\xbf\xef\xbb\xbf" + original)
+        report = validate(root)
+
+    assert not report.valid
+    assert len(report.issues) == 1
+    issue = report.issues[0]
+    assert issue.code == "format.invalid"
+    assert issue.path == "produktion/start/CONTEXT.md"
+    assert "line 1" in issue.message
+    assert "remove extra leading BOMs" in issue.message
 
 
 def test_unresolved_route_is_rejected():

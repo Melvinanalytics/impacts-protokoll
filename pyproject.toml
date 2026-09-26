@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "impacts-protocol"
-version = "0.3.13"
+version = "0.3.14"
 description = "File-based process design and reliable work for people and agents"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -19,6 +19,9 @@ dependencies = [
 [project.urls]
 Repository = "https://github.com/Melvinanalytics/impacts-protokoll"
 Issues = "https://github.com/Melvinanalytics/impacts-protokoll/issues"
+
+[project.optional-dependencies]
+test = ["pytest>=9.1", "hypothesis>=6.168.1", "setuptools>=77"]
 
 [project.scripts]
 impacts = "impacts_protocol.cli:main"
