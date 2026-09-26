@@ -1,4 +1,5 @@
-from contextlib import redirect_stderr
+from contextlib import redirect_stderr, redirect_stdout
+from importlib.metadata import PackageNotFoundError
 from io import StringIO
 from pathlib import Path
 import json
@@ -41,6 +42,89 @@ def test_benchmark_yaml_fixtures_validate_and_select_expected_loader(tmp_path):
 
 
 class CliTests(unittest.TestCase):
+    def test_version_uses_installed_distribution_metadata(self):
+        class Distribution:
+            metadata = {"Name": "metadata-package"}
+            version = "8.7.6"
+
+        output = StringIO()
+        with patch("importlib.metadata.distribution", return_value=Distribution()):
+            with redirect_stdout(output), self.assertRaises(SystemExit) as raised:
+                main(["--version"])
+
+        self.assertEqual(0, raised.exception.code)
+        self.assertEqual(
+            "metadata-package 8.7.6 (installed distribution metadata)\n",
+            output.getvalue(),
+        )
+
+    def test_version_marks_source_pyproject_fallback(self):
+        with TemporaryDirectory() as directory:
+            source_root = Path(directory)
+            source_cli = source_root / "src" / "impacts_protocol" / "cli.py"
+            source_cli.parent.mkdir(parents=True)
+            (source_root / "pyproject.toml").write_text(
+                '[project]\nname = "source-package"\nversion = "7.6.5"\n',
+                encoding="utf-8",
+            )
+            output = StringIO()
+            with (
+                patch("impacts_protocol.cli.__file__", str(source_cli)),
+                patch(
+                    "importlib.metadata.distribution",
+                    side_effect=PackageNotFoundError,
+                ),
+                redirect_stdout(output),
+                self.assertRaises(SystemExit) as raised,
+            ):
+                main(["--version"])
+
+        self.assertEqual(0, raised.exception.code)
+        self.assertEqual(
+            "source-package 7.6.5 (source pyproject.toml; source revision unknown)\n",
+            output.getvalue(),
+        )
+
+    def test_validate_verbose_reports_package_identity_and_default_stays_quiet(self):
+        class Distribution:
+            metadata = {"Name": "metadata-package"}
+            version = "8.7.6"
+
+        with TemporaryDirectory() as directory:
+            target = Path(directory) / "workspace"
+            init_workspace_output = StringIO()
+            with redirect_stdout(init_workspace_output):
+                self.assertEqual(0, main(["init", str(target)]))
+
+            default_stdout = StringIO()
+            default_stderr = StringIO()
+            verbose_stdout = StringIO()
+            verbose_stderr = StringIO()
+            with patch(
+                "importlib.metadata.distribution",
+                return_value=Distribution(),
+            ):
+                with redirect_stdout(default_stdout), redirect_stderr(default_stderr):
+                    self.assertEqual(0, main(["validate", str(target)]))
+                with redirect_stdout(verbose_stdout), redirect_stderr(verbose_stderr):
+                    self.assertEqual(0, main(["validate", str(target), "--verbose"]))
+
+        self.assertEqual("", default_stdout.getvalue())
+        self.assertEqual("", default_stderr.getvalue())
+        self.assertEqual("", verbose_stdout.getvalue())
+        self.assertEqual(
+            "Package metadata identity: metadata-package 8.7.6 (installed distribution metadata)\n",
+            verbose_stderr.getvalue(),
+        )
+
+    def test_regular_commands_skip_distribution_metadata_lookup(self):
+        output = StringIO()
+        with patch("importlib.metadata.distribution", side_effect=AssertionError("unexpected lookup")):
+            with redirect_stdout(output):
+                self.assertEqual(0, main(["template", "arbeitsschritt"]))
+
+        self.assertNotEqual("", output.getvalue())
+
     def test_non_validation_commands_leave_validator_unloaded(self):
         with TemporaryDirectory() as directory:
             base = Path(directory)
@@ -52,6 +136,7 @@ class CliTests(unittest.TestCase):
             (attempt / "input.txt").write_text("synthetic", encoding="utf-8")
             cases = [
                 ["--help"],
+                ["--version"],
                 ["init", str(base / "new")],
                 ["template", "arbeitsschritt"],
                 ["hash", str(attempt), "input.txt"],

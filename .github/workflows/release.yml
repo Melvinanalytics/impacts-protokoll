@@ -59,8 +59,8 @@ jobs:
         run: |
           set -euo pipefail
           python -m pip install --disable-pip-version-check \
-            "build==1.6.1" "pytest==9.1.1" "setuptools==82.0.1" "wheel==0.48.0"
-          python -m pip install --disable-pip-version-check -e .
+            "build==1.6.1" "pytest==9.1.1" "hypothesis==6.168.1" "setuptools==82.0.1" "wheel==0.48.0"
+          python -m pip install --disable-pip-version-check -e ".[test]"
           python -m pytest -q
 
       - name: Build wheel, complete source archive and checksums

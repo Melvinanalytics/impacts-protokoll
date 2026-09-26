@@ -4,6 +4,7 @@ import subprocess
 import yaml
 
 from impacts_protocol import validate
+from impacts_protocol.io import load_frontmatter
 
 
 def git(root: Path, *args: str) -> str:
@@ -88,9 +89,7 @@ def write_application(root: Path) -> Path:
 
 
 def read_context(path: Path) -> dict:
-    text = path.read_text(encoding="utf-8").splitlines()
-    end = text[1:].index("---") + 1
-    return yaml.safe_load("\n".join(text[1:end]))
+    return load_frontmatter(path)
 
 
 def replace_context(path: Path, metadata: dict) -> None:

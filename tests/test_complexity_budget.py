@@ -8,6 +8,8 @@ from tempfile import TemporaryDirectory
 
 import yaml
 
+from impacts_protocol.io import load_yaml_strict
+
 
 ROOT = Path(__file__).resolve().parents[1]
 CHECK_PATH = ROOT / "06_evaluations" / "complexity-budget" / "check.py"
@@ -23,7 +25,7 @@ def _check_module():
 
 
 def test_target_budget_is_five_five_fifteen():
-    budget = yaml.safe_load(BUDGET_PATH.read_text(encoding="utf-8"))
+    budget = load_yaml_strict(BUDGET_PATH.read_text(encoding="utf-8"))
     assert budget["version"] == 4
     assert budget["limits"] == {
         "root_dirs": 5,
@@ -57,11 +59,23 @@ def test_required_counter_includes_nested_contracts():
     ) == 3
 
 
+def test_hypothesis_cache_is_ignored_but_untracked_root_directory_counts(tmp_path):
+    check = _check_module()
+    (tmp_path / ".hypothesis").mkdir()
+    (tmp_path / "user-created-untracked").mkdir()
+    check.REPO = tmp_path
+
+    measured = check.measure()
+
+    assert measured["root_dirs"] == 1
+    assert measured["root_dir_names"] == ["user-created-untracked"]
+
+
 def test_budget_rejects_nonhuman_attribution():
     check = _check_module()
     with TemporaryDirectory() as directory:
         budget_path = Path(directory) / "budget.yaml"
-        budget = yaml.safe_load(BUDGET_PATH.read_text(encoding="utf-8"))
+        budget = load_yaml_strict(BUDGET_PATH.read_text(encoding="utf-8"))
         budget["approvals"] = [
             {
                 "field": "root_dirs",
@@ -119,7 +133,7 @@ def test_joint_budget_and_fallback_increase_cannot_bypass_release_tag():
         subprocess.run(["git", "-C", str(history), "commit", "-m", "next release"], check=True, capture_output=True)
 
         mutated_path = temporary_root / "budget.yaml"
-        mutated = yaml.safe_load(BUDGET_PATH.read_text(encoding="utf-8"))
+        mutated = load_yaml_strict(BUDGET_PATH.read_text(encoding="utf-8"))
         mutated["limits"]["root_dirs"] = 6
         mutated_path.write_text(yaml.safe_dump(mutated), encoding="utf-8")
 

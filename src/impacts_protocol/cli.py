@@ -9,8 +9,40 @@ from .generator import LANGUAGES, TEMPLATE_KINDS, init_workspace, template_text
 from .hashing import HashSurfaceError, surface_hash
 
 
+def _package_metadata_identity() -> str:
+    from importlib import metadata as importlib_metadata
+
+    try:
+        distribution = importlib_metadata.distribution("impacts-protocol")
+    except importlib_metadata.PackageNotFoundError:
+        source_pyproject = Path(__file__).resolve().parents[2] / "pyproject.toml"
+        try:
+            import tomllib
+
+            project = tomllib.loads(source_pyproject.read_text(encoding="utf-8"))["project"]
+            name = project["name"]
+            version = project["version"]
+        except (OSError, KeyError, TypeError, ValueError):
+            return "impacts-protocol version unknown (metadata unavailable)"
+        return f"{name} {version} (source pyproject.toml; source revision unknown)"
+
+    name = distribution.metadata.get("Name") or "impacts-protocol"
+    return f"{name} {distribution.version} (installed distribution metadata)"
+
+
+class _PrintPackageMetadataAction(argparse.Action):
+    def __init__(self, option_strings, dest, **kwargs):
+        kwargs.setdefault("help", "show package metadata identity and exit")
+        super().__init__(option_strings, dest, nargs=0, **kwargs)
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        print(_package_metadata_identity())
+        parser.exit()
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="impacts")
+    parser.add_argument("--version", action=_PrintPackageMetadataAction)
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     init_parser = subparsers.add_parser("init", help="Create a workspace")
@@ -19,6 +51,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     validate_parser = subparsers.add_parser("validate", help="Validate a workspace")
     validate_parser.add_argument("path")
+    validate_parser.add_argument("--verbose", action="store_true", help="Report package identity")
 
     hash_parser = subparsers.add_parser("hash", help="Hash declared attempt surfaces")
     hash_parser.add_argument("attempt", help="Attempt folder")
@@ -56,6 +89,8 @@ def main(argv: list[str] | None = None) -> int:
             print(error, file=sys.stderr)
             return 1
         return 0
+    if args.verbose:
+        print(f"Package metadata identity: {_package_metadata_identity()}", file=sys.stderr)
     from .validator import validate
 
     report = validate(Path(args.path))
