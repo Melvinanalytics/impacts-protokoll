@@ -110,9 +110,9 @@ def checksum_entries(path: Path) -> list[tuple[str, str]]:
 
 def tracked_files(root: Path) -> set[str]:
     output = subprocess.check_output(
-        ["git", "ls-tree", "-r", "--name-only", "HEAD"], cwd=root, text=True
+        ["git", "ls-tree", "-r", "-z", "--name-only", "HEAD"], cwd=root
     )
-    return {line for line in output.splitlines() if line}
+    return {path.decode("utf-8") for path in output.split(b"\0") if path}
 
 
 def verify_wheel_version(wheel: Path, version: str) -> None:

@@ -1,6 +1,6 @@
 {
   "corpus_version": 1,
-  "target": "v0.3.15 JSON CLI",
+  "target": "JSON CLI report_version 1",
   "application_path": "applications/approval",
   "base_fixture": "fixtures/base",
   "cases": [
