@@ -236,6 +236,7 @@ jobs:
           python3 .github/scripts/test_evidence.py notes \
             --draft "${RUNNER_TEMP}/draft-release.json" \
             --reports "${RUNNER_TEMP}/test-evidence" \
+            --tag "${RELEASE_TAG}" \
             --source "$(git rev-parse HEAD)" \
             --run-url "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" \
             --attempt "${GITHUB_RUN_ATTEMPT}" \
@@ -244,12 +245,20 @@ jobs:
             "repos/${GITHUB_REPOSITORY}/releases/${RELEASE_ID}" \
             --input "${RUNNER_TEMP}/release-notes-patch.json" \
             > "${RUNNER_TEMP}/updated-draft.json"
-          jq -e --slurpfile expected "${RUNNER_TEMP}/release-notes-patch.json" \
-            '.draft == true and .body == $expected[0].body' \
+          jq -e --arg tag "${RELEASE_TAG}" --slurpfile expected "${RUNNER_TEMP}/release-notes-patch.json" \
+            '.tag_name == $tag and .draft == true and .body == $expected[0].body' \
             "${RUNNER_TEMP}/updated-draft.json" > /dev/null
+          python3 .github/scripts/release_guard.py live \
+            --repository "${GITHUB_REPOSITORY}" --tag "${RELEASE_TAG}" \
+            --release-id "${RELEASE_ID}" --expect-draft \
+            --dist "${DIST_DIR}" --retries 12
           gh api --method PATCH \
             "repos/${GITHUB_REPOSITORY}/releases/${RELEASE_ID}" \
-            -F draft=false > /dev/null
+            -f tag_name="${RELEASE_TAG}" -F draft=false \
+            > "${RUNNER_TEMP}/published-release.json"
+          jq -e --arg tag "${RELEASE_TAG}" \
+            '.tag_name == $tag and .draft == false' \
+            "${RUNNER_TEMP}/published-release.json" > /dev/null
           python3 .github/scripts/release_guard.py live \
             --repository "${GITHUB_REPOSITORY}" --tag "${RELEASE_TAG}" \
             --dist "${DIST_DIR}" --retries 12

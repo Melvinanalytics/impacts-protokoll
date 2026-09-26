@@ -53,9 +53,15 @@ def capture(xml: Path, source: str, run_url: str, attempt: int) -> dict:
     return report
 
 
-def release_patch(draft: dict, reports: list[dict], source: str, run_url: str, attempt: int) -> dict:
+def release_patch(
+    draft: dict, reports: list[dict], source: str, run_url: str, attempt: int, tag: str
+) -> dict:
     if draft.get("draft") is not True:
         raise ValueError("test evidence may only update an unpublished draft")
+    if not isinstance(tag, str) or not re.fullmatch(r"v[0-9]+\.[0-9]+\.[0-9]+", tag):
+        raise ValueError("expected a semantic release tag")
+    if draft.get("tag_name") != tag:
+        raise ValueError("draft tag does not match requested release tag")
     for report in reports:
         build_attempt = report.get("run_attempt") if isinstance(report, dict) else None
         validate(report, source, run_url, build_attempt)
@@ -89,7 +95,7 @@ def release_patch(draft: dict, reports: list[dict], source: str, run_url: str, a
         body = body[:body.index(START)] + section + body[body.index(END) + len(END):]
     else:
         body = body.rstrip() + "\n\n" + section + "\n"
-    return {"body": body}
+    return {"tag_name": tag, "body": body}
 
 
 def main() -> int:
@@ -98,6 +104,7 @@ def main() -> int:
     parser.add_argument("--source", required=True)
     parser.add_argument("--run-url", required=True)
     parser.add_argument("--attempt", required=True, type=int)
+    parser.add_argument("--tag")
     parser.add_argument("--output", required=True, type=Path)
     parser.add_argument("--xml", type=Path)
     parser.add_argument("--draft", type=Path)
@@ -109,10 +116,13 @@ def main() -> int:
                 parser.error("capture requires --xml")
             result = capture(args.xml, args.source, args.run_url, args.attempt)
         else:
-            if args.draft is None or args.reports is None:
-                parser.error("notes requires --draft and --reports")
+            if args.draft is None or args.reports is None or args.tag is None:
+                parser.error("notes requires --draft, --reports, and --tag")
             reports = [json.loads(p.read_text()) for p in sorted(args.reports.glob("*.json"))]
-            result = release_patch(json.loads(args.draft.read_text()), reports, args.source, args.run_url, args.attempt)
+            result = release_patch(
+                json.loads(args.draft.read_text()), reports, args.source,
+                args.run_url, args.attempt, args.tag,
+            )
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
     except (ValueError, KeyError, OSError, ET.ParseError) as exc:
