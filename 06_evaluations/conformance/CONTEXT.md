@@ -1,6 +1,6 @@
 # CLI conformance corpus
 
-This corpus checks the public JSON CLI contract against another implementation. It is a small, deterministic structural subset for v0.3.15. It does not import the reference package, use `tests/support.py`, or create expected reports by calling a validator.
+This corpus checks the public JSON CLI contract against another implementation. It is a small, deterministic structural subset of JSON report format version 1. It does not import the reference package, use `tests/support.py`, or create expected reports by calling a validator.
 
 ## Run
 

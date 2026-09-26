@@ -5,6 +5,8 @@ import io
 import json
 from pathlib import Path
 import ssl
+import subprocess
+import tarfile
 from urllib.error import HTTPError, URLError
 import zipfile
 
@@ -67,6 +69,96 @@ def test_wheel_metadata_must_carry_release_version(tmp_path):
     guard.verify_wheel_version(wheel, "0.3.8")
     with pytest.raises(guard.ReleaseGuardError):
         guard.verify_wheel_version(wheel, "0.3.9")
+
+
+def test_git_source_archive_preserves_non_ascii_and_control_character_paths(tmp_path):
+    root = tmp_path / "checkout"
+    root.mkdir()
+    files = {
+        "plain.txt": b"plain content\n",
+        "input/ä.txt": "naïve content\n".encode("utf-8"),
+        "input/tab\tname.txt": b"tab path\n",
+        "input/line\nbreak.txt": b"newline path\n",
+    }
+    for relative, content in files.items():
+        path = root / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(content)
+
+    def git(*args):
+        subprocess.run(["git", *args], cwd=root, check=True, capture_output=True)
+
+    git("init", "--quiet")
+    git("config", "user.name", "Release Guard Test")
+    git("config", "user.email", "release-guard@example.invalid")
+    git("add", "--all")
+    git("commit", "--quiet", "-m", "source fixture")
+
+    expected_files = set(files)
+    assert guard.tracked_files(root) == expected_files
+
+    prefix = "impacts-protokoll-9.8.7/"
+    source_archive = tmp_path / "source.tar.gz"
+    subprocess.run(
+        [
+            "git", "archive", "--format=tar.gz", f"--prefix={prefix}", "HEAD",
+            f"--output={source_archive}",
+        ],
+        cwd=root,
+        check=True,
+        capture_output=True,
+    )
+    guard.verify_source_archive(root, source_archive, "9.8.7")
+
+    def rewrite_archive(destination, transform, extra_member=None):
+        with tarfile.open(source_archive, "r:gz") as source:
+            members = []
+            for member in source.getmembers():
+                body = source.extractfile(member)
+                content = body.read() if body is not None else None
+                replacement = transform(member, content)
+                if replacement is not None:
+                    members.append(replacement)
+        if extra_member is not None:
+            members.append(extra_member)
+        with tarfile.open(destination, "w:gz", encoding="utf-8") as output:
+            for member, content in members:
+                if content is not None:
+                    member.size = len(content)
+                output.addfile(member, io.BytesIO(content) if content is not None else None)
+
+    missing_archive = tmp_path / "missing.tar.gz"
+    rewrite_archive(
+        missing_archive,
+        lambda member, content: None
+        if member.name == f"{prefix}input/ä.txt"
+        else (member, content),
+    )
+    with pytest.raises(guard.ReleaseGuardError, match="omits tracked files"):
+        guard.verify_source_archive(root, missing_archive, "9.8.7")
+
+    extra_archive = tmp_path / "extra.tar.gz"
+    extra_content = b"unexpected\n"
+    extra_member = tarfile.TarInfo(f"{prefix}unexpected.txt")
+    extra_member.size = len(extra_content)
+    rewrite_archive(
+        extra_archive,
+        lambda member, content: (member, content),
+        extra_member=(extra_member, extra_content),
+    )
+    with pytest.raises(guard.ReleaseGuardError, match="Unexpected source member"):
+        guard.verify_source_archive(root, extra_archive, "9.8.7")
+
+    tampered_archive = tmp_path / "tampered.tar.gz"
+    rewrite_archive(
+        tampered_archive,
+        lambda member, content: (
+            member,
+            b"tampered\n" if member.name == f"{prefix}plain.txt" else content,
+        ),
+    )
+    with pytest.raises(guard.ReleaseGuardError, match="differs from tagged checkout"):
+        guard.verify_source_archive(root, tampered_archive, "9.8.7")
 
 
 def test_remote_release_requires_named_assets_and_matching_digests(tmp_path):
