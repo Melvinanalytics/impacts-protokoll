@@ -4,8 +4,10 @@
 from __future__ import annotations
 
 import argparse
+import errno
 import json
 import math
+import os
 import shutil
 import subprocess
 import sys
@@ -25,6 +27,10 @@ class ConformanceError(Exception):
     """A fixture, process, or candidate report failed the frozen contract."""
 
 
+class UnsupportedCase(ConformanceError):
+    """The host filesystem cannot represent one required fixture name."""
+
+
 def _relative_path(value: Any, label: str) -> Path:
     if not isinstance(value, str) or not value:
         raise ConformanceError(f"{label} must be a non-empty relative path")
@@ -39,6 +45,19 @@ def _relative_path(value: Any, label: str) -> Path:
     ):
         raise ConformanceError(f"{label} must be a normalized relative path")
     return Path(*path.parts)
+
+
+def _hex_bytes(value: Any, label: str) -> bytes:
+    if (
+        not isinstance(value, str)
+        or len(value) % 2
+        or any(char not in "0123456789abcdefABCDEF" for char in value)
+    ):
+        raise ConformanceError(f"{label} must be an even-length hexadecimal string")
+    try:
+        return bytes.fromhex(value)
+    except ValueError as error:
+        raise ConformanceError(f"{label} must be hexadecimal") from error
 
 
 def _load_manifest(path: Path | None = None) -> tuple[dict[str, Any], list[dict[str, Any]]]:
@@ -94,6 +113,23 @@ def _load_manifest(path: Path | None = None) -> tuple[dict[str, Any], list[dict[
                 raise ConformanceError(f"{case_id}: history fixture not found")
             if case.get("git_binding") is not True:
                 raise ConformanceError(f"{case_id}: history fixture needs Git binding")
+        invalid_utf8_file = case.get("invalid_utf8_file")
+        if invalid_utf8_file is not None:
+            if not isinstance(invalid_utf8_file, dict) or set(invalid_utf8_file) != {
+                "parent", "name_hex", "content_hex"
+            }:
+                raise ConformanceError(f"{case_id}: invalid_utf8_file needs parent, name_hex, and content_hex")
+            _relative_path(invalid_utf8_file["parent"], f"{case_id}.invalid_utf8_file.parent")
+            name = _hex_bytes(invalid_utf8_file["name_hex"], f"{case_id}.invalid_utf8_file.name_hex")
+            _hex_bytes(invalid_utf8_file["content_hex"], f"{case_id}.invalid_utf8_file.content_hex")
+            if not name or name in (b".", b"..") or b"/" in name or b"\x00" in name:
+                raise ConformanceError(f"{case_id}: invalid UTF-8 filename must be one basename")
+            try:
+                name.decode("utf-8")
+            except UnicodeDecodeError:
+                pass
+            else:
+                raise ConformanceError(f"{case_id}: invalid UTF-8 filename bytes decode as UTF-8")
         repeat = case.get("repeat", 1)
         if type(repeat) is not int or repeat < 1:
             raise ConformanceError(f"{case_id}: repeat must be positive integer")
@@ -153,6 +189,39 @@ def _copy_tree(source: Path, destination: Path) -> None:
             raise ConformanceError(f"fixture contains non-regular entry: {item}")
 
 
+def _create_invalid_utf8_file(root: Path, specification: dict[str, Any]) -> None:
+    if os.name != "posix":
+        raise UnsupportedCase("host is not POSIX; arbitrary filename bytes are unavailable")
+    parent = root / _relative_path(specification["parent"], "invalid_utf8_file.parent")
+    try:
+        parent.mkdir(parents=True, exist_ok=True)
+        if parent.is_symlink() or not parent.is_dir():
+            raise ConformanceError(f"invalid UTF-8 fixture parent is not a directory: {parent}")
+        parent_bytes = os.fsencode(parent)
+    except ConformanceError:
+        raise
+    except (OSError, UnicodeError) as error:
+        raise ConformanceError(f"cannot prepare invalid UTF-8 fixture directory: {error}") from error
+
+    name = _hex_bytes(specification["name_hex"], "invalid_utf8_file.name_hex")
+    content = _hex_bytes(specification["content_hex"], "invalid_utf8_file.content_hex")
+    path = parent_bytes + os.fsencode(os.sep) + name
+    try:
+        descriptor = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    except OSError as error:
+        if error.errno in {errno.EINVAL, errno.EILSEQ}:
+            raise UnsupportedCase(
+                f"filesystem rejects non-UTF-8 filename ({error.strerror or error.errno})"
+            ) from error
+        raise ConformanceError(f"cannot create invalid UTF-8 fixture file: {error}") from error
+
+    try:
+        with os.fdopen(descriptor, "wb") as output:
+            output.write(content)
+    except (OSError, ValueError) as error:
+        raise ConformanceError(f"cannot write invalid UTF-8 fixture file: {error}") from error
+
+
 def _git(root: Path, *args: str) -> str:
     try:
         result = subprocess.run(
@@ -207,6 +276,9 @@ def _prepare_workspace(case: dict[str, Any], manifest: dict[str, Any], root: Pat
     fixture = case.get("fixture")
     if fixture is not None:
         _copy_tree(HERE / _relative_path(fixture, f"{case['id']}.fixture"), root)
+    invalid_utf8_file = case.get("invalid_utf8_file")
+    if invalid_utf8_file is not None:
+        _create_invalid_utf8_file(root, invalid_utf8_file)
     if case.get("git_binding"):
         _bind_application(root, manifest["application_path"])
         history_fixture = case.get("history_fixture")
@@ -345,6 +417,9 @@ def _invoke(candidate: list[str], case: dict[str, Any], root: Path, timeout: flo
 
 def run_cases(candidate: list[str], cases: list[dict[str, Any]], manifest: dict[str, Any], timeout: float) -> int:
     passed = 0
+    applicable = 0
+    unsupported = 0
+    failed = 0
     for case in cases:
         try:
             with tempfile.TemporaryDirectory(prefix=f"impacts-conformance-{case['id']}-") as directory:
@@ -357,14 +432,29 @@ def run_cases(candidate: list[str], cases: list[dict[str, Any]], manifest: dict[
                 ]
                 if any(report != reports[0] for report in reports[1:]):
                     raise ConformanceError("fresh-process reports differ across repeats")
+        except UnsupportedCase as error:
+            print(f"UNSUPPORTED {case['id']}: {error}")
+            unsupported += 1
+            continue
         except ConformanceError as error:
             print(f"FAIL {case['id']}: {error}", file=sys.stderr)
-            return 1
+            applicable += 1
+            failed += 1
+            continue
         repeat_count = case.get("repeat", 1)
         suffix = f" ({repeat_count} fresh processes)" if repeat_count > 1 else ""
         print(f"PASS {case['id']}{suffix}")
         passed += 1
-    print(f"Conformance passed: {passed}/{len(cases)} cases")
+        applicable += 1
+    print(
+        "Conformance summary: "
+        f"applicable={applicable} passed={passed} unsupported={unsupported} "
+        f"failed={failed} total={len(cases)}"
+    )
+    if failed:
+        return 1
+    if applicable == 0:
+        return 3
     return 0
 
 

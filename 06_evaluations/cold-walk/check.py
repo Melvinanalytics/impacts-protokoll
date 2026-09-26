@@ -16,7 +16,11 @@ import yaml
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 
 from impacts_protocol import init_workspace, surface_hash, validate
-from impacts_protocol.io import load_frontmatter, load_yaml_strict
+from impacts_protocol.io import (
+    DuplicateKeyError,
+    load_frontmatter,
+    load_yaml_strict,
+)
 
 BEISPIEL_ROOT = Path(__file__).resolve().parent / "beispiel"
 BEISPIEL = BEISPIEL_ROOT / "applications" / "prueffall"
@@ -75,6 +79,10 @@ EXPECTED_REJECTIONS = frozenset(
 
 class ProofError(ValueError):
     """A local Cold-Walk evidence claim is false or incomplete."""
+
+
+class FixtureInputError(ValueError):
+    """A declared Cold-Walk input cannot be read or parsed."""
 
 
 @dataclass(frozen=True)
@@ -778,7 +786,7 @@ def walk(base: Path) -> WalkResult:
     if "gewaehlte_route" not in entry and "freigabe" not in entry:
         proofs.add("gate.open_has_no_decision")
 
-    decision = load_yaml_strict(HUMAN_DECISION.read_text(encoding="utf-8"))
+    decision = _load_human_decision(HUMAN_DECISION)
     harness.close_human(entry, decision)
     if (
         entry.get("freigabe") == decision["freigabe"]
@@ -1253,8 +1261,12 @@ def _import_into_second_repository(
 
 def main() -> int:
     """Run the walk in a disposable repository and report every state."""
-    with TemporaryDirectory(prefix="impacts-cold-walk-") as directory:
-        result = walk(Path(directory))
+    try:
+        with TemporaryDirectory(prefix="impacts-cold-walk-") as directory:
+            result = walk(Path(directory))
+    except FixtureInputError as error:
+        print(f"FAIL cold walk: {error}")
+        return 1
     for router in result.routers:
         print(f"ROUTER {router}")
     for state in result.states:
@@ -1278,6 +1290,33 @@ def main() -> int:
         print(f"REJECTION {rejection}: {'PASS' if rejection in result.rejections else 'FAIL'}")
     print("PASS cold walk" if result.valid else "FAIL cold walk")
     return 0 if result.valid else 1
+
+
+def _load_human_decision(path: Path) -> dict:
+    try:
+        decision = load_yaml_strict(path.read_text(encoding="utf-8"))
+    except DuplicateKeyError as error:
+        line = f":{error.line}" if error.line is not None else ""
+        raise FixtureInputError(
+            f"{path}{line}: duplicate key: {error.key!r}; remove duplicate key and keep one value."
+        ) from None
+    except (OSError, UnicodeError, ValueError, yaml.YAMLError) as error:
+        line = getattr(error, "line", None)
+        mark = getattr(error, "problem_mark", None) or getattr(
+            error, "context_mark", None
+        )
+        if line is None and mark is not None:
+            line = mark.line + 1
+        location = f":{line}" if line is not None else ""
+        detail = getattr(error, "problem", None) or str(error)
+        raise FixtureInputError(
+            f"{path}{location}: invalid human-decision YAML ({detail}); correct the YAML fixture."
+        ) from None
+    if not isinstance(decision, dict):
+        raise FixtureInputError(
+            f"{path}: human-decision YAML must be a mapping; provide one route, freigabe, and output."
+        )
+    return decision
 
 
 def _router_chain(root: Path) -> list[str]:

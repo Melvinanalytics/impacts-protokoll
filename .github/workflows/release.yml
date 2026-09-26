@@ -55,13 +55,43 @@ jobs:
           git merge-base --is-ancestor HEAD refs/remotes/origin/main
           python .github/scripts/release_guard.py source --root . --tag "${RELEASE_TAG}"
 
-      - name: Test the exact tagged source
+      - name: Test the exact tagged source on Python 3.11
         run: |
           set -euo pipefail
           python -m pip install --disable-pip-version-check \
             "build==1.6.1" "pytest==9.1.1" "hypothesis==6.168.1" "setuptools==82.0.1" "wheel==0.48.0"
           python -m pip install --disable-pip-version-check -e ".[test]"
-          python -m pytest -q
+          python -m pytest -q --junitxml="${RUNNER_TEMP}/pytest-3.11.xml"
+          python .github/scripts/test_evidence.py capture \
+            --xml "${RUNNER_TEMP}/pytest-3.11.xml" \
+            --source "$(git rev-parse HEAD)" \
+            --run-url "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" \
+            --attempt "${GITHUB_RUN_ATTEMPT}" \
+            --output "${RUNNER_TEMP}/test-evidence/python-3.11.json"
+
+      - name: Set up Python 3.14
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: "3.14"
+
+      - name: Test the exact tagged source on Python 3.14
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check \
+            "build==1.6.1" "pytest==9.1.1" "hypothesis==6.168.1" "setuptools==82.0.1" "wheel==0.48.0"
+          python -m pip install --disable-pip-version-check -e ".[test]"
+          python -m pytest -q --junitxml="${RUNNER_TEMP}/pytest-3.14.xml"
+          python .github/scripts/test_evidence.py capture \
+            --xml "${RUNNER_TEMP}/pytest-3.14.xml" \
+            --source "$(git rev-parse HEAD)" \
+            --run-url "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" \
+            --attempt "${GITHUB_RUN_ATTEMPT}" \
+            --output "${RUNNER_TEMP}/test-evidence/python-3.14.json"
+
+      - name: Restore Python 3.11 for the release build
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: "3.11"
 
       - name: Build wheel, complete source archive and checksums
         run: |
@@ -91,6 +121,14 @@ jobs:
           if-no-files-found: error
           retention-days: 1
           compression-level: 0
+
+      - name: Transfer compact test evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: release-test-evidence-${{ env.RELEASE_TAG }}
+          path: ${{ runner.temp }}/test-evidence/*.json
+          if-no-files-found: error
+          retention-days: 1
 
   publish:
     name: Publish checked bytes
@@ -122,6 +160,12 @@ jobs:
         with:
           name: release-assets-${{ env.RELEASE_TAG }}
           path: ${{ env.DIST_DIR }}
+
+      - name: Download compact test evidence
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: release-test-evidence-${{ env.RELEASE_TAG }}
+          path: ${{ runner.temp }}/test-evidence
 
       - name: Recheck tag and transferred bytes
         run: |
@@ -189,6 +233,20 @@ jobs:
             --repository "${GITHUB_REPOSITORY}" --tag "${RELEASE_TAG}" \
             --release-id "${RELEASE_ID}" --expect-draft \
             --dist "${DIST_DIR}" --retries 12
+          python3 .github/scripts/test_evidence.py notes \
+            --draft "${RUNNER_TEMP}/draft-release.json" \
+            --reports "${RUNNER_TEMP}/test-evidence" \
+            --source "$(git rev-parse HEAD)" \
+            --run-url "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" \
+            --attempt "${GITHUB_RUN_ATTEMPT}" \
+            --output "${RUNNER_TEMP}/release-notes-patch.json"
+          gh api --method PATCH \
+            "repos/${GITHUB_REPOSITORY}/releases/${RELEASE_ID}" \
+            --input "${RUNNER_TEMP}/release-notes-patch.json" \
+            > "${RUNNER_TEMP}/updated-draft.json"
+          jq -e --slurpfile expected "${RUNNER_TEMP}/release-notes-patch.json" \
+            '.draft == true and .body == $expected[0].body' \
+            "${RUNNER_TEMP}/updated-draft.json" > /dev/null
           gh api --method PATCH \
             "repos/${GITHUB_REPOSITORY}/releases/${RELEASE_ID}" \
             -F draft=false > /dev/null

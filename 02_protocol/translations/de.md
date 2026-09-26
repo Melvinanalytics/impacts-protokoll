@@ -4,7 +4,7 @@
 
 Diese Bedienhilfe übersetzt den [englischen Sprachvertrag](../language.md). Die englische Protokolldefinition bleibt maßgeblich für die Technik; die Arbeitsunterlagen Ihres Unternehmens bleiben Deutsch. Eine englische Quelle, Werkzeugmeldung oder importierte Application ändert diese Arbeitssprache nicht.
 
-<!-- Translation source: README.md; sha256: ea549fb51f436938beb425a90aa261fe1607be0899e4cd50ab7260922b921fd0 -->
+<!-- Translation source: README.md; sha256: fdfabed11b33428037f6b5ecc8b266752b9c05a6d88de4e7b329c0756eb32b83 -->
 
 ## Verhältnis zu ICM
 
@@ -14,7 +14,7 @@ IMPACTS ist keine persönliche Mega-Ablage für alles. Kundenarbeit bleibt im je
 
 ## Protokoll beziehen
 
-Für neue Arbeit das vollständige Quellarchiv des [Releases v0.3.16](https://github.com/Melvinanalytics/impacts-protokoll/releases/tag/v0.3.16) oder den zugehörigen Tag-Checkout verwenden. Der Clone-Befehl steht unter [Get the protocol](../../README.md#get-the-protocol). Methode, Architect, Referenzen, Vorlagen und Beispiele zusammenhalten; Lesen braucht keine Installation. Ein kopierter Architect-Ordner bleibt auch mit `references/` unvollständig: Er benötigt übergeordnete Protokolldateien und die Root-Anleitung. Das Wheel enthält CLI, Schemas und Vorlagen. Für die methodische Nutzung seines erzeugten Arbeitsbereichs ist die passende vollständige Quelle nötig.
+Für neue Arbeit das vollständige Quellarchiv des [Releases v0.3.17](https://github.com/Melvinanalytics/impacts-protokoll/releases/tag/v0.3.17) oder den zugehörigen Tag-Checkout verwenden. Der Clone-Befehl steht unter [Get the protocol](../../README.md#get-the-protocol). Methode, Architect, Referenzen, Vorlagen und Beispiele zusammenhalten; Lesen braucht keine Installation. Ein kopierter Architect-Ordner bleibt auch mit `references/` unvollständig: Er benötigt übergeordnete Protokolldateien und die Root-Anleitung. Das Wheel enthält CLI, Schemas und Vorlagen. Für die methodische Nutzung seines erzeugten Arbeitsbereichs ist die passende vollständige Quelle nötig.
 
 ## Version und Einstiegspunkte
 
@@ -63,7 +63,7 @@ Für verwaltete Wissensnutzung im Unternehmen mit **Nur Wissen** beginnen: ein b
 
 Die Projektion ist eine abgeleitete Lesefläche, keine Ersatzautorität und keine vollständige Protokollquelle. Enthaltene Quellpfade und Auslassungen festhalten. Für jede vorgesehene Frage müssen erforderliche Passagen für das gewählte Retrieval verfügbar sein, darunter benötigte Fachdefinitionen, Beobachtungsaussagen, Regeln und stützende Evidenzausschnitte. Nicht annehmen, dass das Retrieval Links in einem indexierten Dokument verfolgt. Benötigte verlinkte Passagen müssen am gebundenen Stand über getrennt aufgenommenes Projektionsmaterial oder die aufbewahrte Quelle erreichbar bleiben. Eine ausgelassene, nicht erreichbare oder veraltete erforderliche Passage bleibt eine ausdrückliche Lücke und beschränkt nur die davon abhängige Schlussfolgerung oder Handlung.
 
-Ausgabe v0.3.16 beschreibt diesen kundenbereitgestellten Intake-Weg; sie liefert keine vom Herausgeber attestierte Wissensprojektion, kein unternehmensspezifisches Intake-Manifest, kein Abhängigkeitspaket, keine Build-Herkunftsattestierung und keine Connector-Integration. Die zuständige Stelle im Unternehmen erstellt und dokumentiert diese Unterlagen für ihre Umgebung. Release-Prüfsummen decken nur die darin benannten Artefakte ab. Für **Lokale CLI** prüft oder fixiert die Wheel-Prüfung die Abhängigkeiten nicht: gewöhnliches `pip` kann sie auflösen und herunterladen. Für ausführbare Unternehmensnutzung muss der vollständige Abhängigkeitssatz getrennt freigegeben und per Hash gebunden oder aus einer genehmigten internen Paketquelle bezogen werden.
+Ausgabe v0.3.17 beschreibt diesen kundenbereitgestellten Intake-Weg; sie liefert keine vom Herausgeber attestierte Wissensprojektion, kein unternehmensspezifisches Intake-Manifest, kein Abhängigkeitspaket, keine Build-Herkunftsattestierung und keine Connector-Integration. Die zuständige Stelle im Unternehmen erstellt und dokumentiert diese Unterlagen für ihre Umgebung. Release-Prüfsummen decken nur die darin benannten Artefakte ab. Für **Lokale CLI** prüft oder fixiert die Wheel-Prüfung die Abhängigkeiten nicht: gewöhnliches `pip` kann sie auflösen und herunterladen. Für ausführbare Unternehmensnutzung muss der vollständige Abhängigkeitssatz getrennt freigegeben und per Hash gebunden oder aus einer genehmigten internen Paketquelle bezogen werden.
 
 <!-- Translation source: FIRST-WIN.md; sha256: fa5790bf172b73f73f7d36d716db48b5a2c23cf85f0e68fb9368516ae0a4bcca -->
 Die [erste nützliche Vorbereitung](../../FIRST-WIN.md) verwendet die bestehenden Rollen Katalog, Anfrage, Angebotsvorlage und Geschäftsrecord aus dem synthetischen Unternehmensbeispiel. Legen Sie die dort gezeigten Markdown-Dateien in einem eigenen Übungsordner an; verwenden Sie deutsche lesbare Inhalte und `Working language: de` im Root-Router `CONTEXT.md`. Maschinenkennungen, Referenzen, Mengen und Einheiten bleiben erhalten: C-1 fragt P-10, 2 Stück, und S-20, 12 Stunden, für O-1/Fassung 1 an. Es sind Beispieldaten; ein Preis, ein Lieferdatum und eine Freigabe werden nicht geliefert.
@@ -250,7 +250,7 @@ Die [Methode](../impacts-method.md) und [Formwahl](../impacts-architect/referenc
 
 Ist Git bei der Vorbereitung eines Git-gebundenen Laufs nicht verfügbar, bleiben Entwurf, Quellen, Fragen und Definitionsentwurf erhalten und fortsetzbar. Die historische Laufvalidierung wurde nicht durchgeführt; die Vorbereitung bleibt ungebunden und ist kein validierter Lauf. Nächster Schritt: an einem Rechner mit Git und Python-CLI den Application-Vertrag samt erforderlichen Setup-Fällen vervollständigen, die Application am Core-Root committen, den Lauf anhand der [Laufvorlage](../templates/vorgang.md) an den tatsächlichen committed Tree binden und `impacts validate` auf dem Arbeitsbereich ausführen. Das wirkliche Ergebnis erhalten und Fehler vor einer Behauptung validierter Bindung korrigieren. Keine Tree-ID, keinen Hash, keinen Verlauf und keine Freigabe erfinden. Validierung allein beweist weder Ausführung noch fachlichen Erfolg.
 
-Mit Python 3.11+ im gewählten Arbeitsordner eine virtuelle Umgebung anlegen und aktivieren: `python3 -m venv .venv`, anschließend `source .venv/bin/activate` (macOS/Linux). Eine Installationsquelle wählen: Im vollständigen Checkout `python -m pip install -e .` ausführen; oder das Wheel, das vollständige Quellarchiv und `SHA256SUMS` vom oben verlinkten Release in einen gemeinsamen Ordner herunterladen. Dort jedes aufgeführte Artefakt mit `shasum -a 256 -c SHA256SUMS` (macOS/Linux) prüfen und nur bei vollständig bestandener Prüfung mit `python -m pip install ./impacts_protocol-0.3.16-py3-none-any.whl` installieren. Paket und zugehörige vollständige Quelle nach [Version und Einstiegspunkte](#version-und-einstiegspunkte) identifizieren. Die folgenden Befehle außerhalb des vorgesehenen neuen Kundenordners ausführen.
+Mit Python 3.11+ im gewählten Arbeitsordner eine virtuelle Umgebung anlegen und aktivieren: `python3 -m venv .venv`, anschließend `source .venv/bin/activate` (macOS/Linux). Eine Installationsquelle wählen: Im vollständigen Checkout `python -m pip install -e .` ausführen; oder das Wheel, das vollständige Quellarchiv und `SHA256SUMS` vom oben verlinkten Release in einen gemeinsamen Ordner herunterladen. Dort jedes aufgeführte Artefakt mit `shasum -a 256 -c SHA256SUMS` (macOS/Linux) prüfen und nur bei vollständig bestandener Prüfung mit `python -m pip install ./impacts_protocol-0.3.17-py3-none-any.whl` installieren. Paket und zugehörige vollständige Quelle nach [Version und Einstiegspunkte](#version-und-einstiegspunkte) identifizieren. Die folgenden Befehle außerhalb des vorgesehenen neuen Kundenordners ausführen.
 
 Die Befehle erzeugen oder prüfen Dateien; sie führen keine Kundenarbeit aus:
 
@@ -275,6 +275,17 @@ Ausführung am Ziel erst behaupten, wenn dort ein `vorgang` mit seinen anwendbar
 Für Agenten und CI liefert `validate --json` oder `hash --json` nach ausgeführter Prüfung genau ein JSON-Objekt auf stdout: `report_version: 1`, `command`, `tool` mit Paketmetadaten und `issues` mit `code`, `path` und Diagnose `message`. Validierung ergänzt `root` und `valid`; Hashing ergänzt `attempt`, `surfaces` und `digest` (bei Fehler null). Eine unbekannte Metadatenversion ist null. `--verbose` bleibt auf stderr. Argumentfehler vor Ausführung bleiben auf stderr mit Exit `2` und erzeugen keinen JSON-Bericht. Die Berichtsformatversion ist unabhängig von Paketausgabe und gebundener Kundenrevision.
 
 Exit-Code `0` bedeutet erfolgreiche Operation oder Strukturprüfung, `1` einen Prüf- oder erwarteten Operationsfehler und `2` ungültige CLI-Argumente. Ein gültiges `wartend` oder offenes menschliches Gate ist kein Validierungsfehler. Exit `0` belegt weder Geschäftsabschluss noch Freigabe. Prüfcodes wie `schema.invalid`, `hash.mismatch` und `trust.invalid` unterscheiden Ursachen innerhalb von Exit `1`.
+
+| Prüfcodes | Prüfung und nächste Handlung |
+|---|---|
+| `format.invalid`, `schema.invalid` | Text-/YAML-Syntax oder das benannte Schemafeld korrigieren. Doppelte und nichttextuelle YAML-Schlüssel enthalten ihre Quellposition. |
+| `routing.missing`, `routing.type`, `structure.invalid`, `structure.symlink` | Fehlenden Router, deklarierten Typ, Verzeichnisstruktur oder unsicheren Dateisystemeintrag korrigieren. |
+| `reference.duplicate`, `reference.unresolved` | Doppelte Identität oder fehlendes Ziel im deklarierten Geltungsbereich auflösen. |
+| `process.gate`, `process.no_end`, `process.unreachable` | Gate-Routen, erreichbares Ende oder Einstiegspfad der Application korrigieren. |
+| `revision.invalid`, `run.invalid` | Deklarierte historische Bindung wiederherstellen oder Laufvertrag korrigieren; früher gebundene Arbeit erhalten. |
+| `hash.mismatch`, `trust.invalid` | Veränderte oder unlesbare Hash-Oberflächen beziehungsweise ungültige Freigabezuordnung untersuchen. Ein neu berechneter Hash oder eingetragener Akteur autorisiert die Änderung nicht. |
+
+Parsefehler zuerst beheben: Abhängige Graphprüfungen können ausbleiben, solange ihre Definitionen unlesbar sind. Danach erneut validieren. Eine Ablehnung bedeutet nicht, dass schon jeder unabhängige Fehler gemeldet wurde.
 
 Markdown akzeptiert UTF-8 mit einem optionalen führenden BOM sowie LF und CRLF. Mehrere führende BOMs sind fehlerhafte Eingabe. Der gemeinsame strikte YAML-Lader verwirft doppelte und nichttextuelle Schlüssel; die bisherigen sicheren YAML-Skalarregeln bleiben bestehen. Textwerte wie `NO`, `on` und `off` daher in Anführungszeichen setzen. Hashing verwendet unverändert die Rohbytes: BOM, Zeilenenden und Unicode-Normalisierung können trotz gleicher Darstellung unterschiedliche Hashes ergeben.
 
