@@ -1,0 +1,89 @@
+{
+  "source_commit": "d09d84732895cefdb54cd4b1cfa88f3523f8a9fc",
+  "working_tree_changes": [
+    "M 02_protocol/translations/de.md",
+    " M 06_evaluations/CONTEXT.md",
+    " M README.md",
+    " M pyproject.toml",
+    " M src/impacts_protocol/cli.py",
+    " M tests/test_cli.py",
+    "?? 06_evaluations/conformance/",
+    "?? tests/benchmark_scale.py"
+  ],
+  "source_sha256": {
+    "src/impacts_protocol/__init__.py": "e46fbebf039d0eb10590404f8214017b6205b58725d7695cef0300ce92e77121",
+    "src/impacts_protocol/cli.py": "538ed3a8b7e428118425acd980e9656393e3b1b352021590084dc4b04ea9e812",
+    "src/impacts_protocol/generator.py": "4ba46e2f77a09d133cec06873f7b82fb7f8c4fa8768f882b1c78bedc970c7a8a",
+    "src/impacts_protocol/hashing.py": "468f8ca4276f3022550d9f8c2184a2fdd1b429c209bf5fbbbb74cc849d7ee59e",
+    "src/impacts_protocol/io.py": "28a5fde34e0514df793e1851021443a2e447229d990abcb96ae28e3dcb23cdb4",
+    "src/impacts_protocol/model.py": "c6eee2e18820a4a4def940e5b4d26c5d7e505b217cc3f9bb8ad1839fc12d0f7c",
+    "src/impacts_protocol/validator.py": "5f0a09a341d88a499949fea1f7382fc654cd68f768cd20e2c6dbca9de65bb505",
+    "src/impacts_protocol/workspace_contract.py": "533cf449e8e1689a10551785cf3108a2884ff4db8cd9856f30304c67fe85dcbe",
+    "02_protocol/schemas/arbeitsschritt.schema.json": "a0af1bbee73f91fbecb90ae8707519ff715caa9160ee7c42acef5b3a92836f95",
+    "02_protocol/schemas/hauptprozess.schema.json": "7b5dea4df1528b56e804c8db6b65598be9ef65bf770598aa3e95f3e8f81c61a7",
+    "02_protocol/schemas/leistung.schema.json": "d62dbd978eb0926c59063286a187e2ef3da8b5844b94acb2e39090968dabe347",
+    "02_protocol/schemas/teilprozess.schema.json": "1b1d316d29613c9f16a87f78ae443bdae0d7ad53c0374cb3bb009f31118aeb38",
+    "02_protocol/schemas/vorgang.schema.json": "cecb2b61294dbe2aa0130dbfb5f3fc640db2950f87e79923a265ebf437a3bd31",
+    "pyproject.toml": "4bb6b728b5cbba72038f5fe8b873fa6a6ed9866cd3adf66a568004651f674982",
+    "tests/benchmark_scale.py": "34fb9ea6f759fc72eb4a9253e57c1e3409b6125b4361971ab74ee299c0dbe672",
+    "tests/support.py": "de84da047b649e6b1eb1b6853861912238210c5cb76fb2194e08690b3ec708e2",
+    "tests/c_owner_support.py": "45891b06a0df91592837ad62cea856cd1a67acd97e3439826034906a0d5e41e6"
+  },
+  "package_metadata_version": "0.3.15",
+  "dependencies": {
+    "PyYAML": "6.0.3",
+    "jsonschema": "4.26.0",
+    "referencing": "0.37.0"
+  },
+  "python": "3.11.15",
+  "os": "Darwin",
+  "machine": "arm64",
+  "repetitions": 3,
+  "workload": "one active run; fixed Application; aggregate raw-byte input hashing",
+  "cache": "fresh interpreter; OS file cache retained",
+  "claim_limit": "descriptive scale only; no before/after or concurrent-writer guarantee",
+  "results": [
+    {
+      "input_files": 1000,
+      "input_bytes": 22000,
+      "application_files": 4,
+      "runs": 1,
+      "attempts": 1,
+      "surface_digest": "sha256:eb57416cab5d423591c3d7d3fef27c6d328e77041c3cafb49e1abc229c7c3c9c",
+      "seconds": [
+        0.20783833297900856,
+        0.27624316699802876,
+        0.22099191695451736
+      ],
+      "median_seconds": 0.22099191695451736
+    },
+    {
+      "input_files": 10000,
+      "input_bytes": 220000,
+      "application_files": 4,
+      "runs": 1,
+      "attempts": 1,
+      "surface_digest": "sha256:b2115a724d33ea80c2fdcc4d0570d377d122f99797eb84055449376f709f0842",
+      "seconds": [
+        0.9915821659378707,
+        1.0692878749687225,
+        1.1207199579803273
+      ],
+      "median_seconds": 1.0692878749687225
+    },
+    {
+      "input_files": 100000,
+      "input_bytes": 2200000,
+      "application_files": 4,
+      "runs": 1,
+      "attempts": 1,
+      "surface_digest": "sha256:351e49bcfca0e66c08b9954844b246b2eb00390a81d841dac734ff6f735a5be1",
+      "seconds": [
+        12.282203709008172,
+        12.416416125022806,
+        12.292636541998945
+      ],
+      "median_seconds": 12.292636541998945
+    }
+  ]
+}

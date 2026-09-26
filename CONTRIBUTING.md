@@ -4,12 +4,12 @@ Changes enter `main` through a reviewed pull request. Keep customer material in 
 
 ## Hardening roadmap after v0.3.13
 
-Release numbers below are planned scope, not evidence of publication. Apply the publication checks below to identify what is live.
+The table records scoped milestones, not evidence of publication. Apply the publication checks below to identify what is live. The v0.4 row is a design gate, not an implemented sealing feature.
 
 | Target | Work and acceptance |
 |---|---|
 | v0.3.14 | Package metadata diagnostics, shared strict YAML ingestion, one primary error for repeated leading BOMs, documented existing exit codes, and bounded generated parser tests in both CI interpreters. Preserve raw-byte hashes, default output and Core schemas. |
-| v0.3.15 | Opt-in JSON for `validate` and `hash`; a public, implementation-independent structural conformance corpus with frozen expected outcomes, runnable from complete source against a candidate command; measured scale and explicit concurrent-writer limits. Preserve existing commands and text output. |
+| v0.3.15 | Opt-in JSON for `validate` and `hash`; a public, implementation-independent structural conformance corpus with frozen expected outcomes, runnable from complete source against a candidate command; measured scale and explicit concurrent-writer limits. Preserve existing commands and text output. The [corpus](06_evaluations/conformance/CONTEXT.md) runs through pytest in both CI interpreters. |
 | v0.4 design gate | Define an independently retained trust anchor and verifier before proposing sealing. Exercise coordinated content/hash rewriting, rollback, forked histories, missing anchors, identity/key rotation and unavailable verification. A valid signature must bind the retained state to an authorized identity and independently checked revision; it does not prove business truth. Choose transport and trust custody in the consuming harness. A new Core command or schema requires a demonstrated gap in existing structures. |
 
 The five [JSON Schemas](02_protocol/schemas/) already define Core frontmatter; editor support should reuse those contracts. `validate` already checks declared attempt directories, routes and hashes, so recovery first uses that existing command. A separate `doctor` command is justified only by a concrete recovery check that cannot fit the existing read-only path. A conformance corpus can establish a tested contract subset without independently versioning another copy of the specification. It does not establish complete protocol conformance or model behavior.
