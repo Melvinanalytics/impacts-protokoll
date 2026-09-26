@@ -17,6 +17,33 @@ sys.path.insert(0, str(ROOT / "src"))
 from impacts_protocol.cli import main
 
 
+def _run_cli(cwd, *arguments):
+    environment = os.environ.copy()
+    environment["PYTHONPATH"] = str(ROOT / "src")
+    environment["PYTHONDONTWRITEBYTECODE"] = "1"
+    return subprocess.run(
+        [sys.executable, "-m", "impacts_protocol.cli", *(str(arg) for arg in arguments)],
+        cwd=cwd,
+        env=environment,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+    )
+
+
+def _json_stdout(result):
+    assert result.stdout.endswith("\n")
+    assert result.stdout.count("\n") == 1
+    return json.loads(result.stdout)
+
+
+def _assert_tool_metadata(tool):
+    assert set(tool) == {"name", "version", "version_source"}
+    assert isinstance(tool["name"], str) and tool["name"]
+    assert tool["version"] is None or isinstance(tool["version"], str)
+    assert isinstance(tool["version_source"], str) and tool["version_source"]
+
+
 def test_benchmark_yaml_fixtures_validate_and_select_expected_loader(tmp_path):
     from impacts_protocol import validate
     from impacts_protocol import io
@@ -249,6 +276,204 @@ class CliTests(unittest.TestCase):
             self.assertIn("routing.type: CONTEXT.md: Root type must be workspace or hauptprozess", rejected.stdout)
             self.assertEqual("", rejected.stderr)
             self.assertEqual(before, {p.relative_to(target): p.read_bytes() for p in target.rglob("*") if p.is_file()})
+
+
+def test_validate_json_subprocess_reports_valid_and_invalid_without_text_leaks(tmp_path):
+    from impacts_protocol import init_workspace
+
+    root = init_workspace(tmp_path / "workspace")
+    valid = _run_cli(tmp_path, "validate", root, "--json")
+
+    assert valid.returncode == 0
+    assert valid.stderr == ""
+    valid_report = _json_stdout(valid)
+    assert set(valid_report) == {
+        "report_version", "command", "tool", "issues", "valid", "root"
+    }
+    assert valid_report["report_version"] == 1
+    assert valid_report["command"] == "validate"
+    _assert_tool_metadata(valid_report["tool"])
+    assert valid_report["issues"] == []
+    assert valid_report["valid"] is True
+    assert valid_report["root"] == str(root)
+
+    verbose = _run_cli(tmp_path, "validate", root, "--json", "--verbose")
+    assert verbose.returncode == 0
+    assert verbose.stderr.startswith("Package metadata identity: ")
+    assert "Package metadata identity" not in verbose.stdout
+    assert _json_stdout(verbose)["valid"] is True
+
+    (root / "CONTEXT.md").write_text("---\ntype: invalid\n---\n", encoding="utf-8")
+    invalid = _run_cli(tmp_path, "validate", root, "--json")
+
+    assert invalid.returncode == 1
+    assert invalid.stderr == ""
+    invalid_report = _json_stdout(invalid)
+    assert invalid_report["valid"] is False
+    assert any(issue["code"] == "routing.type" for issue in invalid_report["issues"])
+    assert all(set(issue) == {"code", "path", "message"} for issue in invalid_report["issues"])
+
+
+def test_hash_json_subprocess_reports_digest_and_expected_failure(tmp_path):
+    from impacts_protocol import surface_hash
+
+    attempt = tmp_path / "attempt"
+    (attempt / "input").mkdir(parents=True)
+    source = attempt / "input" / "auftrag.md"
+    source.write_bytes(b"Synthetic input\n")
+    expected_digest = surface_hash(attempt, ["input/auftrag.md"])
+
+    success = _run_cli(tmp_path, "hash", attempt, "input/auftrag.md", "--json")
+
+    assert success.returncode == 0
+    assert success.stderr == ""
+    report = _json_stdout(success)
+    assert set(report) == {
+        "report_version", "command", "tool", "issues", "digest", "attempt", "surfaces"
+    }
+    assert report["report_version"] == 1
+    assert report["command"] == "hash"
+    _assert_tool_metadata(report["tool"])
+    assert report["issues"] == []
+    assert report["digest"] == expected_digest
+    assert report["attempt"] == str(attempt)
+    assert report["surfaces"] == ["input/auftrag.md"]
+
+    failure = _run_cli(tmp_path, "hash", attempt, "input/missing.md", "--json")
+
+    assert failure.returncode == 1
+    assert failure.stderr == ""
+    failed_report = _json_stdout(failure)
+    assert failed_report["digest"] is None
+    assert failed_report["attempt"] == str(attempt)
+    assert failed_report["surfaces"] == ["input/missing.md"]
+    assert failed_report["issues"][0]["code"] == "hash.mismatch"
+    assert set(failed_report["issues"][0]) == {"code", "path", "message"}
+
+
+def test_validate_json_subprocess_reports_tampered_attempt_hash(tmp_path):
+    from tests.test_minimal_vorgang import _prepare_workspace
+
+    root, run = _prepare_workspace(tmp_path)
+    (run / "start" / "001" / "input" / "auftrag.md").write_text(
+        "Tampered input\n", encoding="utf-8"
+    )
+
+    result = _run_cli(tmp_path, "validate", root, "--json")
+
+    assert result.returncode == 1
+    assert result.stderr == ""
+    report = _json_stdout(result)
+    assert report["valid"] is False
+    assert any(
+        issue["code"] == "hash.mismatch"
+        and issue["path"] == "vorgaenge/video-001/start/001"
+        for issue in report["issues"]
+    )
+
+
+def test_validate_json_subprocess_escapes_unicode_root_and_issue_paths(tmp_path):
+    from impacts_protocol import init_workspace
+
+    root = init_workspace(tmp_path / "workspace-ü")
+    (root / "applications" / "café").mkdir()
+
+    result = _run_cli(tmp_path, "validate", root, "--json")
+
+    assert result.returncode == 1
+    assert result.stdout.isascii()
+    assert "\\u00fc" in result.stdout.lower()
+    assert "\\u00e9" in result.stdout.lower()
+    report = _json_stdout(result)
+    assert report["root"] == str(root)
+    assert any("café" in issue["path"] for issue in report["issues"])
+
+
+def test_validate_json_subprocess_escapes_surrogateescape_root_on_posix(tmp_path):
+    if os.name != "posix":
+        raise unittest.SkipTest("surrogateescape paths require POSIX filesystem bytes")
+
+    root_bytes = os.path.join(os.fsencode(tmp_path), b"workspace-\xff")
+    root = os.fsdecode(root_bytes)
+    code = """
+import sys
+from types import SimpleNamespace
+from unittest.mock import patch
+from impacts_protocol.cli import main
+
+with patch(
+    "impacts_protocol.validator.validate",
+    return_value=SimpleNamespace(valid=True, issues=[]),
+):
+    raise SystemExit(main(["validate", sys.argv[1], "--json"]))
+"""
+    environment = os.environ.copy()
+    environment["PYTHONPATH"] = str(ROOT / "src")
+    environment["PYTHONDONTWRITEBYTECODE"] = "1"
+    result = subprocess.run(
+        [sys.executable, "-c", code, root],
+        cwd=tmp_path,
+        env=environment,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert result.stdout.isascii()
+    assert "\\udcff" in result.stdout.lower()
+    report = _json_stdout(result)
+    assert report["root"] == root
+
+
+def test_json_usage_errors_remain_argparse_stderr_exit_two(tmp_path):
+    missing_path = _run_cli(tmp_path, "validate", "--json")
+    unsupported_command = _run_cli(tmp_path, "init", tmp_path / "new", "--json")
+
+    for result in (missing_path, unsupported_command):
+        assert result.returncode == 2
+        assert result.stdout == ""
+        assert "usage:" in result.stderr.lower()
+
+
+def test_json_tool_version_is_null_when_metadata_and_source_version_are_unavailable(tmp_path):
+    from impacts_protocol import init_workspace
+
+    root = init_workspace(tmp_path / "workspace")
+    code = """
+import importlib.metadata
+import sys
+from unittest.mock import patch
+from impacts_protocol.cli import main
+
+with patch(
+    "importlib.metadata.distribution",
+    side_effect=importlib.metadata.PackageNotFoundError,
+):
+    with patch(
+        "impacts_protocol.cli.__file__",
+        "/missing/src/impacts_protocol/cli.py",
+    ):
+        raise SystemExit(main(["validate", sys.argv[1], "--json"]))
+"""
+    environment = os.environ.copy()
+    environment["PYTHONPATH"] = str(ROOT / "src")
+    environment["PYTHONDONTWRITEBYTECODE"] = "1"
+    result = subprocess.run(
+        [sys.executable, "-c", code, str(root)],
+        cwd=tmp_path,
+        env=environment,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert result.stderr == ""
+    report = _json_stdout(result)
+    assert report["tool"]["name"] == "impacts-protocol"
+    assert report["tool"]["version"] is None
+    assert report["tool"]["version_source"] == "metadata unavailable"
 
 
 if __name__ == "__main__":

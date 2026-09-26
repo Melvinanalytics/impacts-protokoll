@@ -10,6 +10,7 @@ This directory contains optional deterministic Core checks and a reading evaluat
 - [ICM context architecture](icm-context-architecture/CONTEXT.md): frozen cases for layered context, triggered skills, editable handoffs, dependency-directed rechecks and the boundary of file-based orchestration. After answering, read its [candidate execution record](icm-context-architecture/COVERAGE.md).
 - [Context-efficiency measurement](context-efficiency/CONTEXT.md): matched v0.3.6 and v0.3.7-candidate runs for one frozen direct-routing question, with a reusable JSONL measurement script and explicit claim limits.
 - [Complexity budget](complexity-budget/CONTEXT.md): declared structural metrics.
+- [Structural conformance corpus](conformance/CONTEXT.md): frozen input/output cases against a supplied CLI command, including malformed input, hash binding, waiting, recovery and known trust limits; passing covers only these cases.
 - [Cross-repository authority walk](cross-repository-authority/CONTEXT.md): synthetic owner, consumer, revision and unsafe-retirement questions; this is a reading case, not an executable check.
 - [Result-work and coordination walk](result-work-coordination/CONTEXT.md): synthetic Ist classification, Minimize and execution-selection cases; this is a reading case, not a classifier or runtime check.
 - [Augment context walk](augment-context/CONTEXT.md): synthetic point-of-use context, acquisition, derivation, freshness and missing-context cases; this is a reading case, not proof of live retrieval.

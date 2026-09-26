@@ -1,0 +1,119 @@
+{
+  "corpus_version": 1,
+  "target": "v0.3.15 JSON CLI",
+  "application_path": "applications/approval",
+  "base_fixture": "fixtures/base",
+  "cases": [
+    {
+      "id": "application-valid",
+      "command": "validate",
+      "fixture": null,
+      "expected": {"exit_code": 0, "valid": true, "issue_codes": []}
+    },
+    {
+      "id": "application-unresolved-route",
+      "command": "validate",
+      "fixture": "fixtures/cases/application-unresolved-route",
+      "expected": {"exit_code": 1, "valid": false, "issue_codes": ["reference.unresolved"]}
+    },
+    {
+      "id": "application-duplicate-yaml",
+      "command": "validate",
+      "fixture": "fixtures/cases/application-duplicate-yaml",
+      "expected": {"exit_code": 1, "valid": false, "issue_codes": ["format.invalid"]}
+    },
+    {
+      "id": "hash-fixed-vector",
+      "command": "hash",
+      "fixture": "fixtures/cases/hash-fixed-vector",
+      "attempt": "hash-attempt",
+      "surfaces": ["input"],
+      "expected": {
+        "exit_code": 0,
+        "digest": "sha256:e8fdf8b5a31291deb1c3fa4d982f85da0605a4e3dd5a2f340e2ad2ebf182b965",
+        "issue_codes": []
+      }
+    },
+    {
+      "id": "hash-missing-surface",
+      "command": "hash",
+      "fixture": null,
+      "attempt": "hash-attempt",
+      "surfaces": ["input/missing.txt"],
+      "expected": {"exit_code": 1, "digest": null, "issue_codes": ["hash.mismatch"]}
+    },
+    {
+      "id": "run-active-gate",
+      "command": "validate",
+      "fixture": "fixtures/cases/run-active-gate",
+      "git_binding": true,
+      "expected": {"exit_code": 0, "valid": true, "issue_codes": []}
+    },
+    {
+      "id": "run-waiting",
+      "command": "validate",
+      "fixture": "fixtures/cases/run-waiting",
+      "git_binding": true,
+      "repeat": 2,
+      "expected": {"exit_code": 0, "valid": true, "issue_codes": []}
+    },
+    {
+      "id": "run-resumed-gate",
+      "command": "validate",
+      "fixture": "fixtures/cases/run-resumed-gate",
+      "git_binding": true,
+      "repeat": 2,
+      "expected": {"exit_code": 0, "valid": true, "issue_codes": []}
+    },
+    {
+      "id": "run-closed-gate-missing-approval",
+      "command": "validate",
+      "fixture": "fixtures/cases/run-closed-gate-missing-approval",
+      "git_binding": true,
+      "expected": {"exit_code": 1, "valid": false, "issue_codes": ["trust.invalid"]}
+    },
+    {
+      "id": "run-input-tampered",
+      "command": "validate",
+      "fixture": "fixtures/cases/run-input-tampered",
+      "git_binding": true,
+      "expected": {"exit_code": 1, "valid": false, "issue_codes": ["hash.mismatch"]}
+    },
+    {
+      "id": "run-output-tampered",
+      "command": "validate",
+      "fixture": "fixtures/cases/run-output-tampered",
+      "git_binding": true,
+      "expected": {"exit_code": 1, "valid": false, "issue_codes": ["hash.mismatch"]}
+    },
+    {
+      "id": "run-orphan-attempt",
+      "command": "validate",
+      "fixture": "fixtures/cases/run-orphan-attempt",
+      "git_binding": true,
+      "expected": {"exit_code": 1, "valid": false, "issue_codes": ["run.invalid"]}
+    },
+    {
+      "id": "run-duplicate-attempt",
+      "command": "validate",
+      "fixture": "fixtures/cases/run-duplicate-attempt",
+      "git_binding": true,
+      "expected": {"exit_code": 1, "valid": false, "issue_codes": ["reference.duplicate"]}
+    },
+    {
+      "id": "run-historical-application",
+      "command": "validate",
+      "fixture": "fixtures/cases/run-historical-application",
+      "git_binding": true,
+      "history_fixture": "fixtures/cases/run-historical-application-current",
+      "expected": {"exit_code": 0, "valid": true, "issue_codes": []}
+    },
+    {
+      "id": "run-coordinated-rewrite-boundary",
+      "command": "validate",
+      "fixture": "fixtures/cases/run-coordinated-rewrite-boundary",
+      "git_binding": true,
+      "expected": {"exit_code": 0, "valid": true, "issue_codes": []}
+    }
+  ]
+}
