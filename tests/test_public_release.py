@@ -4,6 +4,9 @@ import importlib.util
 import os
 import posixpath
 import re
+import shutil
+import subprocess
+import textwrap
 import tomllib
 from urllib.parse import unquote, urlsplit
 
@@ -166,12 +169,92 @@ def test_tag_workflow_separates_read_only_build_from_publication():
     assert "\n          python " not in publish
     assert "--release-id" in workflow
     assert "--expect-draft" in workflow
-    draft_verify = publish.index("release_guard.py live")
-    publish_by_id = publish.index("gh api --method PATCH")
+    body_patch = publish.index("gh api --method PATCH")
+    body_response_check = publish.index(".tag_name == $tag and .draft == true", body_patch)
+    draft_recheck = publish.index("release_guard.py live", body_response_check)
+    publish_by_id = publish.index("gh api --method PATCH", draft_recheck)
     final_verify = publish.rindex("release_guard.py live")
-    assert draft_verify < publish_by_id < final_verify
+    assert body_patch < body_response_check < draft_recheck < publish_by_id < final_verify
+    assert '--release-id "${RELEASE_ID}" --expect-draft' in publish[draft_recheck:publish_by_id]
+    assert '-f tag_name="${RELEASE_TAG}" -F draft=false' in publish[publish_by_id:final_verify]
     assert "--token" not in publish
     assert "pypi" not in workflow.lower()
+
+
+@pytest.mark.parametrize(
+    ("response_tag", "published"),
+    [("v0.3.18", True), ("untagged-48312c7106a2a0522ebc", False)],
+)
+def test_draft_tag_response_gates_publication(tmp_path, response_tag, published):
+    bash = shutil.which("bash")
+    if bash is None:
+        pytest.skip("release workflow shell check requires bash")
+    if shutil.which("jq") is None:
+        pytest.skip("release workflow shell check requires jq")
+
+    workflow = (ROOT / ".github/workflows/release.yml").read_text()
+    step = workflow[workflow.index("      - name: Verify draft, publish by ID, then verify public Release") :]
+    script = textwrap.dedent(step.split("        run: |\n", 1)[1])
+    body_patch = script.index("gh api --method PATCH")
+    final_verify = script.rindex("python3 .github/scripts/release_guard.py live")
+    transaction = "set -euo pipefail\n" + script[body_patch:final_verify]
+
+    stub_bin = tmp_path / "bin"
+    stub_bin.mkdir()
+    gh = stub_bin / "gh"
+    gh.write_text("""#!/bin/sh
+input=""
+while [ "$#" -gt 0 ]; do
+  if [ "$1" = "--input" ]; then
+    input="$2"
+    shift 2
+  else
+    shift
+  fi
+done
+if [ -n "$input" ]; then
+  cp "$input" "$PATCH_CAPTURE"
+  printf '{"tag_name":"%s","draft":true,"body":"workflow evidence"}\\n' "$PATCH_RESPONSE_TAG"
+else
+  touch "$PUBLISH_MARKER"
+  printf '{"tag_name":"%s","draft":false}\\n' "$RELEASE_TAG"
+fi
+""")
+    python3 = stub_bin / "python3"
+    python3.write_text("#!/bin/sh\nexit 0\n")
+    for executable in (gh, python3):
+        executable.chmod(0o755)
+
+    runner_temp = tmp_path / "runner-temp"
+    runner_temp.mkdir()
+    patch_capture = tmp_path / "observed-patch.json"
+    (runner_temp / "release-notes-patch.json").write_text(
+        '{"tag_name":"v0.3.18","body":"workflow evidence"}\n'
+    )
+    publish_marker = tmp_path / "published"
+    env = os.environ.copy()
+    env.update({
+        "PATH": os.pathsep.join((str(stub_bin), env.get("PATH", ""))),
+        "RELEASE_TAG": "v0.3.18",
+        "RELEASE_ID": "397359181",
+        "RUNNER_TEMP": str(runner_temp),
+        "GITHUB_REPOSITORY": "example/protocol",
+        "DIST_DIR": "release-dist",
+        "PATCH_RESPONSE_TAG": response_tag,
+        "PATCH_CAPTURE": str(patch_capture),
+        "PUBLISH_MARKER": str(publish_marker),
+    })
+    result = subprocess.run(
+        [bash, "-e", "-c", transaction],
+        cwd=ROOT,
+        env=env,
+        capture_output=True,
+        text=True,
+    )
+
+    assert (result.returncode == 0) is published, result.stdout + result.stderr
+    assert publish_marker.exists() is published
+    assert '"tag_name":"v0.3.18"' in patch_capture.read_text()
 
 
 def test_push_and_manual_runs_share_one_concurrency_key_per_tag():

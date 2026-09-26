@@ -37,6 +37,12 @@ The patch keeps Core schemas, hash semantics and the four CLI commands unchanged
 
 Successful historical corpus cases cover the named contracts; they do not prove zero semantic drift for all inputs. Parser acceptance intentionally changed for malformed inputs. Review and integration records identify their actual actors; an agent's review is not a human approval.
 
+### v0.3.18 publication identity correction
+
+`verified` (publication state and workflow result): the v0.3.17 [workflow run](https://github.com/Melvinanalytics/impacts-protokoll/actions/runs/36264479825) passed its build and test job, then failed publication verification. The [published record](https://github.com/Melvinanalytics/impacts-protokoll/releases/tag/untagged-48312c7106a2a0522ebc) uses the unexpected tag `untagged-48312c7106a2a0522ebc`, pointing to the same commit as the intended annotated [v0.3.17 tag](https://github.com/Melvinanalytics/impacts-protokoll/tree/v0.3.17). The final public lookup for the intended release returned 404. `verified` (source inspection): the [tagged workflow](https://github.com/Melvinanalytics/impacts-protokoll/blob/6f343277b3b0d26961ee158bdef0fcae3d21b55c/.github/workflows/release.yml#L243-L256) omitted `tag_name` from both update requests and did not check tag identity after the notes update. `open`: the retained responses do not establish which request changed the association. The published immutable record and both tags are retained.
+
+v0.3.18 sends the intended tag explicitly in both updates and rechecks draft identity and artifact digests after changing the notes, before publication. The correction changes the publication path, not Core contracts or hash rules. See GitHub's [release update API](https://docs.github.com/en/rest/releases/releases#update-a-release) and [immutable release restrictions](https://docs.github.com/en/code-security/concepts/supply-chain-security/immutable-releases).
+
 ## Publish an edition
 
 An edition claim spans source text and public delivery. `pyproject.toml`, the annotated Git tag, GitHub Release, release assets, README URLs and filenames, the German guide, and installed package metadata must name the same version. A green documentation test establishes only the source-tree part.

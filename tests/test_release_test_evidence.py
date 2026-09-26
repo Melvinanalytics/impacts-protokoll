@@ -12,6 +12,7 @@ evidence = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(evidence)
 SOURCE = "a" * 40
 RUN = "https://github.com/example/protocol/actions/runs/123"
+TAG = "v0.3.18"
 
 
 def reports():
@@ -32,14 +33,15 @@ def test_capture_whitelists_aggregate_counts_without_leaking_junit(tmp_path, mon
 
 
 def test_notes_preserve_generated_body_are_idempotent_and_support_publish_retry():
-    draft = {"draft": True, "body": "## What's Changed\nExisting notes.\n"}
-    patch = evidence.release_patch(draft, reports(), SOURCE, RUN, 2)
+    draft = {"tag_name": TAG, "draft": True, "body": "## What's Changed\nExisting notes.\n"}
+    patch = evidence.release_patch(draft, reports(), SOURCE, RUN, 2, TAG)
+    assert patch["tag_name"] == TAG
     assert patch["body"].startswith(draft["body"])
     assert "| 3.14.6 | 24 | 1 | 0 | 0 |" in patch["body"]
     assert "include subtests" in patch["body"]
     assert "build attempt 1" in patch["body"]
     assert "independent verification" in patch["body"]
-    assert evidence.release_patch({"draft": True, **patch}, reports(), SOURCE, RUN, 2) == patch
+    assert evidence.release_patch({"draft": True, **patch}, reports(), SOURCE, RUN, 2, TAG) == patch
 
 
 @pytest.mark.parametrize("change", [
@@ -55,7 +57,7 @@ def test_notes_reject_unmatched_or_unsuccessful_evidence(change):
     values = reports()
     values[0].update(change)
     with pytest.raises(ValueError):
-        evidence.release_patch({"draft": True}, values, SOURCE, RUN, 2)
+        evidence.release_patch({"tag_name": TAG, "draft": True}, values, SOURCE, RUN, 2, TAG)
 
 
 @pytest.mark.parametrize("kind", ["missing", "duplicate", "mixed-attempts"])
@@ -68,7 +70,7 @@ def test_both_interpreters_must_be_tested_in_one_build(kind):
     else:
         values[1]["run_attempt"] = 2
     with pytest.raises(ValueError):
-        evidence.release_patch({"draft": True}, values, SOURCE, RUN, 2)
+        evidence.release_patch({"tag_name": TAG, "draft": True}, values, SOURCE, RUN, 2, TAG)
 
 
 @pytest.mark.parametrize("draft", [
@@ -77,4 +79,12 @@ def test_both_interpreters_must_be_tested_in_one_build(kind):
 ])
 def test_published_or_ambiguous_notes_are_not_overwritten(draft):
     with pytest.raises(ValueError):
-        evidence.release_patch(draft, reports(), SOURCE, RUN, 1)
+        evidence.release_patch({"tag_name": TAG, **draft}, reports(), SOURCE, RUN, 1, TAG)
+
+
+def test_notes_reject_a_draft_attached_to_a_different_tag():
+    with pytest.raises(ValueError, match="draft tag"):
+        evidence.release_patch(
+            {"tag_name": "untagged-48312c7106a2a0522ebc", "draft": True},
+            reports(), SOURCE, RUN, 2, TAG,
+        )
