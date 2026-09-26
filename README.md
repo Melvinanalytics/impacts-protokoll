@@ -44,10 +44,10 @@ This diagram is orientation. The [ontology](02_protocol/ontology.md) owns eviden
 
 ## Get the protocol
 
-For new work, get the complete source archive from the [v0.3.16 release](https://github.com/Melvinanalytics/impacts-protokoll/releases/tag/v0.3.16), or clone that tag:
+For new work, get the complete source archive from the [v0.3.17 release](https://github.com/Melvinanalytics/impacts-protokoll/releases/tag/v0.3.17), or clone that tag:
 
 ```bash
-git clone --branch v0.3.16 --depth 1 https://github.com/Melvinanalytics/impacts-protokoll.git
+git clone --branch v0.3.17 --depth 1 https://github.com/Melvinanalytics/impacts-protokoll.git
 cd impacts-protokoll
 ```
 
@@ -99,7 +99,7 @@ For managed enterprise knowledge use, start with **Knowledge only**: identify on
 
 The projection is a derived reading surface, not a replacement authority or a complete protocol source. Record its included source paths and omissions. For each intended question, make the required passages available to the selected retriever, including needed domain definitions, observation claims, rules and supporting evidence excerpts. Do not assume that the retriever follows links inside an indexed document. Required linked passages must remain reachable at the bound revision through separately included projection material or the retained source. An omitted, inaccessible or stale required passage remains an explicit gap and restricts only the dependent conclusion or action.
 
-Edition v0.3.16 documents this customer-prepared intake path; it does not supply a publisher-attested knowledge projection, enterprise intake manifest, dependency bundle, build-provenance attestation or connector integration. The enterprise custodian prepares and records those materials for its environment. Release checksums cover only the assets named in that checksum file. For **Local CLI**, checking the IMPACTS wheel does not verify or freeze its dependencies: ordinary `pip` can resolve and download them. Enterprise executable intake must separately approve and hash-pin the complete dependency set or use an approved internal package source.
+Edition v0.3.17 documents this customer-prepared intake path; it does not supply a publisher-attested knowledge projection, enterprise intake manifest, dependency bundle, build-provenance attestation or connector integration. The enterprise custodian prepares and records those materials for its environment. Release checksums cover only the assets named in that checksum file. For **Local CLI**, checking the IMPACTS wheel does not verify or freeze its dependencies: ordinary `pip` can resolve and download them. Enterprise executable intake must separately approve and hash-pin the complete dependency set or use an approved internal package source.
 
 Call machine validation for a needed check when a suitable checker is available. An unavailable or failed check leaves its condition unestablished: preparation continues while the dependent claim or action waits. Explain progress, consequence and next action; retain raw diagnostics for maintainers. [Form selection](02_protocol/impacts-architect/references/formwahl.md#tooling-stopp) owns this boundary.
 
@@ -115,7 +115,7 @@ source .venv/bin/activate
 Choose one installation source:
 
 - **Complete checkout:** from its root, run `python -m pip install -e .`.
-- **Release wheel:** download the wheel, complete source archive and `SHA256SUMS` from the release above into one folder. From that folder, verify every listed asset with `shasum -a 256 -c SHA256SUMS` (macOS/Linux), then install with `python -m pip install ./impacts_protocol-0.3.16-py3-none-any.whl` only if the complete check passes.
+- **Release wheel:** download the wheel, complete source archive and `SHA256SUMS` from the release above into one folder. From that folder, verify every listed asset with `shasum -a 256 -c SHA256SUMS` (macOS/Linux), then install with `python -m pip install ./impacts_protocol-0.3.17-py3-none-any.whl` only if the complete check passes.
 
 Follow [Version and entry points](#version-and-entry-points) to identify the installed package and obtain its complete source. Then, outside the intended new customer folder:
 
@@ -147,6 +147,17 @@ impacts hash ../impacts-demo/vorgaenge/example/check/001 input --json
 | `2` | CLI arguments are invalid. |
 
 A valid `wartend` entry or pending human gate is not a validation failure. Exit `0` establishes neither business completion nor approval. Issue codes such as `schema.invalid`, `hash.mismatch` and `trust.invalid` distinguish failed checks within exit `1`.
+
+| Issue codes | Check and next action |
+|---|---|
+| `format.invalid`, `schema.invalid` | Repair text/YAML syntax or the named schema field. Duplicate and non-string YAML keys include their source location. |
+| `routing.missing`, `routing.type`, `structure.invalid`, `structure.symlink` | Repair the missing router, declared type, layout or unsafe filesystem entry. |
+| `reference.duplicate`, `reference.unresolved` | Resolve the duplicate identity or missing target within its declared scope. |
+| `process.gate`, `process.no_end`, `process.unreachable` | Correct the Application's gate routes, reachable end or entry path. |
+| `revision.invalid`, `run.invalid` | Restore the declared historical binding or correct the Run contract; preserve earlier bound work. |
+| `hash.mismatch`, `trust.invalid` | Investigate changed or unreadable hash surfaces, or invalid approval attribution. Recomputing a digest or writing an attribution does not authorize the change. |
+
+Fix parse errors before interpreting absent graph diagnostics: dependent checks can be withheld when their definitions cannot be read. Rerun validation after repair. A rejection does not imply that every independent defect has already been reported.
 
 Markdown input accepts UTF-8 with one optional leading BOM and LF or CRLF line endings. Repeated leading BOMs are malformed input. Strict YAML ingestion rejects duplicate and non-string mapping keys; it retains the existing safe YAML scalar rules, so quote string values such as `NO`, `on` and `off`. Hashing always uses raw file bytes: BOMs, line endings and Unicode normalization can change a digest even when text looks the same.
 

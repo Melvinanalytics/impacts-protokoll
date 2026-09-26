@@ -1,6 +1,8 @@
 import json
 import os
 from pathlib import Path
+import subprocess
+import sys
 from tempfile import TemporaryDirectory
 import unicodedata
 
@@ -8,7 +10,7 @@ import pytest
 import yaml
 from hypothesis import given, settings, strategies as st
 
-from impacts_protocol import io
+from impacts_protocol import init_workspace, io
 from impacts_protocol.hashing import surface_hash
 from impacts_protocol.io import (
     DuplicateKeyError,
@@ -129,6 +131,45 @@ def test_frontmatter_loader_rejects_duplicate_keys_in_both_plain_and_quoted_form
             assert error.value.key == key
 
 
+@pytest.mark.parametrize("force_python", [False, True])
+def test_duplicate_key_errors_report_plain_and_absolute_frontmatter_locations(
+    tmp_path, monkeypatch, force_python
+):
+    if force_python:
+        monkeypatch.setattr(io, "_StrictLoader", io._PythonStrictLoader)
+    plain_yaml = "type: workspace\nnested:\n  route: approve\n  route: deny\n"
+    with pytest.raises(DuplicateKeyError) as plain_error:
+        load_yaml_strict(plain_yaml)
+    assert plain_error.value.key == "route"
+    assert plain_error.value.line == 4
+    assert plain_error.value.column == 3
+
+    markdown = tmp_path / "CONTEXT.md"
+    markdown.write_text(f"---\n{plain_yaml}---\n", encoding="utf-8")
+    with pytest.raises(DuplicateKeyError) as markdown_error:
+        load_frontmatter_and_body(markdown)
+    assert markdown_error.value.key == "route"
+    assert markdown_error.value.line == 5
+    assert markdown_error.value.column == 3
+
+
+@pytest.mark.parametrize("force_python", [False, True])
+def test_boolean_mapping_key_diagnostic_identifies_coerced_token_and_line(
+    tmp_path, monkeypatch, force_python
+):
+    if force_python:
+        monkeypatch.setattr(io, "_StrictLoader", io._PythonStrictLoader)
+    path = tmp_path / "CONTEXT.md"
+    path.write_text("---\ntype: workspace\ntrue: value\n---\n", encoding="utf-8")
+
+    with pytest.raises(ValueError) as error:
+        load_frontmatter_and_body(path)
+
+    assert "line 3" in str(error.value)
+    assert "token 'true'" in str(error.value)
+    assert "resolves to True" in str(error.value)
+
+
 @HYPOTHESIS_SETTINGS
 @given(value=_PLAIN_UNICODE_SCALAR)
 def test_public_yaml_loader_matches_python_and_c_safe_yaml_semantics(value):
@@ -161,6 +202,27 @@ def test_yaml_boolean_coercion_keeps_existing_safe_loader_dialect(token, expecte
     assert yaml.load(source, Loader=io._PythonStrictLoader) == parsed
     if io._C_SAFE_LOADER is not None:
         assert yaml.load(source, Loader=io._StrictLoader) == parsed
+
+
+def test_yaml_loader_accepts_bounded_alias_reuse_and_nesting():
+    alias_source = "shared: &shared\n  value: retained\n" + "".join(
+        f"reference{index}: *shared\n" for index in range(32)
+    )
+    aliases = load_yaml_strict(alias_source)
+    assert len(aliases) == 33
+    assert all(
+        aliases[f"reference{index}"] is aliases["shared"] for index in range(32)
+    )
+
+    depth = 48
+    nested_source = "root:\n" + "".join(
+        "  " * (level + 1) + f"level{level}:\n" for level in range(depth)
+    )
+    nested_source += "  " * (depth + 1) + "leaf: retained\n"
+    nested = load_yaml_strict(nested_source)["root"]
+    for level in range(depth):
+        nested = nested[f"level{level}"]
+    assert nested == {"leaf": "retained"}
 
 
 def test_frontmatter_read_keeps_bom_bytes_in_the_existing_surface_hash(tmp_path):
@@ -205,3 +267,57 @@ def test_surface_hash_keeps_nfc_and_nfd_path_names_byte_distinct(
     if os.fsencode(stored_names[0]) == os.fsencode(stored_names[1]):
         pytest.skip("filesystem normalized distinct Unicode path spellings")
     assert digests[0] != digests[1]
+
+
+def test_frontmatter_preserves_canonically_equivalent_scalar_bytes_and_hashes(
+    tmp_path,
+):
+    values = ("Caf\u00e9", "Cafe\u0301")
+    parsed_values = []
+    digests = []
+    for root_name, value in zip(("nfc", "nfd"), values):
+        root = tmp_path / root_name
+        root.mkdir()
+        path = root / "CONTEXT.md"
+        raw = f'---\nlabel: "{value}"\n---\n'.encode("utf-8")
+        path.write_bytes(raw)
+
+        metadata, _ = load_frontmatter_and_body(path)
+        parsed_values.append(metadata["label"])
+        digests.append(surface_hash(root, ["CONTEXT.md"]))
+        assert path.read_bytes() == raw
+
+    assert parsed_values == list(values)
+    assert unicodedata.normalize("NFC", parsed_values[0]) == unicodedata.normalize(
+        "NFC", parsed_values[1]
+    )
+    assert parsed_values[0] != parsed_values[1]
+    assert digests[0] != digests[1]
+
+
+def test_cli_validator_reports_duplicate_key_source_location(tmp_path):
+    root = init_workspace(tmp_path / "workspace")
+    context = root / "CONTEXT.md"
+    context.write_text(
+        "---\ntype: workspace\nnested:\n  route: approve\n  route: deny\n---\n",
+        encoding="utf-8",
+    )
+    environment = os.environ.copy()
+    environment["PYTHONPATH"] = str(Path(__file__).resolve().parents[1] / "src")
+    environment["PYTHONDONTWRITEBYTECODE"] = "1"
+
+    result = subprocess.run(
+        [sys.executable, "-m", "impacts_protocol.cli", "validate", str(root)],
+        cwd=tmp_path,
+        env=environment,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+    )
+
+    assert result.returncode == 1
+    assert (
+        "format.invalid: CONTEXT.md: line 5, column 3: duplicate key: 'route'"
+        in result.stdout
+    )
+    assert result.stderr == ""

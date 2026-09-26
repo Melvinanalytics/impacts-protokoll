@@ -114,6 +114,43 @@
       "fixture": "fixtures/cases/run-coordinated-rewrite-boundary",
       "git_binding": true,
       "expected": {"exit_code": 0, "valid": true, "issue_codes": []}
+    },
+    {
+      "id": "application-single-bom",
+      "command": "validate",
+      "fixture": "fixtures/cases/application-single-bom",
+      "expected": {"exit_code": 0, "valid": true, "issue_codes": []}
+    },
+    {
+      "id": "application-repeated-bom",
+      "command": "validate",
+      "fixture": "fixtures/cases/application-repeated-bom",
+      "expected": {"exit_code": 1, "valid": false, "issue_codes": ["format.invalid"]}
+    },
+    {
+      "id": "hash-invalid-utf8-filename",
+      "command": "hash",
+      "fixture": null,
+      "attempt": "hash-attempt",
+      "surfaces": ["input"],
+      "invalid_utf8_file": {
+        "parent": "hash-attempt/input",
+        "name_hex": "ff2e747874",
+        "content_hex": "666978747572650a"
+      },
+      "expected": {"exit_code": 1, "digest": null, "issue_codes": ["hash.mismatch"]}
+    },
+    {
+      "id": "run-invalid-utf8-filename",
+      "command": "validate",
+      "fixture": "fixtures/cases/run-invalid-utf8-filename",
+      "git_binding": true,
+      "invalid_utf8_file": {
+        "parent": "vorgaenge/approval-001/pruefen/001/input",
+        "name_hex": "ff2e747874",
+        "content_hex": "666978747572650a"
+      },
+      "expected": {"exit_code": 1, "valid": false, "issue_codes": ["hash.mismatch"]}
     }
   ]
 }

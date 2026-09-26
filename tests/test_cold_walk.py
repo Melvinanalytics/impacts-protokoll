@@ -125,22 +125,44 @@ def test_cold_walk_rejects_duplicate_human_decision_keys_in_subprocess(tmp_path)
         fixture.write("route: abgelehnt\n")
 
     check_path = checkout / "06_evaluations" / "cold-walk" / "check.py"
-    code = (
-        "import importlib.util, sys; from pathlib import Path; "
-        "spec = importlib.util.spec_from_file_location('cold_walk_under_test', sys.argv[1]); "
-        "check = importlib.util.module_from_spec(spec); sys.modules[spec.name] = check; "
-        "spec.loader.exec_module(check); check.walk(Path(sys.argv[2])); print('ACCEPTED')"
-    )
     result = subprocess.run(
-        [sys.executable, "-c", code, str(check_path), str(tmp_path / "walk")],
+        [sys.executable, str(check_path)],
         cwd=tmp_path,
         text=True,
         capture_output=True,
     )
 
     assert result.returncode == 1
-    assert "duplicate key: 'route'" in result.stderr
-    assert "ACCEPTED" not in result.stdout
+    assert "FAIL cold walk:" in result.stdout
+    assert "human-decision.yaml:9" in result.stdout
+    assert "duplicate key: 'route'" in result.stdout
+    assert "remove duplicate" in result.stdout
+    assert "Traceback" not in result.stdout + result.stderr
+    assert result.stderr == ""
+
+
+def test_cold_walk_main_preserves_unexpected_proof_tracebacks(monkeypatch):
+    check = _check_module()
+
+    def fail(_base):
+        raise check.ProofError("unexpected harness invariant")
+
+    monkeypatch.setattr(check, "walk", fail)
+    with pytest.raises(check.ProofError, match="unexpected harness invariant"):
+        check.main()
+
+
+def test_human_decision_yaml_syntax_error_reports_path_line_and_remedy(tmp_path):
+    check = _check_module()
+    path = tmp_path / "human-decision.yaml"
+    path.write_text("route: [\n", encoding="utf-8")
+
+    with pytest.raises(check.FixtureInputError) as error:
+        check._load_human_decision(path)
+
+    assert f"{path}:2" in str(error.value)
+    assert "invalid human-decision YAML" in str(error.value)
+    assert "correct the YAML fixture" in str(error.value)
 
 
 def test_walk_imports_the_application_into_a_second_repository_with_equal_oid(walk_result):

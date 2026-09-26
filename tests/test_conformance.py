@@ -1,6 +1,9 @@
+import errno
+import importlib.util
 import json
 import os
 from pathlib import Path
+import re
 import subprocess
 import sys
 
@@ -9,6 +12,18 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 RUNNER = ROOT / "06_evaluations" / "conformance" / "run.py"
+
+
+def _runner_module():
+    name = "conformance_runner_tests"
+    if name in sys.modules:
+        return sys.modules[name]
+    spec = importlib.util.spec_from_file_location(name, RUNNER)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[name] = module
+    spec.loader.exec_module(module)
+    return module
 
 
 def _candidate(tmp_path: Path, source: str) -> Path:
@@ -207,18 +222,62 @@ def test_runner_rejects_non_array_command_json(tmp_path):
     ],
 )
 def test_manifest_loader_rejects_duplicate_keys_and_non_finite_values(tmp_path, raw):
-    import importlib.util
-
-    spec = importlib.util.spec_from_file_location("conformance_runner", RUNNER)
-    assert spec is not None and spec.loader is not None
-    namespace = importlib.util.module_from_spec(spec)
-    sys.modules[spec.name] = namespace
-    spec.loader.exec_module(namespace)
+    namespace = _runner_module()
     manifest_path = tmp_path / "cases.json"
     manifest_path.write_text(raw, encoding="utf-8")
 
     with pytest.raises(namespace.ConformanceError):
         namespace._load_manifest(manifest_path)
+
+
+@pytest.mark.parametrize(
+    ("error_number", "is_unsupported"),
+    [
+        (errno.EINVAL, True),
+        (errno.EILSEQ, True),
+        (errno.EACCES, False),
+        (errno.ENOSPC, False),
+    ],
+)
+def test_invalid_filename_setup_does_not_swallow_real_setup_errors(
+    tmp_path, monkeypatch, error_number, is_unsupported
+):
+    runner = _runner_module()
+    root = tmp_path / "workspace"
+    root.mkdir()
+    specification = {
+        "parent": "attempt/input",
+        "name_hex": "ff2e747874",
+        "content_hex": "666978747572650a",
+    }
+
+    def fail_open(*_args, **_kwargs):
+        raise OSError(error_number, "simulated filesystem result")
+
+    monkeypatch.setattr(runner.os, "open", fail_open)
+    if is_unsupported:
+        with pytest.raises(runner.UnsupportedCase):
+            runner._create_invalid_utf8_file(root, specification)
+    else:
+        with pytest.raises(runner.ConformanceError) as raised:
+            runner._create_invalid_utf8_file(root, specification)
+        assert not isinstance(raised.value, runner.UnsupportedCase)
+
+
+def test_all_unsupported_selection_is_not_reported_as_pass(monkeypatch, capsys):
+    runner = _runner_module()
+    manifest, cases = runner._load_manifest()
+
+    def unsupported(*_args, **_kwargs):
+        raise runner.UnsupportedCase("synthetic filesystem capability limit")
+
+    monkeypatch.setattr(runner, "_prepare_workspace", unsupported)
+    exit_code = runner.run_cases(["unused"], cases[:1], manifest, timeout=1.0)
+
+    assert exit_code == 3
+    output = capsys.readouterr().out
+    assert "UNSUPPORTED application-valid:" in output
+    assert "applicable=0 passed=0 unsupported=1 failed=0 total=1" in output
 
 
 def test_reference_cli_passes_full_frozen_corpus():
@@ -237,4 +296,17 @@ def test_reference_cli_passes_full_frozen_corpus():
     )
 
     assert result.returncode == 0, result.stdout + result.stderr
-    assert "Conformance passed: 15/15 cases" in result.stdout
+    summary = next(
+        line for line in result.stdout.splitlines() if line.startswith("Conformance summary: ")
+    )
+    match = re.fullmatch(
+        r"Conformance summary: applicable=(\d+) passed=(\d+) unsupported=(\d+) failed=(\d+) total=(\d+)",
+        summary,
+    )
+    assert match is not None
+    applicable, passed, unsupported, failed, total = map(int, match.groups())
+    assert passed == applicable
+    assert failed == 0
+    assert applicable + unsupported == total == 19
+    assert 15 <= applicable
+    assert unsupported <= 2

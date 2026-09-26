@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Any
 
 import yaml
-from yaml.nodes import MappingNode
+from yaml.nodes import MappingNode, ScalarNode
 
 
 YAML_MAPPING_TAG = "tag:yaml.org,2002:map"
@@ -13,9 +13,45 @@ YAML_MAPPING_TAG = "tag:yaml.org,2002:map"
 class DuplicateKeyError(ValueError):
     """A YAML mapping declares the same key more than once."""
 
-    def __init__(self, key: Any):
+    def __init__(
+        self, key: Any, line: int | None = None, column: int | None = None
+    ):
         self.key = key
-        super().__init__(f"duplicate key: {key!r}")
+        self.line = line
+        self.column = column
+        super().__init__(self._message())
+
+    def _message(self) -> str:
+        if self.line is None:
+            return f"duplicate key: {self.key!r}"
+        return f"line {self.line}, column {self.column}: duplicate key: {self.key!r}"
+
+    def add_line_offset(self, offset: int) -> None:
+        if self.line is not None and offset:
+            self.line += offset
+            self.args = (self._message(),)
+
+
+class _InvalidMappingKeyError(ValueError):
+    """A non-string YAML key, with its original token and source location."""
+
+    def __init__(self, key: Any, token: str, line: int, column: int):
+        self.key = key
+        self.token = token
+        self.line = line
+        self.column = column
+        super().__init__(self._message())
+
+    def _message(self) -> str:
+        return (
+            f"line {self.line}, column {self.column}: frontmatter keys must be strings; "
+            f"token {self.token!r} resolves to {self.key!r}"
+        )
+
+    def add_line_offset(self, offset: int) -> None:
+        if offset:
+            self.line += offset
+            self.args = (self._message(),)
 
 
 class PathEscapeError(ValueError):
@@ -35,9 +71,23 @@ def _strict_loader(base_loader: type) -> type:
         for key_node, _ in node.value:
             key = loader.construct_object(key_node, deep=deep)
             if not isinstance(key, str):
-                raise ValueError("frontmatter keys must be strings")
+                token = (
+                    key_node.value
+                    if isinstance(key_node, ScalarNode)
+                    else f"<{key_node.id}>"
+                )
+                raise _InvalidMappingKeyError(
+                    key,
+                    token,
+                    key_node.start_mark.line + 1,
+                    key_node.start_mark.column + 1,
+                )
             if key in seen:
-                raise DuplicateKeyError(key)
+                raise DuplicateKeyError(
+                    key,
+                    key_node.start_mark.line + 1,
+                    key_node.start_mark.column + 1,
+                )
             seen.add(key)
         return base_loader.construct_mapping(loader, node, deep=deep)
 
@@ -52,6 +102,19 @@ _StrictLoader = _strict_loader(_C_SAFE_LOADER) if _C_SAFE_LOADER else _PythonStr
 
 def load_yaml_strict(source: str) -> Any:
     """Load safe YAML while rejecting duplicate mapping keys."""
+
+    return _load_yaml_strict(source, line_offset=0)
+
+
+def _load_yaml_strict(source: str, *, line_offset: int) -> Any:
+    try:
+        return _parse_yaml_strict(source)
+    except (DuplicateKeyError, _InvalidMappingKeyError) as error:
+        error.add_line_offset(line_offset)
+        raise
+
+
+def _parse_yaml_strict(source: str) -> Any:
 
     # LibYAML and PyYAML's Python parser disagree on some valid and invalid
     # syntax. Keep the Python parser for those syntax families; use C for the
@@ -97,7 +160,9 @@ def load_frontmatter_and_body(
     except StopIteration as error:
         raise ValueError("frontmatter has no closing delimiter") from error
     try:
-        value = load_yaml_strict("\n".join(lines[1:closing_index]))
+        value = _load_yaml_strict(
+            "\n".join(lines[1:closing_index]), line_offset=1
+        )
     except DuplicateKeyError:
         raise
     except yaml.YAMLError as error:

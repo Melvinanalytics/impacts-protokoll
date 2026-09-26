@@ -18,6 +18,25 @@ The five [JSON Schemas](02_protocol/schemas/) already define Core frontmatter; e
 
 Single-snapshot validation detects changed bytes against retained digests. It cannot detect a writer replacing both the bytes and their recorded digests without a trusted earlier state. This applies to active, waiting and completed attempts. Concurrent execution must therefore use the consuming harness's writer coordination, current-state checks and retained revision; a green validator result is not a lock, transaction, authentication or history-rewrite detector.
 
+### v0.3.17 audit follow-through
+
+The patch keeps Core schemas, hash semantics and the four CLI commands unchanged. Each residual has one disposition:
+
+| Residual | Disposition |
+|---|---|
+| Cold-walk duplicate-key traceback | Malformed decision fixtures produce a concise path, source location and remedy; unexpected proof failures remain visible. |
+| YAML key diagnostics | Duplicate and non-string keys retain their original token and line/column, including the Markdown frontmatter offset. |
+| Graph diagnostics after parse failure | Preserve conservative dependent-check suppression; [CLI guidance](README.md#cli-output-and-text-input) explains repair and revalidation. No false claim of exhaustive diagnostics. |
+| Parser edge coverage | Add bounded location, Unicode-normalization, alias and nesting checks. These are regression examples, not a resource-exhaustion guarantee or a new YAML dialect. |
+| Corpus input boundaries | Add leading/repeated BOM and invalid-UTF-8 filename cases. A filesystem that cannot create the byte filename reports the case as unsupported, never passed. |
+| JSON for `init`/`template` and issue categories | Document the existing issue categories. Defer new output modes until a consumer needs structured results from these creation commands. |
+| Git revision in `--version` | Keep installed package identity separate from source binding. Record a tag/commit or verified archive separately; the enclosing checkout cannot identify an installed wheel. |
+| Fully hash-pinned consumer dependencies | The wheel checksum does not pin transitive dependencies. The enterprise custodian supplies an approved dependency set for its Python/platform; this patch does not publish a universal lock or attestation. |
+| Anonymous CI visibility | Test the exact tag on Python 3.11 and 3.14 and publish compact workflow results in the Release body. Counts include JUnit subtests and explicitly identify source, run and build attempt; raw logs may still require authentication. |
+| Scale portability | Retain the measured workload, machine and limitations. No new speed or concurrency claim. |
+
+Successful historical corpus cases cover the named contracts; they do not prove zero semantic drift for all inputs. Parser acceptance intentionally changed for malformed inputs. Review and integration records identify their actual actors; an agent's review is not a human approval.
+
 ## Publish an edition
 
 An edition claim spans source text and public delivery. `pyproject.toml`, the annotated Git tag, GitHub Release, release assets, README URLs and filenames, the German guide, and installed package metadata must name the same version. A green documentation test establishes only the source-tree part.
@@ -28,7 +47,7 @@ Use this order:
 2. Change `[project].version` plus all release URLs, clone commands, wheel filenames and edition wording in `README.md` and `02_protocol/translations/de.md`. Regenerate affected translation hashes.
 3. Run the complete repository checks. Open and review the release pull request. Do not create a public Release from an unmerged branch.
 4. Merge the reviewed release commit. Create an **annotated** `vX.Y.Z` tag on that exact public `main` commit and push the tag once.
-5. The tag workflow uses a read-only build job to check the tag, source claims and full test suite; build the wheel and complete source archive; and write `SHA256SUMS`. A separate publish job downloads those checked bytes without installing or running package code, uploads exactly the three artifacts to a hidden draft Release, verifies their remote names and SHA-256 digests, and only then publishes that Release by numeric ID.
+5. The tag workflow uses a read-only build job to check the tag, source claims and full test suite on Python 3.11 and 3.14; build the wheel and complete source archive on Python 3.11; and write `SHA256SUMS`. A separate publish job downloads those checked bytes without installing or running package code, uploads exactly the three artifacts to a hidden draft Release, verifies their remote names and SHA-256 digests, and attaches compact test evidence to the draft body before publication by numeric ID. Evidence must match the source and workflow run, with both interpreters from the same build attempt. Retrying only publication may reuse that successful earlier build attempt. The publicly readable body labels JUnit counts including subtests as workflow evidence, not independent verification or attestation.
 6. Verify that `main`, `vX.Y.Z`, the Release and its assets resolve to the intended commit and bytes. Run the optional live check below.
 
 For an initially unpublished version, a failure before the final publish command leaves the Release absent or draft. A rerun rejects an already published Release without modifying it. Repair a published edition through a new reviewed commit and version; do not move a published version tag or replace assets on a published Release. A manual rerun accepts only an existing annotated tag and may repair an unpublished draft.
