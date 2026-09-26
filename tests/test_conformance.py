@@ -280,6 +280,35 @@ def test_all_unsupported_selection_is_not_reported_as_pass(monkeypatch, capsys):
     assert "applicable=0 passed=0 unsupported=1 failed=0 total=1" in output
 
 
+def test_invalid_utf8_run_fixture_is_valid_before_filename_corruption(tmp_path):
+    runner = _runner_module()
+    manifest, cases = runner._load_manifest()
+    case = next(case for case in cases if case["id"] == "run-invalid-utf8-filename")
+    clean_case = {**case, "invalid_utf8_file": None}
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    runner._prepare_workspace(clean_case, manifest, workspace)
+
+    env = os.environ.copy()
+    source_path = str(ROOT / "src")
+    env["PYTHONPATH"] = os.pathsep.join(
+        part for part in (source_path, env.get("PYTHONPATH", "")) if part
+    )
+    result = subprocess.run(
+        [sys.executable, "-m", "impacts_protocol.cli", "validate", str(workspace), "--json"],
+        cwd=ROOT,
+        env=env,
+        capture_output=True,
+        text=True,
+        timeout=20,
+    )
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    report = json.loads(result.stdout)
+    assert report["valid"] is True
+    assert report["issues"] == []
+
+
 def test_reference_cli_passes_full_frozen_corpus():
     env = os.environ.copy()
     source_path = str(ROOT / "src")

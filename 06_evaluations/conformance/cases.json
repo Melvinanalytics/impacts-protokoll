@@ -146,7 +146,7 @@
       "fixture": "fixtures/cases/run-invalid-utf8-filename",
       "git_binding": true,
       "invalid_utf8_file": {
-        "parent": "vorgaenge/approval-001/pruefen/001/input",
+        "parent": "vorgaenge/approval-001/pruefen/001/input/daten",
         "name_hex": "ff2e747874",
         "content_hex": "666978747572650a"
       },

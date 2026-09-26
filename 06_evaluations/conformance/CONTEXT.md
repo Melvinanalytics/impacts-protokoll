@@ -27,9 +27,13 @@ Coverage includes valid and invalid Application structure, strict duplicate-key 
 
 Invalid UTF-8 filename cases are applicable only when the host filesystem can create the requested POSIX basename. On non-POSIX systems, or when creation returns `EINVAL` or `EILSEQ`, each case is reported as `UNSUPPORTED` and is not counted as passed. Other setup errors, including permission and storage failures, are failures. A run that reports unsupported cases exits 0 only when at least one case was applicable and all applicable cases passed.
 
+The invalid-filename Run fixture also has a portable regression check before filename corruption. Its declared `input/daten` surface, Application revision and clean input hash must validate even on a filesystem that cannot create the corrupt filename. Protocol paths use forward slashes independently of the host; actual filename creation remains subject to the filesystem's capabilities.
+
 The synthetic `human:fixture-reviewer` value is test data only. It authenticates no person or approval. The coordinated rewrite case is expected to pass because current files contain no independent trusted history; that result demonstrates a boundary, not tamper resistance. A content digest proves byte identity only. These cases do not test workstep execution, customer evidence, authenticated human decisions, complete protocol semantics, or business effects.
 
 ## Sources
+
+- Python's [filesystem encoding guidance](https://docs.python.org/3/library/sys.html#sys.getfilesystemencoding) and [pure paths](https://docs.python.org/3/library/pathlib.html#pure-paths): distinguish portable path representation from the host filesystem's encoding and capabilities.
 
 - [02_protocol/invariants/complete-process-paths.md](../../02_protocol/invariants/complete-process-paths.md): Application graph, gates, and waiting state.
 - [02_protocol/templates/application.md](../../02_protocol/templates/application.md) and [02_protocol/templates/vorgang.md](../../02_protocol/templates/vorgang.md): selected Core structure and source binding.

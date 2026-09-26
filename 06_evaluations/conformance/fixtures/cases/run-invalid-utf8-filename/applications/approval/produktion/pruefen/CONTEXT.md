@@ -2,7 +2,7 @@
 type: arbeitsschritt
 id: arbeitsschritt:pruefen
 eingaben:
-  - input
+  - input/daten
 ausgaben:
   - output/ergebnis.md
 pruefung: Decision follows recorded request
