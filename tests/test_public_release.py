@@ -269,11 +269,13 @@ def test_public_issue_forms_and_pull_request_template_request_scoped_evidence():
     assert "does not authenticate a person" in pr
 
 
-def test_contribution_dispositions_keep_candidate_and_external_scope_separate():
+def test_contribution_dispositions_keep_published_and_external_scope_separate():
     text = (ROOT / "CONTRIBUTING.md").read_text()
     for phrase in (
-        "Closed in the v0.3.20 candidate",
-        "The public record exists only after its actual run and publication",
+        "Closed for the published v0.3.20 wheel",
+        "Closed for the published v0.3.20 Release",
+        "source text alone cannot establish publication",
+        "Discussions are for exploratory questions",
         "Open outside named runner results",
         "hash-enforced selected wheels",
         "Open for independent third-party reruns",
