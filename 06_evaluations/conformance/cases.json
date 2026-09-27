@@ -67,7 +67,7 @@
       "filesystem_probe": {"kind": "unicode-distinct"},
       "bad_folders": ["caf\u00e9", "café"],
       "expected_issue_paths": ["applications/approval/caf\u00e9", "applications/approval/café"],
-      "expected": {"exit_code": 1, "valid": false, "issue_codes": ["structure.invalid"]}
+      "expected": {"exit_code": 1, "valid": false, "issue_codes": ["structure.invalid", "structure.invalid"]}
     },
     {
       "id": "application-unresolved-route",

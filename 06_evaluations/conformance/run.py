@@ -195,8 +195,8 @@ def _validate_expected(case: dict[str, Any]) -> None:
     codes = expected.get("issue_codes")
     if not isinstance(codes, list) or any(not isinstance(code, str) or not code for code in codes):
         raise ConformanceError(f"{case_id}: issue_codes must be strings")
-    if codes != sorted(set(codes)):
-        raise ConformanceError(f"{case_id}: issue_codes must be sorted and unique")
+    if codes != sorted(codes):
+        raise ConformanceError(f"{case_id}: issue_codes must be sorted")
     if case["command"] == "validate":
         if set(expected) != {"exit_code", "valid", "issue_codes"}:
             raise ConformanceError(f"{case_id}: malformed validate expectation")
@@ -535,7 +535,7 @@ def _check_report(report: dict[str, Any], case: dict[str, Any], root: Path, retu
             raise ConformanceError(
                 f"issue paths differ: expected {sorted(expected_paths)}, got {actual_paths}"
             )
-    if sorted(set(issue_codes)) != expected["issue_codes"]:
+    if sorted(issue_codes) != expected["issue_codes"]:
         raise ConformanceError(
             f"issue codes differ: expected {expected['issue_codes']}, got {sorted(issue_codes)}"
         )

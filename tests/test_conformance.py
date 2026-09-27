@@ -155,6 +155,22 @@ def test_runner_requires_exact_issue_codes(tmp_path):
     assert "issue codes differ" in result.stderr
 
 
+def test_runner_rejects_duplicate_diagnostic_for_original_single_issue_case(tmp_path):
+    result = _run(
+        tmp_path,
+        _emit_report(
+            valid=False,
+            exit_code=1,
+            issue_codes=("reference.unresolved", "reference.unresolved"),
+        ),
+        case="application-unresolved-route",
+    )
+
+    assert result.returncode == 1
+    assert "issue codes differ" in result.stderr
+    assert "reference.unresolved" in result.stderr
+
+
 def test_runner_requires_exact_frozen_issue_paths(tmp_path):
     result = _run(
         tmp_path,
