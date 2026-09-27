@@ -167,6 +167,42 @@ def test_runner_requires_exact_frozen_issue_paths(tmp_path):
     assert "applications/approval/Bad Folder" in result.stderr
 
 
+def test_unicode_equivalent_folder_spellings_keep_distinct_issue_occurrences(tmp_path):
+    runner = _runner_module()
+    _, cases = runner._load_manifest()
+    case = next(
+        case for case in cases
+        if case["id"] == "application-unicode-equivalent-folders"
+    )
+    root = tmp_path / "workspace"
+    root.mkdir()
+    report = {
+        "report_version": 1,
+        "command": "validate",
+        "tool": {
+            "name": "candidate",
+            "version": None,
+            "version_source": "test fixture",
+        },
+        "root": str(root),
+        "valid": False,
+        "issues": [
+            {
+                "code": "structure.invalid",
+                "path": path,
+                "message": "folder name is invalid",
+            }
+            for path in case["expected_issue_paths"]
+        ],
+    }
+
+    runner._check_report(report, case, root, 1)
+
+    report["issues"].pop()
+    with pytest.raises(runner.ConformanceError, match="issue paths differ"):
+        runner._check_report(report, case, root, 1)
+
+
 @pytest.mark.parametrize(
     ("mutation", "valid", "issue_codes", "diagnostic"),
     [
@@ -314,6 +350,30 @@ def test_filesystem_probes_skip_only_specific_capability_failures(
         with pytest.raises(runner.ConformanceError) as raised:
             runner._probe_filesystem_capability(root, specification)
         assert not isinstance(raised.value, runner.UnsupportedCase)
+
+
+def test_windows_overlong_component_einval_is_unsupported_only_on_windows(
+    tmp_path, monkeypatch
+):
+    runner = _runner_module()
+    path = tmp_path / ("p" * 256)
+
+    def fail_open(*_args, **_kwargs):
+        raise OSError(errno.EINVAL, "simulated Windows component limit")
+
+    monkeypatch.setattr(runner.os, "open", fail_open)
+    with pytest.raises(runner.UnsupportedCase):
+        runner._open_probe_file(
+            path,
+            "256-byte path components",
+            runner._path_component_probe_unsupported_errnos("win32"),
+        )
+    with pytest.raises(runner.ConformanceError):
+        runner._open_probe_file(
+            path,
+            "256-byte path components",
+            runner._path_component_probe_unsupported_errnos("linux"),
+        )
 
 
 def test_all_unsupported_selection_is_not_reported_as_pass(monkeypatch, capsys):

@@ -286,6 +286,14 @@ def _open_probe_file(
         raise ConformanceError(f"cannot finish {capability} capability probe: {error}") from error
 
 
+def _path_component_probe_unsupported_errnos(platform: str) -> set[int]:
+    unsupported = {errno.ENAMETOOLONG}
+    if platform == "win32":
+        # Windows reports its over-limit component response as EINVAL.
+        unsupported.add(errno.EINVAL)
+    return unsupported
+
+
 def _probe_filesystem_capability(root: Path, specification: dict[str, Any]) -> None:
     """Verify only the host path property a fixture depends on."""
     kind = specification["kind"]
@@ -302,7 +310,7 @@ def _probe_filesystem_capability(root: Path, specification: dict[str, Any]) -> N
                 _open_probe_file(
                     probe_root / ("p" * length),
                     f"{length}-byte path components",
-                    {errno.ENAMETOOLONG},
+                    _path_component_probe_unsupported_errnos(sys.platform),
                 )
             elif kind == "unicode-distinct":
                 composed = "caf\u00e9"
@@ -527,7 +535,7 @@ def _check_report(report: dict[str, Any], case: dict[str, Any], root: Path, retu
             raise ConformanceError(
                 f"issue paths differ: expected {sorted(expected_paths)}, got {actual_paths}"
             )
-    if sorted(issue_codes) != expected["issue_codes"]:
+    if sorted(set(issue_codes)) != expected["issue_codes"]:
         raise ConformanceError(
             f"issue codes differ: expected {expected['issue_codes']}, got {sorted(issue_codes)}"
         )
