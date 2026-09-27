@@ -81,7 +81,7 @@ def test_public_markdown_references_resolve_inside_the_allowlisted_export():
     assert link_issues(export_files(ROOT)) == []
 
 
-def test_native_portability_workflows_enforce_the_frozen_corpus_before_release_build():
+def test_native_portability_workflows_bind_reports_to_the_frozen_corpus():
     ci = (ROOT / ".github/workflows/ci.yml").read_text()
     release = (ROOT / ".github/workflows/release.yml").read_text()
     for workflow in (ci, release):
@@ -92,28 +92,37 @@ def test_native_portability_workflows_enforce_the_frozen_corpus_before_release_b
         assert "macos-latest" in native
         assert 'python-version: "3.12"' in native
         assert "06_evaluations/conformance/run.py" in native
-        assert "$expectedPassed = 19 - $unsupported.Count" in native
-        assert "failed=0 total=19" in native
-        assert "$unsupported.Count -gt 2" in native
         assert "$runnerExit -ne 0" in native
-        assert "$summary[0] -ne $expectedSummary" in native
-        assert "hash-invalid-utf8-filename" in native
-        assert "run-invalid-utf8-filename" in native
-        assert "$allowedUnsupported -notcontains $Matches[1]" in native
-        assert "Malformed unsupported-case result" in native
+        assert "cases.json" in (ROOT / ".github/scripts/test_evidence.py").read_text()
+        assert "total=19" not in native
+        assert "hash-invalid-utf8-filename" not in native
+        assert "run-invalid-utf8-filename" not in native
         assert "shell: pwsh" in native
         assert "pip install --disable-pip-version-check -e ." in native
         assert "pytest" not in native.lower()
         assert "Preserve Git fixture bytes on Windows" in native
+    assert "test_evidence.py native-check" in ci
+    assert "test_evidence.py native-capture" in release
+    assert "--expected-os \"${{ runner.os }}\"" in release
+    assert "--source \"$(git rev-parse HEAD)\"" in release
+    assert "--run-url $runUrl" in release
+    assert "corpus_sha256" in (ROOT / ".github/scripts/test_evidence.py").read_text()
     release_native = release[release.index("  native-conformance:\n") : release.index("\n  build:\n")]
     assert "^v[0-9]+\\.[0-9]+\\.[0-9]+$" in release_native
     assert release_native.index("Validate requested tag name") < release_native.index("Check out the exact tagged source")
     assert "ref: ${{ env.RELEASE_TAG }}" in release_native
     assert "fetch-depth: 0" in release_native
+    assert "Transfer native conformance evidence" in release_native
+    assert "${{ github.run_attempt }}-${{ matrix.os }}" in release_native
     build = release[release.index("  build:\n") : release.index("\n  publish:\n")]
     publish = release[release.index("  publish:\n") :]
     assert "needs: native-conformance" in build
+    assert "Download current-attempt native evidence" in build
+    assert "merge-multiple: true" in build
+    assert "release-test-evidence-${{ env.RELEASE_TAG }}" in build
     assert "needs: build" in publish
+    assert "--reports \"${RUNNER_TEMP}/test-evidence\"" in publish
+    assert "--root ." in publish
 
 
 def test_public_docs_contain_no_workstation_paths():
