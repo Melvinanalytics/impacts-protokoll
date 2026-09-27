@@ -12,7 +12,7 @@ evidence = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(evidence)
 SOURCE = "a" * 40
 RUN = "https://github.com/example/protocol/actions/runs/123"
-TAG = "v0.3.18"
+TAG = "v0.3.19"
 
 
 def reports():

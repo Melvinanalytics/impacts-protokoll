@@ -81,6 +81,41 @@ def test_public_markdown_references_resolve_inside_the_allowlisted_export():
     assert link_issues(export_files(ROOT)) == []
 
 
+def test_native_portability_workflows_enforce_the_frozen_corpus_before_release_build():
+    ci = (ROOT / ".github/workflows/ci.yml").read_text()
+    release = (ROOT / ".github/workflows/release.yml").read_text()
+    for workflow in (ci, release):
+        native = workflow[workflow.index("  native-conformance:\n") :]
+        if "\n  build:\n" in native:
+            native = native[: native.index("\n  build:\n")]
+        assert "windows-latest" in native
+        assert "macos-latest" in native
+        assert 'python-version: "3.12"' in native
+        assert "06_evaluations/conformance/run.py" in native
+        assert "$expectedPassed = 19 - $unsupported.Count" in native
+        assert "failed=0 total=19" in native
+        assert "$unsupported.Count -gt 2" in native
+        assert "$runnerExit -ne 0" in native
+        assert "$summary[0] -ne $expectedSummary" in native
+        assert "hash-invalid-utf8-filename" in native
+        assert "run-invalid-utf8-filename" in native
+        assert "$allowedUnsupported -notcontains $Matches[1]" in native
+        assert "Malformed unsupported-case result" in native
+        assert "shell: pwsh" in native
+        assert "pip install --disable-pip-version-check -e ." in native
+        assert "pytest" not in native.lower()
+        assert "Preserve Git fixture bytes on Windows" in native
+    release_native = release[release.index("  native-conformance:\n") : release.index("\n  build:\n")]
+    assert "^v[0-9]+\\.[0-9]+\\.[0-9]+$" in release_native
+    assert release_native.index("Validate requested tag name") < release_native.index("Check out the exact tagged source")
+    assert "ref: ${{ env.RELEASE_TAG }}" in release_native
+    assert "fetch-depth: 0" in release_native
+    build = release[release.index("  build:\n") : release.index("\n  publish:\n")]
+    publish = release[release.index("  publish:\n") :]
+    assert "needs: native-conformance" in build
+    assert "needs: build" in publish
+
+
 def test_public_docs_contain_no_workstation_paths():
     for name, text in export_files(ROOT).items():
         if name.endswith('.md'):
@@ -183,7 +218,7 @@ def test_tag_workflow_separates_read_only_build_from_publication():
 
 @pytest.mark.parametrize(
     ("response_tag", "published"),
-    [("v0.3.18", True), ("untagged-48312c7106a2a0522ebc", False)],
+    [("v0.3.19", True), ("untagged-48312c7106a2a0522ebc", False)],
 )
 def test_draft_tag_response_gates_publication(tmp_path, response_tag, published):
     bash = shutil.which("bash")
@@ -229,13 +264,13 @@ fi
     runner_temp.mkdir()
     patch_capture = tmp_path / "observed-patch.json"
     (runner_temp / "release-notes-patch.json").write_text(
-        '{"tag_name":"v0.3.18","body":"workflow evidence"}\n'
+        '{"tag_name":"v0.3.19","body":"workflow evidence"}\n'
     )
     publish_marker = tmp_path / "published"
     env = os.environ.copy()
     env.update({
         "PATH": os.pathsep.join((str(stub_bin), env.get("PATH", ""))),
-        "RELEASE_TAG": "v0.3.18",
+        "RELEASE_TAG": "v0.3.19",
         "RELEASE_ID": "397359181",
         "RUNNER_TEMP": str(runner_temp),
         "GITHUB_REPOSITORY": "example/protocol",
@@ -254,7 +289,7 @@ fi
 
     assert (result.returncode == 0) is published, result.stdout + result.stderr
     assert publish_marker.exists() is published
-    assert '"tag_name":"v0.3.18"' in patch_capture.read_text()
+    assert '"tag_name":"v0.3.19"' in patch_capture.read_text()
 
 
 def test_push_and_manual_runs_share_one_concurrency_key_per_tag():

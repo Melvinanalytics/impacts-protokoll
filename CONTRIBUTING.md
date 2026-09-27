@@ -43,6 +43,12 @@ Successful historical corpus cases cover the named contracts; they do not prove 
 
 v0.3.18 sends the intended tag explicitly in both updates and rechecks draft identity and artifact digests after changing the notes, before publication. The correction changes the publication path, not Core contracts or hash rules. See GitHub's [release update API](https://docs.github.com/en/rest/releases/releases#update-a-release) and [immutable release restrictions](https://docs.github.com/en/code-security/concepts/supply-chain-security/immutable-releases).
 
+### v0.3.19 first-use and portability scope
+
+`reported` (S4–S7 scenario findings): the monthly-close example uses existing `validate --json` and `hash.mismatch` for its GO/NO-GO; no new decision format is needed. First-use diagnostics explain the accepted folder-name form and locate malformed YAML at its source. A hash-surface symlink remains rejected with a lifecycle-aware remedy. The CLI does not prove that an attempt contains every relevant file: undeclared extras remain a human completeness check. Existing `SHA256SUMS`, `impacts --version` and the Run-bound revision answer artifact-byte, package-edition and historical-binding questions respectively, within their stated limits. No second version command or `hash --all-declared` is added.
+
+`required gate` (not evidence of a passing run): PR and exact-tag workflows run the 19-case corpus on GitHub-hosted Windows and macOS with Python 3.12. At least 17 cases must pass; only `hash-invalid-utf8-filename` and `run-invalid-utf8-filename` may be unsupported, and any failure blocks the release build. This characterizes those runners and cases only. An I/O or storage error, including FUSE `EIO`, is a failure. The existing Linux Python 3.11/3.14 full suite and three-asset release contract remain in force. No customer scenario workspace, JUnit report or private review is published.
+
 ## Publish an edition
 
 An edition claim spans source text and public delivery. `pyproject.toml`, the annotated Git tag, GitHub Release, release assets, README URLs and filenames, the German guide, and installed package metadata must name the same version. A green documentation test establishes only the source-tree part.

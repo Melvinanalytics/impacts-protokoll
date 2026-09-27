@@ -65,7 +65,7 @@ def surface_hash(attempt_root: Path, declared: Sequence[str]) -> str:
 
 def _candidates(source: Path, attempt_root: Path) -> list[Path]:
     if _has_symlink_component(source, attempt_root):
-        raise HashSurfaceError("structure.symlink", source, "Hash surface contains a symlink")
+        raise HashSurfaceError("structure.symlink", source, _symlink_message())
     try:
         source.resolve().relative_to(attempt_root.resolve())
     except (OSError, ValueError) as error:
@@ -81,7 +81,7 @@ def _candidates(source: Path, attempt_root: Path) -> list[Path]:
         directory = pending.pop()
         for path in sorted(directory.iterdir(), key=lambda item: item.name):
             if path.is_symlink():
-                raise HashSurfaceError("structure.symlink", path, "Hash surface contains a symlink")
+                raise HashSurfaceError("structure.symlink", path, _symlink_message())
             if path.is_dir():
                 pending.append(path)
             elif path.is_file():
@@ -91,6 +91,14 @@ def _candidates(source: Path, attempt_root: Path) -> list[Path]:
     if not files:
         raise HashSurfaceError("hash.mismatch", source, "Declared hash surface has no regular file")
     return sorted(files)
+
+
+def _symlink_message() -> str:
+    return (
+        "Hash surface contains a symlink. To proceed, materialize approved regular-file bytes before binding "
+        "and record provenance separately. If the input is already bound or completed, preserve it "
+        "and use the permitted new attempt/revision path rather than rewriting evidence."
+    )
 
 
 def _has_symlink_component(path: Path, root: Path) -> bool:

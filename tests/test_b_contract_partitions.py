@@ -124,6 +124,41 @@ def test_safe_yaml_paths_reject_bad_mappings_and_tags(
         assert "frontmatter keys must be strings" in str(caught.value)
 
 
+def test_frontmatter_yaml_syntax_error_uses_original_markdown_location_and_safe_fix(
+    tmp_path, strict_yaml_path
+):
+    path = tmp_path / "CONTEXT.md"
+    path.write_text(
+        "---\n"
+        "type: workspace\n"
+        "name: Bakery: East\n"
+        "---\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError) as caught:
+        load_frontmatter_and_body(path, tmp_path)
+
+    message = str(caught.value)
+    assert message.startswith("invalid frontmatter YAML: line 3, column 13:")
+    assert "mapping values are not allowed" in message
+    assert "inspect indentation and YAML punctuation at this location" in message
+    assert "quote ambiguous scalar text such as values containing ': '" in message
+    assert "line 2, column 13" not in message
+
+
+def test_standalone_yaml_syntax_error_keeps_unshifted_source_location(strict_yaml_path):
+    source = "type: workspace\nname: Bakery: East\n"
+
+    with pytest.raises(yaml.YAMLError) as caught:
+        io.load_yaml_strict(source)
+
+    message = str(caught.value)
+    assert message.startswith("line 2, column 13:")
+    assert "mapping values are not allowed" in message
+    assert "line 3, column 13" not in message
+
+
 @pytest.mark.parametrize("source,error", [
     ("outer: {x: 1, x: 2}", DuplicateKeyError),
     ("outer: {1: x}", ValueError),
