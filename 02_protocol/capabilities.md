@@ -130,12 +130,11 @@ The Application tree binds its own instructions only. Referenced rules, prompt f
 <a id="provenance-file-example"></a>
 ### Copyable stable-source provenance file
 
-For each stable source input, declare `input/<name>.md` and `input/<name>-herkunft.md` together under `eingaben`. Copy this ordinary Markdown body into the provenance file and replace every placeholder:
+For each stable source input, declare its actual input path, for example `input/rezeptur.md` or `input/messwerte.csv`, and its separate `input/<name>-herkunft.md` together under `eingaben`. Copy this ordinary Markdown body into the provenance file and replace every placeholder:
 
 ```markdown
 # Source provenance
 
-- Provenance file: `input/rezeptur-herkunft.md`
 - Local input: `input/rezeptur.md`
 - Origin / locator: `grundlagen/rezeptur.md` or the actual external source reference
 - Source state: `git:<commit>`, the applicable as-of state, or `open: unknown`

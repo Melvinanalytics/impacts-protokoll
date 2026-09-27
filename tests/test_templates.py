@@ -173,17 +173,20 @@ def test_both_workstep_templates_link_one_copyable_provenance_authority():
     end = capabilities.find("\n## ", anchor)
     example = capabilities[anchor : end if end >= 0 else None]
 
-    for body, link in (
-        (template_text("arbeitsschritt"), "../capabilities.md#provenance-file-example"),
-        (template_text("arbeitsschritt", language="de"), "../../capabilities.md#provenance-file-example"),
+    locator = "02_protocol/capabilities.md#provenance-file-example"
+    for body in (
+        template_text("arbeitsschritt"),
+        template_text("arbeitsschritt", language="de"),
     ):
-        assert link in body
+        assert locator in body
         assert "*-herkunft.md" in body
         assert '<a id="provenance-file-example"></a>' not in body
+        assert "../capabilities.md#provenance-file-example" not in body
 
     for field in (
-        "input/rezeptur-herkunft.md",
+        "input/<name>-herkunft.md",
         "input/rezeptur.md",
+        "input/messwerte.csv",
         "Origin / locator:",
         "Source state:",
         "Acquired by / provider:",
@@ -196,6 +199,7 @@ def test_both_workstep_templates_link_one_copyable_provenance_authority():
         "not a Core schema",
     ):
         assert field in example
+    assert "- Provenance file:" not in example
 
 
 def test_generated_workstep_routes_ontology_and_binds_document_blank():

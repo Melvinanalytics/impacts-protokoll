@@ -14,7 +14,7 @@ routen:
 customer_touchpoint: sacred  # fehlend, standard oder sacred
 ---
 
-<!-- Translation source: 02_protocol/templates/arbeitsschritt.md; sha256: 23f854bb64ce74445be82c5376c2f7e1f7a2dddbd03bff342fd6d079812bb502 -->
+<!-- Translation source: 02_protocol/templates/arbeitsschritt.md; sha256: 0d8d7d8d3690317a51b31d7e7e5095d7d004b23a3de51b599f8514c638c3bfa3 -->
 
 # Entscheiden
 
@@ -28,7 +28,7 @@ Ein Satz: Ergebnis dieses Jobs, Empfänger und erlaubte Nutzung.
 
 ## Eingaben
 
-Dieser Abschnitt setzt Augment am Ort der Arbeit um. Nur den Mindestkontext deklarieren, den der jeweilige menschliche, agentische oder deterministische Beitrag braucht, einschließlich beabsichtigter Nutzung sowie Zeitpunkt, zu dem er gültig und verfügbar sein muss. Für jede Quell- oder Übergabedatei Beschaffung/Producer, benötigten Inhalt und Eingangskontrolle benennen. Die Datei und ihre separate `*-herkunft.md` in `eingaben` deklarieren; das zentrale kopierbare [Beispiel zur Herkunftsdatei](../../capabilities.md#provenance-file-example) für stabile Quellen verwenden. Das Harness materialisiert diese Bytes unter `input/` und hasht die deklarierte Fläche vor dem Öffnen. Benötigte Definitionen, Regeln, Promptbausteine und Dokumentrohlinge außerhalb der Application einschließen; ihre aktuellen Links binden sie nicht. Stabile Referenzen behalten ihre einzige Heimat.
+Dieser Abschnitt setzt Augment am Ort der Arbeit um. Nur den Mindestkontext deklarieren, den der jeweilige menschliche, agentische oder deterministische Beitrag braucht, einschließlich beabsichtigter Nutzung sowie Zeitpunkt, zu dem er gültig und verfügbar sein muss. Für jede Quell- oder Übergabedatei Beschaffung/Producer, benötigten Inhalt und Eingangskontrolle benennen. Die Datei und ihre separate `*-herkunft.md` in `eingaben` deklarieren; das zentrale kopierbare Beispiel zur Herkunftsdatei unter `02_protocol/capabilities.md#provenance-file-example` in der benannten Protokollquelle und Revision verwenden. Das Harness materialisiert diese Bytes unter `input/` und hasht die deklarierte Fläche vor dem Öffnen. Benötigte Definitionen, Regeln, Promptbausteine und Dokumentrohlinge außerhalb der Application einschließen; ihre aktuellen Links binden sie nicht. Stabile Referenzen behalten ihre einzige Heimat.
 
 Für die Beschaffung eingerichteten Reader oder liefernde Person, Objektbezug, Auswahl/Zeitpunkt und Zieldatei benennen. Fachliche Schlüssel und Quellzuordnung wiederverwenden. Bezüge, Regelvoraussetzungen und relevante Widersprüche erhalten; die Arbeitsfrage bestimmt den Ausschnitt. Bei abgeleitetem oder erzeugtem Kontext Quelleingaben, sanktionierte Rechnung oder Anweisung, Producer, Ziel und Prüfung benennen; das Ergebnis behält seine Herkunft und liefert keine fehlende Tatsache oder Befugnis. Tatsächliche Mindestkontrolle für die beabsichtigte Nutzung sowie Auslöser für Aktualisierung oder Neubeschaffung deklarieren. Fehlender Zugriff, fehlende Werte und widersprüchliche Bedeutung bleiben verschiedene Blockaden.
 

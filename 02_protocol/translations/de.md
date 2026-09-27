@@ -188,7 +188,7 @@ Bei der Entwicklung von Möglichkeiten regulatorische oder physische Grenzen anh
 
 Der Agent übernimmt die Analyse. Der Nutzer ergänzt entscheidungsrelevante Fakten oder Entscheidungen; vollständige Neugestaltung, eine feste Zahl von Optionen oder ein verbindlicher Reduktionsnachweis sind keine Voraussetzung für weitere erlaubte Arbeit.
 
-<!-- Translation source: 02_protocol/capabilities.md; sha256: 6cac1c39974270516823bd315a737b162ff5e2d8da0de1ca3f419cb11f0c1349 -->
+<!-- Translation source: 02_protocol/capabilities.md; sha256: cc7cf367bcfbc7ea7bbfaf322cb14268d8ab5f4b63336c7e304e48d63dd1ac22 -->
 ### Quellen, Stammdaten und Verantwortung beschreiben
 
 Benötigte Quellen an ihren bestehenden fachlichen Heimaten beschreiben, auch bei gewöhnlicher Dateinutzung ohne Application oder Live-Verbindung. Dokumentierte Quelle oder Schnittstelle, beschaffte Daten, geprüfter Zugriff und Erlaubnis zur vorgesehenen Nutzung bleiben getrennte Befunde.
@@ -203,7 +203,7 @@ Die bekannte Quellenform festhalten: Datei, Export, Bericht, manuelle Eingabe od
 
 ### Kopierbare Herkunftsdatei für stabile Quellen
 
-Für jede stabile Quelle `input/<name>.md` und `input/<name>-herkunft.md` gemeinsam unter `eingaben` deklarieren. Die Herkunftsdatei bleibt gewöhnliche Markdown-Evidenz. Dafür die maßgebliche englische [kopierbare Vorlage für stabile Quellen](../capabilities.md#provenance-file-example) verwenden und alle Platzhalter ersetzen.
+Für jede stabile Quelle ihren tatsächlichen Eingabepfad, zum Beispiel `input/rezeptur.md` oder `input/messwerte.csv`, und ihre separate `input/<name>-herkunft.md` gemeinsam unter `eingaben` deklarieren. Die Herkunftsdatei bleibt gewöhnliche Markdown-Evidenz. Dafür die maßgebliche englische [kopierbare Vorlage für stabile Quellen](../capabilities.md#provenance-file-example) verwenden und alle Platzhalter ersetzen.
 
 Quellrevision oder fachlichen Stand getrennt vom tatsächlichen Lese- oder Empfangszeitpunkt festhalten. Der SHA-256-Digest gilt den exakten Rohbytes der lokalen Eingabedatei, nicht einem behaupteten Upstream-Digest oder dem aggregierten Oberflächenhash. Ursprung beziehungsweise Fundstelle, Reader oder Provider und Auswahlgrenzen nachvollziehbar benennen. Erforderliche Kontrolle und Beleg der tatsächlich ausgeführten Kontrolle getrennt halten. Unbekannter Quellenstand und unbekannte oder nicht ausgeführte Kontrolle bleiben ausdrücklich offen. Das Beispiel ist Anleitung für Evidenz in normalen Markdown-Dateien, weder Core-Schema noch Vertrag des allgemeinen Validators.
 
@@ -269,7 +269,7 @@ impacts validate ../mein-arbeitsbereich
 
 `init` erzeugt einen neuen, leeren Arbeitsbereich; es verweigert ein vorhandenes Ziel. Der Root-Router enthält `Working language: de`. Git wird nicht erzeugt und ist für Application-Strukturprüfung ohne Lauf nicht nötig; die aktuelle historische Laufvalidierung benötigt Git und die committed Application-Bindung. Git-Historie oder Hashes belegen weder die Wahrheit einer Quelle noch eine authentifizierte Entscheidung. `setuptools` wird nur für die Entwicklungs-Packagingtests benötigt. Der [programmierte Angebotslauf](../../06_evaluations/offer-walk/CONTEXT.md) ist eine optionale technische Evaluation mit synthetischen Daten, kein Beweis für die Nutzung durch einen Menschen oder einen Agenten allein aus Dateien.
 
-<!-- Translation source: 02_protocol/capabilities.md; sha256: 6cac1c39974270516823bd315a737b162ff5e2d8da0de1ca3f419cb11f0c1349 -->
+<!-- Translation source: 02_protocol/capabilities.md; sha256: cc7cf367bcfbc7ea7bbfaf322cb14268d8ab5f4b63336c7e304e48d63dd1ac22 -->
 Die Übernahme einer Application erhält ihre Definitionsbytes; Anwendbarkeit der Quellen und Befugnisse am Ziel folgen [Data Governance](../capabilities.md#data-governance), wobei gültige lokale Zuordnungen und Befugnisse weitergelten und offene Fragen an die dafür zuständige Entscheidungsperson gehen.
 Ausführung am Ziel erst behaupten, wenn dort ein `vorgang` mit seinen anwendbaren Voraussetzungen und Prüfungen tatsächlich den benannten Testendpunkt erreicht hat; Kopieren oder Linkprüfungen allein belegen dies nicht, und unabhängig erlaubte Vorbereitung bleibt bei eingeschränkter abhängiger Ausführung nützlich.
 [Reviewed correction](../impacts-method.md#reviewed-correction) an der Revisionsgrenze der geänderten Heimat anwenden: Geänderte Application-Definitionen benötigen eine neue Application-Bindung, während geänderte externe Zuordnungen in ihrer Quellenheimat bleiben und entsprechende Quellenbindung sowie betroffene Prüfungen benötigen, unter Erhalt früher gebundener Eingaben.
