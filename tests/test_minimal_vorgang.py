@@ -76,6 +76,35 @@ def test_committed_revision_and_complete_run_are_valid():
         assert report.valid, report.issues
 
 
+def test_missing_run_id_reports_schema_repair_without_folder_mismatch(tmp_path):
+    root, run = _prepare_workspace(tmp_path)
+    metadata = read_context(run / "CONTEXT.md")
+    metadata.pop("id")
+    replace_context(run / "CONTEXT.md", metadata)
+
+    issues = validate(root).issues
+
+    assert len(issues) == 1
+    assert issues[0].code == "schema.invalid"
+    assert issues[0].path == "vorgaenge/video-001/CONTEXT.md"
+    assert issues[0].message == (
+        "<root>: 'id' is a required property; add `id` to this frontmatter mapping"
+    )
+
+
+def test_present_wrong_run_id_still_reports_folder_mismatch(tmp_path):
+    root, run = _prepare_workspace(tmp_path)
+    metadata = read_context(run / "CONTEXT.md")
+    metadata["id"] = "vorgang:other-run"
+    replace_context(run / "CONTEXT.md", metadata)
+
+    issues = validate(root).issues
+
+    assert len(issues) == 1
+    assert issues[0].code == "structure.invalid"
+    assert issues[0].message == "Vorgang ID must match folder slug"
+
+
 def test_unreachable_application_tree_is_rejected():
     with TemporaryDirectory() as directory:
         root, run = _prepare_workspace(Path(directory))

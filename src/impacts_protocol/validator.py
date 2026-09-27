@@ -362,7 +362,8 @@ def _validate_vorgang(
     )
     if document is None:
         return
-    if document.get("id") != f"vorgang:{run_root.name}":
+    run_id = document.get("id")
+    if isinstance(run_id, str) and run_id != f"vorgang:{run_root.name}":
         _add(issues, "structure.invalid", run_root, workspace, "Vorgang ID must match folder slug")
     application = _resolve_application(
         workspace, document.get("application_revision"), run_root, issues, definitions, snapshots, reachable
