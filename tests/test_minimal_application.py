@@ -265,6 +265,31 @@ def test_unresolved_route_is_rejected():
         )
 
 
+def test_unknown_regular_file_does_not_hide_computable_graph_error():
+    with TemporaryDirectory() as directory:
+        root = write_application(Path(directory) / "video")
+        (root / ".DS_Store").write_bytes(b"metadata")
+        path = root / "produktion" / "start" / "CONTEXT.md"
+        metadata = read_context(path)
+        metadata["routen"] = {"weiter": "arbeitsschritt:fehlt"}
+        replace_context(path, metadata)
+
+        issues = validate(root).issues
+
+    assert any(
+        issue.code == "structure.invalid"
+        and issue.path == ".DS_Store"
+        and issue.message == "Unknown Application entry"
+        for issue in issues
+    )
+    assert any(
+        issue.code == "reference.unresolved"
+        and issue.path == "produktion/start/CONTEXT.md"
+        and "Route target does not resolve" in issue.message
+        for issue in issues
+    )
+
+
 def test_unresolved_entry_is_rejected_when_tree_is_fully_readable():
     with TemporaryDirectory() as directory:
         root = write_application(Path(directory) / "video")

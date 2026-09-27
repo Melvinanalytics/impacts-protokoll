@@ -881,7 +881,6 @@ def _slug_children(
             children.append(child)
         else:
             _add(issues, "structure.invalid", child, root, "Unknown Application entry")
-            complete = False
     return children, complete
 
 
