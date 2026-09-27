@@ -11,6 +11,65 @@
       "expected": {"exit_code": 0, "valid": true, "issue_codes": []}
     },
     {
+      "id": "application-bad-folder",
+      "command": "validate",
+      "fixture": null,
+      "bad_folders": ["Bad Folder"],
+      "expected_issue_paths": ["applications/approval/Bad Folder"],
+      "expected": {"exit_code": 1, "valid": false, "issue_codes": ["structure.invalid"]}
+    },
+    {
+      "id": "application-missing-required-field",
+      "command": "validate",
+      "fixture": "fixtures/cases/application-missing-required-field",
+      "expected": {"exit_code": 1, "valid": false, "issue_codes": ["schema.invalid"]}
+    },
+    {
+      "id": "application-wrong-type",
+      "command": "validate",
+      "fixture": "fixtures/cases/application-wrong-type",
+      "expected": {"exit_code": 1, "valid": false, "issue_codes": ["schema.invalid"]}
+    },
+    {
+      "id": "application-missing-routes",
+      "command": "validate",
+      "fixture": "fixtures/cases/application-missing-routes",
+      "expected": {"exit_code": 1, "valid": false, "issue_codes": ["schema.invalid"]}
+    },
+    {
+      "id": "application-missing-routes-independent-defect",
+      "command": "validate",
+      "fixture": "fixtures/cases/application-missing-routes-independent-defect",
+      "expected": {"exit_code": 1, "valid": false, "issue_codes": ["process.gate", "schema.invalid"]}
+    },
+    {
+      "id": "application-case-sensitive-folder",
+      "command": "validate",
+      "fixture": null,
+      "filesystem_probe": {"kind": "case-sensitive"},
+      "bad_folders": ["Produktion"],
+      "expected_issue_paths": ["applications/approval/Produktion"],
+      "expected": {"exit_code": 1, "valid": false, "issue_codes": ["structure.invalid"]}
+    },
+    {
+      "id": "application-long-component-folder",
+      "command": "validate",
+      "fixture": null,
+      "filesystem_probe": {"kind": "path-component", "length": 256},
+      "bad_folder_length": 256,
+      "expected_issue_paths": ["applications/approval/Bad_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"],
+      "expected": {"exit_code": 1, "valid": false, "issue_codes": ["structure.invalid"]}
+    },
+    {
+      "id": "application-unicode-equivalent-folders",
+      "command": "validate",
+      "fixture": null,
+      "filesystem_probe": {"kind": "unicode-distinct"},
+      "bad_folders": ["caf\u00e9", "café"],
+      "expected_issue_paths": ["applications/approval/caf\u00e9", "applications/approval/café"],
+      "expected": {"exit_code": 1, "valid": false, "issue_codes": ["structure.invalid"]}
+    },
+    {
       "id": "application-unresolved-route",
       "command": "validate",
       "fixture": "fixtures/cases/application-unresolved-route",

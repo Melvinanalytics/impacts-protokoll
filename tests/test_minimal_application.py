@@ -97,7 +97,29 @@ def test_schema_violation_fails_at_public_interface():
         errors = [issue for issue in validate(root).issues if issue.code == "schema.invalid"]
         assert len(errors) == 1
         assert errors[0].path == "CONTEXT.md"
-        assert errors[0].message == "<root>: 'leistung' is a required property"
+        assert errors[0].message == (
+            "<root>: 'leistung' is a required property; add `leistung` to this frontmatter mapping"
+        )
+
+
+def test_missing_id_reports_nearest_mapping_and_avoids_folder_mismatch(tmp_path):
+    root = write_application(tmp_path / "video")
+    path = root / "CONTEXT.md"
+    metadata = read_context(path)
+    metadata.pop("id")
+    replace_context(path, metadata)
+
+    issues = validate(root).issues
+
+    assert not any(
+        issue.code == "structure.invalid" and "ID must match folder slug" in issue.message
+        for issue in issues
+    )
+    schema = [issue for issue in issues if issue.code == "schema.invalid"]
+    assert len(schema) == 1
+    assert schema[0].message == (
+        "<root>: 'id' is a required property; add `id` to this frontmatter mapping"
+    )
 
 
 def test_workspace_application_issues_include_each_application_path(tmp_path):
@@ -113,7 +135,10 @@ def test_workspace_application_issues_include_each_application_path(tmp_path):
         issue
         for issue in validate(root).issues
         if issue.code == "schema.invalid"
-        and issue.message == "<root>: 'einstieg_ref' is a required property"
+        and issue.message == (
+            "<root>: 'einstieg_ref' is a required property; "
+            "add `einstieg_ref` to this frontmatter mapping"
+        )
     ]
 
     assert [issue.path for issue in errors] == [
@@ -136,6 +161,21 @@ def test_schema_errors_locate_nested_array_values(tmp_path, invalid):
     assert len(errors) == len(expected)
     assert all(issue.path == "CONTEXT.md" for issue in errors)
     assert all(issue.message.startswith(pointer) for issue, pointer in zip(errors, expected))
+
+
+def test_wrong_type_has_one_primary_diagnostic_and_keeps_other_schema_errors(tmp_path):
+    root = write_application(tmp_path / "video")
+    path = root / "produktion/start/CONTEXT.md"
+    metadata = read_context(path)
+    metadata["eingaben"] = "input/auftrag.md"
+    metadata["ausgaben"] = ["output//ergebnis.md"]
+    replace_context(path, metadata)
+
+    errors = [issue for issue in validate(root).issues if issue.code == "schema.invalid"]
+
+    assert len(errors) == 2
+    assert any(issue.message.startswith("/eingaben:") and "type" in issue.message for issue in errors)
+    assert any(issue.message.startswith("/ausgaben/0:") for issue in errors)
 
 
 @pytest.mark.parametrize("body", ["", "   \n\t"])
@@ -263,6 +303,49 @@ def test_unresolved_route_is_rejected():
             and "Route target does not resolve" in issue.message
             for issue in issues
         )
+
+
+def test_missing_routes_blocks_only_route_derived_graph_conclusions(tmp_path):
+    root = write_application(tmp_path / "video")
+    path = root / "produktion/start/CONTEXT.md"
+    metadata = read_context(path)
+    metadata.pop("routen")
+    replace_context(path, metadata)
+
+    issues = validate(root).issues
+
+    assert any(
+        issue.code == "schema.invalid" and "`routen`" in issue.message
+        for issue in issues
+    )
+    assert not any(
+        issue.code in {"process.unreachable", "process.no_end"}
+        for issue in issues
+    )
+
+
+def test_missing_routes_does_not_hide_independent_local_gate_error(tmp_path):
+    root = write_application(tmp_path / "video")
+    start_path = root / "produktion/start/CONTEXT.md"
+    metadata = read_context(start_path)
+    metadata.pop("routen")
+    replace_context(start_path, metadata)
+    gate_path = root / "produktion/pruefen/CONTEXT.md"
+    metadata = read_context(gate_path)
+    metadata["routen"] = {"ok": "end:fertig"}
+    replace_context(gate_path, metadata)
+
+    issues = validate(root).issues
+
+    assert any(issue.code == "schema.invalid" for issue in issues)
+    assert any(
+        issue.code == "process.gate" and issue.path == "produktion/pruefen/CONTEXT.md"
+        for issue in issues
+    )
+    assert not any(
+        issue.code in {"process.unreachable", "process.no_end"}
+        for issue in issues
+    )
 
 
 def test_unknown_regular_file_does_not_hide_computable_graph_error():

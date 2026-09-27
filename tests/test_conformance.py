@@ -155,6 +155,18 @@ def test_runner_requires_exact_issue_codes(tmp_path):
     assert "issue codes differ" in result.stderr
 
 
+def test_runner_requires_exact_frozen_issue_paths(tmp_path):
+    result = _run(
+        tmp_path,
+        _emit_report(valid=False, exit_code=1, issue_codes=("structure.invalid",)),
+        case="application-bad-folder",
+    )
+
+    assert result.returncode == 1
+    assert "issue paths differ" in result.stderr
+    assert "applications/approval/Bad Folder" in result.stderr
+
+
 @pytest.mark.parametrize(
     ("mutation", "valid", "issue_codes", "diagnostic"),
     [
@@ -235,6 +247,7 @@ def test_manifest_loader_rejects_duplicate_keys_and_non_finite_values(tmp_path, 
     [
         (errno.EINVAL, True),
         (errno.EILSEQ, True),
+        (errno.EEXIST, False),
         (errno.EACCES, False),
         (errno.ENOSPC, False),
     ],
@@ -261,6 +274,45 @@ def test_invalid_filename_setup_does_not_swallow_real_setup_errors(
     else:
         with pytest.raises(runner.ConformanceError) as raised:
             runner._create_invalid_utf8_file(root, specification)
+        assert not isinstance(raised.value, runner.UnsupportedCase)
+
+
+@pytest.mark.parametrize(
+    ("specification", "error_number", "fail_at", "is_unsupported"),
+    [
+        ({"kind": "case-sensitive"}, errno.EEXIST, 2, True),
+        ({"kind": "case-sensitive"}, errno.EACCES, 1, False),
+        ({"kind": "path-component", "length": 256}, errno.ENAMETOOLONG, 1, True),
+        ({"kind": "path-component", "length": 256}, errno.ENOSPC, 1, False),
+        ({"kind": "unicode-distinct"}, errno.EINVAL, 1, True),
+        ({"kind": "unicode-distinct"}, errno.EILSEQ, 1, True),
+        ({"kind": "unicode-distinct"}, errno.EEXIST, 2, True),
+        ({"kind": "unicode-distinct"}, errno.EACCES, 1, False),
+    ],
+)
+def test_filesystem_probes_skip_only_specific_capability_failures(
+    tmp_path, monkeypatch, specification, error_number, fail_at, is_unsupported
+):
+    runner = _runner_module()
+    root = tmp_path / "workspace"
+    root.mkdir()
+    real_open = runner.os.open
+    calls = 0
+
+    def fail_probe(path, flags, mode=0o777, **kwargs):
+        nonlocal calls
+        calls += 1
+        if calls == fail_at:
+            raise OSError(error_number, "simulated filesystem result")
+        return real_open(path, flags, mode, **kwargs)
+
+    monkeypatch.setattr(runner.os, "open", fail_probe)
+    if is_unsupported:
+        with pytest.raises(runner.UnsupportedCase):
+            runner._probe_filesystem_capability(root, specification)
+    else:
+        with pytest.raises(runner.ConformanceError) as raised:
+            runner._probe_filesystem_capability(root, specification)
         assert not isinstance(raised.value, runner.UnsupportedCase)
 
 
@@ -336,6 +388,6 @@ def test_reference_cli_passes_full_frozen_corpus():
     applicable, passed, unsupported, failed, total = map(int, match.groups())
     assert passed == applicable
     assert failed == 0
-    assert applicable + unsupported == total == 19
-    assert 15 <= applicable
-    assert unsupported <= 2
+    assert applicable + unsupported == total == 27
+    assert 19 <= applicable
+    assert unsupported <= 5
