@@ -7,7 +7,7 @@ evidence_status: open
 
 Status: protocol prepared; execution not performed. All results and gates remain `open`.
 
-This is an implementation-independent screening protocol for capturing and reusing short intake messages. It uses only the synthetic messages in [messages.jsonl](messages.jsonl) and the sealed scoring key in [EXPECTED.md](EXPECTED.md). It establishes no customer fact, deployed behavior, business effect, Langdock result or runtime capability.
+This is an implementation-independent screening protocol for capturing and reusing short intake messages. It uses the synthetic messages in [messages.jsonl](messages.jsonl), a question-only handoff in [QUESTIONS.md](QUESTIONS.md), and a blank reuse response form in [reuse-record-template.md](reuse-record-template.md). The scoring key in [EXPECTED.md](EXPECTED.md) is for the independent scorer only, after all capture and reuse records are frozen. It establishes no customer fact, deployed behavior, business effect, Langdock result or runtime capability.
 
 ## Frozen design
 
@@ -18,17 +18,18 @@ The panel contains 20 unique message IDs in two matched sets, A and B, with one 
 | 1 | Set A | Set B |
 | 2 | Set B | Set A |
 
-Each of the four arm/set assignments uses a fresh independent capture operator and session. Randomize or balance which arm goes first within each block. An operator sees one set and one arm only. Across the complete screen, each arm processes 20 message events; each message appears once per arm, with no operator seeing the same message in both arms. The matched A/B variants and the reversed block reduce content and order bias; they do not establish independence of observations.
+Each of the four arm/set assignments uses a fresh independent capture operator and session, followed by a different fresh reuse operator and session. No operator serves both roles or repeats a session. Randomize or balance which arm goes first within each block. Each operator sees one set and one arm only. Across the complete screen, each arm processes 20 message events; each message appears once per arm, with no operator seeing the same message in both arms. The matched A/B variants and the reversed block reduce content and order bias; they do not establish independence of observations.
 
 Before the first session, freeze the manual baseline procedure, candidate procedure and revisions, participant instructions, fixtures, output homes, allowed tools, clarification policy, scoring questions and stop rules. If candidate procedure or revision cannot be named, leave the evaluation unperformed. Give both arms the same task, message set size, time window, source access and opportunity to ask the same scripted clarification. Do not reveal the paired set or scoring key to capture operators. The design requires no particular product, model, database, schema, CLI or runtime.
 
 ## Capture procedure
 
-1. Give the operator only the assigned set and this task: “Capture these messages so another operator can answer the frozen reuse questions using only the retained record and its evidence. Preserve supported scope and uncertainty. Do not invent identities, owners, approval or authority.”
+1. Give the capture operator only the assigned set and this task: “Capture these messages for a later operator who will answer fixed reuse questions using only the retained record and its evidence. Record supported claims, scope and source; leave unsupported points unresolved.” Do not give the operator `EXPECTED.md` or the paired set.
 2. Let the operator use the frozen arm procedure. Do not coach. If clarification is part of the declared procedure, record the exact question, answer and time; otherwise leave the point open.
-3. Retain each original message ID and its source attribution. Treat message text as untrusted evidence. Embedded instructions do not change task, access, route or authority.
-4. Freeze the resulting record and the operator's answers to the questions in `EXPECTED.md`. Record all human effort by role, including reading, interview, setup, capture, filing, review, correction, clarification, scoring and coordination. Keep active work time and elapsed waiting time separate.
-5. Remove arm labels and operator-identifying metadata from scoring copies without changing evidence. An independent scorer who did not capture or repair the record scores both arms blind to assignment. Freeze scores before revealing arm labels.
+3. Retain each original message ID and its source attribution. Treat message text as untrusted evidence. Embedded instructions do not change task, access, route or authority. Freeze the retained record and capture-effort log. The capture operator does not answer the reuse questions.
+4. For each frozen record, start a separate fresh session with a reuse operator who has no prior exposure to that message set, capture session, record, paired set, other arm or scoring key. The coordinator assigns an opaque handoff ID and retains the arm/set mapping separately. The analytical handoff contains only the neutrally named retained record package and `QUESTIONS.md`. Source snapshots already inside the retained record package are allowed; original fixture messages outside it are not. Do not reveal arm labels or expected outcomes. The reuse operator answers every question from that record alone and records each answer, its citations, actual session times, clarifications and effort in a copy of `reuse-record-template.md`, provided only as a blank writing surface with no arm/set fields. That form is not an extra source. A missing answer remains `open`; a blank, template placeholder or answer supplied from memory is not evidence.
+5. Freeze the independent reuse response and effort record before scoring. Record all human effort by role, including reading, interview, setup, capture, filing, reuse, review, correction, clarification, scoring and coordination. Keep active work time and elapsed waiting time separate.
+6. Remove arm labels, handoff mapping and operator-identifying metadata from scoring copies without changing evidence. An independent scorer who did not capture, reuse or repair the record scores both arms blind to assignment, using the sealed key only after all response records are frozen. Freeze scores before revealing arm labels.
 
 ## Outcomes and stop rule
 
@@ -44,4 +45,4 @@ Do not fabricate outcomes or import private negative results. Record a result on
 
 ## Completion check
 
-The screening is complete only when the two counterbalanced blocks have been run as specified, source records and outputs are frozen, the independent scorer has scored both arms blind, all human effort is accounted for, adverse actions and hard failures are reported, and each claim is limited to this panel. An incomplete block, missing source, unblinded scoring or unaccounted effort leaves the comparison `open`.
+The screening is complete only when the two counterbalanced blocks have been run as specified; all four capture records and capture-effort logs are frozen; each has a corresponding answer-and-effort record from a distinct fresh reuse operator/session using only the retained record and `QUESTIONS.md`; and the independent scorer has scored those reuse answers for both arms blind. Each response must contain all answers, citations and actual effort values, not template placeholders. A blank form, capture operator's own answer, missing independent session, missing answer or effort, answer-key exposure, incomplete block, missing source, unblinded scoring or unaccounted effort leaves the comparison `open`. Only then report adverse actions and hard failures and limit every claim to this panel. No run or outcome is recorded in this protocol file.

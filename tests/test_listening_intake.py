@@ -50,9 +50,11 @@ def test_screen_has_twenty_synthetic_messages_in_ten_matched_pairs():
     assert by_id["M12"]["message"] == by_id["M02"]["message"]
 
 
-def test_screen_protocol_preserves_design_blinding_hard_fail_and_claim_limits():
+def test_screen_cannot_complete_without_independent_reuse_records():
     context = (SCREEN / "CONTEXT.md").read_text(encoding="utf-8")
     expected = (SCREEN / "EXPECTED.md").read_text(encoding="utf-8")
+    questions = (SCREEN / "QUESTIONS.md").read_text(encoding="utf-8")
+    response_form = (SCREEN / "reuse-record-template.md").read_text(encoding="utf-8")
 
     for phrase in (
         "manual baseline",
@@ -66,10 +68,20 @@ def test_screen_protocol_preserves_design_blinding_hard_fail_and_claim_limits():
         "independent Bernoulli assumption",
         "Langdock result",
         "runtime capability",
+        "fresh reuse operator and session",
+        "The analytical handoff contains only the neutrally named retained record package and `QUESTIONS.md`",
+        "The capture operator does not answer the reuse questions",
+        "all four capture records and capture-effort logs are frozen",
+        "each has a corresponding answer-and-effort record",
+        "missing independent session",
+        "missing answer or effort",
+        "Each response must contain all answers, citations and actual effort values",
+        "distinct fresh reuse operator/session",
+        "using only the retained record and `QUESTIONS.md`",
     ):
         assert phrase in context
     for phrase in (
-        "normalized reuse questions",
+        "Question mapping",
         "invents an owner, approval or rule authority",
         "do not repair the candidate answer",
         "identity ambiguity",
@@ -78,6 +90,21 @@ def test_screen_protocol_preserves_design_blinding_hard_fail_and_claim_limits():
         assert phrase in expected
     assert context.count("| Block") == 1
     assert "All results and gates remain `open`." in context
+    assert expected.endswith("\n")
+    assert "M01" not in questions and "hard failure" not in questions
+    assert "EXPECTED.md" not in questions and "arm" not in questions.lower()
+    assert "Do not invent" not in questions
+    assert len([line for line in questions.splitlines() if line[:1].isdigit() and line[1:3] == ". "]) == 7
+    question_rows = [line for line in questions.splitlines() if line[:1].isdigit() and line[1:3] == ". "]
+    assert [line[:1] for line in question_rows] == list("1234567")
+    nonempty_questions = [line for line in questions.splitlines() if line]
+    assert nonempty_questions == ["# Reuse questions", *question_rows]
+    assert "Status: `open`." in response_form
+    assert "Block / arm / set" not in response_form
+    assert "Opaque handoff ID" in response_form
+    assert response_form.count("`<actual answer and citations>`") == 7
+    assert "Active minutes" in response_form and "Waiting minutes" in response_form
+    assert "EXPECTED.md" not in questions
 
 
 def test_future_gates_are_unperformed_and_cover_all_requested_scoring():
