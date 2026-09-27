@@ -127,6 +127,27 @@ The Application tree binds its own instructions only. Referenced rules, prompt f
 
 `Content-Digest` is lowercase hexadecimal SHA-256 of raw file bytes, not the aggregate surface hash.
 
+<a id="provenance-file-example"></a>
+### Copyable stable-source provenance file
+
+For each stable source input, declare its actual input path, for example `input/rezeptur.md` or `input/messwerte.csv`, and its separate `input/<name>-herkunft.md` together under `eingaben`. Copy this ordinary Markdown body into the provenance file and replace every placeholder:
+
+```markdown
+# Source provenance
+
+- Local input: `input/rezeptur.md`
+- Origin / locator: `grundlagen/rezeptur.md` or the actual external source reference
+- Source state: `git:<commit>`, the applicable as-of state, or `open: unknown`
+- Acquired by / provider: the configured reader or responsible provider
+- Acquired at: the actual date and time this material was read or received
+- Selection: the identity, query or extraction boundaries used
+- Content-Digest: `sha256:<lowercase-hex>` of the exact local input file's raw bytes
+- Required control: the control required before this intended use
+- Actual control: evidence of the control performed, or `open: not performed` / `open: unknown`
+```
+
+`Source state` describes the source revision or business state; `Acquired at` records when this local copy was obtained. They are not substitutes for one another. The digest covers the exact local input bytes, not an upstream file's claimed digest or the aggregate hash surface. Keep required control separate from evidence of actual control. If source state or actual control is unknown, leave it explicitly open. This is guidance for ordinary Markdown evidence, not a Core schema or a contract enforced by the general validator.
+
 <a id="sichtbare-ausgabe-und-übergabe"></a>
 ## Visible output and handoff
 

@@ -77,18 +77,27 @@ def test_empty_directory_surface_raises_hash_mismatch():
         assert error.value.code == "hash.mismatch"
 
 
-def test_symlink_inside_surface_raises_structure_symlink():
+@pytest.mark.parametrize("target_kind", ["inside", "outside"])
+def test_symlink_inside_surface_raises_actionable_structure_symlink(target_kind):
     with TemporaryDirectory() as directory:
         base = Path(directory)
         attempt = _attempt(base, {"input/auftrag.md": "x"})
         outside = base / "outside.md"
         outside.write_text("fremd", encoding="utf-8")
-        (attempt / "input" / "link.md").symlink_to(outside)
+        target = attempt / "input" / "auftrag.md" if target_kind == "inside" else outside
+        link = attempt / "input" / "link.md"
+        link.symlink_to(target)
 
         with pytest.raises(HashSurfaceError) as error:
             surface_hash(attempt, ["input/"])
 
         assert error.value.code == "structure.symlink"
+        assert error.value.path == link
+        assert "materialize approved regular-file bytes before binding" in error.value.message
+        assert "record provenance separately" in error.value.message
+        assert "preserve it" in error.value.message
+        assert "new attempt/revision path" in error.value.message
+        assert str(target) not in error.value.message
 
 
 def test_surface_escaping_attempt_raises_hash_mismatch():

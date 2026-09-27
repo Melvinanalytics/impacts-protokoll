@@ -58,6 +58,24 @@ class PathEscapeError(ValueError):
     """A source path resolves outside its declared workspace root."""
 
 
+class _YamlSyntaxError(yaml.YAMLError):
+    """Normalized YAML syntax failure with a stable source location."""
+
+    def __init__(
+        self, problem: str, line: int, column: int, *, frontmatter: bool
+    ) -> None:
+        self.problem = problem
+        self.line = line
+        self.column = column
+        message = f"line {line}, column {column}: {problem}"
+        if frontmatter:
+            message += (
+                ". inspect indentation and YAML punctuation at this location; "
+                "quote ambiguous scalar text such as values containing ': '"
+            )
+        super().__init__(message)
+
+
 def _strict_loader(base_loader: type) -> type:
     """Give either safe parser its own strict mapping constructor."""
 
@@ -112,6 +130,17 @@ def _load_yaml_strict(source: str, *, line_offset: int) -> Any:
     except (DuplicateKeyError, _InvalidMappingKeyError) as error:
         error.add_line_offset(line_offset)
         raise
+    except yaml.YAMLError as error:
+        mark = getattr(error, "problem_mark", None)
+        problem = getattr(error, "problem", None)
+        if mark is None or not problem:
+            raise
+        raise _YamlSyntaxError(
+            problem,
+            mark.line + 1 + line_offset,
+            mark.column + 1,
+            frontmatter=bool(line_offset),
+        ) from error
 
 
 def _parse_yaml_strict(source: str) -> Any:

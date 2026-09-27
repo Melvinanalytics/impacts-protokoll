@@ -174,8 +174,9 @@ def _validate_application(
 ) -> Application | None:
     before = len(issues)
     _reject_symlinks(root, root, issues)
-    if check_slug and SLUG.fullmatch(root.name) is None:
-        _add(issues, "structure.invalid", root, root, "Application folder needs a slug")
+    root_slug_valid = SLUG.fullmatch(root.name) is not None
+    if check_slug and not root_slug_valid:
+        _add(issues, "structure.invalid", root, root, _slug_message("Application"))
     process = _load_context(
         root / "CONTEXT.md",
         root,
@@ -184,14 +185,17 @@ def _validate_application(
     )
     if process is None:
         return None
-    if check_slug and process.get("id") != f"hauptprozess:{root.name}":
+    if check_slug and root_slug_valid and process.get("id") != f"hauptprozess:{root.name}":
         _add(issues, "structure.invalid", root, root, "Hauptprozess ID must match folder slug")
-    part_dirs = _slug_children(root, root, issues, "Teilprozess")
-    if not part_dirs:
+    part_dirs, complete_tree = _slug_children(root, root, issues, "Teilprozess")
+    if check_slug and not root_slug_valid:
+        complete_tree = False
+    if not part_dirs and complete_tree:
         _add(issues, "structure.invalid", root, root, "Hauptprozess needs at least one Teilprozess")
 
     steps: dict[str, tuple[Path, dict[str, Any]]] = {}
-    incomplete_steps = False
+    if process.get("type") != "hauptprozess":
+        complete_tree = False
     for part_root in part_dirs:
         part = _load_context(
             part_root / "CONTEXT.md",
@@ -199,10 +203,18 @@ def _validate_application(
             issues,
             kind="teilprozess",
         )
-        if part is not None and part.get("id") != f"teilprozess:{part_root.name}":
+        if part is None or part.get("type") != "teilprozess":
+            complete_tree = False
+        if (
+            part is not None
+            and SLUG.fullmatch(part_root.name) is not None
+            and part.get("id") != f"teilprozess:{part_root.name}"
+        ):
             _add(issues, "structure.invalid", part_root, root, "Teilprozess ID must match folder slug")
-        step_dirs = _slug_children(part_root, root, issues, "Arbeitsschritt")
-        if not step_dirs:
+            complete_tree = False
+        step_dirs, part_complete = _slug_children(part_root, root, issues, "Arbeitsschritt")
+        complete_tree = complete_tree and part_complete
+        if not step_dirs and part_complete:
             _add(
                 issues,
                 "structure.invalid",
@@ -211,8 +223,11 @@ def _validate_application(
                 "Teilprozess needs at least one Arbeitsschritt",
             )
         for step_root in step_dirs:
-            if _slug_children(step_root, root, issues, "Arbeitsschritt"):
+            nested_dirs, step_complete = _slug_children(step_root, root, issues, "Arbeitsschritt")
+            if nested_dirs:
                 _add(issues, "structure.invalid", step_root, root, "Arbeitsschritt must not contain subfolders")
+            if not step_complete or nested_dirs:
+                complete_tree = False
             step = _load_context(
                 step_root / "CONTEXT.md",
                 root,
@@ -220,19 +235,25 @@ def _validate_application(
                 kind="arbeitsschritt",
                 require_body=True,
             )
-            if step is None or not isinstance(step.get("id"), str):
-                incomplete_steps = True
+            if step is None:
+                complete_tree = False
+                continue
+            _validate_local_workstep(step_root, step, root, issues)
+            if step.get("type") != "arbeitsschritt" or not isinstance(step.get("id"), str):
+                complete_tree = False
                 continue
             step_id = step["id"]
-            if step_id != f"arbeitsschritt:{step_root.name}":
+            if SLUG.fullmatch(step_root.name) is not None and step_id != f"arbeitsschritt:{step_root.name}":
                 _add(issues, "structure.invalid", step_root, root, "Arbeitsschritt ID must match folder slug")
+                complete_tree = False
             if step_id in steps:
                 _add(issues, "reference.duplicate", step_root, root, f"Duplicate Arbeitsschritt ID: {step_id}")
+                complete_tree = False
             else:
                 steps[step_id] = (step_root, step)
 
     application = Application(root, process, steps)
-    if not incomplete_steps:
+    if complete_tree:
         _validate_graph(application, issues)
     if len(issues) > before and not steps:
         return None
@@ -253,8 +274,6 @@ def _validate_graph(application: Application, issues: list[Issue]) -> None:
         routes = step.get("routen")
         if not isinstance(routes, dict):
             continue
-        if step.get("gate") == "human" and set(routes) != {"freigegeben", "abgelehnt"}:
-            _add(issues, "process.gate", path / "CONTEXT.md", root, "Human gate needs freigegeben and abgelehnt routes")
         for target in routes.values():
             if not isinstance(target, str):
                 continue
@@ -289,6 +308,30 @@ def _validate_graph(application: Application, issues: list[Issue]) -> None:
                 queue.append(step_id)
     for step_id in sorted(set(steps) - can_end):
         _add(issues, "process.no_end", steps[step_id][0], root, f"No reachable end from: {step_id}")
+
+
+def _validate_local_workstep(
+    path: Path, step: dict[str, Any], root: Path, issues: list[Issue]
+) -> None:
+    routes = step.get("routen")
+    if step.get("gate") == "human" and isinstance(routes, dict) and set(routes) != {
+        "freigegeben",
+        "abgelehnt",
+    }:
+        _add(
+            issues,
+            "process.gate",
+            path / "CONTEXT.md",
+            root,
+            "Human gate needs freigegeben and abgelehnt routes",
+        )
+
+
+def _slug_message(label: str) -> str:
+    return (
+        f"{label} folder slug must use lowercase ASCII letters and digits, "
+        "with single hyphens between words; example: bestellung-ausloesen"
+    )
 
 
 def _validate_vorgang(
@@ -810,25 +853,35 @@ def _load_context(
 
 def _slug_children(
     path: Path, root: Path, issues: list[Issue], label: str
-) -> list[Path]:
-    """Return the slug-named subfolders of one process node; flag everything else."""
+) -> tuple[list[Path], bool]:
+    """Return slug-named child folders and whether their enumeration is complete."""
     if _has_symlink_component(path, root) or not path.is_dir():
-        return []
+        return [], False
     children: list[Path] = []
-    for child in sorted(path.iterdir(), key=lambda item: item.name):
+    complete = True
+    try:
+        entries = sorted(path.iterdir(), key=lambda item: item.name)
+    except OSError as error:
+        _add(issues, "structure.invalid", path, root, f"Cannot enumerate {label} folders: {error}")
+        return [], False
+    for child in entries:
         if child.is_symlink():
             _add(issues, "structure.symlink", child, root, f"{label} is a symlink")
+            complete = False
         elif child.name == "CONTEXT.md":
             if not child.is_file():
                 _add(issues, "structure.invalid", child, root, "CONTEXT.md must be a file")
+                complete = False
         elif child.is_dir():
             if SLUG.fullmatch(child.name) is None:
-                _add(issues, "structure.invalid", child, root, f"{label} folder needs a slug")
-            else:
-                children.append(child)
+                _add(issues, "structure.invalid", child, root, _slug_message(label))
+                complete = False
+            # Keep the readable directory in the walk so independent local
+            # checks can still run; its invalid name prevents graph inference.
+            children.append(child)
         else:
             _add(issues, "structure.invalid", child, root, "Unknown Application entry")
-    return children
+    return children, complete
 
 
 def _reject_symlinks(path: Path, root: Path, issues: list[Issue]) -> None:

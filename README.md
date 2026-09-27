@@ -44,10 +44,10 @@ This diagram is orientation. The [ontology](02_protocol/ontology.md) owns eviden
 
 ## Get the protocol
 
-For new work, get the complete source archive from the [v0.3.18 release](https://github.com/Melvinanalytics/impacts-protokoll/releases/tag/v0.3.18), or clone that tag:
+For new work, get the complete source archive from the [v0.3.19 release](https://github.com/Melvinanalytics/impacts-protokoll/releases/tag/v0.3.19), or clone that tag:
 
 ```bash
-git clone --branch v0.3.18 --depth 1 https://github.com/Melvinanalytics/impacts-protokoll.git
+git clone --branch v0.3.19 --depth 1 https://github.com/Melvinanalytics/impacts-protokoll.git
 cd impacts-protokoll
 ```
 
@@ -99,7 +99,7 @@ For managed enterprise knowledge use, start with **Knowledge only**: identify on
 
 The projection is a derived reading surface, not a replacement authority or a complete protocol source. Record its included source paths and omissions. For each intended question, make the required passages available to the selected retriever, including needed domain definitions, observation claims, rules and supporting evidence excerpts. Do not assume that the retriever follows links inside an indexed document. Required linked passages must remain reachable at the bound revision through separately included projection material or the retained source. An omitted, inaccessible or stale required passage remains an explicit gap and restricts only the dependent conclusion or action.
 
-Edition v0.3.18 documents this customer-prepared intake path; it does not supply a publisher-attested knowledge projection, enterprise intake manifest, dependency bundle, build-provenance attestation or connector integration. The enterprise custodian prepares and records those materials for its environment. Release checksums cover only the assets named in that checksum file. For **Local CLI**, checking the IMPACTS wheel does not verify or freeze its dependencies: ordinary `pip` can resolve and download them. Enterprise executable intake must separately approve and hash-pin the complete dependency set or use an approved internal package source.
+Edition v0.3.19 documents this customer-prepared intake path; it does not supply a publisher-attested knowledge projection, enterprise intake manifest, dependency bundle, build-provenance attestation or connector integration. The enterprise custodian prepares and records those materials for its environment. Release checksums cover only the assets named in that checksum file. For **Local CLI**, checking the IMPACTS wheel does not verify or freeze its dependencies: ordinary `pip` can resolve and download them. Enterprise executable intake must separately approve and hash-pin the complete dependency set or use an approved internal package source.
 
 Call machine validation for a needed check when a suitable checker is available. An unavailable or failed check leaves its condition unestablished: preparation continues while the dependent claim or action waits. Explain progress, consequence and next action; retain raw diagnostics for maintainers. [Form selection](02_protocol/impacts-architect/references/formwahl.md#tooling-stopp) owns this boundary.
 
@@ -115,7 +115,7 @@ source .venv/bin/activate
 Choose one installation source:
 
 - **Complete checkout:** from its root, run `python -m pip install -e .`.
-- **Release wheel:** download the wheel, complete source archive and `SHA256SUMS` from the release above into one folder. From that folder, verify every listed asset with `shasum -a 256 -c SHA256SUMS` (macOS/Linux), then install with `python -m pip install ./impacts_protocol-0.3.18-py3-none-any.whl` only if the complete check passes.
+- **Release wheel:** download the wheel, complete source archive and `SHA256SUMS` from the release above into one folder. From that folder, verify every listed asset with `shasum -a 256 -c SHA256SUMS` (macOS/Linux), then install with `python -m pip install ./impacts_protocol-0.3.19-py3-none-any.whl` only if the complete check passes.
 
 Follow [Version and entry points](#version-and-entry-points) to identify the installed package and obtain its complete source. Then, outside the intended new customer folder:
 
@@ -173,7 +173,7 @@ python3 06_evaluations/complexity-budget/check.py
 
 The test extra supplies pytest, Hypothesis for generated boundary cases, and setuptools for packaging tests using `--no-build-isolation`; these are not runtime dependencies. Run evaluations from their linked guides. Local checks cover Python 3.11/3.14 on macOS. The distribution supplies CLI, schemas and templates; use the complete checkout for method, Architect, examples and tests.
 
-The public [structural conformance corpus](06_evaluations/conformance/CONTEXT.md) contains fixed synthetic fixtures and expected outcomes. Its independent runner accepts a candidate command, so another implementation can exercise the same cases. It covers a named subset, not all protocol meaning or production use. For descriptive file-count measurements, use [benchmark_scale.py](tests/benchmark_scale.py); setup is excluded, each validation starts a fresh interpreter, and no timing limit or concurrency guarantee is asserted. Run `python tests/benchmark_scale.py --sizes 1000 10000 100000 --repetitions 3 --output scale-results.json` in the test environment. The report records every sample and source-file digest. The [2026-09-26 measurement](06_evaluations/conformance/scale-2026-09-26.json) recorded medians of 0.221 s, 1.069 s and 12.293 s for 1,000, 10,000 and 100,000 small input files in one active Run on macOS arm64/Python 3.11.15. These three-sample results describe that workload and machine; they establish no speedup or concurrent-writer behavior. The recorded base commit predates the measured edits; the source-file SHA-256 map identifies the measured implementation.
+The public [structural conformance corpus](06_evaluations/conformance/CONTEXT.md) contains fixed synthetic fixtures and expected outcomes. Its independent runner accepts a candidate command, so another implementation can exercise the same cases. The workflows are configured to run all 19 cases on GitHub-hosted Windows and macOS with Python 3.12; this checks those runners and cases, not universal operating-system or filesystem support. The corpus covers a named subset, not all protocol meaning or production use. For descriptive file-count measurements, use [benchmark_scale.py](tests/benchmark_scale.py); setup is excluded, each validation starts a fresh interpreter, and no timing limit or concurrency guarantee is asserted. Run `python tests/benchmark_scale.py --sizes 1000 10000 100000 --repetitions 3 --output scale-results.json` in the test environment. The report records every sample and source-file digest. The [2026-09-26 measurement](06_evaluations/conformance/scale-2026-09-26.json) recorded medians of 0.221 s, 1.069 s and 12.293 s for 1,000, 10,000 and 100,000 small input files in one active Run on macOS arm64/Python 3.11.15. These three-sample results describe that workload and machine; they establish no speedup or concurrent-writer behavior. The recorded base commit predates the measured edits; the source-file SHA-256 map identifies the measured implementation.
 
 Submit [issues](https://github.com/Melvinanalytics/impacts-protokoll/issues) or [pull requests](https://github.com/Melvinanalytics/impacts-protokoll/pulls) with revision, expected/observed behavior and a synthetic case. Exclude private customer material; update affected German surfaces and report checks not performed. Tests, files-only consumer checks and release decisions are separate.
 

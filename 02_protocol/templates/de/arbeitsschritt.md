@@ -14,7 +14,7 @@ routen:
 customer_touchpoint: sacred  # fehlend, standard oder sacred
 ---
 
-<!-- Translation source: 02_protocol/templates/arbeitsschritt.md; sha256: 1ab574c37746c4f95c9489aa7ad73ddc5e8aac974d2da5c75bff02c273751254 -->
+<!-- Translation source: 02_protocol/templates/arbeitsschritt.md; sha256: 0d8d7d8d3690317a51b31d7e7e5095d7d004b23a3de51b599f8514c638c3bfa3 -->
 
 # Entscheiden
 
@@ -28,7 +28,7 @@ Ein Satz: Ergebnis dieses Jobs, Empfänger und erlaubte Nutzung.
 
 ## Eingaben
 
-Dieser Abschnitt setzt Augment am Ort der Arbeit um. Nur den Mindestkontext deklarieren, den der jeweilige menschliche, agentische oder deterministische Beitrag braucht, einschließlich beabsichtigter Nutzung sowie Zeitpunkt, zu dem er gültig und verfügbar sein muss. Für jede Quell- oder Übergabedatei Beschaffung/Producer, benötigten Inhalt und Eingangskontrolle benennen. Die Datei und ihre separate `*-herkunft.md` in `eingaben` deklarieren. Das Harness materialisiert diese Bytes unter `input/` und hasht die deklarierte Fläche vor dem Öffnen. Benötigte Definitionen, Regeln, Promptbausteine und Dokumentrohlinge außerhalb der Application einschließen; ihre aktuellen Links binden sie nicht. Stabile Referenzen behalten ihre einzige Heimat.
+Dieser Abschnitt setzt Augment am Ort der Arbeit um. Nur den Mindestkontext deklarieren, den der jeweilige menschliche, agentische oder deterministische Beitrag braucht, einschließlich beabsichtigter Nutzung sowie Zeitpunkt, zu dem er gültig und verfügbar sein muss. Für jede Quell- oder Übergabedatei Beschaffung/Producer, benötigten Inhalt und Eingangskontrolle benennen. Die Datei und ihre separate `*-herkunft.md` in `eingaben` deklarieren; das zentrale kopierbare Beispiel zur Herkunftsdatei unter `02_protocol/capabilities.md#provenance-file-example` in der benannten Protokollquelle und Revision verwenden. Das Harness materialisiert diese Bytes unter `input/` und hasht die deklarierte Fläche vor dem Öffnen. Benötigte Definitionen, Regeln, Promptbausteine und Dokumentrohlinge außerhalb der Application einschließen; ihre aktuellen Links binden sie nicht. Stabile Referenzen behalten ihre einzige Heimat.
 
 Für die Beschaffung eingerichteten Reader oder liefernde Person, Objektbezug, Auswahl/Zeitpunkt und Zieldatei benennen. Fachliche Schlüssel und Quellzuordnung wiederverwenden. Bezüge, Regelvoraussetzungen und relevante Widersprüche erhalten; die Arbeitsfrage bestimmt den Ausschnitt. Bei abgeleitetem oder erzeugtem Kontext Quelleingaben, sanktionierte Rechnung oder Anweisung, Producer, Ziel und Prüfung benennen; das Ergebnis behält seine Herkunft und liefert keine fehlende Tatsache oder Befugnis. Tatsächliche Mindestkontrolle für die beabsichtigte Nutzung sowie Auslöser für Aktualisierung oder Neubeschaffung deklarieren. Fehlender Zugriff, fehlende Werte und widersprüchliche Bedeutung bleiben verschiedene Blockaden.
 

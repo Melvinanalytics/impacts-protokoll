@@ -34,7 +34,12 @@ def test_application_folder_requires_a_slug():
     with TemporaryDirectory() as directory:
         root = write_application(Path(directory) / "Bad Application")
 
-        assert "structure.invalid" in codes(root)
+        issue = next(issue for issue in validate(root).issues if issue.code == "structure.invalid")
+
+        assert issue.path == "."
+        assert "lowercase ASCII letters and digits" in issue.message
+        assert "single hyphens" in issue.message
+        assert "bestellung-ausloesen" in issue.message
 
 
 @pytest.mark.parametrize("slug", ["caf\u00e9", "cafe\u0301"])
@@ -176,6 +181,51 @@ def test_workstep_id_matches_its_folder_slug():
         assert "structure.invalid" in codes(root)
 
 
+def test_invalid_teilprozess_slug_is_primary_over_dependent_graph_errors():
+    with TemporaryDirectory() as directory:
+        root = write_application(Path(directory) / "video")
+        invalid_part = root / "Bestellung_Auslösen"
+        (root / "produktion").rename(invalid_part)
+
+        issues = validate(root).issues
+
+    primary = next(
+        issue for issue in issues
+        if issue.code == "structure.invalid" and issue.path == invalid_part.name
+    )
+    assert "lowercase ASCII letters and digits" in primary.message
+    assert "single hyphens" in primary.message
+    assert "bestellung-ausloesen" in primary.message
+    assert not any(issue.code == "reference.unresolved" for issue in issues)
+    assert not any("Hauptprozess needs at least one Teilprozess" in issue.message for issue in issues)
+
+
+def test_incomplete_step_enumeration_keeps_independent_human_gate_error():
+    with TemporaryDirectory() as directory:
+        root = write_application(Path(directory) / "video")
+        write_workstep(
+            root / "produktion",
+            "Bad_step",
+            step_id="arbeitsschritt:bad-step",
+        )
+        metadata = read_context(root / "CONTEXT.md")
+        metadata["einstieg_ref"] = "arbeitsschritt:bad-step"
+        replace_context(root / "CONTEXT.md", metadata)
+        gate_path = root / "produktion" / "pruefen" / "CONTEXT.md"
+        metadata = read_context(gate_path)
+        metadata["routen"] = {"yes": "end:done"}
+        replace_context(gate_path, metadata)
+
+        issues = validate(root).issues
+
+    assert any(
+        issue.code == "process.gate" and issue.path == "produktion/pruefen/CONTEXT.md"
+        for issue in issues
+    )
+    assert any(issue.code == "structure.invalid" and issue.path == "produktion/Bad_step" for issue in issues)
+    assert not any(issue.code in {"reference.unresolved", "process.unreachable", "process.no_end"} for issue in issues)
+
+
 def test_double_leading_bom_has_one_primary_format_error():
     with TemporaryDirectory() as directory:
         root = write_application(Path(directory) / "video")
@@ -205,7 +255,57 @@ def test_unresolved_route_is_rejected():
         metadata["routen"] = {"weiter": "arbeitsschritt:fehlt"}
         replace_context(path, metadata)
 
-        assert "reference.unresolved" in codes(root)
+        issues = validate(root).issues
+
+        assert any(
+            issue.code == "reference.unresolved"
+            and issue.path == "produktion/start/CONTEXT.md"
+            and "Route target does not resolve" in issue.message
+            for issue in issues
+        )
+
+
+def test_unknown_regular_file_does_not_hide_computable_graph_error():
+    with TemporaryDirectory() as directory:
+        root = write_application(Path(directory) / "video")
+        (root / ".DS_Store").write_bytes(b"metadata")
+        path = root / "produktion" / "start" / "CONTEXT.md"
+        metadata = read_context(path)
+        metadata["routen"] = {"weiter": "arbeitsschritt:fehlt"}
+        replace_context(path, metadata)
+
+        issues = validate(root).issues
+
+    assert any(
+        issue.code == "structure.invalid"
+        and issue.path == ".DS_Store"
+        and issue.message == "Unknown Application entry"
+        for issue in issues
+    )
+    assert any(
+        issue.code == "reference.unresolved"
+        and issue.path == "produktion/start/CONTEXT.md"
+        and "Route target does not resolve" in issue.message
+        for issue in issues
+    )
+
+
+def test_unresolved_entry_is_rejected_when_tree_is_fully_readable():
+    with TemporaryDirectory() as directory:
+        root = write_application(Path(directory) / "video")
+        path = root / "CONTEXT.md"
+        metadata = read_context(path)
+        metadata["einstieg_ref"] = "arbeitsschritt:fehlt"
+        replace_context(path, metadata)
+
+        issues = validate(root).issues
+
+    assert any(
+        issue.code == "reference.unresolved"
+        and issue.path == "CONTEXT.md"
+        and "Hauptprozess entry does not resolve" in issue.message
+        for issue in issues
+    )
 
 
 def test_unreachable_workstep_is_rejected():

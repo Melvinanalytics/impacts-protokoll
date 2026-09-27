@@ -167,6 +167,41 @@ def test_workstep_template_materializes_stable_inputs_with_provenance():
     assert "*-herkunft.md" in inputs
 
 
+def test_both_workstep_templates_link_one_copyable_provenance_authority():
+    capabilities = (ROOT / "02_protocol" / "capabilities.md").read_text(encoding="utf-8")
+    anchor = capabilities.index('<a id="provenance-file-example"></a>')
+    end = capabilities.find("\n## ", anchor)
+    example = capabilities[anchor : end if end >= 0 else None]
+
+    locator = "02_protocol/capabilities.md#provenance-file-example"
+    for body in (
+        template_text("arbeitsschritt"),
+        template_text("arbeitsschritt", language="de"),
+    ):
+        assert locator in body
+        assert "*-herkunft.md" in body
+        assert '<a id="provenance-file-example"></a>' not in body
+        assert "../capabilities.md#provenance-file-example" not in body
+
+    for field in (
+        "input/<name>-herkunft.md",
+        "input/rezeptur.md",
+        "input/messwerte.csv",
+        "Origin / locator:",
+        "Source state:",
+        "Acquired by / provider:",
+        "Acquired at:",
+        "Selection:",
+        "Content-Digest",
+        "Required control:",
+        "Actual control:",
+        "ordinary Markdown evidence",
+        "not a Core schema",
+    ):
+        assert field in example
+    assert "- Provenance file:" not in example
+
+
 def test_generated_workstep_routes_ontology_and_binds_document_blank():
     body = template_text("arbeitsschritt")
     assert "02_protocol/ontology.md" in body
