@@ -237,6 +237,32 @@ def test_public_issue_forms_and_pull_request_template_request_scoped_evidence():
         assert "source" in text and "scope" in text and "evidence" in text
         assert "checks" in text or "result" in text
 
+    adoption = forms["adoption-record.yml"]
+    adoption_text = str(adoption).lower()
+    evidence_options = next(
+        item["attributes"]["options"]
+        for item in adoption["body"]
+        if item.get("id") == "evidence_kind"
+    )
+    assert set(evidence_options) == {"Synthetic evidence", "Already-public evidence"}
+    for phrase in (
+        "only synthetic or already-public evidence",
+        "non-sensitive reference",
+        "customer repository",
+        "do not link or attach them here",
+        "never include or link customer sources",
+        "captured outputs",
+        "review records",
+        "sanitized summary",
+    ):
+        assert phrase in adoption_text
+    assert "specifically authorized" not in adoption_text
+    assert "retained input/output evidence" not in adoption_text
+
+    contributing = (ROOT / "CONTRIBUTING.md").read_text().lower()
+    assert "public adoption issues accept only synthetic or already-public evidence" in contributing
+    assert "never attach or link them in a public issue" in contributing
+
     pr = (ROOT / ".github/PULL_REQUEST_TEMPLATE.md").read_text()
     for heading in ("Change and reason", "Source and evidence", "Compatibility and localization", "Maintainer review"):
         assert heading in pr
@@ -299,12 +325,54 @@ def test_current_entry_instructions_match_distribution_version(path):
         + link_label_versions
     ) == {version}
 
+    lower_text = text.lower()
+    checksum_recipe = next(
+        section.lower()
+        for section in text.split("\n\n")
+        if "shasum -a 256 -c sha256sums" in section.lower()
+    )
+    if path == "README.md":
+        publication_gate = "published immutable release"
+        latest_published = "latest actually published release"
+        candidate_link = "candidate v0.3.20 release"
+        candidate_gate = "select the v0.3.20 candidate only after"
+        intro_gate = "is usable only after"
+        not_installable = "do not install a candidate wheel"
+    else:
+        publication_gate = "veröffentlichtes unveränderliches release"
+        latest_published = "neueste tatsächlich veröffentlichte ausgabe"
+        candidate_link = "v0.3.20 release"
+        candidate_gate = "kandidaten-release v0.3.20 erst auswählen, wenn"
+        intro_gate = "ist erst verwendbar, wenn"
+        not_installable = "kandidaten-wheel nicht installieren"
+    release_intro = next(
+        section.lower()
+        for section in text.split("\n\n")
+        if "releases/tag/v0.3.20" in section
+    )
+    assert candidate_link in lower_text
+    assert publication_gate in lower_text
+    assert latest_published in lower_text
+    assert intro_gate in release_intro
+    assert "sha256sums" in checksum_recipe
+    assert publication_gate in checksum_recipe
+    assert latest_published in checksum_recipe
+    assert candidate_gate in checksum_recipe
+    assert "python -m pip install" in checksum_recipe
+    assert checksum_recipe.index("sha256sums") < checksum_recipe.index(
+        "python -m pip install"
+    )
+    assert checksum_recipe.index("sha256sums") < checksum_recipe.index(
+        "impacts_protocol-0.3.20-py3-none-any.whl"
+    )
+    assert not_installable in checksum_recipe
+
 
 @pytest.mark.parametrize(
     ("path", "required_terms"),
     [
         ("README.md", ("wheel", "complete source archive", "`SHA256SUMS`")),
-        ("02_protocol/translations/de.md", ("Wheel", "vollständige Quellarchiv", "`SHA256SUMS`")),
+        ("02_protocol/translations/de.md", ("Wheel", "vollständiges Quellarchiv", "`SHA256SUMS`")),
     ],
 )
 def test_checksum_recipe_downloads_every_listed_release_asset(path, required_terms):

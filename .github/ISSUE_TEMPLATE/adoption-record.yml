@@ -6,8 +6,11 @@ body:
     attributes:
       value: >-
         Submit completed observations only. A prepared protocol, synthetic replay, internal
-        model run, or coached walkthrough is not a real-user or deployment result. Keep
-        customer/personal data, credentials, and private access state out of the issue.
+        model run, or coached walkthrough is not a real-user or deployment result. This public
+        issue may contain only synthetic or already-public evidence, a non-sensitive reference
+        and bounded scope, and a sanitized summary. Keep customer records and all raw sources,
+        captured outputs, review records, personal data, credentials, and private access state
+        in the customer repository; do not link or attach them here.
   - type: dropdown
     id: contribution_kind
     attributes:
@@ -21,28 +24,40 @@ body:
     id: candidate_revision
     attributes:
       label: Candidate source/procedure revision
-      description: Identify the exact source, instructions, adapter and evaluation revisions used.
+      description: Identify the public protocol/source revision and non-sensitive procedure or adapter revisions. Omit private paths and customer-specific identifiers.
     validations:
       required: true
   - type: textarea
     id: participants_and_scope
     attributes:
-      label: Participant/operator scope and assignment
-      description: Give counts, roles, inclusion rules, assignments and whether each person was unaccompanied. Avoid names and identifying details.
+      label: Participant/operator scope
+      description: Give only non-sensitive aggregate counts, broad role categories and whether the use was unaccompanied. Do not include names, identifying details or customer-specific assignment information.
+    validations:
+      required: true
+  - type: dropdown
+    id: evidence_kind
+    attributes:
+      label: Public evidence kind
+      options:
+        - Synthetic evidence
+        - Already-public evidence
     validations:
       required: true
   - type: textarea
-    id: sources_and_outputs
+    id: public_reference_and_scope
     attributes:
-      label: Retained input/output evidence
-      description: Link synthetic or specifically authorized minimized sources, captured outputs and review records. Preserve source IDs and revisions.
+      label: Non-sensitive public reference and bounded scope
+      description: Give only a non-sensitive pointer to synthetic or already-public evidence and state its inspected scope. Never include or link customer sources, captured outputs, review records, or private customer-repository paths.
     validations:
       required: true
   - type: textarea
     id: checks_and_adverse_actions
     attributes:
       label: Checks, scoring, adverse actions and open results
-      description: Report actual denominators, hard failures, missing data, reviewer scope and remaining open gates. Do not infer a favorable result from missing evidence.
+      description: >-
+        Give only a sanitized summary of synthetic or already-public evidence: denominators,
+        hard-failure counts, missing data, broad reviewer scope and open gates. Do not include
+        excerpts or attach/link sources, outputs or review records.
     validations:
       required: true
   - type: textarea
