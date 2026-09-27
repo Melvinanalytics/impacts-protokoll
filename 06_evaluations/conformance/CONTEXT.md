@@ -1,6 +1,6 @@
 # CLI conformance corpus
 
-This corpus checks the public JSON CLI contract against another implementation. It is a small, deterministic structural subset of JSON report format version 1. It does not import the reference package, use `tests/support.py`, or create expected reports by calling a validator. It has 27 cases: the original 19 frozen expectations plus eight additions; old expected hashes and issue-code vectors stay unchanged.
+This corpus checks the public JSON CLI contract against another implementation. It is a small, deterministic structural subset of JSON report format version 1. It does not import the reference package, use `tests/support.py`, or create expected reports by calling a validator. The current `cases.json` manifest has 27 cases: the original 19 frozen expectations plus eight additions; old expected hashes and issue-code vectors stay unchanged. The runner and release evidence read the manifest count instead of maintaining a second count.
 
 ## Run
 
@@ -30,6 +30,29 @@ Invalid UTF-8 filename cases are applicable only when the host filesystem can cr
 The invalid-filename Run fixture also has a portable regression check before filename corruption. Its declared `input/daten` surface, Application revision and clean input hash must validate even on a filesystem that cannot create the corrupt filename. Protocol paths use forward slashes independently of the host; actual filename creation remains subject to the filesystem's capabilities.
 
 The synthetic `human:fixture-reviewer` value is test data only. It authenticates no person or approval. The coordinated rewrite case is expected to pass because current files contain no independent trusted history; that result demonstrates a boundary, not tamper resistance. A content digest proves byte identity only. These cases do not test workstep execution, customer evidence, authenticated human decisions, complete protocol semantics, or business effects.
+
+## Independent implementation challenge
+
+Implement the report contract from this written corpus contract and `cases.json`; do not import, copy or consult `src/impacts_protocol/`, project tests or generated reports while writing the candidate. The shared corpus is the specification for this named structural subset, not for the whole protocol. Declare prior source exposure in the result: whether the implementation author previously read, used or received source from this repository, including reference implementation or test code. Prior exposure does not invalidate useful work, but it must be visible and prevents a claim of source-unexposed implementation.
+
+Run the candidate as a command with `--command-json`. Preserve the exact candidate source revision, command, runtime and operating system, runner output, applicable/unsupported counts and every unsupported reason. The submitted record must include extra cases authored independently for this challenge, with their fixtures, expected reports and rationale. Keep those cases separate from the shared corpus unless a reviewed change to the common contract is proposed. Reusing or copying a frozen case does not count as an additional case.
+
+A pass requires every applicable shared case and each submitted extra case to pass. Report unsupported shared cases with their exact capability reason; they are not passes. A pass supports only the exercised structural report contract and named inputs. It does not establish full protocol conformance, production suitability, security, authenticated decisions, business outcomes, other-platform support or absence of untested defects. A pass record is not a human approval or release authorization.
+
+## Declared public inspection scope
+
+This inventory covers tracked source, committed workflow configuration and public synthetic evaluation files in the inspected candidate repository. It excludes private operator/customer systems, external tenants, unpublished workflow artifacts and production environments. `No evidence in scope` means no qualifying evidence is retained in those inspected public files; it does not establish non-use. Production use outside this inspected scope is unknown.
+
+| Feature or adoption claim | Evidence in inspected public scope | Limit or status |
+|---|---|---|
+| First-use offer preparation | [FIRST-WIN.md](../../FIRST-WIN.md) and synthetic source files describe a no-install exercise. | Expected exercise only; no unaccompanied real-user result is retained. |
+| Structural CLI report subset | `cases.json`, this runner and synthetic fixtures define the current 27 cases; workflow files configure Windows/macOS checks. | No independent candidate report is retained for this candidate revision. Passing does not cover all protocol meanings. |
+| Wheel provenance-template distribution | CLI/package tests exercise English and German `impacts template herkunft` output and its nine fields. | Source tests do not prove that a 0.3.20 wheel or public release has been built or published. |
+| Native and interpreter release evidence | The release workflow and `.github/scripts/test_evidence.py` generate retained test summaries when an exact tagged run publishes. | Candidate release evidence does not exist until that tagged workflow has run; workflow code alone is not a run result, independent verification or build attestation. |
+| Filesystem and platform coverage | The corpus probes case-sensitive names, long components, Unicode spelling and invalid UTF-8 filenames; native workflow targets GitHub-hosted Windows and macOS with Python 3.12. | Each unsupported case stays unsupported. NTFS behavior, all Windows versions, other filesystems and platforms are not established. |
+| Dependency closure | `.github/runtime-linux-cp311-x86_64.txt` and `install_runtime.py` bind selected dependency wheel hashes for Linux CPython 3.11 x86_64 with glibc 2.17 or newer. | Python, pip, publishers, build provenance and all other targets are outside this bounded recipe. |
+| Independent implementation | The challenge above defines submission evidence. | No independent implementation result is retained in inspected public scope. |
+| Real first use, delayed continuation, domain/tax review, live Langdock and business baseline | The [follow-up plan](../nontechnical-reconstruction/FOLLOW-UP.md) and [listening screen](../listening-intake/CONTEXT.md) declare procedures and gates. | All external gates remain `open`; synthetic runs, internal model output and CI cannot substitute for them. Production use outside inspected scope is unknown. |
 
 ## Sources
 

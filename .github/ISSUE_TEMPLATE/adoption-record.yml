@@ -1,0 +1,54 @@
+name: Bounded adoption or listening result
+description: Submit a completed first-use record or listening-screen result with its actual scope.
+title: "[Adoption evidence]: "
+body:
+  - type: markdown
+    attributes:
+      value: >-
+        Submit completed observations only. A prepared protocol, synthetic replay, internal
+        model run, or coached walkthrough is not a real-user or deployment result. Keep
+        customer/personal data, credentials, and private access state out of the issue.
+  - type: dropdown
+    id: contribution_kind
+    attributes:
+      label: Contribution kind
+      options:
+        - Unaccompanied first use
+        - Bounded listening-adapter screen
+    validations:
+      required: true
+  - type: input
+    id: candidate_revision
+    attributes:
+      label: Candidate source/procedure revision
+      description: Identify the exact source, instructions, adapter and evaluation revisions used.
+    validations:
+      required: true
+  - type: textarea
+    id: participants_and_scope
+    attributes:
+      label: Participant/operator scope and assignment
+      description: Give counts, roles, inclusion rules, assignments and whether each person was unaccompanied. Avoid names and identifying details.
+    validations:
+      required: true
+  - type: textarea
+    id: sources_and_outputs
+    attributes:
+      label: Retained input/output evidence
+      description: Link synthetic or specifically authorized minimized sources, captured outputs and review records. Preserve source IDs and revisions.
+    validations:
+      required: true
+  - type: textarea
+    id: checks_and_adverse_actions
+    attributes:
+      label: Checks, scoring, adverse actions and open results
+      description: Report actual denominators, hard failures, missing data, reviewer scope and remaining open gates. Do not infer a favorable result from missing evidence.
+    validations:
+      required: true
+  - type: textarea
+    id: effort_and_limits
+    attributes:
+      label: Effort, elapsed time and claim limits
+      description: Keep active effort and elapsed waiting separate. Include setup, review, repair and coordination; state checks not performed and what this result cannot establish.
+    validations:
+      required: true

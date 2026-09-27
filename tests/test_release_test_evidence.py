@@ -73,6 +73,8 @@ def test_notes_preserve_generated_body_are_idempotent_and_support_publish_retry(
     assert "CPython 3.12.10" in patch["body"]
     assert "Corpus SHA-256" in patch["body"]
     assert "independent verification" in patch["body"]
+    _, corpus_cases = evidence._corpus(ROOT)
+    assert f"| {len(corpus_cases)} | {len(corpus_cases)} | 0 | none |" in patch["body"]
     assert evidence.release_patch({"draft": True, **patch}, reports(), SOURCE, RUN, 2, TAG) == patch
 
 

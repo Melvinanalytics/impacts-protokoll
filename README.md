@@ -1,14 +1,14 @@
 # IMPACTS Protocol
 
-**Keep business sources, work, checks and decisions connected in ordinary files.**
+**Keep sources, required checks, executed checks and responsible decisions inspectable in ordinary files.**
 
-IMPACTS is a file-based method for people and file-capable agents. It starts with existing business files. For bounded, repeatable work, its optional Core adds versioned file contracts; the Python CLI supplies templates, structural validation and hashing. The CLI does not execute customer work.
+IMPACTS is a file-based method for people and file-capable agents. It starts with existing business files. For bounded, repeatable work, its optional Core adds versioned file contracts; the Python CLI supplies templates, structural validation and hashing. IMPACTS does not authenticate people, grant permissions, execute work, prove business effect or detect a coordinated rewrite of content and its recorded digest. A `human:<id>` value records attribution; it does not authenticate a person or establish approval.
 
 [Prepare a useful offer draft](FIRST-WIN.md) · [Agent start](#version-and-entry-points) · [Install or validate](#optional-technical-use) · [Trust and security](#trust-and-security-boundaries) · [Deutsch](02_protocol/translations/de.md)
 
 **First result, no installation:** prepare an internal offer draft with source links, open price and delivery questions, and a named next action. The supplied exercise is synthetic and authorizes no customer commitment.
 
-Agents may interpret and draft. Required calculations need executed deterministic checks. Human decisions remain human. Missing facts remain open. Validation, hashes and Git history establish only their named technical conditions.
+Agents may interpret and draft. Required calculations need executed deterministic checks. Human decisions remain human. Missing facts remain open. Validation, hashes and Git history establish only their named technical conditions; they do not establish business acceptance or permission.
 
 > **Agent start:** Resolve the [protocol version and source](#version-and-entry-points), read [CONTEXT.md](CONTEXT.md), and follow one selected route. Keep customer material in its customer workspace.
 
@@ -44,14 +44,14 @@ This diagram is orientation. The [ontology](02_protocol/ontology.md) owns eviden
 
 ## Get the protocol
 
-For new work, get the complete source archive from the [v0.3.19 release](https://github.com/Melvinanalytics/impacts-protokoll/releases/tag/v0.3.19), or clone that tag:
+For new work, get the complete source archive from the [v0.3.20 release](https://github.com/Melvinanalytics/impacts-protokoll/releases/tag/v0.3.20), or clone that tag:
 
 ```bash
-git clone --branch v0.3.19 --depth 1 https://github.com/Melvinanalytics/impacts-protokoll.git
+git clone --branch v0.3.20 --depth 1 https://github.com/Melvinanalytics/impacts-protokoll.git
 cd impacts-protokoll
 ```
 
-Keep the complete source together: method, Architect, references, templates and examples. Reading the archive needs no installation. A copied Architect folder is incomplete even when its `references/` folder is present: it also depends on parent protocol files and root guidance. The wheel contains the CLI, schemas and templates; using its generated workspace with the method requires the matching complete source.
+Keep the complete source together: method, Architect, references, templates and examples. Reading the archive needs no installation. A copied Architect folder is incomplete even when its `references/` folder is present: it also depends on parent protocol files and root guidance. The wheel contains only the CLI, schemas and templates; it does not contain the method, Architect, evaluations, tests or complete source guidance. Wheel users who need the source-provenance form can run `impacts template herkunft` (or add `--language de`). That template has nine evidence fields. Its field count describes this template; it is not a universal line-count rule.
 
 ## Version and entry points
 
@@ -99,7 +99,7 @@ For managed enterprise knowledge use, start with **Knowledge only**: identify on
 
 The projection is a derived reading surface, not a replacement authority or a complete protocol source. Record its included source paths and omissions. For each intended question, make the required passages available to the selected retriever, including needed domain definitions, observation claims, rules and supporting evidence excerpts. Do not assume that the retriever follows links inside an indexed document. Required linked passages must remain reachable at the bound revision through separately included projection material or the retained source. An omitted, inaccessible or stale required passage remains an explicit gap and restricts only the dependent conclusion or action.
 
-Edition v0.3.19 documents this customer-prepared intake path; it does not supply a publisher-attested knowledge projection, enterprise intake manifest, dependency bundle, build-provenance attestation or connector integration. The enterprise custodian prepares and records those materials for its environment. Release checksums cover only the assets named in that checksum file. For **Local CLI**, checking the IMPACTS wheel does not verify or freeze its dependencies: ordinary `pip` can resolve and download them. Enterprise executable intake must separately approve and hash-pin the complete dependency set or use an approved internal package source.
+Edition v0.3.20 documents this customer-prepared intake path; it does not supply a publisher-attested knowledge projection, enterprise intake manifest, dependency bundle, build-provenance attestation or connector integration. The enterprise custodian prepares and records those materials for its environment. Release checksums cover only the assets named in that checksum file. For **Local CLI**, checking the IMPACTS wheel does not verify or freeze its dependencies: ordinary `pip` can resolve and download them. The bounded Linux recipe below pins selected dependency wheel hashes for one declared target; it is not a universal dependency lock or publisher-authenticity claim. Enterprise executable intake outside that target must separately approve and bind its dependency set or use an approved internal package source.
 
 Call machine validation for a needed check when a suitable checker is available. An unavailable or failed check leaves its condition unestablished: preparation continues while the dependent claim or action waits. Explain progress, consequence and next action; retain raw diagnostics for maintainers. [Form selection](02_protocol/impacts-architect/references/formwahl.md#tooling-stopp) owns this boundary.
 
@@ -115,7 +115,7 @@ source .venv/bin/activate
 Choose one installation source:
 
 - **Complete checkout:** from its root, run `python -m pip install -e .`.
-- **Release wheel:** download the wheel, complete source archive and `SHA256SUMS` from the release above into one folder. From that folder, verify every listed asset with `shasum -a 256 -c SHA256SUMS` (macOS/Linux), then install with `python -m pip install ./impacts_protocol-0.3.19-py3-none-any.whl` only if the complete check passes.
+- **Release wheel:** download the wheel, complete source archive and `SHA256SUMS` from the release above into one folder. From that folder, verify every listed asset with `shasum -a 256 -c SHA256SUMS` (macOS/Linux), then install with `python -m pip install ./impacts_protocol-0.3.20-py3-none-any.whl` only if the complete check passes.
 
 Follow [Version and entry points](#version-and-entry-points) to identify the installed package and obtain its complete source. Then, outside the intended new customer folder:
 
@@ -123,6 +123,7 @@ Follow [Version and entry points](#version-and-entry-points) to identify the ins
 impacts init ../impacts-demo
 impacts validate ../impacts-demo
 impacts template arbeitsschritt
+impacts template herkunft
 ```
 
 `init` creates an empty Core workspace (`CONTEXT.md`, `applications/`, `vorgaenge/`), refuses an existing target and creates no Git repository or runnable process. Keep the customer workspace separate from the protocol source. Add `--language de` to `init` or `template` for German. Initialize Git at the Core root before committing an Application for Run binding.
@@ -134,6 +135,8 @@ Explore the [Application template](02_protocol/templates/application.md), [schem
 `impacts validate <path>` remains silent on success and prints issue code, path and message on failure. Add `--verbose` to record package metadata identity on stderr. `impacts hash <attempt> <surface>...` prints only the digest on success; operational errors go to stderr. Human-readable message wording is diagnostic, not a stable parsing interface.
 
 For agents and CI, add `--json` to `validate` or `hash`. A completed check writes one JSON object to stdout with `report_version: 1`, `command`, `tool` metadata and an `issues` list of `code`, `path` and diagnostic `message`. Validation adds `root` and `valid`; hashing adds `attempt`, `surfaces` and `digest` (null on failure). Unknown metadata version is null. `--verbose` remains on stderr. Argument errors occur before dispatch and retain stderr diagnostics with exit `2`; they do not produce a JSON report. The report version identifies this output format, independently of the package edition and the customer's bound source revision.
+
+`report_version: 1` protects the JSON report shape. Human-readable `message` values are diagnostic and may change. The frozen `cases.json` corpus defines the issue codes and results required for each listed case, within that corpus's structural scope; it is not an exhaustive list for every possible input. When a documented parsing or routing prerequisite fails, checks that depend on the unread definition may be suppressed, while independent defects remain reportable. Changing the report shape requires a `report_version` change and corresponding consumer and runner updates. Changing a required result for a frozen case requires a reviewed fixture or expected-outcome change and fresh report evidence. No separate protocol-specification version is introduced for these case expectations.
 
 ```bash
 impacts validate ../impacts-demo --json
@@ -157,7 +160,7 @@ A valid `wartend` entry or pending human gate is not a validation failure. Exit 
 | `revision.invalid`, `run.invalid` | Restore the declared historical binding or correct the Run contract; preserve earlier bound work. |
 | `hash.mismatch`, `trust.invalid` | Investigate changed or unreadable hash surfaces, or invalid approval attribution. Recomputing a digest or writing an attribution does not authorize the change. |
 
-Fix parse errors before interpreting absent graph diagnostics: dependent checks can be withheld when their definitions cannot be read. Rerun validation after repair. A rejection does not imply that every independent defect has already been reported.
+Fix parse or documented routing prerequisites before interpreting absent graph diagnostics: dependent checks can be withheld when their definitions cannot be read. Independent defects remain reportable. Rerun validation after repair. A rejection does not imply that every independent defect has already been reported.
 
 Markdown input accepts UTF-8 with one optional leading BOM and LF or CRLF line endings. Repeated leading BOMs are malformed input. Strict YAML ingestion rejects duplicate and non-string mapping keys; it retains the existing safe YAML scalar rules, so quote string values such as `NO`, `on` and `off`. Hashing always uses raw file bytes: BOMs, line endings and Unicode normalization can change a digest even when text looks the same.
 
@@ -173,7 +176,21 @@ python3 06_evaluations/complexity-budget/check.py
 
 The test extra supplies pytest, Hypothesis for generated boundary cases, and setuptools for packaging tests using `--no-build-isolation`; these are not runtime dependencies. Run evaluations from their linked guides. Local checks cover Python 3.11/3.14 on macOS. The distribution supplies CLI, schemas and templates; use the complete checkout for method, Architect, examples and tests.
 
-The public [structural conformance corpus](06_evaluations/conformance/CONTEXT.md) contains fixed synthetic fixtures and expected outcomes. Its independent runner accepts a candidate command, so another implementation can exercise the same cases. The workflows are configured to run all 19 cases on GitHub-hosted Windows and macOS with Python 3.12; this checks those runners and cases, not universal operating-system or filesystem support. The corpus covers a named subset, not all protocol meaning or production use. For descriptive file-count measurements, use [benchmark_scale.py](tests/benchmark_scale.py); setup is excluded, each validation starts a fresh interpreter, and no timing limit or concurrency guarantee is asserted. Run `python tests/benchmark_scale.py --sizes 1000 10000 100000 --repetitions 3 --output scale-results.json` in the test environment. The report records every sample and source-file digest. The [2026-09-26 measurement](06_evaluations/conformance/scale-2026-09-26.json) recorded medians of 0.221 s, 1.069 s and 12.293 s for 1,000, 10,000 and 100,000 small input files in one active Run on macOS arm64/Python 3.11.15. These three-sample results describe that workload and machine; they establish no speedup or concurrent-writer behavior. The recorded base commit predates the measured edits; the source-file SHA-256 map identifies the measured implementation.
+### Bounded Linux dependency install
+
+For a fresh virtual environment running CPython 3.11 on Linux x86_64 with glibc 2.17 or newer, the checkout includes a hash-enforced install recipe:
+
+```bash
+python3.11 -m venv .venv
+source .venv/bin/activate
+python .github/scripts/install_runtime.py
+```
+
+Run it from the complete checkout. It checks the interpreter, architecture, libc and virtual environment; installs binary dependencies from the PyPI index with `--require-hashes`; then installs this checkout editable without resolving dependencies again. Record the checkout's Git commit. The lock binds selected wheel bytes for this target. It does not bind Python, pip, the checkout's authenticity, build provenance or package publishers. It makes no dependency-closure claim for other Python versions, operating systems, architectures or libc versions.
+
+The public [structural conformance corpus](06_evaluations/conformance/CONTEXT.md) currently contains 27 fixed synthetic cases and expected outcomes. Its independent runner accepts a candidate command, so another implementation can exercise the same cases. The workflows run the manifest's cases on GitHub-hosted Windows and macOS with Python 3.12; unsupported filesystem cases are reported separately. This checks only those named runners and cases, not universal operating-system or filesystem support. The corpus covers a named structural subset, not all protocol meaning or production use. The [independent-implementation challenge](06_evaluations/conformance/CONTEXT.md#independent-implementation-challenge) requires work from the written contract, disclosure of prior source exposure and additional independently authored cases. A pass covers only the declared structural subset. For descriptive file-count measurements, use [benchmark_scale.py](tests/benchmark_scale.py); setup is excluded, each validation starts a fresh interpreter, and no timing limit or concurrency guarantee is asserted. Run `python tests/benchmark_scale.py --sizes 1000 10000 100000 --repetitions 3 --output scale-results.json` in the test environment. The report records every sample and source-file digest. The [2026-09-26 measurement](06_evaluations/conformance/scale-2026-09-26.json) recorded medians of 0.221 s, 1.069 s and 12.293 s for 1,000, 10,000 and 100,000 small input files in one active Run on macOS arm64/Python 3.11.15. These three-sample results describe that workload and machine; they establish no speedup or concurrent-writer behavior. The recorded base commit predates the measured edits; the source-file SHA-256 map identifies the measured implementation.
+
+After a tagged release workflow passes and publishes, its release notes retain workflow-reported evidence: the source commit, tag, run and build attempt; test totals for Python 3.11 and 3.14; and exact Windows/macOS runner platforms, Python 3.12 runtime, corpus SHA-256, case count, passed count and unsupported cases with reasons. Reports must come from the same build attempt. This durable record describes those workflow runs and named inputs; it is not independent verification, a build attestation, publisher authentication or evidence for other environments. It does not replace a public third-party reproduction.
 
 Submit [issues](https://github.com/Melvinanalytics/impacts-protokoll/issues) or [pull requests](https://github.com/Melvinanalytics/impacts-protokoll/pulls) with revision, expected/observed behavior and a synthetic case. Exclude private customer material; update affected German surfaces and report checks not performed. Tests, files-only consumer checks and release decisions are separate.
 

@@ -9,5 +9,6 @@ For an existing definition, follow [Use](02_protocol/ontology.md#use); for missi
 | Protocol meaning, work design, source binding or a business question | [Protocol task routes](02_protocol/CONTEXT.md#task-routes) |
 | Evaluations and structural limits | [Evaluation routes](06_evaluations/CONTEXT.md) |
 | Initialization, templates, hashing or validation | Start with [optional technical use](README.md#optional-technical-use), then inspect the [CLI implementation](src/impacts_protocol/) only when implementation detail is needed |
+| Public structural conformance, independent implementation, or adoption evidence | [Conformance and public inspection scope](06_evaluations/conformance/CONTEXT.md) — only named structural cases or retained external results; open gates remain explicit |
 
 For customer-readable work, apply the [language contract](02_protocol/language.md). Follow the selected route's conditional links; do not load unrelated branches or scan the repository to discover a home.

@@ -1,6 +1,7 @@
 """Check the existing release allowlist; this neither exports nor approves a release."""
 from pathlib import Path, PurePosixPath
 import importlib.util
+import json
 import os
 import posixpath
 import re
@@ -9,6 +10,8 @@ import subprocess
 import textwrap
 import tomllib
 from urllib.parse import unquote, urlsplit
+
+import yaml
 
 import pytest
 
@@ -94,7 +97,7 @@ def test_native_portability_workflows_bind_reports_to_the_frozen_corpus():
         assert "06_evaluations/conformance/run.py" in native
         assert "$runnerExit -ne 0" in native
         assert "cases.json" in (ROOT / ".github/scripts/test_evidence.py").read_text()
-        assert "total=19" not in native
+        assert not re.search(r"total\s*[=:]\s*\d+", native)
         assert "hash-invalid-utf8-filename" not in native
         assert "run-invalid-utf8-filename" not in native
         assert "shell: pwsh" in native
@@ -129,6 +132,128 @@ def test_public_docs_contain_no_workstation_paths():
     for name, text in export_files(ROOT).items():
         if name.endswith('.md'):
             assert not re.search(r'/Users/|/home/|/var/folders/|file://', text), name
+
+
+def test_candidate_public_contract_and_scope_match_the_manifest():
+    version = tomllib.loads((ROOT / "pyproject.toml").read_text())["project"]["version"]
+    manifest = json.loads((ROOT / "06_evaluations/conformance/cases.json").read_text())
+    count = len(manifest["cases"])
+    readme = (ROOT / "README.md").read_text()
+    german = (ROOT / "02_protocol/translations/de.md").read_text()
+    conformance = (ROOT / "06_evaluations/conformance/CONTEXT.md").read_text()
+    contributing = (ROOT / "CONTRIBUTING.md").read_text()
+    first_win = (ROOT / "FIRST-WIN.md").read_text()
+
+    assert version == "0.3.20"
+    assert f"currently contains {count} fixed synthetic cases" in readme
+    assert f"manifest has {count} cases" in conformance
+    assert f"derzeit {count} feste synthetische Fälle" in german
+    for content in (readme, german):
+        assert "report_version: 1" in content
+        assert ("message" in content and "diagnostic" in content.lower()) or "Diagnosehilfen" in content
+        assert "does not authenticate people" in content or "authentifiziert keine Menschen" in content
+        assert "coordinated rewrite" in content or "koordinierte Änderung" in content
+        assert "permission" in content or "Rechte" in content
+    assert "not a universal line-count rule" in readme
+    assert "keine allgemeine Zeilenzahlregel" in german
+    assert "impacts template herkunft" in readme and "neun Evidenzfelder" in german
+    assert "execute work" in readme and "führt keine Arbeit aus" in german
+    assert "report_version: 1` protects the JSON report shape" in readme
+    assert "Human-readable `message` values are diagnostic and may change" in readme
+    assert "frozen `cases.json` corpus defines the issue codes" in readme
+    assert "independent defects remain reportable" in readme
+    assert "Changing the report shape requires a `report_version` change" in readme
+    assert "No separate protocol-specification version" in readme
+    assert "report_version` versions the report shape" in contributing
+    assert "extra cases authored independently" in conformance
+    assert "prior" in conformance.lower() and "source exposure" in conformance.lower()
+    assert "Production use outside this inspected scope is unknown." in conformance
+    assert "remain **open**" in contributing
+    assert "Luna-generated output" in contributing
+    assert "optional next proof" in first_win
+    assert "first use file based and optional-tool free" in first_win
+    assert "CPython 3.11 on Linux x86_64 with glibc 2.17 or newer" in readme
+    assert "--require-hashes" in readme
+    assert "not a universal dependency lock or publisher-authenticity claim" in readme
+    assert "not independent verification, a build attestation, publisher authentication" in readme
+    for gate in (
+        "Three to five real first-use participants",
+        "Second operator after 168 elapsed hours",
+        "Independent implementation",
+        "Domain/tax reviewer",
+        "Real Langdock",
+        "Business baseline",
+    ):
+        assert gate in contributing
+    for gate in (
+        "drei bis fünf reale Teilnehmende",
+        "zweite Person nach 168 Stunden",
+        "unabhängige Implementierung",
+        "Fach-/Steuerprüfung",
+        "reale Langdock-Integration",
+        "Geschäftsbaseline-Vergleich",
+    ):
+        assert gate in german
+
+
+def test_public_issue_forms_and_pull_request_template_request_scoped_evidence():
+    template_root = ROOT / ".github/ISSUE_TEMPLATE"
+    config = yaml.safe_load((template_root / "config.yml").read_text(encoding="utf-8"))
+    assert config["blank_issues_enabled"] is False
+    assert {entry["name"] for entry in config["contact_links"]} == {
+        "Read contribution and evidence scope",
+        "Propose a reviewed change",
+    }
+    forms = {
+        path.name: yaml.safe_load(path.read_text(encoding="utf-8"))
+        for path in template_root.glob("*.yml")
+        if path.name != "config.yml"
+    }
+    assert set(forms) == {
+        "finding.yml",
+        "independent-implementation.yml",
+        "adoption-record.yml",
+    }
+    for path, form in forms.items():
+        assert set(form) >= {"name", "description", "title", "body"}, path
+        field_ids = [item["id"] for item in form["body"] if item.get("id")]
+        assert len(field_ids) == len(set(field_ids)), path
+
+    finding_options = next(
+        item["attributes"]["options"]
+        for item in forms["finding.yml"]["body"]
+        if item.get("id") == "finding_class"
+    )
+    assert set(finding_options) == {
+        "Diagnostics",
+        "Provenance-template distribution",
+        "Durable native release evidence",
+        "NTFS and platform boundary",
+        "Dependency closure for the bounded target",
+        "Public-review reproducibility",
+    }
+    for form in forms.values():
+        text = str(form).lower()
+        assert "source" in text and "scope" in text and "evidence" in text
+        assert "checks" in text or "result" in text
+
+    pr = (ROOT / ".github/PULL_REQUEST_TEMPLATE.md").read_text()
+    for heading in ("Change and reason", "Source and evidence", "Compatibility and localization", "Maintainer review"):
+        assert heading in pr
+    assert "does not authenticate a person" in pr
+
+
+def test_contribution_dispositions_keep_candidate_and_external_scope_separate():
+    text = (ROOT / "CONTRIBUTING.md").read_text()
+    for phrase in (
+        "Closed in the v0.3.20 candidate",
+        "The public record exists only after its actual run and publication",
+        "Open outside named runner results",
+        "hash-enforced selected wheels",
+        "Open for independent third-party reruns",
+        "Production use outside the declared inspected public repository scope is unknown",
+    ):
+        assert phrase in text
 
 
 @pytest.mark.parametrize('target', [
