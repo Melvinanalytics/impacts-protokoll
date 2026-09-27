@@ -16,4 +16,6 @@ This directory contains optional deterministic Core checks and a reading evaluat
 - [Augment context walk](augment-context/CONTEXT.md): synthetic point-of-use context, acquisition, derivation, freshness and missing-context cases; this is a reading case, not proof of live retrieval.
 - [Typed classification and selection walk](typed-classification/CONTEXT.md): synthetic form, domain-item, process-role, result-work, terminology and adapter-boundary cases; this is a reading case, not an executed backend integration.
 
+- [Listening-intake screen](listening-intake/CONTEXT.md): implementation-independent synthetic 20-message screening protocol, frozen reuse questions and blinded scoring; no run or runtime claim.
+
 Package evaluations live with their package. Customer regression material stays in the customer repository. Do not load sibling walks or exhaust their outgoing links.

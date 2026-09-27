@@ -167,6 +167,23 @@ Before opening `gate: human` or preparing a declared action at a `sacred` custom
 
 Core validation neither enforces that preflight nor authenticates a person. A synthetic walk establishes only that opening writes no route/approval and completion consumes an external decision fixture.
 
+<a id="retention-and-deletion"></a>
+## Retention and deletion at the harness boundary
+
+For each record home, its responsible operator declares the intended purpose, applicable legal basis, retention period and exceptions from the responsible authority's source. This declaration identifies the permitted scope; it does not itself establish that the basis or authority is valid. Keep an unknown basis, period, exception or owner open and restrict only the dependent deletion.
+
+Before deletion, inventory the known source records and their known copies, projections, caches, search indexes, exports and backups. State the inventory's sources, scope and search limits. Unknown consumers remain unknown; do not claim complete erasure or absence of copies beyond checked coverage.
+
+Bind a deletion preview to the exact record identities and current source revisions or states. Show the stated purpose, basis, retention rule, exceptions, affected locations and expected effect. Obtain the required human approval for that scoped preview. Immediately before the effect, recheck that source state, approval and preview still match. Prevent a concurrent writer from changing the target between that recheck and deletion, using an effective lock, an exclusive maintenance window or equivalent control. If the harness cannot establish this race protection, do not execute the deletion.
+
+Delete only the exact authorized targets and declared derivatives. Do not widen a path, query or identifier match at execution time. If part of the operation fails, stop dependent deletion, report confirmed and unconfirmed targets separately through a minimal receipt, and leave completion open. Do not recreate already deleted bytes merely to make the operation appear atomic.
+
+After deletion, recheck each known copy and index in scope. Check backup and restore paths so deleted material is not silently reintroduced; where a restore is required, apply the same deletion control before restored data becomes available. Retain the bounded search method and unresolved copies as explicit gaps.
+
+The receipt records only what is needed to show the authorized scope, decision reference, operator or authenticated system, time, checked inventory coverage and actual outcome, including partial failure and open gaps. It contains neither deleted content nor a content hash or other durable fingerprint that can be linked back to that content. Its record reference must be no more identifying than the record home requires.
+
+Authorized deletion of bytes bound to an existing Run currently produces `hash.mismatch`, indistinguishable from tampering. **Open design question:** how can an authorized retention/deletion event be represented for bound Run bytes without weakening detection of unauthorized changes or adding deletion state to Core? This subsection defines no Core deletion state or schema; retain the mismatch and report the authorization separately until that design question is resolved.
+
 ## Transport
 
 Transport an Application alone if it has no Capability calls. Otherwise materialize each needed `capabilities/<slug>/` from the same source repository revision at the same relative path. Before the first run, `git rev-parse <workspace-revision>:capabilities/<slug>` must equal the bound tree OID. Missing or mismatching paths prevent execution. No package manifest or Core resolver is introduced.

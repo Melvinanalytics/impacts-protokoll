@@ -188,7 +188,7 @@ Bei der Entwicklung von Möglichkeiten regulatorische oder physische Grenzen anh
 
 Der Agent übernimmt die Analyse. Der Nutzer ergänzt entscheidungsrelevante Fakten oder Entscheidungen; vollständige Neugestaltung, eine feste Zahl von Optionen oder ein verbindlicher Reduktionsnachweis sind keine Voraussetzung für weitere erlaubte Arbeit.
 
-<!-- Translation source: 02_protocol/capabilities.md; sha256: 259b03ce6142371262ee1430e188a6842a78c010242a9d1d9b1e41a40c0211ed -->
+<!-- Translation source: 02_protocol/capabilities.md; sha256: 622f00e3dec577a1bb9af5fcfa7caaf48190953cbca6317fc5486b5db936d203 -->
 ### Quellen, Stammdaten und Verantwortung beschreiben
 
 Benötigte Quellen an ihren bestehenden fachlichen Heimaten beschreiben, auch bei gewöhnlicher Dateinutzung ohne Application oder Live-Verbindung. Dokumentierte Quelle oder Schnittstelle, beschaffte Daten, geprüfter Zugriff und Erlaubnis zur vorgesehenen Nutzung bleiben getrennte Befunde.
@@ -269,10 +269,26 @@ impacts validate ../mein-arbeitsbereich
 
 `init` erzeugt einen neuen, leeren Arbeitsbereich; es verweigert ein vorhandenes Ziel. Der Root-Router enthält `Working language: de`. Git wird nicht erzeugt und ist für Application-Strukturprüfung ohne Lauf nicht nötig; die aktuelle historische Laufvalidierung benötigt Git und die committed Application-Bindung. Git-Historie oder Hashes belegen weder die Wahrheit einer Quelle noch eine authentifizierte Entscheidung. `setuptools` wird nur für die Entwicklungs-Packagingtests benötigt. Der [programmierte Angebotslauf](../../06_evaluations/offer-walk/CONTEXT.md) ist eine optionale technische Evaluation mit synthetischen Daten, kein Beweis für die Nutzung durch einen Menschen oder einen Agenten allein aus Dateien.
 
-<!-- Translation source: 02_protocol/capabilities.md; sha256: 259b03ce6142371262ee1430e188a6842a78c010242a9d1d9b1e41a40c0211ed -->
+<!-- Translation source: 02_protocol/capabilities.md; sha256: 622f00e3dec577a1bb9af5fcfa7caaf48190953cbca6317fc5486b5db936d203 -->
 Die Übernahme einer Application erhält ihre Definitionsbytes; Anwendbarkeit der Quellen und Befugnisse am Ziel folgen [Data Governance](../capabilities.md#data-governance), wobei gültige lokale Zuordnungen und Befugnisse weitergelten und offene Fragen an die dafür zuständige Entscheidungsperson gehen.
 Ausführung am Ziel erst behaupten, wenn dort ein `vorgang` mit seinen anwendbaren Voraussetzungen und Prüfungen tatsächlich den benannten Testendpunkt erreicht hat; Kopieren oder Linkprüfungen allein belegen dies nicht, und unabhängig erlaubte Vorbereitung bleibt bei eingeschränkter abhängiger Ausführung nützlich.
 [Reviewed correction](../impacts-method.md#reviewed-correction) an der Revisionsgrenze der geänderten Heimat anwenden: Geänderte Application-Definitionen benötigen eine neue Application-Bindung, während geänderte externe Zuordnungen in ihrer Quellenheimat bleiben und entsprechende Quellenbindung sowie betroffene Prüfungen benötigen, unter Erhalt früher gebundener Eingaben.
+
+### Aufbewahrung und Löschung an der Harness-Grenze
+
+Für jede Record-Heimat dokumentiert die verantwortliche Betreiberperson den vorgesehenen Zweck, die anwendbare Rechtsgrundlage, Aufbewahrungsfrist und Ausnahmen anhand der Quelle der zuständigen Stelle. Diese Erklärung grenzt den zulässigen Umfang ab; sie belegt weder die Gültigkeit der Grundlage noch die Befugnis selbst. Unbekannte Grundlage, Frist, Ausnahme oder Zuständigkeit bleibt `open`; nur die abhängige Löschung wird eingeschränkt.
+
+Vor einer Löschung die bekannten Quellrecords sowie deren bekannte Kopien, Projektionen, Caches, Suchindizes, Exporte und Backups inventarisieren. Quellen, Umfang und Suchgrenzen der Inventur angeben. Unbekannte Verbraucher bleiben unbekannt; eine vollständige Löschung oder die Abwesenheit weiterer Kopien darf nicht über die tatsächlich geprüfte Abdeckung hinaus behauptet werden.
+
+Die Löschvorschau an die exakten Record-Identitäten und aktuellen Quellenrevisionen oder -zustände binden. Angegeben werden Zweck, Grundlage, Aufbewahrungsregel, Ausnahmen, betroffene Speicherorte und erwartete Wirkung. Die erforderliche menschliche Freigabe gilt nur für diese abgegrenzte Vorschau. Unmittelbar vor der Wirkung erneut prüfen, ob Quellenzustand, Freigabe und Vorschau übereinstimmen. Eine gleichzeitige Änderung am Ziel zwischen dieser Prüfung und der Löschung durch eine wirksame Sperre, ein exklusives Wartungsfenster oder eine gleichwertige Kontrolle verhindern. Kann das Harness diesen Schutz vor Race Conditions nicht belegen, darf es die Löschung nicht ausführen.
+
+Nur exakt freigegebene Ziele und deklarierte Ableitungen löschen. Pfad-, Abfrage- oder Kennungstreffer zur Ausführungszeit nicht ausweiten. Scheitert ein Teil des Vorgangs, abhängige Löschungen stoppen, bestätigte und unbestätigte Ziele getrennt in einem minimalen Beleg ausweisen und den Abschluss `open` lassen. Bereits gelöschte Bytes nicht wiederherstellen, nur um scheinbare Atomarität herzustellen.
+
+Nach der Löschung jede bekannte Kopie und jeden Index im Umfang erneut prüfen. Backup- und Wiederherstellungspfade prüfen, damit gelöschtes Material nicht unbemerkt zurückkehrt. Ist eine Wiederherstellung nötig, dieselbe Löschkontrolle anwenden, bevor wiederhergestellte Daten verfügbar werden. Begrenztes Suchverfahren und ungeklärte Kopien als ausdrückliche Lücken festhalten.
+
+Der Beleg enthält nur die Informationen, die für den freigegebenen Umfang, den Entscheidungsverweis, die Betreiberperson oder das authentifizierte System, den Zeitpunkt, die geprüfte Inventurabdeckung und das tatsächliche Ergebnis einschließlich Teilausfall und offener Lücken nötig sind. Er enthält weder gelöschte Inhalte noch einen Inhalts-Hash oder einen anderen dauerhaften Fingerabdruck, der auf diese Inhalte zurückführen kann. Der Record-Verweis darf nicht mehr identifizieren, als die zuständige Heimat erfordert.
+
+Die befugte Löschung von Bytes, die an einen bestehenden Run gebunden sind, führt derzeit zu `hash.mismatch`, nicht unterscheidbar von Manipulation. **Offene Designfrage:** Wie lässt sich ein befugtes Aufbewahrungs-/Löschereignis für gebundene Run-Bytes darstellen, ohne die Erkennung unbefugter Änderungen zu schwächen oder einen Löschzustand in Core aufzunehmen? Dieser Abschnitt definiert weder Core-Löschzustand noch Schema; den Hash-Mismatch beibehalten und die Befugnis getrennt belegen, bis die Designfrage geklärt ist.
 
 ### CLI-Ausgabe und Texteingabe
 

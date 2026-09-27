@@ -36,3 +36,5 @@ Record the protocol paths actually read. Do not create files, IDs, schemas, regi
 After the first answers are frozen, an independent grader applies `EXPECTED.md`. The grader may not repair an answer. Any later protocol correction requires new answer evidence; earlier failures remain recorded.
 
 After submitting and grading an answer, read the [coverage record](COVERAGE.md). It records every round and the limits of the result.
+
+The frozen case above remains its own synthetic reading evaluation. Prospective unaccompanied first-use, seven-day continuation, narrow-reviewer and matched business-comparison gates are separately packaged in [FOLLOW-UP.md](FOLLOW-UP.md); none has been performed.
