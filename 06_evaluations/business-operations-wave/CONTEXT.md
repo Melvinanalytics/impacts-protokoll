@@ -4,6 +4,8 @@ Status: frozen synthetic cases, 2026-09-22. No case below is an executed Run, cu
 
 This reading evaluation stress-tests all feature clusters introduced in v0.3.5 and the business-design additions in v0.3.6. It deliberately combines departments, repositories, calculations, sources, working languages, human authority and physical effects. Start at the [repository router](../../CONTEXT.md), follow only the applicable protocol routes, and do not open [EXPECTED.md](EXPECTED.md) or [COVERAGE.md](COVERAGE.md) before recording the answers.
 
+For a bounded deterministic demonstration of A01/B01 and the synthetic O-17 evidence pattern, use [delivery replay](delivery-replay/CONTEXT.md). It is a simulation; its digest checks do not authenticate sources or decisions.
+
 The cases are synthetic. Names, codes, systems and numbers identify no customer. A reader must not create a schema, registry, graph, CLI command or universal mapping table to answer them.
 
 ## Run contract

@@ -1,0 +1,56 @@
+{
+  "case_id": "O-17",
+  "synthetic": true,
+  "scope": "candidate estimate replay only",
+  "delivery_time_definitions": {
+    "sales": {
+      "namespace": "Northstar/Sales (synthetic)",
+      "address": "kennzahl:lieferzeit",
+      "meaning": "calendar days from accepted order to customer-confirmed arrival date"
+    },
+    "production": {
+      "namespace": "Northstar/Production Planning (synthetic)",
+      "address": "kennzahl:lieferzeit",
+      "meaning": "machine hours from released order to completed assembly"
+    }
+  },
+  "prescribed_rule": {
+    "namespace": "Northstar/Production Planning (synthetic)",
+    "address": "rechenweg:estimated-delivery-r7",
+    "revision": "R7",
+    "scenario_premise": "B01",
+    "formula": "max(material-ready, capacity-slot) + 2 working days",
+    "calendar": "Monday-Friday; holidays omitted"
+  },
+  "r7_check_vectors": [
+    {
+      "material_ready": "2026-09-16",
+      "capacity_slot": "2026-09-18",
+      "expected_candidate_date": "2026-09-22"
+    },
+    {
+      "material_ready": "2026-09-21",
+      "capacity_slot": "2026-09-18",
+      "expected_candidate_date": "2026-09-23"
+    }
+  ],
+  "planner_workbook_practice": {
+    "scenario_premise": "B01",
+    "formula": "material-ready + 5 calendar days",
+    "reported_frequency": "weekly",
+    "comparison_with_r7": "not performed",
+    "artifact_identity_and_revision": "open",
+    "relationship_to_o17_report": "not established"
+  },
+  "human_decision": {
+    "question": "May the candidate estimate be used in a customer commitment?",
+    "status": "open",
+    "authority_identity": "open"
+  },
+  "limits": {
+    "external_action": "not performed",
+    "business_benefit": "not measured",
+    "nontechnical_user_proof": "not performed",
+    "time_claim": "none"
+  }
+}

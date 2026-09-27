@@ -1,0 +1,10 @@
+{
+  "case_id": "O-17",
+  "claim": "A case worker reported that a personal workbook displayed 12 calendar days for offer state 2026-09-16.",
+  "observed_on": "2026-09-18",
+  "evidence_label": "reported",
+  "workbook_acquired": false,
+  "formula": "open",
+  "calculation_occurrence": "O-17/C-02",
+  "check_acceptance_and_use": "open"
+}
