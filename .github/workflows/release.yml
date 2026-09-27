@@ -64,31 +64,33 @@ jobs:
         shell: pwsh
         run: python -m pip install --disable-pip-version-check -e .
 
-      - name: Run frozen 19-case native portability corpus
+      - name: Run frozen native portability corpus
         shell: pwsh
         run: |
           $output = @(& python 06_evaluations/conformance/run.py 2>&1)
           $runnerExit = $LASTEXITCODE
           $output | ForEach-Object { Write-Output ([string] $_) }
           if ($runnerExit -ne 0) { throw "Conformance runner exited with $runnerExit" }
-          $summary = @($output | ForEach-Object { [string] $_ } | Where-Object { $_ -match '^Conformance summary: ' })
-          $unsupported = @($output | ForEach-Object { [string] $_ } | Where-Object { $_ -match '^UNSUPPORTED ' })
-          if ($unsupported.Count -gt 2) { throw "More than two corpus cases are unsupported" }
-          $expectedPassed = 19 - $unsupported.Count
-          $expectedSummary = "Conformance summary: applicable=$expectedPassed passed=$expectedPassed unsupported=$($unsupported.Count) failed=0 total=19"
-          if ($summary.Count -ne 1 -or $summary[0] -ne $expectedSummary) {
-            throw "Conformance summary is missing or inconsistent with the 19 case results"
-          }
-          $allowedUnsupported = @('hash-invalid-utf8-filename', 'run-invalid-utf8-filename')
-          foreach ($line in $unsupported) {
-            if ([string] $line -match '^UNSUPPORTED ([^:]+):') {
-              if ($allowedUnsupported -notcontains $Matches[1]) {
-                throw "Unexpected unsupported case: $($Matches[1])"
-              }
-            } else {
-              throw "Malformed unsupported-case result: $line"
-            }
-          }
+          $log = "${env:RUNNER_TEMP}/native-conformance.txt"
+          $output | Set-Content -Path $log -Encoding utf8
+          $runUrl = "$env:GITHUB_SERVER_URL/$env:GITHUB_REPOSITORY/actions/runs/$env:GITHUB_RUN_ID"
+          python .github/scripts/test_evidence.py native-capture `
+            --root . --log $log `
+            --source "$(git rev-parse HEAD)" `
+            --run-url $runUrl `
+            --attempt "$env:GITHUB_RUN_ATTEMPT" `
+            --tag "$env:RELEASE_TAG" `
+            --expected-os "${{ runner.os }}" `
+            --output "${env:RUNNER_TEMP}/native-evidence/native-${{ matrix.os }}.json"
+
+      - name: Transfer native conformance evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: release-native-evidence-${{ env.RELEASE_TAG }}-${{ github.run_attempt }}-${{ matrix.os }}
+          path: ${{ runner.temp }}/native-evidence/*.json
+          if-no-files-found: error
+          retention-days: 1
+          compression-level: 0
 
   build:
     name: Verify and build
@@ -185,6 +187,13 @@ jobs:
           python .github/scripts/release_guard.py artifacts \
             --root . --dist "${DIST_DIR}" --tag "${RELEASE_TAG}"
 
+      - name: Download current-attempt native evidence
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: release-native-evidence-${{ env.RELEASE_TAG }}-${{ github.run_attempt }}-*
+          path: ${{ runner.temp }}/test-evidence
+          merge-multiple: true
+
       - name: Transfer checked release bytes
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
@@ -193,6 +202,7 @@ jobs:
           if-no-files-found: error
           retention-days: 1
           compression-level: 0
+          overwrite: true
 
       - name: Transfer compact test evidence
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -201,6 +211,7 @@ jobs:
           path: ${{ runner.temp }}/test-evidence/*.json
           if-no-files-found: error
           retention-days: 1
+          overwrite: true
 
   publish:
     name: Publish checked bytes
@@ -308,6 +319,7 @@ jobs:
           python3 .github/scripts/test_evidence.py notes \
             --draft "${RUNNER_TEMP}/draft-release.json" \
             --reports "${RUNNER_TEMP}/test-evidence" \
+            --root . \
             --tag "${RELEASE_TAG}" \
             --source "$(git rev-parse HEAD)" \
             --run-url "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" \

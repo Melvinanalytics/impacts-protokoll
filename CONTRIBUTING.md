@@ -49,6 +49,54 @@ v0.3.18 sends the intended tag explicitly in both updates and rechecks draft ide
 
 `required gate` (not evidence of a passing run): PR and exact-tag workflows run the 19-case corpus on GitHub-hosted Windows and macOS with Python 3.12. At least 17 cases must pass; only `hash-invalid-utf8-filename` and `run-invalid-utf8-filename` may be unsupported, and any failure blocks the release build. This characterizes those runners and cases only. An I/O or storage error, including FUSE `EIO`, is a failure. The existing Linux Python 3.11/3.14 full suite and three-asset release contract remain in force. No customer scenario workspace, JUnit report or private review is published.
 
+### v0.3.20 public integration and evidence scope
+
+This section describes the candidate source tree. It does not claim that v0.3.20 has been tagged, built or published. IMPACTS keeps sources, required checks, executed checks and responsible decisions inspectable. It does not authenticate people, grant permissions, execute work, prove business effect or detect a coordinated content-and-digest rewrite. A name, reviewer label or `human:<id>` string is attribution, not authentication or approval evidence.
+
+#### Three useful contributions
+
+1. **Independent implementation.** Implement the [declared JSON structural subset](06_evaluations/conformance/CONTEXT.md#independent-implementation-challenge) from its written contract and frozen cases. Disclose previous exposure to this repository's source and tests, record the candidate revision and exact run scope, and add independently authored cases. A shared-corpus pass alone is incomplete and no pass claims full protocol conformance or production suitability.
+2. **Unaccompanied first-use record.** Use the no-install [first-win exercise](FIRST-WIN.md) without coaching. Retain the instruction/source revision, what the operator could find and complete, observed blockers, open items, next action and checks actually performed. An internal walkthrough or coached repair is not an unaccompanied user result.
+3. **Bounded listening-adapter result.** Apply a named, revision-bound capture adapter through the [listening-intake screen](06_evaluations/listening-intake/CONTEXT.md), including its counterbalanced blocks, fresh operators, retained inputs/outputs, blinded scoring, effort accounting and stop rule. Report hard failures and missing data. Do not present one adapter output, a synthetic simulation or model evaluation as a completed screen, Langdock result or customer validation.
+
+Use the repository's [issue forms](.github/ISSUE_TEMPLATE/) to propose or report scoped work and its [pull request template](.github/PULL_REQUEST_TEMPLATE.md) for changes. The public community routes are GitHub [issues](https://github.com/Melvinanalytics/impacts-protokoll/issues) and [pull requests](https://github.com/Melvinanalytics/impacts-protokoll/pulls). To object to a claim or contract, cite its exact source and scope, give a counterexample or evidence, and propose the smallest correction. An open objection is not an approval or maintainer decision. Discussions are not enabled or required. Public adoption issues accept only synthetic or already-public evidence, a non-sensitive reference and bounded scope, and a sanitized summary. Keep customer records and raw sources, captured outputs, and review records in the customer repository; never attach or link them in a public issue. Do not submit credentials, personal data or live access state.
+
+#### Finding classes and current disposition
+
+An issue should name the source revision, inspected scope, evidence path, exact command and result, and checks not performed. A `reported` observation must remain attributed; a frozen expected result is not an observation from a candidate run.
+
+| Finding class | Candidate disposition | Evidence needed for a useful report |
+|---|---|---|
+| Diagnostics | Frozen cases require their listed codes/results; message wording remains diagnostic. Documented parse or routing prerequisites suppress dependent conclusions, while independent defects remain reportable. | Minimal synthetic files, exact candidate command, JSON report, expected and observed codes/paths, source revision, and checks performed. |
+| Provenance-template distribution | **Closed in the v0.3.20 candidate:** `impacts template herkunft` is included in the wheel CLI and English/German templates, with nine fields. Public wheel bytes remain pending the exact tagged release. | For a distribution defect, give the installed package version, wheel SHA-256, command, language and captured output; do not use a universal line-count expectation. |
+| Durable native release evidence | **Closed in the v0.3.20 candidate workflow:** the successful tagged release workflow adds Python test totals and exact Windows/macOS corpus reports to release notes. The public record exists only after its actual run and publication. | For a reporting defect, give tag, source commit, workflow URL/attempt, runner platform/runtime, corpus digest/count and retained release-note result. A workflow configuration alone is not execution evidence. |
+| NTFS and platform boundary | **Open outside named runner results.** The hosted Windows job does not identify every filesystem or establish universal NTFS behavior; unsupported cases are not passes. | Name OS version, filesystem, runtime, relevant case capability, command, raw output and exact unsupported/failure reason. Do not generalize beyond that environment. |
+| Dependency closure | **Bounded only:** hash-enforced selected wheels for Linux CPython 3.11 x86_64 with glibc 2.17 or newer. Other targets remain open. No publisher-authenticity claim. | Name Python implementation/version, pip, OS, architecture, libc, dependency source, lock revision, command and install result. State whether the target is inside the recipe's bound. |
+| Public-review reproducibility | **Open for independent third-party reruns.** Release notes retain workflow-reported test evidence after publication; this is not independent verification or a build attestation. | Give the published source commit, exact inputs/command/environment, candidate output and independently retained result. Report access limits and checks not performed. |
+
+#### Compatibility and change process
+
+English owns the active contract. Reuse the current file/template/schema home and state the concrete gap before adding a field, role, file kind, command or version. Preserve machine tokens and Core schemas unless a separately evidenced gap and reviewed change authorize their update. Keep German readable surfaces aligned and refresh their source-byte hashes.
+
+For JSON CLI changes, `report_version` versions the report shape. Message text is diagnostic. `cases.json` defines the exact required results for its listed cases; a changed frozen expectation needs an explicit fixture or expected-result diff, rationale and fresh runner evidence. Do not create a parallel protocol or conformance-specification version. A new structural claim needs named cases and stated limits. Keep reference implementation tests separate from the implementation-independent corpus.
+
+Pull requests should link the issue or bounded gap, name changed authority files, provide synthetic evidence and exact checks/results, disclose checks not run, and update affected translations. Maintainers review the actual diff and evidence through repository permissions and GitHub records; an author cannot create approval by entering a name or identifier. Preserve the issue, reviewed source revision and decision rationale in the repository so a successor can continue. If no authorized maintainer is available, leave the change unmerged and its status explicit rather than inventing a review or transferring authority by text.
+
+#### External adoption and deployment gates
+
+These gates remain **open**. CI, Luna-generated output, synthetic replays, internal model reviews or repository instructions do not substitute for the named external evidence.
+
+| Gate | Required evidence before the gate can be reviewed |
+|---|---|
+| Three to five real first-use participants | Unaccompanied, scoped first-use records and separately retained repairs under the [follow-up protocol](06_evaluations/nontechnical-reconstruction/FOLLOW-UP.md). |
+| Second operator after 168 elapsed hours | A different operator continues from only the retained router and case evidence; preserve actual timestamps and score against an independently prepared, matched manual case. |
+| Independent implementation | A source-exposure declaration, candidate revision, shared-corpus result and independently authored extra cases under the challenge above. |
+| Domain/tax reviewer | A named, bounded review scope, cited evidence, masked candidate/baseline material where comparative, reviewer findings and unresolved items. Review does not itself establish source ownership or approval authority. |
+| Real Langdock | A revision-bound run in the actual authorized Langdock environment, with its tool scope, inputs, outputs, checks and limits recorded. Synthetic/local runs do not satisfy this. |
+| Business baseline | A predeclared outcome and same-scope manual comparison, actual case selection, checks, adverse-action review and total human effort. No benefit or effect claim before this evidence. |
+
+Production use outside the declared inspected public repository scope is unknown.
+
 ## Publish an edition
 
 An edition claim spans source text and public delivery. `pyproject.toml`, the annotated Git tag, GitHub Release, release assets, README URLs and filenames, the German guide, and installed package metadata must name the same version. A green documentation test establishes only the source-tree part.

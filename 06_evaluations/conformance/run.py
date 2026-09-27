@@ -21,6 +21,7 @@ MANIFEST_PATH = HERE / "cases.json"
 RUN_ASSETS = HERE / "fixtures" / "common-run-assets"
 REVISION_TOKEN = "@APPLICATION_REVISION@"
 HASH_PREFIX = "sha256:"
+FILESYSTEM_PROBES = {"case-sensitive", "path-component", "unicode-distinct"}
 
 
 class ConformanceError(Exception):
@@ -130,6 +131,52 @@ def _load_manifest(path: Path | None = None) -> tuple[dict[str, Any], list[dict[
                 pass
             else:
                 raise ConformanceError(f"{case_id}: invalid UTF-8 filename bytes decode as UTF-8")
+        filesystem_probe = case.get("filesystem_probe")
+        if filesystem_probe is not None:
+            if not isinstance(filesystem_probe, dict):
+                raise ConformanceError(f"{case_id}: filesystem_probe must be an object")
+            kind = filesystem_probe.get("kind")
+            if not isinstance(kind, str) or kind not in FILESYSTEM_PROBES:
+                raise ConformanceError(f"{case_id}: unknown filesystem_probe kind")
+            if kind == "path-component":
+                length = filesystem_probe.get("length")
+                if type(length) is not int or length < 256:
+                    raise ConformanceError(
+                        f"{case_id}: path-component probe length must be integer at least 256"
+                    )
+                if set(filesystem_probe) != {"kind", "length"}:
+                    raise ConformanceError(f"{case_id}: malformed path-component probe")
+            elif set(filesystem_probe) != {"kind"}:
+                raise ConformanceError(f"{case_id}: malformed filesystem_probe")
+        bad_folders = case.get("bad_folders", [])
+        if (
+            not isinstance(bad_folders, list)
+            or any(
+                not isinstance(name, str)
+                or not name
+                or name in (".", "..")
+                or "/" in name
+                or "\\" in name
+                or "\x00" in name
+                for name in bad_folders
+            )
+            or len(set(bad_folders)) != len(bad_folders)
+        ):
+            raise ConformanceError(f"{case_id}: bad_folders must be unique path basenames")
+        bad_folder_length = case.get("bad_folder_length")
+        if bad_folder_length is not None and (
+            type(bad_folder_length) is not int or bad_folder_length < 256
+        ):
+            raise ConformanceError(f"{case_id}: bad_folder_length must be integer at least 256")
+        if bad_folder_length is not None and bad_folders:
+            raise ConformanceError(f"{case_id}: choose bad_folders or bad_folder_length")
+        expected_issue_paths = case.get("expected_issue_paths")
+        if expected_issue_paths is not None and (
+            command != "validate"
+            or not isinstance(expected_issue_paths, list)
+            or any(not isinstance(path, str) or not path for path in expected_issue_paths)
+        ):
+            raise ConformanceError(f"{case_id}: expected_issue_paths must be non-empty strings")
         repeat = case.get("repeat", 1)
         if type(repeat) is not int or repeat < 1:
             raise ConformanceError(f"{case_id}: repeat must be positive integer")
@@ -148,8 +195,8 @@ def _validate_expected(case: dict[str, Any]) -> None:
     codes = expected.get("issue_codes")
     if not isinstance(codes, list) or any(not isinstance(code, str) or not code for code in codes):
         raise ConformanceError(f"{case_id}: issue_codes must be strings")
-    if codes != sorted(set(codes)):
-        raise ConformanceError(f"{case_id}: issue_codes must be sorted and unique")
+    if codes != sorted(codes):
+        raise ConformanceError(f"{case_id}: issue_codes must be sorted")
     if case["command"] == "validate":
         if set(expected) != {"exit_code", "valid", "issue_codes"}:
             raise ConformanceError(f"{case_id}: malformed validate expectation")
@@ -222,6 +269,121 @@ def _create_invalid_utf8_file(root: Path, specification: dict[str, Any]) -> None
         raise ConformanceError(f"cannot write invalid UTF-8 fixture file: {error}") from error
 
 
+def _open_probe_file(
+    path: Path, capability: str, unsupported_errnos: set[int]
+) -> None:
+    try:
+        descriptor = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    except OSError as error:
+        if error.errno in unsupported_errnos:
+            raise UnsupportedCase(
+                f"filesystem lacks {capability} capability ({error.strerror or error.errno})"
+            ) from error
+        raise ConformanceError(f"cannot probe {capability} capability: {error}") from error
+    try:
+        os.close(descriptor)
+    except OSError as error:
+        raise ConformanceError(f"cannot finish {capability} capability probe: {error}") from error
+
+
+def _path_component_probe_unsupported_errnos(platform: str) -> set[int]:
+    unsupported = {errno.ENAMETOOLONG}
+    if platform == "win32":
+        # Windows reports its over-limit component response as EINVAL.
+        unsupported.add(errno.EINVAL)
+    return unsupported
+
+
+def _probe_filesystem_capability(root: Path, specification: dict[str, Any]) -> None:
+    """Verify only the host path property a fixture depends on."""
+    kind = specification["kind"]
+    try:
+        with tempfile.TemporaryDirectory(prefix="filesystem-probe-", dir=root) as directory:
+            probe_root = Path(directory)
+            if kind == "case-sensitive":
+                _open_probe_file(probe_root / "CaseProbe", "case-sensitive paths", set())
+                _open_probe_file(
+                    probe_root / "caseprobe", "case-sensitive paths", {errno.EEXIST}
+                )
+            elif kind == "path-component":
+                length = specification["length"]
+                _open_probe_file(
+                    probe_root / ("p" * length),
+                    f"{length}-byte path components",
+                    _path_component_probe_unsupported_errnos(sys.platform),
+                )
+            elif kind == "unicode-distinct":
+                composed = "caf\u00e9"
+                decomposed = "cafe\u0301"
+                _open_probe_file(
+                    probe_root / composed,
+                    "distinct Unicode spellings",
+                    {errno.EINVAL, errno.EILSEQ},
+                )
+                _open_probe_file(
+                    probe_root / decomposed,
+                    "distinct Unicode spellings",
+                    {errno.EEXIST, errno.EINVAL, errno.EILSEQ},
+                )
+            else:
+                raise ConformanceError(f"unknown filesystem capability probe: {kind}")
+    except UnsupportedCase:
+        raise
+    except ConformanceError:
+        raise
+    except OSError as error:
+        raise ConformanceError(f"cannot prepare {kind} filesystem probe: {error}") from error
+
+
+def _add_bad_folders(root: Path, manifest: dict[str, Any], case: dict[str, Any]) -> None:
+    names = list(case.get("bad_folders", []))
+    length = case.get("bad_folder_length")
+    if length is not None:
+        names.append("Bad_" + "x" * (length - len("Bad_")))
+    if not names:
+        return
+    application = root / _relative_path(manifest["application_path"], "application_path")
+    context = (
+        "---\n"
+        "type: teilprozess\n"
+        "id: teilprozess:filesystem-probe\n"
+        "ergebnis: Folder spelling is preserved for structural validation\n"
+        "---\n\n"
+        "# Synthetic folder probe\n"
+    )
+    workstep_context = (
+        "---\n"
+        "type: arbeitsschritt\n"
+        "id: arbeitsschritt:filesystem-probe-{index}\n"
+        "eingaben:\n"
+        "  - input/source.md\n"
+        "ausgaben:\n"
+        "  - output/result.md\n"
+        "pruefung: Synthetic fixture file is listed\n"
+        "routen:\n"
+        "  fertig: end:fertig\n"
+        "---\n\n"
+        "# Synthetic folder workstep\n"
+    )
+    for index, name in enumerate(names, start=1):
+        folder = application / name
+        try:
+            folder.mkdir()
+            (folder / "CONTEXT.md").write_text(context, encoding="utf-8")
+            step = folder / f"filesystem-probe-{index}"
+            step.mkdir()
+            (step / "CONTEXT.md").write_text(
+                workstep_context.format(index=index), encoding="utf-8"
+            )
+            actual_names = os.listdir(application)
+        except OSError as error:
+            raise ConformanceError(f"cannot create bad-folder fixture {name!r}: {error}") from error
+        if name not in actual_names:
+            raise UnsupportedCase(
+                f"filesystem cannot preserve requested folder spelling for bad-folder probe {index}"
+            )
+
+
 def _git(root: Path, *args: str) -> str:
     try:
         result = subprocess.run(
@@ -269,6 +431,9 @@ def _bind_application(root: Path, application_path: str) -> None:
 
 
 def _prepare_workspace(case: dict[str, Any], manifest: dict[str, Any], root: Path) -> None:
+    filesystem_probe = case.get("filesystem_probe")
+    if filesystem_probe is not None:
+        _probe_filesystem_capability(root, filesystem_probe)
     base_fixture = HERE / _relative_path(manifest["base_fixture"], "base_fixture")
     _copy_tree(base_fixture, root)
     if case.get("git_binding"):
@@ -276,6 +441,7 @@ def _prepare_workspace(case: dict[str, Any], manifest: dict[str, Any], root: Pat
     fixture = case.get("fixture")
     if fixture is not None:
         _copy_tree(HERE / _relative_path(fixture, f"{case['id']}.fixture"), root)
+    _add_bad_folders(root, manifest, case)
     invalid_utf8_file = case.get("invalid_utf8_file")
     if invalid_utf8_file is not None:
         _create_invalid_utf8_file(root, invalid_utf8_file)
@@ -362,6 +528,13 @@ def _check_report(report: dict[str, Any], case: dict[str, Any], root: Path, retu
         if any(not isinstance(issue[field], str) or not issue[field] for field in ("code", "path", "message")):
             raise ConformanceError("issue code, path, and message must be non-empty strings")
         issue_codes.append(issue["code"])
+    expected_paths = case.get("expected_issue_paths")
+    if expected_paths is not None:
+        actual_paths = sorted(issue["path"] for issue in issues)
+        if actual_paths != sorted(expected_paths):
+            raise ConformanceError(
+                f"issue paths differ: expected {sorted(expected_paths)}, got {actual_paths}"
+            )
     if sorted(issue_codes) != expected["issue_codes"]:
         raise ConformanceError(
             f"issue codes differ: expected {expected['issue_codes']}, got {sorted(issue_codes)}"

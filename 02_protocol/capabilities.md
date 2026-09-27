@@ -130,21 +130,7 @@ The Application tree binds its own instructions only. Referenced rules, prompt f
 <a id="provenance-file-example"></a>
 ### Copyable stable-source provenance file
 
-For each stable source input, declare its actual input path, for example `input/rezeptur.md` or `input/messwerte.csv`, and its separate `input/<name>-herkunft.md` together under `eingaben`. Copy this ordinary Markdown body into the provenance file and replace every placeholder:
-
-```markdown
-# Source provenance
-
-- Local input: `input/rezeptur.md`
-- Origin / locator: `grundlagen/rezeptur.md` or the actual external source reference
-- Source state: `git:<commit>`, the applicable as-of state, or `open: unknown`
-- Acquired by / provider: the configured reader or responsible provider
-- Acquired at: the actual date and time this material was read or received
-- Selection: the identity, query or extraction boundaries used
-- Content-Digest: `sha256:<lowercase-hex>` of the exact local input file's raw bytes
-- Required control: the control required before this intended use
-- Actual control: evidence of the control performed, or `open: not performed` / `open: unknown`
-```
+For each stable source input, declare its actual input path, for example `input/rezeptur.md` or `input/messwerte.csv`, and its separate `input/<name>-herkunft.md` together under `eingaben`. Use the authoritative [stable-source provenance template](templates/herkunft.md), printed by `impacts template herkunft`; use `impacts template herkunft --language de` for German. Replace all nine field values with the actual evidence.
 
 `Source state` describes the source revision or business state; `Acquired at` records when this local copy was obtained. They are not substitutes for one another. The digest covers the exact local input bytes, not an upstream file's claimed digest or the aggregate hash surface. Keep required control separate from evidence of actual control. If source state or actual control is unknown, leave it explicitly open. This is guidance for ordinary Markdown evidence, not a Core schema or a contract enforced by the general validator.
 
@@ -180,6 +166,23 @@ Writing a run result to a continuing record or source system is a separately per
 Before opening `gate: human` or preparing a declared action at a `sacred` customer touchpoint for its responsible human, the executing harness checks declared inputs, required control evidence and the body’s permitted effect and actor. A failed prerequisite leaves the previous run state unchanged. Touchpoint classification grants no execution authority. Changing a `sacred` classification separately requires the applicable human review of the Application; a technical success cannot supply it. After human work, `pruefung` evaluates the gate output. Actual `freigegeben`/`abgelehnt` and `freigabe` come exclusively from the responsible human.
 
 Core validation neither enforces that preflight nor authenticates a person. A synthetic walk establishes only that opening writes no route/approval and completion consumes an external decision fixture.
+
+<a id="retention-and-deletion"></a>
+## Retention and deletion at the harness boundary
+
+For each record home, its responsible operator declares the intended purpose, applicable legal basis, retention period and exceptions from the responsible authority's source. This declaration identifies the permitted scope; it does not itself establish that the basis or authority is valid. Keep an unknown basis, period, exception or owner open and restrict only the dependent deletion.
+
+Before deletion, inventory the known source records and their known copies, projections, caches, search indexes, exports and backups. State the inventory's sources, scope and search limits. Unknown consumers remain unknown; do not claim complete erasure or absence of copies beyond checked coverage.
+
+Bind a deletion preview to the exact record identities and current source revisions or states. Show the stated purpose, basis, retention rule, exceptions, affected locations and expected effect. Obtain the required human approval for that scoped preview. Immediately before the effect, recheck that source state, approval and preview still match. Prevent a concurrent writer from changing the target between that recheck and deletion, using an effective lock, an exclusive maintenance window or equivalent control. If the harness cannot establish this race protection, do not execute the deletion.
+
+Delete only the exact authorized targets and declared derivatives. Do not widen a path, query or identifier match at execution time. If part of the operation fails, stop dependent deletion, report confirmed and unconfirmed targets separately through a minimal receipt, and leave completion open. Do not recreate already deleted bytes merely to make the operation appear atomic.
+
+After deletion, recheck each known copy and index in scope. Check backup and restore paths so deleted material is not silently reintroduced; where a restore is required, apply the same deletion control before restored data becomes available. Retain the bounded search method and unresolved copies as explicit gaps.
+
+The receipt records only what is needed to show the authorized scope, decision reference, operator or authenticated system, time, checked inventory coverage and actual outcome, including partial failure and open gaps. It contains neither deleted content nor a content hash or other durable fingerprint that can be linked back to that content. Its record reference must be no more identifying than the record home requires.
+
+Authorized deletion of bytes bound to an existing Run currently produces `hash.mismatch`, indistinguishable from tampering. **Open design question:** how can an authorized retention/deletion event be represented for bound Run bytes without weakening detection of unauthorized changes or adding deletion state to Core? This subsection defines no Core deletion state or schema; retain the mismatch and report the authorization separately until that design question is resolved.
 
 ## Transport
 

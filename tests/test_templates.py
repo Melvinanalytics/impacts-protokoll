@@ -9,7 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 from impacts_protocol.cli import main
 from impacts_protocol.io import load_frontmatter_and_body
-from impacts_protocol.generator import TEMPLATE_KINDS, template_text
+from impacts_protocol.generator import CLI_TEMPLATE_KINDS, TEMPLATE_KINDS, template_text
 from impacts_protocol.validator import SCHEMA_REGISTRY
 
 TEMPLATES = ROOT / "02_protocol" / "templates"
@@ -52,6 +52,7 @@ SECTIONS = {
 
 def test_template_kinds_are_the_five_core_objects():
     assert TEMPLATE_KINDS == ("application", "hauptprozess", "teilprozess", "arbeitsschritt", "vorgang")
+    assert CLI_TEMPLATE_KINDS == TEMPLATE_KINDS + ("herkunft",)
 
 
 @pytest.mark.parametrize("kind", SCHEMA_KINDS)
@@ -144,6 +145,18 @@ def test_cli_template_rejects_unknown_kind():
     assert error.value.code == 2
 
 
+def test_cli_template_help_and_errors_list_supplemental_provenance_template(capsys):
+    with pytest.raises(SystemExit) as help_error:
+        main(["template", "--help"])
+    assert help_error.value.code == 0
+    assert "herkunft" in capsys.readouterr().out
+
+    with pytest.raises(SystemExit) as unknown_error:
+        main(["template", "unknown"])
+    assert unknown_error.value.code == 2
+    assert "herkunft" in capsys.readouterr().err
+
+
 def test_workstep_template_exposes_only_the_local_capability_call():
     _, body = load_frontmatter_and_body(TEMPLATES / "arbeitsschritt.md")
 
@@ -172,6 +185,7 @@ def test_both_workstep_templates_link_one_copyable_provenance_authority():
     anchor = capabilities.index('<a id="provenance-file-example"></a>')
     end = capabilities.find("\n## ", anchor)
     example = capabilities[anchor : end if end >= 0 else None]
+    provenance = (TEMPLATES / "herkunft.md").read_text(encoding="utf-8")
 
     locator = "02_protocol/capabilities.md#provenance-file-example"
     for body in (
@@ -187,6 +201,16 @@ def test_both_workstep_templates_link_one_copyable_provenance_authority():
         "input/<name>-herkunft.md",
         "input/rezeptur.md",
         "input/messwerte.csv",
+        "templates/herkunft.md",
+        "impacts template herkunft",
+        "impacts template herkunft --language de",
+        "Replace all nine field values",
+        "ordinary Markdown evidence",
+        "not a Core schema",
+    ):
+        assert field in example
+
+    for field in (
         "Origin / locator:",
         "Source state:",
         "Acquired by / provider:",
@@ -195,11 +219,30 @@ def test_both_workstep_templates_link_one_copyable_provenance_authority():
         "Content-Digest",
         "Required control:",
         "Actual control:",
-        "ordinary Markdown evidence",
-        "not a Core schema",
     ):
-        assert field in example
+        assert field in provenance
+    assert len([line for line in provenance.splitlines() if line.startswith("- ")]) == 9
     assert "- Provenance file:" not in example
+    assert "- Local input:" not in example
+
+
+@pytest.mark.parametrize(
+    "language,heading",
+    [("en", "# Source provenance"), ("de", "# Herkunft der Quelle")],
+)
+def test_cli_provenance_template_prints_exact_localized_bytes(language, heading):
+    output = StringIO()
+    with redirect_stdout(output):
+        exit_code = main(["template", "herkunft", "--language", language])
+
+    assert exit_code == 0
+    actual = output.getvalue().encode("utf-8")
+    expected = (TEMPLATES / ("de/" if language == "de" else "") / "herkunft.md").read_bytes()
+    assert heading.encode("utf-8") in actual
+    assert actual == expected
+    assert actual == template_text("herkunft", language=language).encode("utf-8")
+    assert len([line for line in output.getvalue().splitlines() if line.startswith("- ")]) == 9
+    assert "- Content-Digest:" in output.getvalue()
 
 
 def test_generated_workstep_routes_ontology_and_binds_document_blank():

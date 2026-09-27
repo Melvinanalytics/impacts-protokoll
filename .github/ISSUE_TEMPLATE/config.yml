@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Read contribution and evidence scope
+    url: https://github.com/Melvinanalytics/impacts-protokoll/blob/main/CONTRIBUTING.md
+    about: Check current contribution routes, evidence limits, and open gates before submitting.
+  - name: Propose a reviewed change
+    url: https://github.com/Melvinanalytics/impacts-protokoll/compare
+    about: Submit repository changes through a pull request.

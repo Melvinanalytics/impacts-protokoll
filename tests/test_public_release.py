@@ -1,6 +1,7 @@
 """Check the existing release allowlist; this neither exports nor approves a release."""
 from pathlib import Path, PurePosixPath
 import importlib.util
+import json
 import os
 import posixpath
 import re
@@ -9,6 +10,8 @@ import subprocess
 import textwrap
 import tomllib
 from urllib.parse import unquote, urlsplit
+
+import yaml
 
 import pytest
 
@@ -81,7 +84,7 @@ def test_public_markdown_references_resolve_inside_the_allowlisted_export():
     assert link_issues(export_files(ROOT)) == []
 
 
-def test_native_portability_workflows_enforce_the_frozen_corpus_before_release_build():
+def test_native_portability_workflows_bind_reports_to_the_frozen_corpus():
     ci = (ROOT / ".github/workflows/ci.yml").read_text()
     release = (ROOT / ".github/workflows/release.yml").read_text()
     for workflow in (ci, release):
@@ -92,34 +95,191 @@ def test_native_portability_workflows_enforce_the_frozen_corpus_before_release_b
         assert "macos-latest" in native
         assert 'python-version: "3.12"' in native
         assert "06_evaluations/conformance/run.py" in native
-        assert "$expectedPassed = 19 - $unsupported.Count" in native
-        assert "failed=0 total=19" in native
-        assert "$unsupported.Count -gt 2" in native
         assert "$runnerExit -ne 0" in native
-        assert "$summary[0] -ne $expectedSummary" in native
-        assert "hash-invalid-utf8-filename" in native
-        assert "run-invalid-utf8-filename" in native
-        assert "$allowedUnsupported -notcontains $Matches[1]" in native
-        assert "Malformed unsupported-case result" in native
+        assert "cases.json" in (ROOT / ".github/scripts/test_evidence.py").read_text()
+        assert not re.search(r"total\s*[=:]\s*\d+", native)
+        assert "hash-invalid-utf8-filename" not in native
+        assert "run-invalid-utf8-filename" not in native
         assert "shell: pwsh" in native
         assert "pip install --disable-pip-version-check -e ." in native
         assert "pytest" not in native.lower()
         assert "Preserve Git fixture bytes on Windows" in native
+    assert "test_evidence.py native-check" in ci
+    assert "test_evidence.py native-capture" in release
+    assert "--expected-os \"${{ runner.os }}\"" in release
+    assert "--source \"$(git rev-parse HEAD)\"" in release
+    assert "--run-url $runUrl" in release
+    assert "corpus_sha256" in (ROOT / ".github/scripts/test_evidence.py").read_text()
     release_native = release[release.index("  native-conformance:\n") : release.index("\n  build:\n")]
     assert "^v[0-9]+\\.[0-9]+\\.[0-9]+$" in release_native
     assert release_native.index("Validate requested tag name") < release_native.index("Check out the exact tagged source")
     assert "ref: ${{ env.RELEASE_TAG }}" in release_native
     assert "fetch-depth: 0" in release_native
+    assert "Transfer native conformance evidence" in release_native
+    assert "${{ github.run_attempt }}-${{ matrix.os }}" in release_native
     build = release[release.index("  build:\n") : release.index("\n  publish:\n")]
     publish = release[release.index("  publish:\n") :]
     assert "needs: native-conformance" in build
+    assert "Download current-attempt native evidence" in build
+    assert "merge-multiple: true" in build
+    assert "release-test-evidence-${{ env.RELEASE_TAG }}" in build
     assert "needs: build" in publish
+    assert "--reports \"${RUNNER_TEMP}/test-evidence\"" in publish
+    assert "--root ." in publish
 
 
 def test_public_docs_contain_no_workstation_paths():
     for name, text in export_files(ROOT).items():
         if name.endswith('.md'):
             assert not re.search(r'/Users/|/home/|/var/folders/|file://', text), name
+
+
+def test_candidate_public_contract_and_scope_match_the_manifest():
+    version = tomllib.loads((ROOT / "pyproject.toml").read_text())["project"]["version"]
+    manifest = json.loads((ROOT / "06_evaluations/conformance/cases.json").read_text())
+    count = len(manifest["cases"])
+    readme = (ROOT / "README.md").read_text()
+    german = (ROOT / "02_protocol/translations/de.md").read_text()
+    conformance = (ROOT / "06_evaluations/conformance/CONTEXT.md").read_text()
+    contributing = (ROOT / "CONTRIBUTING.md").read_text()
+    first_win = (ROOT / "FIRST-WIN.md").read_text()
+
+    assert version == "0.3.20"
+    assert f"currently contains {count} fixed synthetic cases" in readme
+    assert f"manifest has {count} cases" in conformance
+    assert f"derzeit {count} feste synthetische Fälle" in german
+    for content in (readme, german):
+        assert "report_version: 1" in content
+        assert ("message" in content and "diagnostic" in content.lower()) or "Diagnosehilfen" in content
+        assert "does not authenticate people" in content or "authentifiziert keine Menschen" in content
+        assert "coordinated rewrite" in content or "koordinierte Änderung" in content
+        assert "permission" in content or "Rechte" in content
+    assert "not a universal line-count rule" in readme
+    assert "keine allgemeine Zeilenzahlregel" in german
+    assert "impacts template herkunft" in readme and "neun Evidenzfelder" in german
+    assert "execute work" in readme and "führt keine Arbeit aus" in german
+    assert "report_version: 1` protects the JSON report shape" in readme
+    assert "Human-readable `message` values are diagnostic and may change" in readme
+    assert "frozen `cases.json` corpus defines the issue codes" in readme
+    assert "independent defects remain reportable" in readme
+    assert "Changing the report shape requires a `report_version` change" in readme
+    assert "No separate protocol-specification version" in readme
+    assert "report_version` versions the report shape" in contributing
+    assert "extra cases authored independently" in conformance
+    assert "prior" in conformance.lower() and "source exposure" in conformance.lower()
+    assert "Production use outside this inspected scope is unknown." in conformance
+    assert "remain **open**" in contributing
+    assert "Luna-generated output" in contributing
+    assert "optional next proof" in first_win
+    assert "first use file based and optional-tool free" in first_win
+    assert "CPython 3.11 on Linux x86_64 with glibc 2.17 or newer" in readme
+    assert "--require-hashes" in readme
+    assert "not a universal dependency lock or publisher-authenticity claim" in readme
+    assert "not independent verification, a build attestation, publisher authentication" in readme
+    for gate in (
+        "Three to five real first-use participants",
+        "Second operator after 168 elapsed hours",
+        "Independent implementation",
+        "Domain/tax reviewer",
+        "Real Langdock",
+        "Business baseline",
+    ):
+        assert gate in contributing
+    for gate in (
+        "drei bis fünf reale Teilnehmende",
+        "zweite Person nach 168 Stunden",
+        "unabhängige Implementierung",
+        "Fach-/Steuerprüfung",
+        "reale Langdock-Integration",
+        "Geschäftsbaseline-Vergleich",
+    ):
+        assert gate in german
+
+
+def test_public_issue_forms_and_pull_request_template_request_scoped_evidence():
+    template_root = ROOT / ".github/ISSUE_TEMPLATE"
+    config = yaml.safe_load((template_root / "config.yml").read_text(encoding="utf-8"))
+    assert config["blank_issues_enabled"] is False
+    assert {entry["name"] for entry in config["contact_links"]} == {
+        "Read contribution and evidence scope",
+        "Propose a reviewed change",
+    }
+    forms = {
+        path.name: yaml.safe_load(path.read_text(encoding="utf-8"))
+        for path in template_root.glob("*.yml")
+        if path.name != "config.yml"
+    }
+    assert set(forms) == {
+        "finding.yml",
+        "independent-implementation.yml",
+        "adoption-record.yml",
+    }
+    for path, form in forms.items():
+        assert set(form) >= {"name", "description", "title", "body"}, path
+        field_ids = [item["id"] for item in form["body"] if item.get("id")]
+        assert len(field_ids) == len(set(field_ids)), path
+
+    finding_options = next(
+        item["attributes"]["options"]
+        for item in forms["finding.yml"]["body"]
+        if item.get("id") == "finding_class"
+    )
+    assert set(finding_options) == {
+        "Diagnostics",
+        "Provenance-template distribution",
+        "Durable native release evidence",
+        "NTFS and platform boundary",
+        "Dependency closure for the bounded target",
+        "Public-review reproducibility",
+    }
+    for form in forms.values():
+        text = str(form).lower()
+        assert "source" in text and "scope" in text and "evidence" in text
+        assert "checks" in text or "result" in text
+
+    adoption = forms["adoption-record.yml"]
+    adoption_text = str(adoption).lower()
+    evidence_options = next(
+        item["attributes"]["options"]
+        for item in adoption["body"]
+        if item.get("id") == "evidence_kind"
+    )
+    assert set(evidence_options) == {"Synthetic evidence", "Already-public evidence"}
+    for phrase in (
+        "only synthetic or already-public evidence",
+        "non-sensitive reference",
+        "customer repository",
+        "do not link or attach them here",
+        "never include or link customer sources",
+        "captured outputs",
+        "review records",
+        "sanitized summary",
+    ):
+        assert phrase in adoption_text
+    assert "specifically authorized" not in adoption_text
+    assert "retained input/output evidence" not in adoption_text
+
+    contributing = (ROOT / "CONTRIBUTING.md").read_text().lower()
+    assert "public adoption issues accept only synthetic or already-public evidence" in contributing
+    assert "never attach or link them in a public issue" in contributing
+
+    pr = (ROOT / ".github/PULL_REQUEST_TEMPLATE.md").read_text()
+    for heading in ("Change and reason", "Source and evidence", "Compatibility and localization", "Maintainer review"):
+        assert heading in pr
+    assert "does not authenticate a person" in pr
+
+
+def test_contribution_dispositions_keep_candidate_and_external_scope_separate():
+    text = (ROOT / "CONTRIBUTING.md").read_text()
+    for phrase in (
+        "Closed in the v0.3.20 candidate",
+        "The public record exists only after its actual run and publication",
+        "Open outside named runner results",
+        "hash-enforced selected wheels",
+        "Open for independent third-party reruns",
+        "Production use outside the declared inspected public repository scope is unknown",
+    ):
+        assert phrase in text
 
 
 @pytest.mark.parametrize('target', [
@@ -165,12 +325,54 @@ def test_current_entry_instructions_match_distribution_version(path):
         + link_label_versions
     ) == {version}
 
+    lower_text = text.lower()
+    checksum_recipe = next(
+        section.lower()
+        for section in text.split("\n\n")
+        if "shasum -a 256 -c sha256sums" in section.lower()
+    )
+    if path == "README.md":
+        publication_gate = "published immutable release"
+        latest_published = "latest actually published release"
+        candidate_link = "candidate v0.3.20 release"
+        candidate_gate = "select the v0.3.20 candidate only after"
+        intro_gate = "is usable only after"
+        not_installable = "do not install a candidate wheel"
+    else:
+        publication_gate = "veröffentlichtes unveränderliches release"
+        latest_published = "neueste tatsächlich veröffentlichte ausgabe"
+        candidate_link = "v0.3.20 release"
+        candidate_gate = "kandidaten-release v0.3.20 erst auswählen, wenn"
+        intro_gate = "ist erst verwendbar, wenn"
+        not_installable = "kandidaten-wheel nicht installieren"
+    release_intro = next(
+        section.lower()
+        for section in text.split("\n\n")
+        if "releases/tag/v0.3.20" in section
+    )
+    assert candidate_link in lower_text
+    assert publication_gate in lower_text
+    assert latest_published in lower_text
+    assert intro_gate in release_intro
+    assert "sha256sums" in checksum_recipe
+    assert publication_gate in checksum_recipe
+    assert latest_published in checksum_recipe
+    assert candidate_gate in checksum_recipe
+    assert "python -m pip install" in checksum_recipe
+    assert checksum_recipe.index("sha256sums") < checksum_recipe.index(
+        "python -m pip install"
+    )
+    assert checksum_recipe.index("sha256sums") < checksum_recipe.index(
+        "impacts_protocol-0.3.20-py3-none-any.whl"
+    )
+    assert not_installable in checksum_recipe
+
 
 @pytest.mark.parametrize(
     ("path", "required_terms"),
     [
         ("README.md", ("wheel", "complete source archive", "`SHA256SUMS`")),
-        ("02_protocol/translations/de.md", ("Wheel", "vollständige Quellarchiv", "`SHA256SUMS`")),
+        ("02_protocol/translations/de.md", ("Wheel", "vollständiges Quellarchiv", "`SHA256SUMS`")),
     ],
 )
 def test_checksum_recipe_downloads_every_listed_release_asset(path, required_terms):

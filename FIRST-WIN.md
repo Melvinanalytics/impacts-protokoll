@@ -85,6 +85,8 @@ Close the conversation. Give a fresh agent only the folder and this task:
 
 The existing router and draft should make the work recoverable. If the draft link or a source is missing, repair that path at its existing home. No second summary or state engine is needed. A consumer check must observe this recovery; the programmed technical examples do not prove it.
 
+Keep this first use file based and optional-tool free. For a later, reproducible technical example with declared synthetic inputs and an executed deterministic delivery calculation, use the [delivery replay](06_evaluations/business-operations-wave/delivery-replay/CONTEXT.md). It is an optional next proof, not a prerequisite for preparing this draft; it simulates no customer action, approval or business effect.
+
 ## If the requested Git binding cannot be checked
 
 Suppose the owner now asks to prepare a Git-bound Run and validate its historical binding, but Git is unavailable. Keep the draft, sources, questions and any candidate definition at their existing homes. Record beside the preparation:

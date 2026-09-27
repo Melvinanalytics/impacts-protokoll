@@ -1,0 +1,11 @@
+---
+type: hauptprozess
+leistung:
+  ergebnis: Checked request
+  kennzahl: review duration
+  abnahme:
+    - Decision recorded
+einstieg_ref: arbeitsschritt:start
+---
+
+# Synthetic request review

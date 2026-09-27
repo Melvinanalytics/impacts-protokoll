@@ -185,7 +185,13 @@ def _validate_application(
     )
     if process is None:
         return None
-    if check_slug and root_slug_valid and process.get("id") != f"hauptprozess:{root.name}":
+    process_id = process.get("id")
+    if (
+        check_slug
+        and root_slug_valid
+        and isinstance(process_id, str)
+        and process_id != f"hauptprozess:{root.name}"
+    ):
         _add(issues, "structure.invalid", root, root, "Hauptprozess ID must match folder slug")
     part_dirs, complete_tree = _slug_children(root, root, issues, "Teilprozess")
     if check_slug and not root_slug_valid:
@@ -208,6 +214,7 @@ def _validate_application(
         if (
             part is not None
             and SLUG.fullmatch(part_root.name) is not None
+            and isinstance(part.get("id"), str)
             and part.get("id") != f"teilprozess:{part_root.name}"
         ):
             _add(issues, "structure.invalid", part_root, root, "Teilprozess ID must match folder slug")
@@ -270,9 +277,11 @@ def _validate_graph(application: Application, issues: list[Issue]) -> None:
 
     adjacency: dict[str, set[str]] = {step_id: set() for step_id in steps}
     direct_end: set[str] = set()
+    routes_complete = True
     for step_id, (path, step) in steps.items():
         routes = step.get("routen")
         if not isinstance(routes, dict):
+            routes_complete = False
             continue
         for target in routes.values():
             if not isinstance(target, str):
@@ -283,6 +292,11 @@ def _validate_graph(application: Application, issues: list[Issue]) -> None:
                 adjacency[step_id].add(target)
             else:
                 _add(issues, "reference.unresolved", path / "CONTEXT.md", root, f"Route target does not resolve: {target}")
+
+    # Declared targets remain checkable individually. Reachability and paths to
+    # an end are not: any missing route could add a graph edge that changes them.
+    if not routes_complete:
+        return
 
     reachable: set[str] = set()
     queue = deque([entry])
@@ -348,7 +362,8 @@ def _validate_vorgang(
     )
     if document is None:
         return
-    if document.get("id") != f"vorgang:{run_root.name}":
+    run_id = document.get("id")
+    if isinstance(run_id, str) and run_id != f"vorgang:{run_root.name}":
         _add(issues, "structure.invalid", run_root, workspace, "Vorgang ID must match folder slug")
     application = _resolve_application(
         workspace, document.get("application_revision"), run_root, issues, definitions, snapshots, reachable
@@ -842,13 +857,55 @@ def _load_context(
         except (OSError, ValueError, json.JSONDecodeError) as error:
             _add(issues, "format.invalid", path, root, str(error))
         else:
-            for error in errors:
-                pointer = "/" + "/".join(
-                    str(part).replace("~", "~0").replace("/", "~1")
-                    for part in error.absolute_path
-                ) if error.absolute_path else "<root>"
-                _add(issues, "schema.invalid", path, root, f"{pointer}: {error.message}")
+            for message in _schema_diagnostics(errors):
+                _add(issues, "schema.invalid", path, root, message)
     return metadata
+
+
+def _schema_diagnostics(errors: Iterable[Any]) -> tuple[str, ...]:
+    """Format useful schema errors, keeping one primary type error per location."""
+    ordered = sorted(
+        errors,
+        key=lambda error: (
+            tuple(str(part) for part in error.absolute_path),
+            0 if error.validator == "type" else 1,
+            tuple(str(part) for part in error.absolute_schema_path),
+        ),
+    )
+    type_paths = {
+        tuple(error.absolute_path) for error in ordered if error.validator == "type"
+    }
+    seen_type_paths: set[tuple[Any, ...]] = set()
+    messages: list[str] = []
+    for error in ordered:
+        instance_path = tuple(error.absolute_path)
+        if error.validator == "type":
+            if instance_path in seen_type_paths:
+                continue
+            seen_type_paths.add(instance_path)
+        elif instance_path in type_paths:
+            # Other keywords at exactly this malformed value do not add a
+            # repair action; errors on sibling values remain reportable.
+            continue
+
+        pointer = (
+            "/" + "/".join(
+                str(part).replace("~", "~0").replace("/", "~1")
+                for part in error.absolute_path
+            )
+            if error.absolute_path
+            else "<root>"
+        )
+        message = f"{pointer}: {error.message}"
+        if error.validator == "required" and isinstance(error.instance, dict):
+            missing = [
+                field for field in error.validator_value if field not in error.instance
+            ]
+            if missing:
+                fields = ", ".join(f"`{field}`" for field in missing)
+                message += f"; add {fields} to this frontmatter mapping"
+        messages.append(message)
+    return tuple(messages)
 
 
 def _slug_children(

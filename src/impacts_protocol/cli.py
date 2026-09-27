@@ -6,7 +6,7 @@ from pathlib import Path
 import sys
 import shlex
 
-from .generator import LANGUAGES, TEMPLATE_KINDS, init_workspace, template_text
+from .generator import CLI_TEMPLATE_KINDS, LANGUAGES, init_workspace, template_text
 from .hashing import HashSurfaceError, surface_hash
 
 
@@ -92,7 +92,7 @@ def build_parser() -> argparse.ArgumentParser:
     hash_parser.add_argument("--json", action="store_true", help="Print a JSON report")
 
     template_parser = subparsers.add_parser("template", help="Print a working template")
-    template_parser.add_argument("kind", choices=TEMPLATE_KINDS)
+    template_parser.add_argument("kind", choices=CLI_TEMPLATE_KINDS)
     template_parser.add_argument("--language", choices=LANGUAGES, default="en", help="Customer working language (default: en)")
     return parser
 
