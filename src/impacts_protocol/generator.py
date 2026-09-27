@@ -8,6 +8,8 @@ from tempfile import mkdtemp
 from .workspace_contract import WORKSPACE_FOLDERS
 
 TEMPLATE_KINDS = ("application", "hauptprozess", "teilprozess", "arbeitsschritt", "vorgang")
+SUPPLEMENTAL_TEMPLATE_KINDS = ("herkunft",)
+CLI_TEMPLATE_KINDS = TEMPLATE_KINDS + SUPPLEMENTAL_TEMPLATE_KINDS
 
 
 def init_workspace(target: Path, *, language: str = "en") -> Path:
@@ -48,7 +50,7 @@ def _template_file(kind: str, language: str) -> str:
 
 def template_text(kind: str, *, language: str = "en") -> str:
     """Return a localized template; machine contracts are unchanged."""
-    if kind not in TEMPLATE_KINDS:
+    if kind not in CLI_TEMPLATE_KINDS:
         raise ValueError(f"unknown template kind: {kind}")
     return _template_file(kind, language)
 

@@ -26,11 +26,32 @@ def installed_environment(tmp_path_factory) -> dict[str, str]:
     temporary_root = tmp_path_factory.mktemp("installed-package")
     target = temporary_root / "site"
     source = temporary_root / "source"
+    wheelhouse = temporary_root / "wheelhouse"
+    wheelhouse.mkdir()
     shutil.copytree(
         ROOT,
         source,
         ignore=shutil.ignore_patterns(".git", "build", "*.egg-info", "__pycache__"),
     )
+    build = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "pip",
+            "wheel",
+            "--wheel-dir",
+            str(wheelhouse),
+            "--no-build-isolation",
+            "--no-deps",
+            str(source),
+        ],
+        cwd=temporary_root,
+        capture_output=True,
+        text=True,
+    )
+    assert build.returncode == 0, build.stderr
+    wheels = list(wheelhouse.glob("*.whl"))
+    assert len(wheels) == 1
     install = subprocess.run(
         [
             sys.executable,
@@ -38,11 +59,10 @@ def installed_environment(tmp_path_factory) -> dict[str, str]:
             "pip",
             "install",
             "--no-cache-dir",
-            "--no-build-isolation",
             "--no-deps",
             "--target",
             str(target),
-            str(source),
+            str(wheels[0]),
         ],
         cwd=temporary_root,
         capture_output=True,
@@ -110,6 +130,32 @@ def test_non_editable_install_exposes_template_and_hash_from_unrelated_cwd(
     assert heading in template.stdout
     assert digest.returncode == 0, digest.stderr
     assert digest.stdout.startswith("sha256:") and len(digest.stdout.strip()) == 71
+
+
+@pytest.mark.parametrize("language", ["en", "de"])
+def test_wheel_install_prints_exact_provenance_template_from_unrelated_cwd(
+    installed_environment, tmp_path, language
+):
+    command = ["impacts", "template", "herkunft"]
+    if language == "de":
+        command.extend(["--language", "de"])
+
+    template = subprocess.run(
+        command,
+        cwd=tmp_path,
+        env=installed_environment,
+        capture_output=True,
+    )
+
+    expected = (
+        ROOT
+        / "02_protocol"
+        / "templates"
+        / ("de" if language == "de" else "")
+        / "herkunft.md"
+    ).read_bytes()
+    assert template.returncode == 0, template.stderr.decode("utf-8", errors="replace")
+    assert template.stdout == expected
 
 
 def test_non_editable_install_contains_only_five_schemas_and_minimal_api(

@@ -9,11 +9,11 @@ ROOT = Path(__file__).resolve().parents[1]
 import pytest
 
 from impacts_protocol.cli import main
-from impacts_protocol.generator import TEMPLATE_KINDS, init_workspace, template_text
+from impacts_protocol.generator import CLI_TEMPLATE_KINDS, init_workspace, template_text
 from impacts_protocol.io import load_frontmatter_and_body
 from impacts_protocol.validator import SCHEMA_REGISTRY, validate
 
-PAIRS = [(f"02_protocol/templates/{kind}.md", f"02_protocol/templates/de/{kind}.md") for kind in (*TEMPLATE_KINDS, "workspace")]
+PAIRS = [(f"02_protocol/templates/{kind}.md", f"02_protocol/templates/de/{kind}.md") for kind in (*CLI_TEMPLATE_KINDS, "workspace")]
 PAIRS += [("02_protocol/language.md", "02_protocol/translations/de.md"),
           ("README.md", "02_protocol/translations/de.md"),
           ("FIRST-WIN.md", "02_protocol/translations/de.md"),
@@ -94,8 +94,18 @@ def test_unknown_language_fails_before_creating_workspace(tmp_path):
 def test_german_template_commands_select_german_instead_of_default_english():
     for _, target in PAIRS:
         text = (ROOT / target).read_text()
-        for match in re.finditer(r"impacts template (?:application|hauptprozess|teilprozess|arbeitsschritt|vorgang|<art>)", text):
+        for match in re.finditer(r"impacts template (?:application|hauptprozess|teilprozess|arbeitsschritt|vorgang|herkunft|<art>)", text):
             assert text[match.end():].startswith(" --language de"), target
+
+
+@pytest.mark.parametrize(
+    "language,heading",
+    [("en", "# Source provenance"), ("de", "# Herkunft der Quelle")],
+)
+def test_cli_selects_localized_provenance_template(language, heading, capsys):
+    assert main(["template", "herkunft", "--language", language]) == 0
+    assert capsys.readouterr().out == template_text("herkunft", language=language)
+    assert heading in template_text("herkunft", language=language)
 
 
 @pytest.mark.parametrize(
