@@ -86,14 +86,19 @@ Pull requests should link the issue or bounded gap, name changed authority files
 
 These gates remain **open**. CI, Luna-generated output, synthetic replays, internal model reviews or repository instructions do not substitute for the named external evidence.
 
-| Gate | Required evidence before the gate can be reviewed |
-|---|---|
-| Three to five real first-use participants | Unaccompanied, scoped first-use records and separately retained repairs under the [follow-up protocol](06_evaluations/nontechnical-reconstruction/FOLLOW-UP.md). |
-| Second operator after 168 elapsed hours | A different operator continues from only the retained router and case evidence; preserve actual timestamps and score against an independently prepared, matched manual case. |
-| Independent implementation | A source-exposure declaration, candidate revision, shared-corpus result and independently authored extra cases under the challenge above. |
-| Domain/tax reviewer | A named, bounded review scope, cited evidence, masked candidate/baseline material where comparative, reviewer findings and unresolved items. Review does not itself establish source ownership or approval authority. |
-| Real Langdock | A revision-bound run in the actual authorized Langdock environment, with its tool scope, inputs, outputs, checks and limits recorded. Synthetic/local runs do not satisfy this. |
-| Business baseline | A predeclared outcome and same-scope manual comparison, actual case selection, checks, adverse-action review and total human effort. No benefit or effect claim before this evidence. |
+Each linked contract owns its pass rule and licensed sentence. Its issue is the execution record: it links one frozen contract commit, records roles and retained evidence, and never restates a different rule. Where the table says issue-owned, that issue remains the single contract and record until a reviewed contract home is created.
+
+| Gate | Authoritative contract | Execution issue |
+|---|---|---|
+| Independent implementation | [Independent implementation challenge](06_evaluations/conformance/CONTEXT.md#independent-implementation-challenge) | [#27](https://github.com/Melvinanalytics/impacts-protokoll/issues/27) |
+| Unaccompanied first use and correction | [Follow-up Gate A](06_evaluations/nontechnical-reconstruction/FOLLOW-UP.md#gate-a) | [#28](https://github.com/Melvinanalytics/impacts-protokoll/issues/28) |
+| Second operator after 168 elapsed hours | [Follow-up Gate B](06_evaluations/nontechnical-reconstruction/FOLLOW-UP.md#gate-b) | [#29](https://github.com/Melvinanalytics/impacts-protokoll/issues/29) |
+| Listening intake in authorized Langdock | [Listening-intake screen](06_evaluations/listening-intake/CONTEXT.md) | [#30](https://github.com/Melvinanalytics/impacts-protokoll/issues/30) |
+| Bounded domain review | [Follow-up Gate C](06_evaluations/nontechnical-reconstruction/FOLLOW-UP.md#gate-c) | [#31](https://github.com/Melvinanalytics/impacts-protokoll/issues/31) |
+| Matched business comparison | [Follow-up Gate D](06_evaluations/nontechnical-reconstruction/FOLLOW-UP.md#gate-d) | [#32](https://github.com/Melvinanalytics/impacts-protokoll/issues/32) |
+| Additional Windows/filesystem boundary | Issue-owned until a reviewed contract home is needed | [#33](https://github.com/Melvinanalytics/impacts-protokoll/issues/33) |
+| Consumer-needed hash-enforced dependency target | Issue-owned until a reviewed contract home is needed | [#34](https://github.com/Melvinanalytics/impacts-protokoll/issues/34) |
+| Independent public release replay | Issue-owned until a reviewed contract home is needed | [#35](https://github.com/Melvinanalytics/impacts-protokoll/issues/35) |
 
 Production use outside the declared inspected public repository scope is unknown.
 
