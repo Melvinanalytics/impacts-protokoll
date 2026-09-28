@@ -25,7 +25,7 @@ Every comparative gate needs a same-scope manual-baseline record or case, prepar
 
 **Licensed sentence after closure:** “`<k>` of `<N>` eligible first-time participants completed the frozen no-install task and one source correction without help and without a hard failure, at candidate revision `<revision>`.”
 
-Recruit people who do business work in a small or medium company and have no earlier exposure to IMPACTS files, demonstrations or courses. Record only broad role categories. Exclude anyone whose main job is software development. Run each participant separately with the same frozen instructions and fresh bounded material. A silent observer may record time and steps and may intervene only to stop unsafe action; the intervention makes that task assisted and therefore failed for this gate.
+Recruit people who do business work in a small or medium company and have no earlier exposure to IMPACTS files, demonstrations or courses. Record only broad role categories. Exclude anyone whose main job is software development. Run each participant separately with the same frozen instructions and fresh bounded material. Use the participants' working language for every instruction and exercise file. A silent observer may record time and steps and may intervene only to stop unsafe action; the intervention makes that task assisted and therefore failed for this gate.
 
 Each participant completes two tasks:
 

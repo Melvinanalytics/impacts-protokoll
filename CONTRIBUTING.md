@@ -86,7 +86,7 @@ Pull requests should link the issue or bounded gap, name changed authority files
 
 These gates remain **open**. CI, Luna-generated output, synthetic replays, internal model reviews or repository instructions do not substitute for the named external evidence.
 
-Each linked contract owns its pass rule and licensed sentence; an issue-owned gate keeps both in its issue. The execution issue links the frozen contract commit and records the run without restating rules. A closed gate supports only its licensed sentence, at the revision that sentence names. A named maintainer reviews the frozen evidence and records the closure decision.
+Each linked contract owns its pass rule and licensed sentence; an issue-owned gate keeps both in its issue. Its execution issue links the contract and records each run in comments: the freeze commit, the evidence and a named maintainer's closure decision after review of the frozen evidence. A closed gate supports only its licensed sentence, at the revision that sentence names.
 
 | Gate | Authoritative contract | Execution issue |
 |---|---|---|
