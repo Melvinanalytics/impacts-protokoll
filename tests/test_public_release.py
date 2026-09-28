@@ -219,23 +219,37 @@ def test_public_issue_forms_and_pull_request_template_request_scoped_evidence():
         field_ids = [item["id"] for item in form["body"] if item.get("id")]
         assert len(field_ids) == len(set(field_ids)), path
 
-    finding_options = next(
-        item["attributes"]["options"]
-        for item in forms["finding.yml"]["body"]
-        if item.get("id") == "finding_class"
-    )
-    assert set(finding_options) == {
-        "Diagnostics",
-        "Provenance-template distribution",
-        "Durable native release evidence",
-        "NTFS and platform boundary",
-        "Dependency closure for the bounded target",
-        "Public-review reproducibility",
+    expected_fields = {
+        "finding.yml": {
+            "source_revision",
+            "reproduction",
+            "expected_observed",
+            "checks_not_performed",
+        },
+        "adoption-record.yml": {
+            "contribution_kind",
+            "candidate_revision",
+            "participants_and_scope",
+            "evidence_kind",
+            "public_reference_and_scope",
+            "checks_and_adverse_actions",
+            "effort_and_limits",
+        },
+        "independent-implementation.yml": {
+            "candidate_revision",
+            "prior_exposure",
+            "ai_assistance",
+            "evidence_record",
+        },
     }
-    for form in forms.values():
-        text = str(form).lower()
-        assert "source" in text and "scope" in text and "evidence" in text
-        assert "checks" in text or "result" in text
+    for path, form in forms.items():
+        assert {item["id"] for item in form["body"] if item.get("id")} == expected_fields[path]
+
+    finding_text = str(forms["finding.yml"]).lower()
+    assert "command" in finding_text and "environment" in finding_text
+    assert "expected" in finding_text and "observed" in finding_text
+    assert "checks not performed" in finding_text
+    assert "finding_class" not in finding_text and "human:<id>" not in finding_text
 
     adoption = forms["adoption-record.yml"]
     adoption_text = str(adoption).lower()
@@ -245,12 +259,12 @@ def test_public_issue_forms_and_pull_request_template_request_scoped_evidence():
         if item.get("id") == "evidence_kind"
     )
     assert set(evidence_options) == {"Synthetic evidence", "Already-public evidence"}
+    assert adoption_text.count("only synthetic or already-public evidence") == 1
     for phrase in (
         "only synthetic or already-public evidence",
         "non-sensitive reference",
         "customer repository",
         "do not link or attach them here",
-        "never include or link customer sources",
         "captured outputs",
         "review records",
         "sanitized summary",
@@ -259,6 +273,10 @@ def test_public_issue_forms_and_pull_request_template_request_scoped_evidence():
     assert "specifically authorized" not in adoption_text
     assert "retained input/output evidence" not in adoption_text
 
+    independent_text = str(forms["independent-implementation.yml"]).lower()
+    for phrase in ("candidate source and revision", "prior source exposure", "ai assistance", "challenge evidence record"):
+        assert phrase in independent_text
+
     contributing = (ROOT / "CONTRIBUTING.md").read_text().lower()
     assert "public adoption issues accept only synthetic or already-public evidence" in contributing
     assert "never attach or link them in a public issue" in contributing
@@ -266,7 +284,8 @@ def test_public_issue_forms_and_pull_request_template_request_scoped_evidence():
     pr = (ROOT / ".github/PULL_REQUEST_TEMPLATE.md").read_text()
     for heading in ("Change and reason", "Source and evidence", "Compatibility and localization", "Maintainer review"):
         assert heading in pr
-    assert "does not authenticate a person" in pr
+    assert "German edits and the English change each mirrors" in pr
+    assert "does not authenticate a person" not in pr
 
 
 def test_contribution_dispositions_keep_published_and_external_scope_separate():
