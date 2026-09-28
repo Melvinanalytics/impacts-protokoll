@@ -44,7 +44,7 @@ This diagram is orientation. The [ontology](02_protocol/ontology.md) owns eviden
 
 ## Get the protocol
 
-Use the latest actually published release for new work. The [candidate v0.3.20 release](https://github.com/Melvinanalytics/impacts-protokoll/releases/tag/v0.3.20) is usable only after GitHub shows it as a published immutable Release with the wheel, complete source archive and `SHA256SUMS`; verify every listed checksum before installing or using its source archive. Until that condition is met, use the latest actually published release. A missing or draft candidate Release is not an install source.
+Use the published immutable Release [v0.3.20](https://github.com/Melvinanalytics/impacts-protokoll/releases/tag/v0.3.20) for new work. Download the wheel, complete source archive and `SHA256SUMS`; verify every listed checksum before installing or using the source archive.
 
 Keep the complete source together: method, Architect, references, templates and examples. Reading the archive needs no installation. A copied Architect folder is incomplete even when its `references/` folder is present: it also depends on parent protocol files and root guidance. The wheel contains only the CLI, schemas and templates; it does not contain the method, Architect, evaluations, tests or complete source guidance. Wheel users who need the source-provenance form can run `impacts template herkunft` (or add `--language de`). That template has nine evidence fields. Its field count describes this template; it is not a universal line-count rule.
 
@@ -109,8 +109,8 @@ source .venv/bin/activate
 
 Choose one installation source:
 
-- **Complete checkout:** use a source tree extracted from the latest actually published immutable Release, after every listed `SHA256SUMS` entry passes. Select the v0.3.20 candidate only after its published immutable Release exists and its listed checksums verify; until then use the source tree from the latest actually published release. From the verified tree's root, run `python -m pip install -e .`.
-- **Release wheel:** use the latest actually published immutable Release and download its wheel, complete source archive and `SHA256SUMS` into one folder. The candidate [v0.3.20 Release](https://github.com/Melvinanalytics/impacts-protokoll/releases/tag/v0.3.20) may be selected only after it exists as a published immutable Release with all three assets; until then use the latest actually published release. From the folder, verify every listed asset with `shasum -a 256 -c SHA256SUMS` (macOS/Linux) before installing. If the verified Release is v0.3.20, install with `python -m pip install ./impacts_protocol-0.3.20-py3-none-any.whl`; otherwise use the wheel filename supplied by the selected Release. Do not install a candidate wheel when the Release is absent, draft, or checksum verification fails.
+- **Complete checkout:** use the source tree extracted from the published immutable v0.3.20 Release after every listed `SHA256SUMS` entry passes. From the verified tree's root, run `python -m pip install -e .`.
+- **Release wheel:** download the wheel, complete source archive and `SHA256SUMS` from the published immutable Release [v0.3.20](https://github.com/Melvinanalytics/impacts-protokoll/releases/tag/v0.3.20) into one folder. Verify every listed asset with `shasum -a 256 -c SHA256SUMS` (macOS/Linux), then install with `python -m pip install ./impacts_protocol-0.3.20-py3-none-any.whl`.
 
 Follow [Version and entry points](#version-and-entry-points) to identify the installed package and obtain its complete source. Then, outside the intended new customer folder:
 

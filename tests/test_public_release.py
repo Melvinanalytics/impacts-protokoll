@@ -334,32 +334,25 @@ def test_current_entry_instructions_match_distribution_version(path):
         if "shasum -a 256 -c sha256sums" in section.lower()
     )
     if path == "README.md":
-        publication_gate = "published immutable release"
-        latest_published = "latest actually published release"
-        candidate_link = "candidate v0.3.20 release"
-        candidate_gate = "select the v0.3.20 candidate only after"
-        intro_gate = "is usable only after"
-        not_installable = "do not install a candidate wheel"
+        intro_publication = "published immutable release"
+        recipe_publication = "published immutable release"
+        release_link = "v0.3.20 release"
+        stale_terms = ("candidate v0.3.20", "v0.3.20 candidate", "candidate wheel")
     else:
-        publication_gate = "veröffentlichtes unveränderliches release"
-        latest_published = "neueste tatsächlich veröffentlichte ausgabe"
-        candidate_link = "v0.3.20 release"
-        candidate_gate = "kandidaten-release v0.3.20 erst auswählen, wenn"
-        intro_gate = "ist erst verwendbar, wenn"
-        not_installable = "kandidaten-wheel nicht installieren"
+        intro_publication = "veröffentlichte unveränderliche release"
+        recipe_publication = "veröffentlichten unveränderlichen release"
+        release_link = "v0.3.20 release"
+        stale_terms = ("kandidaten-release v0.3.20", "kandidaten-wheel")
     release_intro = next(
         section.lower()
         for section in text.split("\n\n")
         if "releases/tag/v0.3.20" in section
     )
-    assert candidate_link in lower_text
-    assert publication_gate in lower_text
-    assert latest_published in lower_text
-    assert intro_gate in release_intro
+    assert release_link in lower_text
+    assert intro_publication in release_intro
+    assert not any(term in lower_text for term in stale_terms)
     assert "sha256sums" in checksum_recipe
-    assert publication_gate in checksum_recipe
-    assert latest_published in checksum_recipe
-    assert candidate_gate in checksum_recipe
+    assert recipe_publication in checksum_recipe
     assert "python -m pip install" in checksum_recipe
     assert checksum_recipe.index("sha256sums") < checksum_recipe.index(
         "python -m pip install"
@@ -367,7 +360,6 @@ def test_current_entry_instructions_match_distribution_version(path):
     assert checksum_recipe.index("sha256sums") < checksum_recipe.index(
         "impacts_protocol-0.3.20-py3-none-any.whl"
     )
-    assert not_installable in checksum_recipe
 
 
 @pytest.mark.parametrize(
