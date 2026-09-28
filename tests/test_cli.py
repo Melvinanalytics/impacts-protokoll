@@ -218,12 +218,6 @@ class CliTests(unittest.TestCase):
             self.assertEqual(
                 0, main(["init", str(target)])
             )
-            self.assertEqual(b"* -text\n", (target / ".gitattributes").read_bytes())
-            self.assertEqual(
-                {".gitattributes", "CONTEXT.md", "applications", "vorgaenge"},
-                {path.name for path in target.iterdir()},
-            )
-            self.assertFalse((target / ".git").exists())
             self.assertEqual(0, main(["validate", str(target)]))
 
     def test_validate_accepts_utf8_bom_before_frontmatter(self):

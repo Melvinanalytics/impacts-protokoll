@@ -4,7 +4,7 @@
 
 Diese Bedienhilfe übersetzt den [englischen Sprachvertrag](../language.md). Die englische Protokolldefinition bleibt maßgeblich für die Technik; die Arbeitsunterlagen Ihres Unternehmens bleiben Deutsch. Eine englische Quelle, Werkzeugmeldung oder importierte Application ändert diese Arbeitssprache nicht.
 
-<!-- Translation source: README.md; sha256: f094c2d85118b0c5381334385c4203a26780a488316aebdb42ac78f3f638daf6 -->
+<!-- Translation source: README.md; sha256: b6173de582a3b52f04ae88ca709614febf79754cb536e27408cad36f80ee0c40 -->
 
 ## Verhältnis zu ICM
 
