@@ -113,13 +113,14 @@ def test_future_gates_are_unperformed_and_cover_all_requested_scoring():
     ).read_text(encoding="utf-8")
     for phrase in (
         "Status: protocol prepared; every gate and result is `open`",
-        "The numeric values of `<N>` and `<k>` are `open`",
+        "A gate cannot run while any of these is `open`",
         "168 hours",
         "bounded domain review",
         "matched business comparison",
         "Licensed sentence after closure",
-        "Every recruited participant remains in the denominator",
-        "The named closer records the decision",
+        "stays in the denominator",
+        "never rewrite a failed answer after the scorer sees it",
+        "do not merge populations or time periods that do not match",
         "adverse actions",
         "useful result",
         "status navigation",
