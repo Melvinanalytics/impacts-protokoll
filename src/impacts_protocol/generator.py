@@ -59,6 +59,7 @@ def _write_workspace(target: Path, language: str) -> None:
     for folder in WORKSPACE_FOLDERS:
         (target / folder).mkdir()
 
+    (target / ".gitattributes").write_text("* -text\n", encoding="utf-8")
     (target / "CONTEXT.md").write_text(
         _template_file("workspace", language),
         encoding="utf-8",

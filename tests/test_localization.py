@@ -72,6 +72,7 @@ def test_cli_language_selection_persists_and_prints_matching_template(tmp_path, 
     data, body = load_frontmatter_and_body(root / "CONTEXT.md")
     assert data == {"type": "workspace"} and validate(root).valid
     assert f"Working language: {language}" in body
+    assert (root / ".gitattributes").read_bytes() == b"* -text\n"
     init_output = capsys.readouterr().out
     assert "impacts validate" in init_output
     assert ("Nächster Schritt" if language == "de" else "Next:") in init_output

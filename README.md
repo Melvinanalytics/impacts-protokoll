@@ -121,7 +121,7 @@ impacts template arbeitsschritt
 impacts template herkunft
 ```
 
-`init` creates an empty Core workspace (`CONTEXT.md`, `applications/`, `vorgaenge/`), refuses an existing target and creates no Git repository or runnable process. Keep the customer workspace separate from the protocol source. Add `--language de` to `init` or `template` for German. Initialize Git at the Core root before committing an Application for Run binding.
+`init` creates an empty Core workspace (`.gitattributes`, `CONTEXT.md`, `applications/`, `vorgaenge/`), writes exactly `* -text` plus a newline to `.gitattributes`, refuses an existing target and creates no Git repository or runnable process. Existing workspaces need the same line before their first bound Run. Keep the customer workspace separate from the protocol source. Add `--language de` to `init` or `template` for German. Initialize Git at the Core root before committing an Application for Run binding.
 
 Explore the [Application template](02_protocol/templates/application.md), [schemas](02_protocol/schemas/), [Capabilities](02_protocol/capabilities.md) and [Architect skill](02_protocol/impacts-architect/SKILL.md). The programmed [offer walk](06_evaluations/offer-walk/CONTEXT.md) retains checked synthetic preparation at a pending human gate; the [cold walk](06_evaluations/cold-walk/CONTEXT.md) exercises loops, waits, synthetic gates and transport.
 
