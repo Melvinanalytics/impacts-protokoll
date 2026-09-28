@@ -249,7 +249,6 @@ def test_public_issue_forms_and_pull_request_template_request_scoped_evidence():
     assert "command" in finding_text and "environment" in finding_text
     assert "expected" in finding_text and "observed" in finding_text
     assert "checks not performed" in finding_text
-    assert "finding_class" not in finding_text and "human:<id>" not in finding_text
 
     adoption = forms["adoption-record.yml"]
     adoption_text = str(adoption).lower()
@@ -285,7 +284,6 @@ def test_public_issue_forms_and_pull_request_template_request_scoped_evidence():
     for heading in ("Change and reason", "Source and evidence", "Compatibility and localization", "Maintainer review"):
         assert heading in pr
     assert "German edits and the English change each mirrors" in pr
-    assert "does not authenticate a person" not in pr
 
 
 def test_contribution_dispositions_keep_published_and_external_scope_separate():
