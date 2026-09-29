@@ -888,15 +888,11 @@ def _schema_diagnostics(errors: Iterable[Any]) -> tuple[str, ...]:
             # repair action; errors on sibling values remain reportable.
             continue
 
-        pointer = (
-            "/" + "/".join(
-                str(part).replace("~", "~0").replace("/", "~1")
-                for part in error.absolute_path
-            )
-            if error.absolute_path
-            else "<root>"
+        pointer = "/" + "/".join(
+            str(part).replace("~", "~0").replace("/", "~1")
+            for part in error.absolute_path
         )
-        message = f"{pointer}: {error.message}"
+        message = f"{pointer}: {error.message}" if error.absolute_path else error.message
         if error.validator == "required" and isinstance(error.instance, dict):
             missing = [
                 field for field in error.validator_value if field not in error.instance
