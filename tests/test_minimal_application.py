@@ -98,7 +98,7 @@ def test_schema_violation_fails_at_public_interface():
         assert len(errors) == 1
         assert errors[0].path == "CONTEXT.md"
         assert errors[0].message == (
-            "<root>: 'leistung' is a required property; add `leistung` to this frontmatter mapping"
+            "'leistung' is a required property; add `leistung` to this frontmatter mapping"
         )
 
 
@@ -118,7 +118,7 @@ def test_missing_id_reports_nearest_mapping_and_avoids_folder_mismatch(tmp_path)
     schema = [issue for issue in issues if issue.code == "schema.invalid"]
     assert len(schema) == 1
     assert schema[0].message == (
-        "<root>: 'id' is a required property; add `id` to this frontmatter mapping"
+        "'id' is a required property; add `id` to this frontmatter mapping"
     )
 
 
@@ -136,7 +136,7 @@ def test_workspace_application_issues_include_each_application_path(tmp_path):
         for issue in validate(root).issues
         if issue.code == "schema.invalid"
         and issue.message == (
-            "<root>: 'einstieg_ref' is a required property; "
+            "'einstieg_ref' is a required property; "
             "add `einstieg_ref` to this frontmatter mapping"
         )
     ]
@@ -146,6 +146,23 @@ def test_workspace_application_issues_include_each_application_path(tmp_path):
         "applications/video-b/CONTEXT.md",
     ]
     assert validate(root / "applications" / "video-a").issues[0].path == "CONTEXT.md"
+
+
+@pytest.mark.parametrize("field", ["pruefung", "routen"])
+def test_missing_top_level_workstep_field_omits_root_prefix(tmp_path, field):
+    root = write_application(tmp_path / "video")
+    path = root / "produktion/start/CONTEXT.md"
+    metadata = read_context(path)
+    metadata.pop(field)
+    replace_context(path, metadata)
+
+    errors = [issue for issue in validate(root).issues if issue.code == "schema.invalid"]
+
+    assert len(errors) == 1
+    assert errors[0].path == "produktion/start/CONTEXT.md"
+    assert errors[0].message == (
+        f"'{field}' is a required property; add `{field}` to this frontmatter mapping"
+    )
 
 
 @pytest.mark.parametrize("invalid", [[42, 17], []])

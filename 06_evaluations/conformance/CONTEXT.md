@@ -33,11 +33,20 @@ The synthetic `human:fixture-reviewer` value is test data only. It authenticates
 
 ## Independent implementation challenge
 
-Implement the report contract from this written corpus contract and `cases.json`; do not import, copy or consult `src/impacts_protocol/`, project tests or generated reports while writing the candidate. The shared corpus is the specification for this named structural subset, not for the whole protocol. Declare prior source exposure in the result: whether the implementation author previously read, used or received source from this repository, including reference implementation or test code. Prior exposure does not invalidate useful work, but it must be visible and prevents a claim of source-unexposed implementation.
+**Licensed sentence after closure:** “A second implementation, written from the public contract, produces the same `validate --json` and `hash` results as the reference CLI for `<n>` applicable shared cases and `<N>` independently authored cases on `<environment>`, at revision `<revision>`.”
+
+Implement the report contract from this written corpus contract and `cases.json`. While writing, neither the author nor an assisting model imports, copies or consults `src/impacts_protocol/`, project tests or generated reports. The shared corpus is the specification for this named structural subset, not for the whole protocol.
+
+For this challenge, an **independent implementation** is a separate code base whose author has no maintainer role and no commit to `src/impacts_protocol/`, and which copies no reference implementation code. Declare any prior source exposure: this repository's source, tests, fixtures or generated reports. Reading the public contract is not source exposure. Prior exposure does not invalidate useful work, but it prevents a claim of **source-unexposed implementation**. Declare AI assistance, prompts and supplied files. Maintainers answer questions only by citing or changing public contract text; retain each question and disposition.
 
 Run the candidate as a command with `--command-json`. Preserve the exact candidate source revision, command, runtime and operating system, runner output, applicable/unsupported counts and every unsupported reason. The submitted record must include extra cases authored independently for this challenge, with their fixtures, expected reports and rationale. Keep those cases separate from the shared corpus unless a reviewed change to the common contract is proposed. Reusing or copying a frozen case does not count as an additional case.
 
-A pass requires every applicable shared case and each submitted extra case to pass. Report unsupported shared cases with their exact capability reason; they are not passes. A pass supports only the exercised structural report contract and named inputs. It does not establish full protocol conformance, production suitability, security, authenticated decisions, business outcomes, other-platform support or absence of untested defects. A pass record is not a human approval or release authorization.
+Commit a numeric minimum of extra cases before implementation begins; without it the challenge cannot close. The extra cases cover both commands and include cases aimed at contract passages the implementer found unclear.
+
+A pass requires every applicable shared case and every submitted extra case to pass. Commit the extra cases and their expected reports, then run the reference CLI at the same declared protocol revision against all of them. Candidate and reference must return the same `valid` or `digest` values and the same sorted issue-code lists, ignoring `tool` and diagnostic `message`. Preserve every disagreement and classify it as a contract, reference or candidate defect before closure. Report unsupported shared cases with their exact capability reason; they are not passes.
+
+
+A pass supports only the exercised structural report contract and named inputs. It does not establish full protocol conformance, production suitability, security, authenticated decisions, business outcomes, other-platform support or absence of untested defects. A pass record is not a human approval or release authorization.
 
 ## Declared public inspection scope
 

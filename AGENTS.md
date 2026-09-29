@@ -6,7 +6,7 @@ For `AGENTS.md`, `CONTEXT.md`, workstep prompts or prompt fragments, apply [Main
 
 Before capturing, changing or applying domain meaning, follow the applicable completion path in [ontology.md](02_protocol/ontology.md).
 
-Keep claims in definitions, records and reviews with their source and [evidence label](02_protocol/impacts-architect/references/zuschnitt.md#evidence). Keep method examples synthetic and customer-specific material in its customer repository.
+Keep claims in definitions, records, reviews and completion reports with their source and [evidence label](02_protocol/impacts-architect/references/zuschnitt.md#evidence). Keep method examples synthetic and customer-specific material in its customer repository.
 
 ## Simplicity contract (binding; grounded in ICM/OKF)
 
