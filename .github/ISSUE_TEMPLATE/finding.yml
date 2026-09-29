@@ -4,63 +4,32 @@ title: "[Finding]: "
 body:
   - type: markdown
     attributes:
-      value: >-
-        Report only evidence you observed. Keep customer and personal data, credentials,
-        private logs, and access state out of this issue. A name, reviewer label, or
-        `human:<id>` is attribution only; it does not establish identity or approval.
-  - type: dropdown
-    id: finding_class
-    attributes:
-      label: Finding class
-      options:
-        - Diagnostics
-        - Provenance-template distribution
-        - Durable native release evidence
-        - NTFS and platform boundary
-        - Dependency closure for the bounded target
-        - Public-review reproducibility
-    validations:
-      required: true
+      value: Follow the public evidence scope in `CONTRIBUTING.md`.
   - type: input
     id: source_revision
     attributes:
       label: Source revision or installed edition
-      description: Give commit/tag and package edition when known. State unknown values as unknown.
-      placeholder: commit, tag, package version, or unknown
+      description: Commit, tag, package edition, or unknown.
     validations:
       required: true
   - type: textarea
-    id: inspected_scope
+    id: reproduction
     attributes:
-      label: Inspected scope
-      description: Name OS/filesystem/runtime, corpus case, wheel, workflow, and exact boundaries relevant to the finding.
-    validations:
-      required: true
-  - type: textarea
-    id: evidence_source
-    attributes:
-      label: Evidence and source
-      description: Link public synthetic inputs and retained output, or describe their repository paths. Do not attach private data.
+      label: Reproduction and evidence
+      description: Command, environment, exit status, output, and public evidence link.
     validations:
       required: true
   - type: textarea
     id: expected_observed
     attributes:
       label: Expected and observed behavior
-      description: Separate stated expectation from the actual result and its source.
+      description: Expected result, observed result, and inspected scope.
     validations:
       required: true
   - type: textarea
-    id: reproduction
+    id: checks_not_performed
     attributes:
-      label: Exact reproduction command and result
-      description: Include command, exit status, report or unsupported reason, and relevant public workflow URL/attempt if applicable.
-    validations:
-      required: true
-  - type: textarea
-    id: checks_and_gaps
-    attributes:
-      label: Checks performed and not performed
-      description: State what ran, what did not run, and which dependent conclusions remain open.
+      label: Checks not performed
+      description: Checks not run and dependent conclusions that remain open.
     validations:
       required: true

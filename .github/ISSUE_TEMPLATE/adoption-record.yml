@@ -5,12 +5,11 @@ body:
   - type: markdown
     attributes:
       value: >-
-        Submit completed observations only. A prepared protocol, synthetic replay, internal
-        model run, or coached walkthrough is not a real-user or deployment result. This public
-        issue may contain only synthetic or already-public evidence, a non-sensitive reference
-        and bounded scope, and a sanitized summary. Keep customer records and all raw sources,
-        captured outputs, review records, personal data, credentials, and private access state
-        in the customer repository; do not link or attach them here.
+        Public adoption records accept only synthetic or already-public evidence,
+        a non-sensitive reference and bounded scope, and a sanitized summary.
+        Keep customer records and raw sources, captured outputs, review records,
+        personal data, credentials, and private access state in the customer repository;
+        do not link or attach them here.
   - type: dropdown
     id: contribution_kind
     attributes:
@@ -24,14 +23,14 @@ body:
     id: candidate_revision
     attributes:
       label: Candidate source/procedure revision
-      description: Identify the public protocol/source revision and non-sensitive procedure or adapter revisions. Omit private paths and customer-specific identifiers.
+      description: Public protocol, procedure, and adapter revisions.
     validations:
       required: true
   - type: textarea
     id: participants_and_scope
     attributes:
       label: Participant/operator scope
-      description: Give only non-sensitive aggregate counts, broad role categories and whether the use was unaccompanied. Do not include names, identifying details or customer-specific assignment information.
+      description: Aggregate count, broad role, bounded scope, and whether use was unaccompanied.
     validations:
       required: true
   - type: dropdown
@@ -46,24 +45,21 @@ body:
   - type: textarea
     id: public_reference_and_scope
     attributes:
-      label: Non-sensitive public reference and bounded scope
-      description: Give only a non-sensitive pointer to synthetic or already-public evidence and state its inspected scope. Never include or link customer sources, captured outputs, review records, or private customer-repository paths.
+      label: Public reference and inspected scope
+      description: Non-sensitive public evidence link and inspected scope.
     validations:
       required: true
   - type: textarea
     id: checks_and_adverse_actions
     attributes:
-      label: Checks, scoring, adverse actions and open results
-      description: >-
-        Give only a sanitized summary of synthetic or already-public evidence: denominators,
-        hard-failure counts, missing data, broad reviewer scope and open gates. Do not include
-        excerpts or attach/link sources, outputs or review records.
+      label: Checks, adverse actions and open results
+      description: Sanitized result summary, denominators, adverse actions, missing data, and open results.
     validations:
       required: true
   - type: textarea
     id: effort_and_limits
     attributes:
-      label: Effort, elapsed time and claim limits
-      description: Keep active effort and elapsed waiting separate. Include setup, review, repair and coordination; state checks not performed and what this result cannot establish.
+      label: Effort and limits
+      description: Active effort, elapsed time, checks not performed, and claim limits.
     validations:
       required: true

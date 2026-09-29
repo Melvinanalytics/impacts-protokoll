@@ -4,49 +4,32 @@ title: "[Independent implementation]: "
 body:
   - type: markdown
     attributes:
-      value: >-
-        Use the written challenge in `06_evaluations/conformance/CONTEXT.md`. Do not
-        claim full protocol conformance, production suitability, authenticated decisions,
-        or business effect from this structural subset. Keep private data and credentials out.
+      value: Complete the written independent implementation challenge and link its retained public evidence record here.
   - type: input
     id: candidate_revision
     attributes:
       label: Candidate source and revision
-      description: Link its public source or identify the retained source revision and executable.
+      description: Public source, retained revision, and executable.
     validations:
       required: true
   - type: textarea
     id: prior_exposure
     attributes:
-      label: Prior exposure to this repository
-      description: Disclose whether you read, used, copied, or received its source, implementation tests, fixtures, or generated reports before writing the candidate. Distinguish each exposure; unknown stays unknown.
+      label: Prior source exposure
+      description: Source, implementation tests, fixtures, or generated reports seen before candidate work; unknown stays unknown.
     validations:
       required: true
   - type: textarea
-    id: candidate_scope
+    id: ai_assistance
     attributes:
-      label: Runtime and tested scope
-      description: Record exact command, operating system, filesystem where known, runtime, and candidate revision.
+      label: AI assistance
+      description: AI systems or tools used, their role, and which outputs were reviewed; state none if none.
     validations:
       required: true
   - type: textarea
-    id: shared_corpus
+    id: evidence_record
     attributes:
-      label: Shared corpus evidence
-      description: Include runner output, applicable/passed/unsupported/failed counts, unsupported IDs and reasons, plus corpus SHA-256.
-    validations:
-      required: true
-  - type: textarea
-    id: extra_cases
-    attributes:
-      label: Independently authored additional cases
-      description: Provide case sources, expected reports, rationale, candidate results, and how they differ from frozen shared cases.
-    validations:
-      required: true
-  - type: textarea
-    id: checks_not_run
-    attributes:
-      label: Checks not performed and claim limit
-      description: State untested cases and explicitly limit the claim to the exercised structural subset.
+      label: Challenge evidence record
+      description: Public link to command, environment, corpus and extra-case results, unsupported reasons, and checks not performed.
     validations:
       required: true
