@@ -144,7 +144,7 @@ def test_candidate_public_contract_and_scope_match_the_manifest():
     contributing = (ROOT / "CONTRIBUTING.md").read_text()
     first_win = (ROOT / "FIRST-WIN.md").read_text()
 
-    assert version == "0.3.20"
+    assert version == "0.3.21"
     assert f"currently contains {count} fixed synthetic cases" in readme
     assert f"manifest has {count} cases" in conformance
     assert f"derzeit {count} feste synthetische Fälle" in german
@@ -353,17 +353,17 @@ def test_current_entry_instructions_match_distribution_version(path):
     if path == "README.md":
         intro_publication = "published immutable release"
         recipe_publication = "published immutable release"
-        release_link = "v0.3.20 release"
-        stale_terms = ("candidate v0.3.20", "v0.3.20 candidate", "candidate wheel")
+        release_link = "v0.3.21 release"
+        stale_terms = ("candidate v0.3.21", "v0.3.21 candidate", "candidate wheel")
     else:
         intro_publication = "veröffentlichte unveränderliche release"
         recipe_publication = "veröffentlichten unveränderlichen release"
-        release_link = "v0.3.20 release"
-        stale_terms = ("kandidaten-release v0.3.20", "kandidaten-wheel")
+        release_link = "v0.3.21 release"
+        stale_terms = ("kandidaten-release v0.3.21", "kandidaten-wheel")
     release_intro = next(
         section.lower()
         for section in text.split("\n\n")
-        if "releases/tag/v0.3.20" in section
+        if "releases/tag/v0.3.21" in section
     )
     assert release_link in lower_text
     assert intro_publication in release_intro
@@ -375,7 +375,7 @@ def test_current_entry_instructions_match_distribution_version(path):
         "python -m pip install"
     )
     assert checksum_recipe.index("sha256sums") < checksum_recipe.index(
-        "impacts_protocol-0.3.20-py3-none-any.whl"
+        "impacts_protocol-0.3.21-py3-none-any.whl"
     )
 
 
