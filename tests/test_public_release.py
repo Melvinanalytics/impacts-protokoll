@@ -103,7 +103,7 @@ def test_native_portability_workflows_bind_reports_to_the_frozen_corpus():
         assert "shell: pwsh" in native
         assert "pip install --disable-pip-version-check -e ." in native
         assert "pytest" not in native.lower()
-        assert "Preserve Git fixture bytes on Windows" in native
+        assert (ROOT / ".gitattributes").read_text() == "* -text\n"
     assert "test_evidence.py native-check" in ci
     assert "test_evidence.py native-capture" in release
     assert "--expected-os \"${{ runner.os }}\"" in release
