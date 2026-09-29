@@ -88,7 +88,7 @@ def test_missing_run_id_reports_schema_repair_without_folder_mismatch(tmp_path):
     assert issues[0].code == "schema.invalid"
     assert issues[0].path == "vorgaenge/video-001/CONTEXT.md"
     assert issues[0].message == (
-        "<root>: 'id' is a required property; add `id` to this frontmatter mapping"
+        "'id' is a required property; add `id` to this frontmatter mapping"
     )
 
 
