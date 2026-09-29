@@ -9,6 +9,8 @@ Status: protocol prepared; execution not performed. All results and gates remain
 
 This is an implementation-independent screening protocol for capturing and reusing short intake messages. It uses the synthetic messages in [messages.jsonl](messages.jsonl), a question-only handoff in [QUESTIONS.md](QUESTIONS.md), and a blank reuse response form in [reuse-record-template.md](reuse-record-template.md). The scoring key in [EXPECTED.md](EXPECTED.md) is for the independent scorer only, after all capture and reuse records are frozen. It establishes no customer fact, deployed behavior, business effect, Langdock result or runtime capability.
 
+**Licensed sentence after closure:** “In the authorized environment `<environment>`, candidate procedure `<name@revision>` produced `<x>` adverse actions against `<y>` for manual capture over the frozen 20-message panel, with no hard failure, at total human effort `<a>` against `<b>`.”
+
 ## Frozen design
 
 The panel contains 20 unique message IDs in two matched sets, A and B, with one item from each of ten challenge pairs per set. A pair matches the challenge, not the exact wording. Two complete counterbalanced blocks compare the manual baseline with the declared candidate capture procedure:
@@ -21,6 +23,10 @@ The panel contains 20 unique message IDs in two matched sets, A and B, with one 
 Each of the four arm/set assignments uses a fresh independent capture operator and session, followed by a different fresh reuse operator and session. No operator serves both roles or repeats a session. Randomize or balance which arm goes first within each block. Each operator sees one set and one arm only. Across the complete screen, each arm processes 20 message events; each message appears once per arm, with no operator seeing the same message in both arms. The matched A/B variants and the reversed block reduce content and order bias; they do not establish independence of observations.
 
 Before the first session, freeze the manual baseline procedure, candidate procedure and revisions, participant instructions, fixtures, output homes, allowed tools, clarification policy, scoring questions and stop rules. If candidate procedure or revision cannot be named, leave the evaluation unperformed. Give both arms the same task, message set size, time window, source access and opportunity to ask the same scripted clarification. Do not reveal the paired set or scoring key to capture operators. The design requires no particular product, model, database, schema, CLI or runtime.
+
+Before freezing, a person who designed neither the message panel nor the candidate procedure reviews `QUESTIONS.md` and `EXPECTED.md` for bias toward either arm. Record their findings and every resulting change before the first session. The [shared gate contract](../nontechnical-reconstruction/FOLLOW-UP.md#shared-gate-contract) applies.
+
+For a hosted or model-backed candidate, retain the authorization reference and the exact environment: workspace, region, configuration export with SHA-256, model and version, tools, knowledge contents and instruction revisions. A changed model or configuration voids that run. Use only this synthetic panel.
 
 ## Capture procedure
 
@@ -45,4 +51,6 @@ Do not fabricate outcomes or import private negative results. Record a result on
 
 ## Completion check
 
-The screening is complete only when the two counterbalanced blocks have been run as specified; all four capture records and capture-effort logs are frozen; each has a corresponding answer-and-effort record from a distinct fresh reuse operator/session using only the retained record and `QUESTIONS.md`; and the independent scorer has scored those reuse answers for both arms blind. Each response must contain all answers, citations and actual effort values, not template placeholders. A blank form, capture operator's own answer, missing independent session, missing answer or effort, answer-key exposure, incomplete block, missing source, unblinded scoring or unaccounted effort leaves the comparison `open`. Only then report adverse actions and hard failures and limit every claim to this panel. No run or outcome is recorded in this protocol file.
+The screening is complete only when the pre-freeze independent review and environment/configuration binding are retained; the two counterbalanced blocks have been run as specified; all four capture records and capture-effort logs are frozen; each has a corresponding answer-and-effort record from a distinct fresh reuse operator/session using only the retained record and `QUESTIONS.md`; and the independent scorer has scored those reuse answers for both arms blind. Each response must contain all answers, citations and actual effort values, not template placeholders. A blank form, capture operator's own answer, missing independent session, missing answer or effort, answer-key exposure, incomplete block, missing source, changed configuration, unblinded scoring or unaccounted effort leaves the comparison `open`. Only then report adverse actions and hard failures and limit every claim to this panel.
+
+No run or outcome is recorded in this protocol file.
