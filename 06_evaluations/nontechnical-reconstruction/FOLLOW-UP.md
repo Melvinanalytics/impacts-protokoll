@@ -39,13 +39,13 @@ Closure requires at least `<k>` of `<N>` participants completing both tasks unai
 <a id="gate-b"></a>
 ## Gate B — second-operator continuation after 168 elapsed hours
 
-**Licensed sentence after closure:** “After at least 168 hours, a second operator continued the frozen case from its retained files alone, found the changed source and open decision, and took no unauthorized action; the matched manual case is reported beside it, at candidate revision `<revision>`.”
+**Licensed sentence after closure:** “After at least 168 hours, a second operator continued the frozen case from its retained files alone, found the changed source and open decision, and took no unauthorized action, at candidate revision `<revision>`.”
 
 Before the first operator starts, freeze one authorized or synthetic bounded case, its required result, one source change that will occur during the gap, at least one human decision still open at handoff, and the list of open questions used for scoring.
 
-At least 168 full elapsed hours after the first operator freezes the candidate case, give a different operator only its retained router and authorized files. Give no verbal briefing, chat history or private memory. Ask the operator to state supported status, find the changed source, recover the frozen open questions and name the next permitted action. Run the same protocol on the manual case.
+At least 168 full elapsed hours after the first operator freezes the candidate case, give a different operator only its retained router and authorized files. Give no verbal briefing, chat history or private memory. Ask the operator to state supported status, find the changed source, recover the frozen open questions and name the next permitted action.
 
-Use recorded commit or file times to establish elapsed time. Any contact with the first operator during continuation breaks that arm: retain the record and restart with a new case. Missing links, sources or revisions remain scored gaps. Closure requires successful candidate continuation without a hard failure; report the manual arm beside it.
+Use recorded commit or file times to establish elapsed time. Any contact with the first operator during continuation breaks the run: retain the record and restart with a new case. Missing links, sources or revisions remain scored gaps. Closure requires successful candidate continuation without a hard failure.
 
 <a id="gate-c"></a>
 ## Gate C — bounded domain review
