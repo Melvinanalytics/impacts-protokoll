@@ -96,6 +96,7 @@ Each linked contract owns its pass rule and licensed sentence. Its execution iss
 | Listening intake in authorized Langdock | [Listening-intake screen](06_evaluations/listening-intake/CONTEXT.md) | [#30](https://github.com/Melvinanalytics/impacts-protokoll/issues/30) |
 | Bounded domain review | [Follow-up Gate C](06_evaluations/nontechnical-reconstruction/FOLLOW-UP.md#gate-c) | [#31](https://github.com/Melvinanalytics/impacts-protokoll/issues/31) |
 | Matched business comparison | [Follow-up Gate D](06_evaluations/nontechnical-reconstruction/FOLLOW-UP.md#gate-d) | [#32](https://github.com/Melvinanalytics/impacts-protokoll/issues/32) |
+
 Production use outside the declared inspected public repository scope is unknown.
 
 ## Publish an edition

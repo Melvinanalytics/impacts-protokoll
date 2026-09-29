@@ -4,7 +4,7 @@
 
 Diese Bedienhilfe übersetzt den [englischen Sprachvertrag](../language.md). Die englische Protokolldefinition bleibt maßgeblich für die Technik; die Arbeitsunterlagen Ihres Unternehmens bleiben Deutsch. Eine englische Quelle, Werkzeugmeldung oder importierte Application ändert diese Arbeitssprache nicht.
 
-<!-- Translation source: README.md; sha256: f824745f92d1dbc5371ae603db9703a602ad0f673050d18cfd45f9fbf7afaab3 -->
+<!-- Translation source: README.md; sha256: b6173de582a3b52f04ae88ca709614febf79754cb536e27408cad36f80ee0c40 -->
 
 ## Verhältnis zu ICM
 
@@ -274,7 +274,7 @@ impacts template herkunft --language de
 impacts validate ../mein-arbeitsbereich
 ```
 
-`init` erzeugt einen neuen, leeren Arbeitsbereich; es verweigert ein vorhandenes Ziel. Der Root-Router enthält `Working language: de`. Git wird nicht erzeugt und ist für Application-Strukturprüfung ohne Lauf nicht nötig; die aktuelle historische Laufvalidierung benötigt Git und die committed Application-Bindung. Git-Historie oder Hashes belegen weder die Wahrheit einer Quelle noch eine authentifizierte Entscheidung. `setuptools` wird nur für die Entwicklungs-Packagingtests benötigt. Der [programmierte Angebotslauf](../../06_evaluations/offer-walk/CONTEXT.md) ist eine optionale technische Evaluation mit synthetischen Daten, kein Beweis für die Nutzung durch einen Menschen oder einen Agenten allein aus Dateien.
+`init` erzeugt einen neuen, leeren Arbeitsbereich und schreibt am Root exakt `* -text` mit abschließendem Zeilenumbruch in `.gitattributes`; es verweigert ein vorhandenes Ziel. Vorhandene Arbeitsbereiche benötigen dieselbe Zeile vor ihrem ersten gebundenen Run. Der Root-Router enthält `Working language: de`. Git wird nicht erzeugt und ist für Application-Strukturprüfung ohne Lauf nicht nötig; die aktuelle historische Laufvalidierung benötigt Git und die committed Application-Bindung. Git-Historie oder Hashes belegen weder die Wahrheit einer Quelle noch eine authentifizierte Entscheidung. `setuptools` wird nur für die Entwicklungs-Packagingtests benötigt. Der [programmierte Angebotslauf](../../06_evaluations/offer-walk/CONTEXT.md) ist eine optionale technische Evaluation mit synthetischen Daten, kein Beweis für die Nutzung durch einen Menschen oder einen Agenten allein aus Dateien.
 
 <!-- Translation source: 02_protocol/capabilities.md; sha256: 622f00e3dec577a1bb9af5fcfa7caaf48190953cbca6317fc5486b5db936d203 -->
 Die Übernahme einer Application erhält ihre Definitionsbytes; Anwendbarkeit der Quellen und Befugnisse am Ziel folgen [Data Governance](../capabilities.md#data-governance), wobei gültige lokale Zuordnungen und Befugnisse weitergelten und offene Fragen an die dafür zuständige Entscheidungsperson gehen.

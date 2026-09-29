@@ -24,10 +24,12 @@ def test_init_creates_only_minimal_workspace():
         root = _init_workspace(target)
 
         assert sorted(path.name for path in root.iterdir()) == [
+            ".gitattributes",
             "CONTEXT.md",
             "applications",
             "vorgaenge",
         ]
+        assert (root / ".gitattributes").read_bytes() == b"* -text\n"
         assert load_frontmatter(root / "CONTEXT.md") == {"type": "workspace"}
 
 
