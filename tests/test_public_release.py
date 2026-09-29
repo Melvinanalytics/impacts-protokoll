@@ -177,19 +177,19 @@ def test_candidate_public_contract_and_scope_match_the_manifest():
     assert "not a universal dependency lock or publisher-authenticity claim" in readme
     assert "not independent verification, a build attestation, publisher authentication" in readme
     for gate in (
-        "Three to five real first-use participants",
-        "Second operator after 168 elapsed hours",
         "Independent implementation",
-        "Domain/tax reviewer",
-        "Real Langdock",
-        "Business baseline",
+        "Unaccompanied first use and correction",
+        "Second operator after 168 elapsed hours",
+        "Listening intake in authorized Langdock",
+        "Bounded domain review",
+        "Matched business comparison",
     ):
         assert gate in contributing
     for gate in (
-        "drei bis fünf reale Teilnehmende",
+        "unbegleiteter Erstgebrauch mit Quellenkorrektur",
         "zweite Person nach 168 Stunden",
         "unabhängige Implementierung",
-        "Fach-/Steuerprüfung",
+        "begrenzte Fachprüfung",
         "reale Langdock-Integration",
         "Geschäftsbaseline-Vergleich",
     ):
