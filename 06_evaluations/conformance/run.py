@@ -408,6 +408,7 @@ def _commit(root: Path, message: str) -> None:
         "-c", "user.name=Conformance Fixture",
         "-c", "user.email=fixture@example.invalid",
         "-c", "commit.gpgsign=false",
+        "-c", "maintenance.auto=false",
         "commit", "--quiet", "-m", message,
     )
 
