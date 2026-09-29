@@ -86,7 +86,7 @@ Pull requests should link the issue or bounded gap, name changed authority files
 
 These gates remain **open**. CI, Luna-generated output, synthetic replays, internal model reviews or repository instructions do not substitute for the named external evidence.
 
-Each linked contract owns its pass rule and licensed sentence; an issue-owned gate keeps both in its issue. Its execution issue links the contract and records each run in comments: the freeze commit, the evidence and a named maintainer's closure decision after review of the frozen evidence. A closed gate supports only its licensed sentence, at the revision that sentence names.
+Each linked contract owns its pass rule and licensed sentence. Its execution issue links the contract and records each run in comments: the freeze commit, the evidence and a named maintainer's closure decision after review of the frozen evidence. A closed gate supports only its licensed sentence, at the revision that sentence names.
 
 | Gate | Authoritative contract | Execution issue |
 |---|---|---|
@@ -96,10 +96,6 @@ Each linked contract owns its pass rule and licensed sentence; an issue-owned ga
 | Listening intake in authorized Langdock | [Listening-intake screen](06_evaluations/listening-intake/CONTEXT.md) | [#30](https://github.com/Melvinanalytics/impacts-protokoll/issues/30) |
 | Bounded domain review | [Follow-up Gate C](06_evaluations/nontechnical-reconstruction/FOLLOW-UP.md#gate-c) | [#31](https://github.com/Melvinanalytics/impacts-protokoll/issues/31) |
 | Matched business comparison | [Follow-up Gate D](06_evaluations/nontechnical-reconstruction/FOLLOW-UP.md#gate-d) | [#32](https://github.com/Melvinanalytics/impacts-protokoll/issues/32) |
-| Additional Windows/filesystem boundary | Issue-owned | [#33](https://github.com/Melvinanalytics/impacts-protokoll/issues/33) |
-| Consumer-needed hash-enforced dependency target | Issue-owned | [#34](https://github.com/Melvinanalytics/impacts-protokoll/issues/34) |
-| Independent public release replay | Issue-owned | [#35](https://github.com/Melvinanalytics/impacts-protokoll/issues/35) |
-
 Production use outside the declared inspected public repository scope is unknown.
 
 ## Publish an edition
