@@ -14,7 +14,7 @@ routen:
 customer_touchpoint: sacred  # fehlend, standard oder sacred
 ---
 
-<!-- Translation source: 02_protocol/templates/arbeitsschritt.md; sha256: 0d8d7d8d3690317a51b31d7e7e5095d7d004b23a3de51b599f8514c638c3bfa3 -->
+<!-- Translation source: 02_protocol/templates/arbeitsschritt.md; sha256: 5c8420dde29b8e76eb9d4129ed6d744332fa4796f2b9364421b26ca7d72ca04f -->
 
 # Entscheiden
 
@@ -76,7 +76,7 @@ Nur bei einer wiederverwendbaren Verarbeitung; die folgenden Bezeichnungen sind 
 
 Dateien unter `output/`. Vorläufige Ausgaben sind lesbare, bearbeitbare Editierflächen. Änderungen an bereits gebundenen oder abgeschlossenen Ergebnissen erfordern eine neue nachvollziehbare Revision; die ursprünglichen Bytes bleiben erhalten.
 
-Optionale Schrittübergabe: Abbildung und Route genau einmal beim Producer nach `02_protocol/capabilities.md`, Abschnitt „Sichtbare Ausgabe und Übergabe“, in der benannten Protokollquelle deklarieren. Der Vorgang ergänzt versuchsqualifizierten Ursprung und Content-Digest in `input/ziel-herkunft.md`.
+Das benötigte Produkt des Nachfolgers nach der Vorwärtsprüfung in `02_protocol/impacts-method.md`, Abschnitt „Reverse-engineer a product or service“, festlegen. Interne Reviewevidenz getrennt halten, wenn ihre Nutzung abweicht; die vom empfangenden Job benötigte Evidenz einschließen. Tatsächliche Dateien sowie optionale Übergabeabbildung und Route genau einmal beim Producer nach `02_protocol/capabilities.md`, Abschnitt „Sichtbare Ausgabe und Übergabe“, in der benannten Protokollquelle deklarieren. Der Vorgang ergänzt versuchsqualifizierten Ursprung und Content-Digest in `input/ziel-herkunft.md`.
 
 ## Prüfung
 

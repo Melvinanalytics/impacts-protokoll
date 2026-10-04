@@ -43,7 +43,7 @@ A wait is a `wartend` Laufpfad entry with `wiedereinstieg` (`ausloeser`, `contin
 
 ## Loops
 
-For a declared rework loop, route rejection to the step that produced the rejected input. A declared final rejection follows its negative end. Every loop leaves through a `pruefung` outcome that reaches an end; the validator rejects a loop without exit.
+For a declared rework loop, route rejection to the step that produced the rejected input. Within the consumer, perform only its declared corrections and preserve the handed-off input bytes. For a defect requiring work outside that job, record its location and follow the declared return route. A declared final rejection follows its negative end. Every loop leaves through a `pruefung` outcome that reaches an end; the validator rejects a loop without exit.
 
 ## Automation boundary
 
@@ -69,7 +69,7 @@ At design time, the responsible human determines which checks and reviews are es
 - Would the mistake be discovered before that harm occurs?
 - Could the result or effect be reversed, and at what cost?
 
-Consider how inputs can vary or violate the assumed premises; variable inputs need applicable source controls and exception handling. Declare the required conditions, permitted use and failure consequence in the existing criterion/body before execution. This qualitative decision adds no numerical score, field or mandatory form. Reuse an already authorized design decision or configuration for routine checks; no fresh approval ceremony is needed. If consequential premises change, the responsible human reassesses the design. The executing agent applies the declared choice within assigned authority and cannot guess or demote essential checks. An undeclared consequence stays a design question; independent permitted preparation continues.
+Consider how inputs can vary or violate the assumed premises; variable inputs need applicable source controls and exception handling. Declare the required conditions, permitted use and failure consequence in the existing criterion/body before execution. This qualitative decision adds no numerical score, field or mandatory form. Reuse an already authorized design decision or configuration for routine checks; no fresh approval ceremony is needed. If consequential premises change, the responsible human reassesses the design. For an uncalibrated recurring job, the design may declare temporary quality review: whether it is essential, its purpose, accountable reviewer, withdrawal evidence and reinstatement condition. A person checking quality does not by itself add `gate: human`. Withdrawing an essential review requires the responsible human's design reassessment and, for changed bound work, a reviewed new definition revision; the executing agent's confidence is not that decision. The executing agent applies the declared choice within assigned authority and cannot guess or demote essential checks. An undeclared consequence stays a design question; independent permitted preparation continues.
 
 Low result tolerance does not automatically require Git. Fixed calculations need actual deterministic calculation checking; that establishes neither input truth nor permission. Variable inputs do not justify probabilistic money calculations. This assessment can underestimate harm; passing declared checks does not repair a mistaken assessment. Files declare the requirements and guide the agent; mechanical enforcement can be claimed only for conditions actually enforced by an available checker or harness.
 

@@ -44,7 +44,7 @@ This diagram is orientation. The [ontology](02_protocol/ontology.md) owns eviden
 
 ## Get the protocol
 
-Use the published immutable Release [v0.3.21](https://github.com/Melvinanalytics/impacts-protokoll/releases/tag/v0.3.21) for new work. Download the wheel, complete source archive and `SHA256SUMS`; verify every listed checksum before installing or using the source archive.
+Use the published immutable Release [v0.3.22](https://github.com/Melvinanalytics/impacts-protokoll/releases/tag/v0.3.22) for new work. Download the wheel, complete source archive and `SHA256SUMS`; verify every listed checksum before installing or using the source archive.
 
 Keep the complete source together: method, Architect, references, templates and examples. Reading the archive needs no installation. A copied Architect folder is incomplete even when its `references/` folder is present: it also depends on parent protocol files and root guidance. The wheel contains only the CLI, schemas and templates; it does not contain the method, Architect, evaluations, tests or complete source guidance. Wheel users who need the source-provenance form can run `impacts template herkunft` (or add `--language de`). That template has nine evidence fields. Its field count describes this template; it is not a universal line-count rule.
 
@@ -94,7 +94,7 @@ For managed enterprise knowledge use, start with **Knowledge only**: identify on
 
 The projection is a derived reading surface, not a replacement authority or a complete protocol source. Record its included source paths and omissions. For each intended question, make the required passages available to the selected retriever, including needed domain definitions, observation claims, rules and supporting evidence excerpts. Do not assume that the retriever follows links inside an indexed document. Required linked passages must remain reachable at the bound revision through separately included projection material or the retained source. An omitted, inaccessible or stale required passage remains an explicit gap and restricts only the dependent conclusion or action.
 
-Edition v0.3.21 documents this customer-prepared intake path; it does not supply a publisher-attested knowledge projection, enterprise intake manifest, dependency bundle, build-provenance attestation or connector integration. The enterprise custodian prepares and records those materials for its environment. Release checksums cover only the assets named in that checksum file. For **Local CLI**, checking the IMPACTS wheel does not verify or freeze its dependencies: ordinary `pip` can resolve and download them. The bounded Linux recipe below pins selected dependency wheel hashes for one declared target; it is not a universal dependency lock or publisher-authenticity claim. Enterprise executable intake outside that target must separately approve and bind its dependency set or use an approved internal package source.
+Edition v0.3.22 documents this customer-prepared intake path; it does not supply a publisher-attested knowledge projection, enterprise intake manifest, dependency bundle, build-provenance attestation or connector integration. The enterprise custodian prepares and records those materials for its environment. Release checksums cover only the assets named in that checksum file. For **Local CLI**, checking the IMPACTS wheel does not verify or freeze its dependencies: ordinary `pip` can resolve and download them. The bounded Linux recipe below pins selected dependency wheel hashes for one declared target; it is not a universal dependency lock or publisher-authenticity claim. Enterprise executable intake outside that target must separately approve and bind its dependency set or use an approved internal package source.
 
 Call machine validation for a needed check when a suitable checker is available. An unavailable or failed check leaves its condition unestablished: preparation continues while the dependent claim or action waits. Explain progress, consequence and next action; retain raw diagnostics for maintainers. [Form selection](02_protocol/impacts-architect/references/formwahl.md#tooling-stopp) owns this boundary.
 
@@ -109,8 +109,8 @@ source .venv/bin/activate
 
 Choose one installation source:
 
-- **Complete checkout:** use the source tree extracted from the published immutable v0.3.21 Release after every listed `SHA256SUMS` entry passes. From the verified tree's root, run `python -m pip install -e .`.
-- **Release wheel:** download the wheel, complete source archive and `SHA256SUMS` from the published immutable Release [v0.3.21](https://github.com/Melvinanalytics/impacts-protokoll/releases/tag/v0.3.21) into one folder. Verify every listed asset with `shasum -a 256 -c SHA256SUMS` (macOS/Linux), then install with `python -m pip install ./impacts_protocol-0.3.21-py3-none-any.whl`.
+- **Complete checkout:** use the source tree extracted from the published immutable v0.3.22 Release after every listed `SHA256SUMS` entry passes. From the verified tree's root, run `python -m pip install -e .`.
+- **Release wheel:** download the wheel, complete source archive and `SHA256SUMS` from the published immutable Release [v0.3.22](https://github.com/Melvinanalytics/impacts-protokoll/releases/tag/v0.3.22) into one folder. Verify every listed asset with `shasum -a 256 -c SHA256SUMS` (macOS/Linux), then install with `python -m pip install ./impacts_protocol-0.3.22-py3-none-any.whl`.
 
 Follow [Version and entry points](#version-and-entry-points) to identify the installed package and obtain its complete source. Then, outside the intended new customer folder:
 

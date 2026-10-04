@@ -74,7 +74,7 @@ Only for reusable processing. The following labels are stable parser vocabulary;
 
 Files under `output/`. Drafts are readable edit surfaces. Bound or completed results require a traceable new revision; retain their original bytes.
 
-Declare an optional handoff mapping and route once at the producer, following `02_protocol/capabilities.md`, “Visible output and handoff”, in the recorded protocol source. The run adds attempt-qualified origin and Content-Digest in `input/<target>-herkunft.md`.
+Specify the successor's needed product under the forward check in `02_protocol/impacts-method.md`, “Reverse-engineer a product or service”. Keep internal review evidence separate where its use differs; include the evidence that the receiving job needs. Declare the actual files and optional handoff mapping and route once at the producer, following `02_protocol/capabilities.md`, “Visible output and handoff”, in the recorded protocol source. The run adds attempt-qualified origin and Content-Digest in `input/<target>-herkunft.md`.
 
 ## Check
 
