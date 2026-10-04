@@ -723,8 +723,11 @@ def test_context_selection_applies_inputs_and_exclusions_before_any_material_rea
     assert "Batch reads, searches and prior artifacts obey the same boundary" in section
     assert (
         "Before reading task material, derive the permitted read set from the selected route's "
-        "declared inputs, direct links and explicit exclusions. Read only that set; when another "
-        "item appears necessary, return to the owning route and resolve the gap before loading it."
+        "declared inputs, direct links and explicit exclusions."
+    ) in section
+    assert (
+        "Read only that set; when another item appears necessary, return to the owning route "
+        "and resolve the gap before loading it."
     ) in section
     assert (
         "Batch reads, searches and prior artifacts obey the same boundary. An excluded item is "
