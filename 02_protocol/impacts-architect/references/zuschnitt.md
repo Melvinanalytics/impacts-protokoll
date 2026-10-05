@@ -56,8 +56,11 @@ Use the human constraints established in Identify to choose only the contributio
 | Contribution | Suitable work | Boundary |
 |---|---|---|
 | Deterministic system | Explicit rules, calculations and reproducible checks | Requires valid rules, appropriate inputs and permission for any external action |
+| Classifier | Recurring judgments whose answer is one value from a supplied set: a yes/no/open test, one category or an ordered rating; choosing one eligible action uses the Selector interface | The set includes `open` or abstention; behavior must be evaluated on representative repeated cases before reliance; the answer is a typed judgment, not evidence of the classified fact, permission or a business metric |
 | Agent | Variable language, interpretation and proposals | States uncertainty and stays within permitted actions; a proposal is not authority |
 | Human | Required interaction, accountable judgement or authorization | Decision scope and permitted consequence must be understandable |
+
+Test each model contribution by its output. If its answer is a category from a supplied scheme, a yes, no or open, or a rating, no fixed rule decides it, and it recurs, design it as a classifier contribution under the [typed classification contract](typed-selection.md#two-interfaces). A small typed backend under the [provider mapping](typed-selection.md#provider-primitive-mapping) may be evaluated for it as a lower-latency, lower-cost option than a general model; neither benefit nor quality is established until that evaluation covers this exact question. Keep a general model where the output is variable language. Independent judgments stay separate questions; choosing an action uses the [Selector](typed-selection.md#two-interfaces) over currently eligible candidates only.
 
 These are not exclusive step classes. Result work may require a deterministic calculation, human authorization or physical operation; necessary routine coordination may be deterministic or agent-assisted. Frequency informs whether implementation effort is worthwhile, not who has authority. Record the execution mix in the existing processing body. Gate and touchpoint semantics remain as declared above.
 

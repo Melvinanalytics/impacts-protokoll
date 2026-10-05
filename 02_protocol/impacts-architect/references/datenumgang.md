@@ -69,7 +69,7 @@ Each station names the question, the existing contract slot that answers it and 
 | Reach | By which route can a reader get it, and may that route write? | Source description and tool line; [access routes](#access-routes) when reader, effect or permission is unresolved | The four separate access findings | Tool listed, therefore treated as usable |
 | Bind | Which bounded excerpt does this attempt use? | [Quellenanforderung](../../capabilities.md#source-inputs-for-core-applications) and `*-herkunft.md` | Input bytes, provenance, digest | New live read used as an input during the same attempt |
 | Check input | Is the excerpt usable for this job? | Required control in Quellenanforderung | Executed input checks | Missing values counted as zero |
-| Process | Which transformation serves this job, by whom and under which rule? | Processing body: selection, extraction, join, conversion, calculation or interpretation; [calculation checks](#checks-before-calculating) when the job calculates | Input and rule revision, parameters, result, checks and any used model configuration | Interpretation claimed as a checked calculation |
+| Process | Which transformation serves this job, by whom and under which rule? | Processing body: selection, extraction, join, conversion, calculation or interpretation; placement and executor under [Augment](../../impacts-method.md#augment); [calculation checks](#checks-before-calculating) when the job calculates | Input and rule revision, parameters, result, checks and any used model configuration | Interpretation claimed as a checked calculation |
 | Check result | Is the result correct for its use? | `pruefung` | Executed checks and their outcome | Query that runs taken as correct |
 | Hand off | What does the successor need first? | Handoff mapping and successor's first action under the [forward check](../../impacts-method.md#reverse-engineer-a-product-or-service) | Byte-identical handoff with provenance | Verdict without the affected content |
 | Write back | Does the result change a continuing record? | [Record writeback](../../capabilities.md#rückübertragung-in-geschäftsrecords) | Target, version, confirmation | Draft or request taken as written |
@@ -168,7 +168,7 @@ The source mapping selects the leading system for an authoritative attribute upd
 
 ## Checks before calculating
 
-Select checks required by the calculation's grain, rule and intended use; these are examples, not universal admission criteria. Keep any missing premise and its dependent-use restriction explicit.
+Select checks required by the calculation's grain, rule and intended use; these are examples, not universal admission criteria. Keep any missing premise and its dependent-use restriction explicit. When a provider such as the leading system, a calculation service or a Capability delivers a derived item, the applicable rows below are premises its provider must evidence; the consuming step checks that evidence for fit to its use and keeps an unevidenced premise `open`.
 
 | Object | Check |
 |---|---|
@@ -180,6 +180,9 @@ Select checks required by the calculation's grain, rule and intended use; these 
 | Data collection | Check the complete key against the declared row grain; count duplicates and required-period gaps. Trace report filters/formulas and export source/state; where needed, reconcile with the underlying data |
 | Key mapping | Declare multiplicity and show unmatched and multiple matches. Before aggregation, check whether the join repeats a measure; aggregate the contributing side to the needed grain or apply an explicitly sanctioned allocation. A legitimate one-to-many relationship remains one-to-many, not a first-match lookup |
 | Chain | A result's support is limited by each needed input and rule premise; retain their separate evidence and scope instead of inventing a combined confidence score |
+| Comparison across cases or periods | Same definition and population on both sides, including cases that left; outcomes mature at the as-of time or the open share stated; composition checked before a difference is read as change |
+| Segment, cluster or outlier | Enough cases per group; group assignment as of the event time; the number of groups scanned stated |
+| Projection | History over several cycles under one definition; no input from after the as-of time; fit and sensitivity under [Scenario use](../../impacts-method.md#scenario-use); an expectation carries its range and base rate over a stated horizon. When the result steers who is acted on, later outcomes reflect that steering; retain who was acted on and why, so that [Test](../../impacts-method.md#test) can separate that effect |
 
 ## Worked example: estimated delivery time
 

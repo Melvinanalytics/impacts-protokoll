@@ -1,6 +1,6 @@
 # Optional typed classification and selection
 
-Use this reference only when a typed semantic backend is explicitly requested for the current task or enabled by an existing job-specific configuration. It extends the [Architect](../SKILL.md); it is not another skill, Core Capability, runtime, or source of business authority. Normal Architect use remains complete without it.
+Use this reference only when a typed semantic backend is explicitly requested for the current task or enabled by an existing job-specific configuration. It extends the [Architect](../SKILL.md); it is not another skill, Core Capability, runtime, or source of business authority. Normal Architect use remains complete without it. A workstep that declares a classifier contribution under the [automation boundary](zuschnitt.md#automation-boundary) is such a job-specific configuration from its design onward; it uses the same two interfaces, host contract, primitive mapping and the applicable completion-test cases.
 
 Invoke a backend only for an unresolved semantic judgment that could change the current review, proposal, or action choice. Availability alone is not a trigger. Exact lookups, deterministic calculations or checks, fixed dependency order, already-known missing premises, one remaining action, and existing human decisions follow their ordinary paths.
 
@@ -10,7 +10,7 @@ Keep classification and action selection distinct:
 
 | Interface | Bounded job | Typed result | Consequence |
 |---|---|---|---|
-| Classifier | Apply one named IMPACTS test to one supplied subject and scope. | Independent answer such as `yes`, `no`, or `open`, or another explicitly supplied rubric result. | The host checks the answer against its bound evidence. A new interpretation remains `hypothesis`; a missing or conflicting premise remains `open`. No action follows automatically. |
+| Classifier | Apply one named test (an IMPACTS test or the bound workstep's rule or scheme) to one supplied subject and scope. | Independent answer such as `yes`, `no`, or `open`, or another explicitly supplied rubric result. | The host checks the answer against its bound evidence. A new interpretation remains `hypothesis`; a missing or conflicting premise remains `open`. No action follows automatically. |
 | Selector | Choose among host-defined actions that are all currently eligible. | One listed candidate ID or `abstain`. | The host revalidates state, prerequisites and permission before the existing executor acts. |
 
 One Choice cannot represent independent result-work and coordination judgments, composable execution contributions, several ICM forms, or several domain items found in one artifact. Independent classifications do not select an operation.
@@ -72,6 +72,7 @@ The adapter is provider-neutral. For current TypeSafe/Jev concepts, see [Choice]
 
 | IMPACTS need | Primitive use | Boundary |
 |---|---|---|
+| One category from a supplied scheme | Choice over the scheme's categories plus `open` | A category is a classification, not a measured value or a cause; an unlisted case stays `open`. |
 | Independent `yes/no/open` test | Choice over the three supplied answers; Noul only with an evaluated host policy that preserves the same required open cases | Noul returns probability of yes; it does not natively create `open`. Missing premises remain `open` before inference. |
 | One action from a finite eligible menu | Choice with explicit no-match or abstention | Choice probabilities compare only supplied alternatives. Omitted correct candidates are a candidate-construction failure. |
 | Ordered review priority | Score over explicit ordered levels | Score is not a business KPI, arithmetic calculation, evidence label or permission. |
