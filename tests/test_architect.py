@@ -494,7 +494,11 @@ def test_skill_never_lets_an_agent_write_human_attribution():
 def test_every_relative_link_in_the_skill_resolves():
     unresolved = []
     for document in SKILL.rglob("*.md"):
-        for target in LINK.findall(document.read_text(encoding="utf-8")):
+        text = document.read_text(encoding="utf-8")
+        # Fenced examples name paths in a future customer workspace, not
+        # dependencies of this protocol checkout. Match the public link check.
+        text = re.sub(r'^(`{3,}|~{3,})[^\n]*\n.*?^\1\s*$', '', text, flags=re.M | re.S)
+        for target in LINK.findall(text):
             if target.startswith(("http://", "https://", "#")):
                 continue
             path = (document.parent / target.split("#", 1)[0]).resolve()
@@ -853,3 +857,23 @@ def test_typed_classification_walk_covers_backend_and_normal_paths():
         "normal mode as well",
     ):
         assert boundary in expected
+
+
+DATA_HANDLING = SKILL / "references/datenumgang.md"
+
+
+def test_data_handling_reference_is_routed_and_adds_no_core_contract():
+    reference = DATA_HANDLING.read_text(encoding="utf-8")
+    router = PROTOCOL_ROUTER.read_text(encoding="utf-8")
+    workstep_row = next(line for line in router.splitlines() if line.startswith("| Workstep prompt, tools, data"))
+    kpi_row = next(line for line in router.splitlines() if line.startswith("| KPI or calculation model design"))
+    assert "impacts-architect/references/datenumgang.md" in workstep_row
+    assert "impacts-architect/references/datenumgang.md#data-objects" in kpi_row
+    assert "datenumgang.md#access-routes" in CAPABILITIES.read_text(encoding="utf-8")
+    assert "datenumgang.md" in GERMAN_GUIDE.read_text(encoding="utf-8")
+    for route in ("Export", "API", "CLI", "MCP server"):
+        assert f"| {route} |" in reference
+    for finding in ("Documented", "Access verified", "Data acquired", "Use permitted"):
+        assert f"| {finding} |" in reference
+    assert "not Core types, required fields, parser labels" in reference
+    assert "Quell-Eingabe:" in reference and "- Ursprung:" in reference
