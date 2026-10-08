@@ -29,7 +29,7 @@ One coherent job with a visible, verifiable result. Cut a new step when a separa
 
 For source mappings needed by this workstep, apply [Data Governance](../../capabilities.md#data-governance).
 
-The body follows the template: One job, Inputs, Excluded context, Processing, Outputs, Check, Human check. [Workstep composition](../../impacts-method.md#compose-an-arbeitsschritt) defines how its prompt, tools and data form one executable job; every input has a source/acquisition or producer handoff, every output a check and permitted use.
+The body follows the template: one section per [step area](../../impacts-method.md#step-areas), with Excluded context as part of Inputs, plus Setup completion. [Workstep composition](../../impacts-method.md#compose-an-arbeitsschritt) defines how its prompt, tools and data form one executable job; every input has a source/acquisition or producer handoff, every output a check and permitted use.
 
 When the Arbeitsschritt calls reusable processing, apply the [Capability extraction criteria](../../capabilities.md#wann-extrahieren) and [local call contract](../../capabilities.md#capability-aufruf). The Arbeitsschritt names only the local call tuple, inputs, expected output and minimum check; it does not duplicate the Capability contract.
 

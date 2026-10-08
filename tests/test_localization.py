@@ -127,7 +127,7 @@ def test_cli_selects_localized_provenance_template(language, heading, capsys):
             ),
         ),
         ("teilprozess", ("Beitrag zur Leistung", "Eingaben und Grenzen", "Zusammenspiel der Arbeitsschritte", "Einrichtungsabschluss")),
-        ("arbeitsschritt", ("Ein Job", "Eingaben", "Nicht laden", "Verarbeitung", "Ausgaben", "Prüfung", "Menschliche Prüfung", "Einrichtungsabschluss")),
+        ("arbeitsschritt", ("Ein Job", "Eingaben", "Nicht laden", "Verarbeitung", "Ausgaben und Wirkungen", "Prüfung", "Befugnis", "Ablauf", "Einrichtungsabschluss")),
     ],
 )
 def test_german_generated_definitions_keep_role_specific_setup_sections(kind, headings):
