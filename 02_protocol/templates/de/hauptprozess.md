@@ -10,7 +10,7 @@ leistung:
 einstieg_ref: arbeitsschritt:pruefen
 ---
 
-<!-- Translation source: 02_protocol/templates/hauptprozess.md; sha256: b771ef083878f996c6b60fcf4e5b8383b8ebf4634803ab6178b7adb0749ff94d -->
+<!-- Translation source: 02_protocol/templates/hauptprozess.md; sha256: 30c8dc2dfd45f280a056f355a884bc746e9ccbd27c06e3d258bee2960c6ef18d -->
 
 # Prüffall entscheiden
 
@@ -28,7 +28,7 @@ Empfänger, Beteiligte, Abhängigkeiten und Grenzen der Leistung. Markt-, Nachfr
 
 ## Wertfluss
 
-Wertobjekt und Empfänger; Kunde, Zahler und beteiligte Externe nur bei Relevanz. Jeden erforderlichen Ergebnisbestandteil mit erzeugendem Job, Voraussetzungen und Abnahmenachweis verbinden. Für verbleibende Koordination die von ihr geregelte Abhängigkeit und den Nachweis verlinken, dass sie nach Minimize weiterhin nötig ist; die Ist-Zuordnungstabelle nicht in die Application kopieren. Bei einem Produkt oder Service dessen zugesagten oder vereinbarten Umfang vom Ergebnis dieses Prozesses und tatsächlicher Erfüllung unterscheiden. Bestehende Definitionen/Records und beobachtete Fälle referenzieren; rekonstruierte Arbeit als `hypothesis`, ungeklärte Abhängigkeiten als `open` mit nächster Aktion und Nutzungsgrenze kennzeichnen.
+Wertobjekt und Empfänger; Kunde, Zahler und beteiligte Externe nur bei Relevanz. Jede geforderte Bedingung samt Urheber und Grundlage mit erzeugendem Job, Voraussetzungen und Abnahmenachweis verbinden. Für verbleibende Koordination die von ihr geregelte Abhängigkeit und den Nachweis verlinken, dass ihre Trennung nach Minimize weiterhin nötig ist; die Ist-Zuordnungstabelle nicht in die Application kopieren. Bei einem Produkt oder Service dessen zugesagten oder vereinbarten Umfang vom Ergebnis dieses Prozesses und tatsächlicher Erfüllung unterscheiden. Bestehende Definitionen/Records und beobachtete Fälle referenzieren; rekonstruierte Arbeit als `hypothesis`, ungeklärte Abhängigkeiten als `open` mit nächster Aktion und Nutzungsgrenze kennzeichnen.
 
 ## Zielgröße und Leitplanken
 
