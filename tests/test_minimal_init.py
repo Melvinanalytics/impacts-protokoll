@@ -67,7 +67,7 @@ def test_init_router_body_states_the_operating_contract():
             "impacts validate",
             "git rev-parse HEAD:applications/",
             "Git root",
-            "No agent writes `human:<id>`",
+            "02_protocol/capabilities.md#signale-und-human-gate",
             "02_protocol/ontology.md",
         ):
             assert phrase in body, f"router body lacks {phrase!r}"

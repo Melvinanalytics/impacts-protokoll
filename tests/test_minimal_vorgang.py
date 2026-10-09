@@ -102,7 +102,7 @@ def test_present_wrong_run_id_still_reports_folder_mismatch(tmp_path):
 
     assert len(issues) == 1
     assert issues[0].code == "structure.invalid"
-    assert issues[0].message == "Vorgang ID must match folder slug"
+    assert issues[0].message == "Vorgang ID must match folder slug: found 'vorgang:other-run', expected vorgang:video-001"
 
 
 def test_unreachable_application_tree_is_rejected():
@@ -740,3 +740,143 @@ def test_invalid_definition_memo_attributes_each_run(tmp_path, monkeypatch):
     assert 'preserve existing historical bindings' in errors[0].message
     assert 'new Run' in errors[0].message
     assert 're-bind' not in errors[0].message
+
+
+@pytest.mark.parametrize('case,expected_codes,fragments', [
+    ('V1', ['run.invalid'], ["/laufpfad/0 (arbeitsschritt:start, versuch 1)", "'weitr'", 'actual pruefung outcome', "['weiter']"]),
+    ('V2', ['run.invalid'], ['/laufpfad/1', "'genehmigt'", "responsible human's decision"]),
+    ('V3', ['run.invalid'], ['/laufpfad/0', 'ausgabe_hash missing', 'every ausgaben path']),
+    ('V4a', ['run.invalid'], ['/laufpfad/0', "route 'weiter' leads to arbeitsschritt:pruefen", 'next entry is missing']),
+    ('V4b', ['run.invalid', 'run.invalid'], ['/laufpfad/0', '/laufpfad/1', 'next entry is arbeitsschritt:start', 'next entry is missing']),
+    ('V5', ['trust.invalid'], ['/laufpfad/0', 'allowed only on a gate: human step', 'arbeitsschritt:start declares no gate']),
+    ('V6', ['trust.invalid'], ['/laufpfad/1', 'freigabe missing', "responsible human's decision", 'dependent transition unresolved']),
+    ('V7', ['run.invalid'], ['/laufpfad/1', 'aktiv entry must not carry freigabe', 'leave a human-written freigabe unchanged']),
+    ('V8', ['schema.invalid', 'trust.invalid'], ['/laufpfad/1', "freigabe.by must be human:<id>; found 'agent:x'", 'preserve decision evidence']),
+    ('V9', ['schema.invalid'], ['/laufpfad/1/freigabe/at', 'read this value as datetime', 'quote plain scalar text', '2026-08-30T10:00:00+02:00', "responsible human's decision"]),
+    ('V10', ['run.invalid', 'run.invalid'], ['aktiv entry must not carry gewaehlte_route', 'aktiv entry must not carry ausgabe_hash']),
+    ('V11', ['run.invalid'], ['/laufpfad/0', 'Attempt directory is missing or unsafe']),
+])
+def test_entry_diagnostics_identify_the_actual_condition(tmp_path, case, expected_codes, fragments):
+    root, run = _prepare_workspace(tmp_path)
+    path = run / 'CONTEXT.md'
+    metadata = read_context(path)
+    entries = metadata['laufpfad']
+    if case == 'V1':
+        entries[0]['gewaehlte_route'] = 'weitr'
+    elif case == 'V2':
+        entries[1]['gewaehlte_route'] = 'genehmigt'
+    elif case == 'V3':
+        entries[0].pop('ausgabe_hash')
+    elif case == 'V4a':
+        entries.pop()
+        shutil.rmtree(run / 'pruefen')
+    elif case == 'V4b':
+        entries[1] = dict(entries[0], versuch=2)
+        shutil.copytree(run / 'start/001', run / 'start/002')
+        shutil.rmtree(run / 'pruefen')
+    elif case == 'V5':
+        entries[0]['freigabe'] = dict(entries[1]['freigabe'])
+    elif case == 'V6':
+        entries[1].pop('freigabe')
+    elif case == 'V7':
+        entries[1]['status'] = 'aktiv'
+        entries[1].pop('gewaehlte_route')
+        entries[1].pop('ausgabe_hash')
+    elif case == 'V8':
+        entries[1]['freigabe']['by'] = 'agent:x'
+    elif case == 'V10':
+        entries[1]['status'] = 'aktiv'
+        entries[1].pop('freigabe')
+    elif case == 'V11':
+        shutil.rmtree(run / 'start')
+    replace_context(path, metadata)
+    if case == 'V9':
+        original = path.read_text()
+        changed = original.replace("'2026-08-30T10:00:00+02:00'", '2026-08-30T10:00:00+02:00')
+        assert changed != original
+        path.write_text(changed)
+
+    issues = validate(root).issues
+
+    assert sorted(issue.code for issue in issues) == sorted(expected_codes), issues
+    messages = '\n'.join(issue.message for issue in issues)
+    for fragment in fragments:
+        assert fragment in messages
+    if case in {'V2', 'V6', 'V7', 'V8', 'V9'}:
+        assert 'remove freigabe' not in messages and 'reopen' not in messages
+        assert 'keep the entry uncompleted' not in messages
+    if case == 'V2':
+        assert 'freigegeben' not in messages
+    assert '02_protocol/' not in messages
+
+
+@pytest.mark.parametrize('recorded', [None, 42])
+def test_missing_or_nonstring_output_hash_preserves_independent_missing_output(tmp_path, recorded):
+    root, run = _prepare_workspace(tmp_path)
+    path = run / 'CONTEXT.md'
+    metadata = read_context(path)
+    if recorded is None:
+        metadata['laufpfad'][0].pop('ausgabe_hash')
+    else:
+        metadata['laufpfad'][0]['ausgabe_hash'] = recorded
+    replace_context(path, metadata)
+    (run / 'start/001/output/ergebnis.md').unlink()
+
+    issues = validate(root).issues
+
+    expected = ['hash.mismatch', 'run.invalid'] + (['schema.invalid'] if recorded is not None else [])
+    assert sorted(issue.code for issue in issues) == sorted(expected), issues
+    missing = next(issue for issue in issues if issue.code == 'hash.mismatch')
+    assert missing.path == 'vorgaenge/video-001/start/001/output/ergebnis.md'
+    assert '/laufpfad/0' in missing.message
+    assert 'no regular file' in missing.message
+    assert not any('Output hash does not match attempt files' in issue.message for issue in issues)
+
+
+def test_missing_attempt_keeps_an_independent_orphan_directory(tmp_path):
+    root, run = _prepare_workspace(tmp_path)
+    shutil.rmtree(run / 'start')
+    (run / 'orphan/001').mkdir(parents=True)
+
+    issues = validate(root).issues
+
+    assert [issue.code for issue in issues] == ['run.invalid', 'run.invalid']
+    assert any('/laufpfad/0' in issue.message and 'missing or unsafe' in issue.message for issue in issues)
+    assert any(issue.path == 'vorgaenge/video-001/orphan/001' and 'Laufpfad differ' in issue.message for issue in issues)
+    assert not any(issue.path == 'vorgaenge/video-001/start/001' and 'Laufpfad differ' in issue.message for issue in issues)
+
+
+def test_yaml_timestamp_type_does_not_hide_independent_invalid_actor(tmp_path):
+    root, run = _prepare_workspace(tmp_path)
+    path = run / 'CONTEXT.md'
+    metadata = read_context(path)
+    metadata['laufpfad'][1]['freigabe']['by'] = 'agent:x'
+    replace_context(path, metadata)
+    path.write_text(path.read_text().replace("'2026-08-30T10:00:00+02:00'", '2026-08-30T10:00:00+02:00'))
+
+    issues = validate(root).issues
+
+    assert sorted(issue.code for issue in issues) == ['schema.invalid', 'schema.invalid', 'trust.invalid']
+    assert any('/laufpfad/1/freigabe/at' in issue.message and 'datetime' in issue.message for issue in issues)
+    trust = next(issue for issue in issues if issue.code == 'trust.invalid')
+    assert "found 'agent:x'" in trust.message
+    assert 'freigabe.at' not in trust.message
+
+
+def test_waiting_entry_reports_each_invalid_field_and_missing_reentry(tmp_path):
+    root, run = _prepare_workspace(tmp_path)
+    path = run / 'CONTEXT.md'
+    metadata = read_context(path)
+    metadata['laufpfad'][1]['status'] = 'wartend'
+    metadata['laufpfad'][1].pop('freigabe')
+    replace_context(path, metadata)
+
+    issues = validate(root).issues
+
+    assert len(issues) == 3 and all(issue.code == 'run.invalid' for issue in issues)
+    assert all('/laufpfad/1 (arbeitsschritt:pruefen, versuch 1)' in issue.message for issue in issues)
+    assert {issue.message.split(': ', 1)[1] for issue in issues} == {
+        'wartend entry must not carry gewaehlte_route',
+        'wartend entry must not carry ausgabe_hash',
+        'wartend entry needs wiedereinstieg with ausloeser and continuation_ref',
+    }

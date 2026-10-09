@@ -8,7 +8,7 @@ A Capability is an optional reusable operation inside a workstep. Its domain con
 |---|---|
 | Capability definition | Reusable operation, parameters, rule and technical use conditions |
 | Workstep | Local call, declared inputs/outputs, intended use, check and route |
-| Harness | Execute the bound operation, collect actual evidence and enforce prerequisites |
+| Harness | Execute the bound operation, collect actual evidence and enforce prerequisites; configured software, an agent session or a person fills this role and gains no authority from it |
 | Source origin | Actual local file or external reference read by this run |
 | Snapshot | Bytes actually used in the run |
 | Data control | Procedure required for an intended use |
@@ -50,7 +50,7 @@ The workstep binds its local call, without repeating the domain contract. These 
 - Operation: `liefertermin-berechnen`
 ```
 
-For one call, its ID may derive as `<arbeitsschritt-slug>-1`; multiple calls need explicit IDs. The [reference harness](../06_evaluations/cold-walk/CONTEXT.md) reads this block and requires the derived value to be written before binding the revision. It supports one call in the example step; general multiple-call execution is not established.
+For one call, its ID may derive as `<arbeitsschritt-slug>-1`; multiple calls need explicit IDs. The [cold walk](../06_evaluations/cold-walk/CONTEXT.md) reads this block and requires the derived value to be written before binding the revision. It supports one call in the example step; general multiple-call execution is not established.
 
 Authority is the tuple of call ID, resolvable path, tree OID and operation in the bound Application. Before the run, the harness binds a reachable workspace revision, resolves the Capability's parent directory there and requires the same tree OID. It executes that tree and writes the workspace revision and tuple into the ordinary result evidence. The Capability does not attest its own origin.
 
@@ -125,7 +125,7 @@ Check scope, evidence and completion follow [Enforcement and completion](ontolog
 
 The Application tree binds its own instructions only. Referenced rules, prompt fragments, document blanks and needed source meaning outside that tree must also be materialized as declared inputs; a pinned Capability follows its separate call contract. Bind no secret values in these files: configured access remains with the harness. New source evidence acquired after opening follows [Work from prerequisites](impacts-method.md#work-from-prerequisites), preserving the existing input set.
 
-`Content-Digest` is lowercase hexadecimal SHA-256 of raw file bytes, not the aggregate surface hash.
+`Content-Digest` is lowercase hexadecimal SHA-256 of raw file bytes, not the aggregate surface hash. The aggregate surface hash, which `impacts hash` prints and `eingabe_hash` and `ausgabe_hash` record, is computed this way: hash each regular file under the declared paths with SHA-256 over its raw bytes; sort the files by the UTF-8 bytes of their resolved attempt-relative POSIX paths, without Unicode normalization; encode the list of `{"path", "sha256"}` records, each `sha256` the file's lowercase hex digest without prefix, as UTF-8 JSON with keys sorted, non-ASCII characters unescaped and no space after `,` or `:`; append one LF; hash that payload with SHA-256 and prefix its lowercase hex with `sha256:`. Overlapping declarations include each path once. Binary content and zero-byte regular files are hashable. A symlinked surface fails as `structure.symlink`; every other unbindable surface (missing, containing no regular file, escaping, unreadable, a path not encodable as UTF-8, or non-regular) fails as `hash.mismatch`, as does a differing digest. File content need not be UTF-8.
 
 <a id="provenance-file-example"></a>
 ### Copyable stable-source provenance file
@@ -139,19 +139,19 @@ For each stable source input, declare its actual input path, for example `input/
 
 Capability evidence is an ordinary `output/` file in the Capability's own format. It shows bound rule, used inputs, result, executed checks, assumptions and technical use conditions. A parameter table or equivalent block list is sufficient; no receipt schema is introduced.
 
-A local handoff has two records: the Application's expected producer-output → consumer-input mapping per route, declared once at the producer; and the run's byte-identical consumer file with `*-herkunft.md`, attempt-qualified origin relative to the run, and matching Content-Digest.
+A local handoff has two records: the Application's expected producer-output → consumer-input mapping per step route, declared once at the producer; and the run's byte-identical consumer file with `*-herkunft.md`, attempt-qualified origin relative to the run, and matching Content-Digest.
 
-The reference harness reads this stable sentence syntax:
+The cold walk reads this stable sentence syntax:
 
 ```markdown
 Bei Route `bestanden`: `output/pruefbericht.md -> arbeitsschritt:entscheiden/input/pruefbericht.md`.
 ```
 
-The mapping sentence is a parser-consumed label under [Preserve meaning](language.md#preserve-meaning): it keeps this exact form in every working language, German words included, while the surrounding instruction is translated. A workspace that declares a different sentence form supplies a harness that reads that form; translating the label breaks the reference harness's mapping check.
+The mapping sentence is a parser-consumed label under [Preserve meaning](language.md#preserve-meaning): it keeps this exact form in every working language, German words included, while the surrounding instruction is translated. A workspace that declares a different sentence form supplies a harness that reads that form; translating the label breaks the cold walk's mapping check.
 
-The output path is relative to the producer attempt; `arbeitsschritt:entscheiden` is a target ID, not a folder. This reference harness requires exactly one matching handoff per selected route. Its block/sentence syntax is a local reading convention, not Core schema. Other worksteps may need multiple mappings; their harness must implement each declared mapping before adoption.
+The output path is relative to the producer attempt; `arbeitsschritt:entscheiden` is a target ID, not a folder. The [cold walk](../06_evaluations/cold-walk/CONTEXT.md) requires exactly one matching handoff per selected step route. Its block/sentence syntax is a local reading convention, not Core schema. Other worksteps may need multiple mappings; their harness must implement each declared mapping before adoption.
 
-Producer `ausgabe_hash` and consumer `eingabe_hash` bind different surfaces. Relative paths participate, so hashes are not compared and do not form a hash chain. The general validator does not verify origin/digest claims; a local harness does where the use requires it.
+Producer `ausgabe_hash` and consumer `eingabe_hash` bind different surfaces. Relative paths participate, so hashes are not compared and do not form a hash chain. A local harness verifies origin and digest claims where the use requires it.
 
 <a id="rückübertragung-in-geschäftsrecords"></a>
 ## Record writeback
@@ -163,7 +163,9 @@ Writing a run result to a continuing record or source system is a separately per
 
 `hypothesis` identifies an expected effect and its validation question. `open` retains a focused question without an invented replacement. A warning needs a use restriction, check, question or blocking consequence.
 
-Before opening `gate: human` or preparing a declared action at a `sacred` customer touchpoint for its responsible human, the executing harness checks declared inputs, required control evidence and the body’s permitted effect and actor. A failed prerequisite leaves the previous run state unchanged. Touchpoint classification grants no execution authority. Changing a `sacred` classification separately requires the applicable human review of the Application; a technical success cannot supply it. After human work, `pruefung` evaluates the gate output. Actual `freigegeben`/`abgelehnt` and `freigabe` come exclusively from the responsible human.
+Before opening `gate: human` or preparing a declared action at a `sacred` customer touchpoint for its responsible human, the executing harness checks declared inputs, required control evidence and the body’s permitted effect and actor. A failed prerequisite leaves the previous run state unchanged. Touchpoint classification grants no execution authority. Changing a `sacred` classification separately requires the applicable human review of the Application; a technical success cannot supply it. After human work, `pruefung` evaluates the gate output. The responsible human supplies the actual `freigegeben`/`abgelehnt` decision and its attribution. The configured harness, including an agent session, may mechanically record an evidenced decision, including one given by voice or another message, for the identified object and revision, preserving its decision, identity and decision time without inventing missing values. Establish its origin from the applicable decision authority through the configured trusted execution path; a file merely claiming `human:<id>` is insufficient. Preserve the source evidence in the existing run evidence. The actual source and evidenced request or channel context must support the decision, object, revision, holder and decision time; the human need not dictate machine fields. Receipt or transcription time cannot substitute for decision time. Recording or formatting creates no authority and authenticates no person. Missing, ambiguous or contradictory decision evidence keeps the dependent transition unresolved; corrections preserve bound and completed history under the existing revision rules.
+
+One packet or interaction may yield separate decisions at declared authority boundaries. Preserve each holder's right, scope and source evidence; record an applicable already received decision at its declared transition without asking again solely for bookkeeping. Recheck its coverage when the object, revision or relevant premises change. Each gate entry retains its responsible human's attribution; a shared interaction creates neither a joint `by` nor a concurrent Laufpfad. Processing and newly acquired evidence follow [Work from prerequisites](impacts-method.md#work-from-prerequisites).
 
 Core validation neither enforces that preflight nor authenticates a person. A synthetic walk establishes only that opening writes no route/approval and completion consumes an external decision fixture.
 

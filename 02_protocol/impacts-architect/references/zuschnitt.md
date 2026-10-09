@@ -14,18 +14,18 @@ Include preparation or an offer in the Hauptprozess when it belongs to the same 
 
 ## Teilprozess
 
-A closed context section. Test: a person can describe its `ergebnis` without describing the other sections. Cut at the handoffs that survived Minimize, not at department borders. Each Teilprozess states its contribution to the accepted result. Include a leading indicator only when it supports a concrete steering decision under [Identify](../../impacts-method.md#identify); its relation to the result remains `hypothesis` until supported by observed runs.
+A closed context section. Test: a person can describe its `ergebnis` without describing the other sections. Cut at the handoffs that survived Minimize, not at department borders. On its positive route, each Teilprozess produces or completes at least one component of the [Leistungsstückliste](../../impacts-method.md#leistungsstückliste), together with the joints it owns. Completing includes bringing a component to a required state such as checked or released. Several Teilprozesse may serve one component. A negative end does not claim successful completion of the Teilprozess; preserve evidence of components already produced, completed or delivered and effects already caused. Work that produces or completes no component stays inside the Teilprozess it serves. Include a leading indicator only when it supports a concrete steering decision under [Identify](../../impacts-method.md#identify); its relation to the result remains `hypothesis` until supported by observed runs.
 
 ## Arbeitsschritt
 
 One coherent job with a visible, verifiable result. Cut a new step when a separately needed result, route or authority boundary requires its own declared inputs, output and check. An actor or tool change alone does not earn a new step; human, agent and deterministic contributions may compose inside one job. Gate readiness still follows the Capability contract below. Declare:
 
 - `eingaben`: paths under `input/` of the attempt. Stable references stay at their single home in `grundlagen/`, `records/` or an external system; the run materializes the smallest professionally sufficient source or projection plus a separate `*-herkunft.md` under attempt `input/`. Apply [Snapshot and provenance](../../capabilities.md#snapshot-und-herkunftsnachweis) for materialization, binding and hashing.
-- `ausgaben`: paths under `output/`; drafts remain editable, while bound or completed outputs require a traceable new revision.
+- `ausgaben`: paths under `output/`; drafts remain editable, while bound or completed outputs require a traceable new revision. Every declared output surface contains at least one regular file when its attempt completes, on every selected route; directory surfaces and zero-byte regular files are allowed. Each file must satisfy the declared meaning of that outcome.
 - `pruefung`: one observable verification rule; it may reference several relevant checks. A long explanation alone does not earn a new step.
 - `routen`: named by the outcome of `pruefung`; targets are steps or ends.
 - `gate: human` only where a person must carry authority, risk or a legal act. Then the routes are exactly `freigegeben` and `abgelehnt`.
-- `customer_touchpoint`: `standard` when a person leads the interaction and the harness prepares it; `sacred` when the interaction is protected and a reclassification needs human review of the Application. Declare the effect and responsible human; apply the [execution preflight](../../capabilities.md#signale-und-human-gate).
+- `customer_touchpoint`: `standard` or `sacred` as [Identify](../../impacts-method.md#identify) defines them. Declare the effect and responsible human; apply the [execution preflight](../../capabilities.md#signale-und-human-gate).
 
 For source mappings needed by this workstep, apply [Data Governance](../../capabilities.md#data-governance).
 
@@ -33,17 +33,17 @@ The body follows the template: one section per [step area](../../impacts-method.
 
 When the Arbeitsschritt calls reusable processing, apply the [Capability extraction criteria](../../capabilities.md#wann-extrahieren) and [local call contract](../../capabilities.md#capability-aufruf). The Arbeitsschritt names only the local call tuple, inputs, expected output and minimum check; it does not duplicate the Capability contract.
 
-For handoffs, follow [Visible output and handoff](../../capabilities.md#sichtbare-ausgabe-und-übergabe). The producer declares the mapping once; the run creates byte-identical consumer input plus provenance. The general validator does not verify provenance claims.
+For handoffs, follow [Visible output and handoff](../../capabilities.md#sichtbare-ausgabe-und-übergabe). The producer declares the mapping once; the run creates byte-identical consumer input plus provenance.
 
-Before opening a Human Gate, apply [Signals and Human Gate](../../capabilities.md#signale-und-human-gate). Producer-close/Gate-open is one logical transition, without claimed filesystem atomicity. Opening grants neither route nor `freigabe`; `pruefung` evaluates the later human output. The general validator neither enforces preflight nor authenticates a person.
+Before opening a Human Gate, apply [Signals and Human Gate](../../capabilities.md#signale-und-human-gate). Producer-close/Gate-open is one logical transition, without claimed filesystem atomicity. Opening grants neither route nor `freigabe`; `pruefung` evaluates the later human output.
 
 ## Waits
 
-A wait is a `wartend` Laufpfad entry with `wiedereinstieg` (`ausloeser`, `continuation_ref`). Work such as acquiring missing documents belongs to the current declared job; required human interaction gets its applicable touchpoint. Permitted preparation can continue within that job under [Work from prerequisites](../../impacts-method.md#work-from-prerequisites). The waiting entry remains current until its declared continuation; no separate wait node is needed.
+A wait is a `wartend` Laufpfad entry with `wiedereinstieg` (`ausloeser`, `continuation_ref`). Work such as acquiring missing documents belongs to the current declared job; required human interaction gets its applicable touchpoint. The waiting entry remains current until its declared continuation; no separate wait node is needed. For permitted preparation, processing and newly acquired evidence, apply [Work from prerequisites](../../impacts-method.md#work-from-prerequisites).
 
 ## Loops
 
-For a declared rework loop, route rejection to the step that produced the rejected input. Within the consumer, perform only its declared corrections and preserve the handed-off input bytes. For a defect requiring work outside that job, record its location and follow the declared return route. A declared final rejection follows its negative end. Every loop leaves through a `pruefung` outcome that reaches an end; the validator rejects a loop without exit.
+For a declared rework loop, route to the producer or a separate rework step whose already-declared inputs carry the rejected result and the rejection details needed for that job. The rejecting step's output and handoff must supply that content, possibly together in one file, compatible with the inputs' bound meaning and shape. Every declared input must have applicable content on every entry, including the first; do not add an input to the bound definition during a run. If the producer has no suitable declared input, define a separate rework step before binding the Application. A route back opens a new attempt with the complete declared input set; earlier attempt bytes remain unchanged. Within the consumer, perform only its declared corrections and preserve the handed-off input bytes. For a defect requiring work outside that job, record its location and follow the declared return route. A declared final rejection follows its negative end. Every loop leaves through a `pruefung` outcome that reaches an end; the validator rejects a loop without exit.
 
 ## Automation boundary
 

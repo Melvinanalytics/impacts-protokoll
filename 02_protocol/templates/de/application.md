@@ -1,4 +1,4 @@
-<!-- Translation source: 02_protocol/templates/application.md; sha256: 8039d02846c9e75935d303020f5ace23d7baf0c2d7d02a99bd4faaeaf392b6cd -->
+<!-- Translation source: 02_protocol/templates/application.md; sha256: b808fdf6e022ca16a1e4153deb6643cf94e6f052c7c794231ad3d72be913d06f -->
 
 # Schablone einer Application
 
@@ -26,7 +26,7 @@ vorgaenge/<vorgang>/
 ## Regeln
 
 - Ein Blockskalarwert im Frontmatter darf keine alleinstehende `---`-Zeile enthalten.
-- `<hauptprozess>`, `<teilprozess>`, `<arbeitsschritt>` und `<vorgang>` sind Slugs: `[a-z0-9]+(?:-[a-z0-9]+)*`. Die ID jeder `CONTEXT.md` ist `<type>:<ordnername>`.
+- `<hauptprozess>`, `<teilprozess>`, `<arbeitsschritt>`, `<vorgang>` und `routen`-Schlüssel sind Slugs: `[a-z0-9]+(?:-[a-z0-9]+)*`. Die ID jeder `CONTEXT.md` ist `<type>:<ordnername>`.
 - Der Application-Baum enthält nur `CONTEXT.md`-Dateien und Ordner. Jeder Hauptprozess hat mindestens einen Teilprozess, jeder Teilprozess mindestens einen Arbeitsschritt; ein Arbeitsschritt hat keine Unterordner.
 - Arbeitsschritt-IDs sind in der ganzen Application eindeutig. Routen zeigen auf `arbeitsschritt:<slug>` oder `end:<slug>`; jeder Schritt erreicht ein Ende.
 - `<versuch>` ist dreistellig, `versuch: 1` heißt `001`. Nur im Laufpfad erreichte Arbeitsschritte und Versuche besitzen Ordner.
@@ -47,4 +47,4 @@ applications/prueffall/
     └── entscheiden/CONTEXT.md  # arbeitsschritt:entscheiden
 ```
 
-Erforderliche Core-Strukturkonformität mit `impacts validate` im gewählten Umfang feststellen; fehlgeschlagene oder nicht ausgeführte Prüfbedingungen unter der gebundenen Werkzeuggrenze festhalten.
+Erforderliche Core-Strukturkonformität mit `impacts validate` im gewählten Umfang feststellen (`02_protocol/ontology.md#enforcement-and-completion`); ein fehlgeschlagener oder nicht ausgeführter Check beschränkt die davon abhängige Aussage.
