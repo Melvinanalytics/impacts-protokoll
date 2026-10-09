@@ -482,13 +482,13 @@ def test_build_mode_requires_role_specific_context_setup_completion():
     assert "Build mode is incomplete until every Hauptprozess, Teilprozess and Arbeitsschritt" in build
     assert "localized setup-completion section" in build
     assert "../impacts-method.md#maintain-agent-instructions" in build
-    assert "this review does not execute an Arbeitsschritt or establish readiness" in build
     assert "Test phase's responsible harness exercises" in build
     assert "Never require" not in build and "never exercise" not in build
 
 
-def test_skill_never_lets_an_agent_write_human_attribution():
-    assert "human:<id>" in _body()
+def test_skill_routes_human_decision_origin_and_recording_to_its_authority():
+    assert "../capabilities.md#signale-und-human-gate" in _body()
+    assert "never executes an Arbeitsschritt or completes a human gate" in _body()
 
 
 def test_every_relative_link_in_the_skill_resolves():
@@ -877,3 +877,39 @@ def test_data_handling_reference_is_routed_and_adds_no_core_contract():
         assert f"| {finding} |" in reference
     assert "not Core types, required fields, parser labels" in reference
     assert "Quell-Eingabe:" in reference and "- Ursprung:" in reference
+
+
+def test_leistungsstueckliste_has_one_home_and_point_of_use_pointers():
+    method = METHOD.read_text(encoding="utf-8")
+    cut = (SKILL / "references/zuschnitt.md").read_text(encoding="utf-8")
+    templates = ROOT / "02_protocol" / "templates"
+
+    assert method.count("### Leistungsstückliste") == 1
+    assert "../../impacts-method.md#leistungsstückliste" in cut
+    for name, home in (
+        ("hauptprozess.md", "02_protocol/impacts-method.md"),
+        ("teilprozess.md", "02_protocol/impacts-architect/references/zuschnitt.md"),
+    ):
+        for path in (templates / name, templates / "de" / name):
+            text = path.read_text(encoding="utf-8")
+            assert "Leistungsstückliste" in text
+            assert home in text
+
+
+def test_router_sends_kpi_evaluation_to_definition_checks_and_system_of_record():
+    router = PROTOCOL_ROUTER.read_text(encoding="utf-8")
+    data = (SKILL / "references/datenumgang.md").read_text(encoding="utf-8")
+    german = GERMAN_GUIDE.read_text(encoding="utf-8")
+    row = next(line for line in router.splitlines() if line.startswith("| Existing KPI evaluated with data"))
+
+    for target in (
+        "ontology.md#use",
+        "datenumgang.md#checks-before-calculating",
+        "impacts-method.md#identify",
+        "impacts-method.md#test",
+        "system of record, report or dashboard",
+    ):
+        assert target in row
+    assert "A KPI already maintained or shown in a system of record, report or dashboard is such an item." in data
+    assert "Without access, its value stays `reported`" in data
+    assert "führenden System, Bericht oder Dashboard" in german

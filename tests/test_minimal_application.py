@@ -458,3 +458,140 @@ def test_validation_is_read_only():
             if path.is_file()
         }
         assert after == before
+
+
+def test_unresolved_route_suppresses_only_derived_graph_issues(tmp_path):
+    root = write_application(tmp_path / 'video')
+    path = root / 'produktion/start/CONTEXT.md'
+    metadata = read_context(path)
+    metadata['routen'] = {'weiter': 'arbeitsschritt:pruefn'}
+    replace_context(path, metadata)
+
+    issues = validate(root).issues
+
+    assert len(issues) == 1
+    assert issues[0].code == 'reference.unresolved'
+    assert 'arbeitsschritt:pruefn' in issues[0].message
+
+
+def test_unresolved_route_keeps_independent_gate_and_schema_errors(tmp_path):
+    root = write_application(tmp_path / 'video')
+    path = root / 'produktion/start/CONTEXT.md'
+    metadata = read_context(path)
+    metadata['routen'] = {'weiter': 'arbeitsschritt:pruefn'}
+    replace_context(path, metadata)
+    gate = root / 'produktion/pruefen/CONTEXT.md'
+    metadata = read_context(gate)
+    metadata['routen'] = {'ok': 'end:done'}
+    metadata['pruefung'] = 42
+    replace_context(gate, metadata)
+
+    issues = validate(root).issues
+
+    assert sorted(issue.code for issue in issues) == ['process.gate', 'reference.unresolved', 'schema.invalid']
+    assert not any(issue.code in {'process.unreachable', 'process.no_end'} for issue in issues)
+
+
+@pytest.mark.parametrize('preamble', ['\n', 'Text before metadata\n', ''])
+def test_typed_context_without_an_opening_delimiter_has_one_format_error(tmp_path, preamble):
+    root = write_application(tmp_path / 'video')
+    path = root / 'produktion/start/CONTEXT.md'
+    original = path.read_text()
+    path.write_text(preamble + original if preamble else '')
+
+    issues = validate(root).issues
+
+    assert len(issues) == 1
+    assert issues[0].code == 'format.invalid'
+    assert issues[0].path == 'produktion/start/CONTEXT.md'
+    assert 'line 1' in issues[0].message and 'frontmatter must open with ---' in issues[0].message
+
+
+@pytest.mark.parametrize('bom', ['', '\ufeff'])
+def test_accepted_whitespace_around_frontmatter_delimiters_stays_valid(tmp_path, bom):
+    root = write_application(tmp_path / 'video')
+    path = root / 'produktion/start/CONTEXT.md'
+    original = path.read_text()
+    path.write_text(bom + original.replace('---', ' \t--- \t', 2))
+
+    assert validate(root).valid
+
+
+def test_delimited_empty_metadata_is_not_a_missing_opening_delimiter(tmp_path):
+    root = write_application(tmp_path / 'video')
+    path = root / 'produktion/start/CONTEXT.md'
+    path.write_text('---\n---\n# Body\n')
+
+    issues = validate(root).issues
+
+    assert issues and all(issue.code == 'schema.invalid' for issue in issues)
+    assert not any('frontmatter must open' in issue.message for issue in issues)
+
+
+def test_missing_router_type_keeps_only_the_required_schema_error(tmp_path):
+    root = write_application(tmp_path / 'video')
+    path = root / 'produktion/CONTEXT.md'
+    metadata = read_context(path)
+    metadata.pop('type')
+    replace_context(path, metadata)
+
+    issues = validate(root).issues
+
+    assert len(issues) == 1 and issues[0].code == 'schema.invalid'
+    assert "'type' is a required property" in issues[0].message
+
+
+def test_tagged_quoted_scalar_diagnostic_does_not_claim_it_was_unquoted(tmp_path):
+    root = write_application(tmp_path / 'video')
+    path = root / 'produktion/start/CONTEXT.md'
+    metadata = read_context(path)
+    metadata['pruefung'] = 'tagged-value-marker'
+    replace_context(path, metadata)
+    path.write_text(path.read_text().replace('tagged-value-marker', '!!int "42"'))
+
+    issues = validate(root).issues
+
+    assert len(issues) == 1 and issues[0].code == 'schema.invalid'
+    message = issues[0].message
+    assert '/pruefung:' in message and 'YAML read this value as int' in message
+    assert 'remove an explicit non-string tag if present' in message
+    assert 'unquoted' not in message
+
+
+def test_unresolved_route_does_not_hide_an_independent_closed_cycle(tmp_path):
+    root = write_application(tmp_path / 'video')
+    start = root / 'produktion/start/CONTEXT.md'
+    metadata = read_context(start)
+    metadata['routen'] = {'weiter': 'arbeitsschritt:fehlt'}
+    replace_context(start, metadata)
+    write_workstep(root / 'produktion', 'cycle-a', routes={'weiter': 'arbeitsschritt:cycle-b'})
+    write_workstep(root / 'produktion', 'cycle-b', routes={'weiter': 'arbeitsschritt:cycle-a'})
+
+    issues = validate(root).issues
+
+    assert sorted(issue.code for issue in issues) == ['process.no_end', 'process.no_end', 'reference.unresolved']
+    assert {issue.path for issue in issues if issue.code == 'process.no_end'} == {
+        'produktion/cycle-a', 'produktion/cycle-b',
+    }
+    assert not any(issue.code == 'process.unreachable' for issue in issues)
+
+
+@pytest.mark.parametrize('routes', [None, {}, 'not a mapping', {'weiter': 42}, {'weiter': 'arbeitsschritt:fehlt'}])
+def test_reaching_an_uncertain_route_does_not_prove_no_end(tmp_path, routes):
+    root = write_application(tmp_path / 'video')
+    start = root / 'produktion/start/CONTEXT.md'
+    metadata = read_context(start)
+    metadata['routen'] = {'weiter': 'arbeitsschritt:uncertain'}
+    replace_context(start, metadata)
+    uncertain = write_workstep(root / 'produktion', 'uncertain')
+    metadata = read_context(uncertain)
+    if routes is None:
+        metadata.pop('routen')
+    else:
+        metadata['routen'] = routes
+    replace_context(uncertain, metadata)
+
+    issues = validate(root).issues
+
+    assert issues
+    assert not any(issue.code in {'process.no_end', 'process.unreachable'} for issue in issues)

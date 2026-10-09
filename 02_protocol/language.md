@@ -1,12 +1,12 @@
 # Working language
 
-English is authoritative for the active protocol, method, technical documentation and contributor guidance. Customer-facing interviews, domain definitions, work instructions, drafts, explanations and human decisions use the customer's agreed working language. Historical evidence and quoted source material retain their original wording.
+English is authoritative for the active protocol, method, technical documentation and contributor guidance. Customer-facing interviews, domain definitions, work instructions, drafts, explanations and human decisions use the customer's agreed working language; a workstep binds another language only for an output whose business purpose is that language, such as a translation or an export document. Historical evidence and quoted source material retain their original wording.
 
 ## Select and bind
 
 Record the language once in the body of the customer's root `CONTEXT.md`, using `Working language: de` for German or `Working language: en` for English. `impacts init PATH --language de` writes a German operating contract with that selection. `impacts template KIND --language de` supplies German working templates. Omission selects English for new templates/workspaces; it never changes an existing customer's language. For German-only customer work, select `de` before capture. Do not infer a person's language solely from nationality.
 
-The Architect resolves this setting before customer work. If an existing workspace has no setting, retain an explicit existing customer instruction; settle an unknown choice before producing material for customer use. An English protocol, source document, imported Application or tool response cannot override the selected language. Bind the relevant language instruction with the workstep's existing declared inputs or within the committed Application body. Later router edits do not retroactively change a run.
+The Architect resolves this setting before customer work. If an existing workspace has no setting, retain an explicit existing customer instruction; settle an unknown choice before producing material for customer use. An English protocol, source document, imported Application or tool response cannot override the selected language. For an output in another language, before committing the Application declare its target language and business purpose in the workstep body or declare the input contract that supplies them. Bind the actual target language and purpose from that body or the designated attempt's declared inputs before that attempt opens or executes. Other outputs use the bound working-language instruction. Work instructions, explanations, questions and human decisions retain the customer's working language; the exception applies only to the declared deliverable. Later router edits do not retroactively change a run.
 
 ## Preserve meaning
 
@@ -16,7 +16,7 @@ Use the [protocol vocabulary](ontology.md#protocol-vocabulary). `leistung` means
 
 ## Enforce at use boundaries
 
-**MUST:** Before customer use, each declared customer-readable output must satisfy the bound working language and preserve its business meaning. The workstep's existing `pruefung` references the language check alongside its other required conditions. Failure keeps that output out of customer use and identifies the affected text; independent permitted work continues.
+**MUST:** Before customer use, each declared customer-readable output must satisfy its bound language and preserve its business meaning. The workstep's existing `pruefung` references the language check alongside its other required conditions. Failure keeps that output out of customer use and identifies the affected text; independent permitted work continues.
 
 For fixed output, render from the matching versioned template and check the actual output, including inserted values. A locale tag alone cannot verify a document. Free prose needs a language and meaning check by the configured checker or accountable reviewer, with an actual result bound to the output and language instruction. A heuristic or model judgment is fallible; where it cannot establish the required condition, leave the dependent use unresolved. The general Core validator does not detect natural language or authenticate reviewers.
 

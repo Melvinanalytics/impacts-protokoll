@@ -2,7 +2,7 @@
 
 Lifecycle expectations follow 02_protocol/invariants/complete-process-paths.md.
 The fixed hash vector checks the serialization contract documented in
-src/impacts_protocol/hashing.py.
+02_protocol/capabilities.md#snapshot-und-herkunftsnachweis.
 """
 
 from pathlib import Path

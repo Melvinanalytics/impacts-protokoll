@@ -25,7 +25,7 @@ vorgaenge/<vorgang>/
 ## Rules
 
 - A frontmatter block-scalar value must not contain a bare `---` line.
-- Placeholders are slugs matching `[a-z0-9]+(?:-[a-z0-9]+)*`. Each ID is `<type>:<folder-name>`.
+- Placeholders and `routen` keys are slugs matching `[a-z0-9]+(?:-[a-z0-9]+)*`. Each ID is `<type>:<folder-name>`.
 - An Application contains only `CONTEXT.md` files and folders. Each main process has at least one subprocess, each subprocess at least one workstep; worksteps have no subfolders.
 - Workstep IDs are unique across the Application. Routes target `arbeitsschritt:<slug>` or `end:<slug>`; every step can reach an end.
 - `<versuch>` has three digits; `versuch: 1` means `001`. Only steps and attempts reached by `laufpfad` have run folders.
@@ -46,4 +46,4 @@ applications/prueffall/
     └── entscheiden/CONTEXT.md  # arbeitsschritt:entscheiden
 ```
 
-Establish required Core structural conformance with `impacts validate` on the selected scope; retain any failed or unperformed condition under the bound Tooling stop boundary.
+Establish required Core structural conformance with `impacts validate` on the selected scope (`02_protocol/ontology.md#enforcement-and-completion`); a failed or unperformed check restricts its dependent claim.

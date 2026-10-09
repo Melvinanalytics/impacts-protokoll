@@ -12,13 +12,11 @@ einstieg_ref: arbeitsschritt:pruefen
 
 # Decide a review case
 
-This template applies to selected Core contracts under `02_protocol/impacts-architect/references/formwahl.md`, "Tooling stop", in the recorded protocol source/revision.
-
 The main process is the Application root at `applications/<slug>/CONTEXT.md`. Its subfolders are subprocesses, whose subfolders are worksteps. It defines the complete path to the embedded result. `einstieg_ref` names the first workstep; each workstep owns its routes. This body carries Identify context for people and harnesses, not another schema. Replace example values in the customer's working language.
 
 ## Result and scope
 
-State the accepted result, recipient, intended use and process boundary in one compact passage. Make `leistung.ergebnis`, `kennzahl` and every `abnahme` condition observable. Keep requested, offered, agreed and delivered results distinct; cite their existing definitions and evidence.
+State the accepted result, recipient, intended use and process boundary in one compact passage. Make `leistung.ergebnis`, `kennzahl` and every `abnahme` condition observable. Keep requested, offered, agreed and delivered results distinct; cite their existing definitions and evidence. For a result with more than one component, make the required components, assemblies and joints within this Hauptprozess's accepted result scope traceable under `02_protocol/impacts-method.md`, "Leistungsstückliste", including the subprocesses that produce or complete them. An existing complete representation or a reference to it suffices. Having several components alone requires no separate list or additional assembly.
 
 ## Relevant environment
 
@@ -26,7 +24,7 @@ Recipient, participants, dependencies and result boundaries. Include market, dem
 
 ## Value flow
 
-Valued result and recipient; customer, payer and external parties only where relevant. Link each required condition, with who imposes it and its basis, to its producing job, prerequisites and acceptance evidence. For retained coordination, link the dependency it manages and the evidence that its separation remains required after Minimize; do not copy the Ist classification table into the Application. Given a product/service, distinguish its promised or agreed scope from this process's result and actual fulfillment. Reference existing definitions/records and observed cases; mark reconstructed work as `hypothesis` and unresolved dependencies as `open` with their next action and use restriction.
+Valued result and recipient; customer, payer and external parties only where relevant. Link each required condition, with who imposes it and its basis, to its producing job, prerequisites and acceptance evidence. For retained coordination, link the dependency it manages and the evidence that its separation remains required after Minimize. Given a product/service, distinguish its promised or agreed scope from this process's result and actual fulfillment. Reference existing definitions/records and observed cases; mark reconstructed work as `hypothesis` and unresolved dependencies as `open` with their next action and use restriction.
 
 ## Objective and guardrails
 
@@ -34,7 +32,7 @@ One primary objective and observable acceptance. Address Identify's questions fo
 
 ## Touchpoints
 
-`standard`: a person leads the customer interaction; the harness prepares and follows up. `sacred`: protected interaction whose reclassification needs human review of the Application. Internal human gates belong to worksteps.
+Name each customer touchpoint of this process with its reason and its value, `standard` or `sacred` as `02_protocol/impacts-method.md#identify` defines them. Internal human gates belong to worksteps.
 
 ## Automation boundary
 
@@ -54,4 +52,4 @@ Which evidenced constraint currently limits the result or lead time, and what ob
 
 ## Setup completion
 
-Definition setup is complete when every `abnahme` component maps to a producing workstep output and applicable check, `einstieg_ref` and every workstep route can reach a declared end, each material claim has its source and evidence state, and every unresolved dependency names its next action and use restriction. Before the candidate commit, review a supported path, a missing or conflicting prerequisite and a plausible forbidden inference; record premises, expected outcomes and open gaps. After commit, the Test phase supplies observed harness evidence against that revision. Structural validity and design review do not establish execution readiness or the process result.
+Definition setup is complete when every `abnahme` condition and every required component, assembly and joint within this Hauptprozess's accepted result scope maps to a producing workstep output and applicable check, `einstieg_ref` and every workstep route can reach an `end:<slug>` route, each material claim has its source and evidence state, and every unresolved dependency names its next action and use restriction. Before the candidate commit, write and review here a supported path, a missing or conflicting prerequisite and a plausible forbidden inference. For each, record its premise, expected outcome, review outcome and open gaps. Label synthetic cases; expected outcomes are not observed execution results. After commit, the Test phase supplies observed harness evidence against that revision. Structural validity and design review do not establish execution readiness or the process result.

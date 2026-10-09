@@ -4,17 +4,15 @@ id: teilprozess:vorpruefung
 ergebnis: Prüffähiger Prüfbericht
 ---
 
-<!-- Translation source: 02_protocol/templates/teilprozess.md; sha256: 4ec7c2e7648a3ef68dc392670a2ef140a08c34a7e8f53d2668d0ea3f2b1c2196 -->
+<!-- Translation source: 02_protocol/templates/teilprozess.md; sha256: 08b2f7390007088a4e2dfd0f46fa9b63e09f4fe1ced877f0c9f9d49fcbce85cf -->
 
 # Vorprüfung
-
-Diese Vorlage gilt für gewählte Core-Verträge gemäß `02_protocol/impacts-architect/references/formwahl.md`, Abschnitt „Tooling stop“, in der benannten Protokollquelle und Revision.
 
 Ein Teilprozess ist ein fachlich geschlossener Abschnitt des Hauptprozesses. Seine Arbeitsschritte sind seine Unterordner; der Ordnername ist der Slug seiner ID. Beispielwerte ersetzen.
 
 ## Beitrag zur Leistung
 
-Ein fachlich geschlossenes Ergebnis dieses Abschnitts, seinen Empfänger oder konsumierenden Folgeabschnitt und seine erlaubte Nutzung angeben. Erklären, wie `ergebnis` zur akzeptierten Leistung des Hauptprozesses beiträgt; Hauptprozess und untergeordnete Arbeitsschritte nicht wiederholen.
+Ein fachlich geschlossenes Ergebnis dieses Abschnitts, seinen Empfänger oder konsumierenden Folgeabschnitt und seine erlaubte Nutzung angeben. Den Bestandteil der Leistungsstückliste nennen, den der Abschnitt erzeugt oder vollendet, samt den Verbindungen, die er verantwortet, gemäß `02_protocol/impacts-architect/references/zuschnitt.md`, Abschnitt „Teilprozess“. Hauptprozess und untergeordnete Arbeitsschritte nicht wiederholen.
 
 ## Eingaben und Grenzen
 
@@ -26,7 +24,7 @@ Jeden erforderlichen Bestandteil von `ergebnis` dem erzeugenden Arbeitsschritt z
 
 ## Einrichtungsabschluss
 
-Die Definitionseinrichtung ist abgeschlossen, wenn jeder Ergebnisbestandteil erzeugenden Arbeitsschritt, sichtbare Ausgabe und anwendbare Prüfung hat; jedes interne Ergebnis referenziert seine konsumierende Grenze, jedes terminale Ergebnis nennt finalen Empfänger und Ende. Jede erforderliche Eingabe ist beschaffbar oder mit nächster Aktion und Nutzungsgrenze ausdrücklich offen, und kein untergeordneter Job oder Claim liegt außerhalb des Abschnittsbeitrags. Vor dem Kandidaten-Commit einen gestützten Fall, einen Fall mit fehlender oder widersprüchlicher Voraussetzung und einen Fall mit plausibler unzulässiger Schlussfolgerung über diesen Abschnitt prüfen; Voraussetzungen, erwartete Ergebnisse und offene Lücken festhalten. Nach dem Commit liefert die Test-Phase beobachtete Harness-Evidenz für genau diese Revision. Strukturelle Gültigkeit und Designprüfung belegen weder Einsatzbereitschaft noch `ergebnis`.
+Die Definitionseinrichtung ist abgeschlossen, wenn jeder Ergebnisbestandteil erzeugenden Arbeitsschritt, sichtbare Ausgabe und anwendbare Prüfung hat; jedes interne Ergebnis referenziert seine konsumierende Grenze, jedes terminale Ergebnis nennt finalen Empfänger und Ende. Jede erforderliche Eingabe ist beschaffbar oder mit nächster Aktion und Nutzungsgrenze ausdrücklich offen, und kein untergeordneter Job oder Claim liegt außerhalb des Abschnittsbeitrags. Vor dem Kandidaten-Commit hier einen gestützten Fall, einen Fall mit fehlender oder widersprüchlicher Voraussetzung und einen Fall mit plausibler unzulässiger Schlussfolgerung über diesen Abschnitt festhalten und prüfen. Je Fall Voraussetzung, erwartetes Ergebnis, Prüfergebnis und offene Lücken festhalten. Synthetische Fälle kennzeichnen; erwartete Ergebnisse sind keine beobachteten Ausführungsergebnisse. Nach dem Commit liefert die Test-Phase beobachtete Harness-Evidenz für genau diese Revision. Strukturelle Gültigkeit und Designprüfung belegen weder Einsatzbereitschaft noch `ergebnis`.
 
 ## Frühindikator
 

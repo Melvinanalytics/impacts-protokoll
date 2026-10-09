@@ -125,7 +125,7 @@ def test_workstep_setup_keeps_waiting_separate_from_completed_routes():
     body = template_text("arbeitsschritt")
 
     assert "every completed outcome selects a declared workstep or end route" in body
-    assert "A waiting attempt retains the current step without selecting a route" in body
+    assert "Flow names each wait's cause and resume trigger" in body
 
 
 def test_cli_template_prints_the_packaged_text():
@@ -251,4 +251,4 @@ def test_generated_workstep_routes_ontology_and_binds_document_blank():
     assert "02_protocol/ontology.md" in body
     assert "document blanks outside the Application; their live links do not bind them" in body
     assert "Fill an output copy of the bound document blank" in body
-    assert "Preserve current input bytes" in body
+    assert "02_protocol/impacts-method.md#work-from-prerequisites" in body

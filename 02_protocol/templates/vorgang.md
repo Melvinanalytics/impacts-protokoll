@@ -5,15 +5,19 @@ application_revision: git-tree:0000000000000000000000000000000000000000
 laufpfad:
   - arbeitsschritt_ref: arbeitsschritt:pruefen
     versuch: 1
+    status: abgeschlossen
+    eingabe_hash: sha256:0000000000000000000000000000000000000000000000000000000000000000
+    gewaehlte_route: bestanden
+    ausgabe_hash: sha256:0000000000000000000000000000000000000000000000000000000000000000
+  - arbeitsschritt_ref: arbeitsschritt:entscheiden
+    versuch: 1
     status: aktiv
     eingabe_hash: sha256:0000000000000000000000000000000000000000000000000000000000000000
 ---
 
 # Review case 001
 
-This template applies to selected Core contracts under `02_protocol/impacts-architect/references/formwahl.md`, "Tooling stop", in the recorded protocol source/revision.
-
-A run executes a committed Application. Obtain `application_revision` from `git rev-parse HEAD:applications/<slug>`. `laufpfad` alone owns execution state; each entry has an attempt folder at `<arbeitsschritt>/<versuch>/`. Use `impacts hash` for hashes. Replace example values and explain the run in the customer's bound working language.
+A run executes a committed Application. Obtain `application_revision` from `git rev-parse HEAD:applications/<slug>`. `laufpfad` alone owns execution state; each entry has an attempt folder at `<arbeitsschritt>/<versuch>/`. Replace example values and explain the run in the customer's bound working language.
 
 ## Subject
 

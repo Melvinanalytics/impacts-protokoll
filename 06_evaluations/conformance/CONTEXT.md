@@ -69,5 +69,5 @@ This inventory covers tracked source, committed workflow configuration and publi
 
 - [02_protocol/invariants/complete-process-paths.md](../../02_protocol/invariants/complete-process-paths.md): Application graph, gates, and waiting state.
 - [02_protocol/templates/application.md](../../02_protocol/templates/application.md) and [02_protocol/templates/vorgang.md](../../02_protocol/templates/vorgang.md): selected Core structure and source binding.
-- [src/impacts_protocol/hashing.py](../../src/impacts_protocol/hashing.py): documented raw-byte surface serialization used to calculate frozen vectors.
+- [Snapshot and provenance](../../02_protocol/capabilities.md#snapshot-und-herkunftsnachweis): documented raw-byte surface serialization used to calculate frozen vectors.
 - [tests/test_owner_c_lifecycle.py](../../tests/test_owner_c_lifecycle.py) and [tests/test_minimal_vorgang.py](../../tests/test_minimal_vorgang.py): existing synthetic lifecycle examples; the corpus runner imports neither tests nor package code.

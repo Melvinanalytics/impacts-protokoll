@@ -6,13 +6,11 @@ ergebnis: Reviewable check report
 
 # Preliminary review
 
-This template applies to selected Core contracts under `02_protocol/impacts-architect/references/formwahl.md`, "Tooling stop", in the recorded protocol source/revision.
-
 A subprocess is a coherent domain section of the main process. Its worksteps are subfolders; its folder name is its ID slug. Replace example values in the customer's working language.
 
 ## Contribution to the result
 
-State one coherent result this section contributes, its recipient or consuming section and its permitted use. Explain how `ergebnis` contributes to the main process's accepted result; do not restate the main process or child worksteps.
+State one coherent result this section contributes, its recipient or consuming section and its permitted use. Name the Leistungsstückliste component it produces or completes, with the joints it owns, under `02_protocol/impacts-architect/references/zuschnitt.md`, "Teilprozess". Do not restate the main process or child worksteps.
 
 ## Inputs and boundaries
 
@@ -24,7 +22,7 @@ Map every required component of `ergebnis` to the workstep that produces it. For
 
 ## Setup completion
 
-Definition setup is complete when every result component has a producing workstep, visible output and applicable check; each internal result references its consuming boundary, while each terminal result names its final recipient and end. Every required input is obtainable or explicitly open with a next action and use restriction, and no child job or claim sits outside this section's contribution. Before the candidate commit, review a supported case, a missing or conflicting prerequisite and a plausible forbidden inference across this section; record premises, expected outcomes and open gaps. After commit, the Test phase supplies observed harness evidence against that revision. Structural validity and design review do not establish execution readiness or `ergebnis`.
+Definition setup is complete when every result component has a producing workstep, visible output and applicable check; each internal result references its consuming boundary, while each terminal result names its final recipient and end. Every required input is obtainable or explicitly open with a next action and use restriction, and no child job or claim sits outside this section's contribution. Before the candidate commit, write and review here a supported case, a missing or conflicting prerequisite and a plausible forbidden inference across this section. For each, record its premise, expected outcome, review outcome and open gaps. Label synthetic cases; expected outcomes are not observed execution results. After commit, the Test phase supplies observed harness evidence against that revision. Structural validity and design review do not establish execution readiness or `ergebnis`.
 
 ## Leading indicator
 

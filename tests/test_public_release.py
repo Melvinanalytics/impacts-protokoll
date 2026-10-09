@@ -22,6 +22,7 @@ PUBLIC_PATHS = (
     '.gitignore', '.gitattributes', '.github/', 'AGENTS.md', 'CONTEXT.md', 'CONTRIBUTING.md', 'LICENSE', 'README.md', 'FIRST-WIN.md', 'pyproject.toml',
     '02_protocol/', '06_evaluations/', 'src/', 'tests/',
 )
+RULE_ANCHOR = re.compile(r"(?<![\w./-])(02_protocol/[A-Za-z0-9_./-]+\.md)#([^\s`)\];,'\"]+)")
 
 
 def export_files(root):
@@ -58,7 +59,7 @@ def anchors(text):
 
 
 def link_issues(files):
-    """Check inline Markdown references using only the selected artifact's paths."""
+    """Check Markdown links and root-relative rule pointers inside the selected artifact."""
     directories = {str(parent) for name in files for parent in PurePosixPath(name).parents}
     issues = []
     for name, text in files.items():
@@ -76,6 +77,12 @@ def link_issues(files):
             if resolved not in files and resolved not in directories:
                 issues.append((name, target, 'target outside export'))
             elif url.fragment and resolved.endswith('.md') and unquote(url.fragment) not in anchors(files[resolved]):
+                issues.append((name, target, 'missing anchor'))
+        for path, fragment in RULE_ANCHOR.findall(prose(text)):
+            target = f'{path}#{fragment}'
+            if path not in files:
+                issues.append((name, target, 'target outside export'))
+            elif unquote(fragment).rstrip('.') not in anchors(files[path]):
                 issues.append((name, target, 'missing anchor'))
     return issues
 
@@ -144,7 +151,7 @@ def test_candidate_public_contract_and_scope_match_the_manifest():
     contributing = (ROOT / "CONTRIBUTING.md").read_text()
     first_win = (ROOT / "FIRST-WIN.md").read_text()
 
-    assert version == "0.3.24"
+    assert version == "0.3.25"
     assert f"currently contains {count} fixed synthetic cases" in readme
     assert f"manifest has {count} cases" in conformance
     assert f"derzeit {count} feste synthetische Fälle" in german
@@ -314,6 +321,30 @@ def test_export_links_support_relative_paths_unicode_aliases_and_duplicate_headi
     files = {'README.md': '[one](docs/guide.md#überblick-1) [two](docs/guide.md#legacy) [dir](docs/)',
              'docs/guide.md': '# Überblick\n# Überblick\n<a id="legacy"></a>\n'}
     assert link_issues(files) == []
+
+
+@pytest.mark.parametrize('delimiter', ['', '`'])
+def test_rule_pointer_missing_anchor_blocks_the_real_public_export(delimiter):
+    files = export_files(ROOT)
+    target = '02_protocol/impacts-architect/references/zuschnitt.md'
+    original = files['README.md']
+    files['README.md'] = original + f'\nUse {delimiter}{target}#waits{delimiter}. Also {delimiter}{target}#wa%69ts{delimiter}.\n'
+    assert link_issues(files) == []
+
+    files['README.md'] = original + f'\nUse {delimiter}{target}#wait{delimiter}.\n'
+    pointer = f'{target}#wait' + ('.' if not delimiter else '')
+    assert link_issues(files) == [('README.md', pointer, 'missing anchor')]
+
+
+def test_rule_pointers_check_export_membership_and_ignore_fenced_and_non_markdown_text():
+    files = {
+        'README.md': '`02_protocol/omitted.md#rule`\n'
+                     '```text\n02_protocol/fenced.md#rule\n```\n',
+        'example.py': '02_protocol/code.md#rule',
+    }
+    assert link_issues(files) == [
+        ('README.md', '02_protocol/omitted.md#rule', 'target outside export'),
+    ]
 
 
 def test_export_excludes_all_private_documentation_and_handovers():

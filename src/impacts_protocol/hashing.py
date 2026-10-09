@@ -1,13 +1,8 @@
 """Canonical attempt-surface hashing.
 
-Hash each regular file's raw bytes with SHA-256. Sort by the UTF-8 bytes of its
-attempt-relative POSIX path. Encode the list of {"path", "sha256"} records as
-UTF-8 JSON with ensure_ascii=False, sorted keys and separators=(",", ":"), then
-append one LF. SHA-256 that payload and prefix its lowercase hex with "sha256:".
-Overlapping declarations include each path once. A symlinked surface fails as
-``structure.symlink``. Every other unbindable surface (missing, empty, escaping,
-unreadable, non-UTF-8 or non-regular) fails as ``hash.mismatch``, as does a
-differing digest. This content identity does not establish permission.
+The serialization and failure rule is written once at
+02_protocol/capabilities.md#snapshot-und-herkunftsnachweis.
+This content identity does not establish permission.
 """
 
 import hashlib

@@ -25,8 +25,8 @@ IMPACTS is not a personal mega-folder for everything. Customer work remains in e
 | An offer to clarify | [First contribution](FIRST-WIN.md) | Internal draft, source links, explicit gaps and next action |
 | Notes or an undocumented business | [Form selection](02_protocol/impacts-architect/references/formwahl.md) | Smallest suitable existing home for facts and open questions |
 | Existing repositories or a shared source change | [Architect Restructure mode](02_protocol/impacts-architect/SKILL.md#restructure-mode) | Owners, revisions, consumers, migration and recovery made explicit |
-| A bounded, repeatable result | [Build method](02_protocol/impacts-method.md) | Candidate definition with result, inputs, checks and routes |
-| An existing bound Run | Its `vorgaenge/<id>/CONTEXT.md` and linked inputs | Next permitted action or a specific blocker under the bound revision |
+| A bounded, repeatable result | [Form selection, then Build mode](02_protocol/impacts-architect/SKILL.md#form-selection) | Candidate definition with result, inputs, checks and routes |
+| An existing bound Run | Its `vorgaenge/<vorgang>/CONTEXT.md` and linked inputs | Next permitted action or a specific blocker under the bound revision |
 | A calculation to check | [Computation example](06_evaluations/computation-walk/CONTEXT.md) | Conditional result or focused missing-input question |
 
 ```mermaid
@@ -44,7 +44,7 @@ This diagram is orientation. The [ontology](02_protocol/ontology.md) owns eviden
 
 ## Get the protocol
 
-Use the published immutable Release [v0.3.24](https://github.com/Melvinanalytics/impacts-protokoll/releases/tag/v0.3.24) for new work. Download the wheel, complete source archive and `SHA256SUMS`; verify every listed checksum before installing or using the source archive.
+Use the published immutable Release [v0.3.25](https://github.com/Melvinanalytics/impacts-protokoll/releases/tag/v0.3.25) for new work. Download the wheel, complete source archive and `SHA256SUMS`; verify every listed checksum before installing or using the source archive.
 
 Keep the complete source together: method, Architect, references, templates and examples. Reading the archive needs no installation. A copied Architect folder is incomplete even when its `references/` folder is present: it also depends on parent protocol files and root guidance. The wheel contains only the CLI, schemas and templates; it does not contain the method, Architect, evaluations, tests or complete source guidance. Wheel users who need the source-provenance form can run `impacts template herkunft` (or add `--language de`). That template has nine evidence fields. Its field count describes this template; it is not a universal line-count rule.
 
@@ -58,7 +58,7 @@ Record the actual source location and identity in the customer's existing root `
 |---|---|
 | Complete protocol source | Read this protocol's root [CONTEXT.md](CONTEXT.md), then the selected task route. Keep customer work in its own folder. |
 | New or existing customer folder | Read that folder's `CONTEXT.md`; record or follow its actual protocol source/revision and working language. Resolve `02_protocol/` paths against that source. |
-| Existing Core Run | Start at its `vorgaenge/<id>/CONTEXT.md` and declared inputs. Preserve its bound Application, sources and language; a newer installed package or protocol does not upgrade them. |
+| Existing Core Run | Start at its `vorgaenge/<vorgang>/CONTEXT.md` and declared inputs. Preserve its bound Application, sources and language; a newer installed package or protocol does not upgrade them. |
 | Wheel or copied skill with missing source | Recover the source/revision from provenance: published versions from [releases](https://github.com/Melvinanalytics/impacts-protokoll/releases), unreleased revisions from the recorded original repository or file snapshot. Resolve the needed links there before applying their rules. |
 
 Entry is resolved when the task's router, source identity and required links are reachable without substituting `main`, another release or model memory. If something is missing, retain the gap and next action; independent permitted preparation can continue. Changes to existing definitions follow [Reviewed correction](02_protocol/impacts-method.md#reviewed-correction), while earlier bound work retains its revisions.
@@ -94,11 +94,11 @@ For managed enterprise knowledge use, start with **Knowledge only**: identify on
 
 The projection is a derived reading surface, not a replacement authority or a complete protocol source. Record its included source paths and omissions. For each intended question, make the required passages available to the selected retriever, including needed domain definitions, observation claims, rules and supporting evidence excerpts. Do not assume that the retriever follows links inside an indexed document. Required linked passages must remain reachable at the bound revision through separately included projection material or the retained source. An omitted, inaccessible or stale required passage remains an explicit gap and restricts only the dependent conclusion or action.
 
-Edition v0.3.24 documents this customer-prepared intake path; it does not supply a publisher-attested knowledge projection, enterprise intake manifest, dependency bundle, build-provenance attestation or connector integration. The enterprise custodian prepares and records those materials for its environment. Release checksums cover only the assets named in that checksum file. For **Local CLI**, checking the IMPACTS wheel does not verify or freeze its dependencies: ordinary `pip` can resolve and download them. The bounded Linux recipe below pins selected dependency wheel hashes for one declared target; it is not a universal dependency lock or publisher-authenticity claim. Enterprise executable intake outside that target must separately approve and bind its dependency set or use an approved internal package source.
+Edition v0.3.25 documents this customer-prepared intake path; it does not supply a publisher-attested knowledge projection, enterprise intake manifest, dependency bundle, build-provenance attestation or connector integration. The enterprise custodian prepares and records those materials for its environment. Release checksums cover only the assets named in that checksum file. For **Local CLI**, checking the IMPACTS wheel does not verify or freeze its dependencies: ordinary `pip` can resolve and download them. The bounded Linux recipe below pins selected dependency wheel hashes for one declared target; it is not a universal dependency lock or publisher-authenticity claim. Enterprise executable intake outside that target must separately approve and bind its dependency set or use an approved internal package source.
 
 Call machine validation for a needed check when a suitable checker is available. An unavailable or failed check leaves its condition unestablished: preparation continues while the dependent claim or action waits. Explain progress, consequence and next action; retain raw diagnostics for maintainers. [Form selection](02_protocol/impacts-architect/references/formwahl.md#tooling-stopp) owns this boundary.
 
-The CLI supplies `init`, `template`, `validate` and `hash`. Application-only validation checks implemented structure, references and paths without Git. Current historical Run validation needs Git and committed Application binding. Neither establishes definition completeness or execution; a configured harness executes structured Runs.
+The CLI supplies `init`, `template`, `validate` and `hash`. Application-only validation checks Core structure, as [Enforcement and completion](02_protocol/ontology.md#enforcement-and-completion) bounds it, without Git. Run validation needs Git and committed Application binding. Neither establishes definition completeness or execution; a configured harness executes structured Runs.
 
 For the CLI, use Python 3.11+. In your chosen working folder, create and activate a virtual environment (shown for macOS/Linux):
 
@@ -109,8 +109,8 @@ source .venv/bin/activate
 
 Choose one installation source:
 
-- **Complete checkout:** use the source tree extracted from the published immutable v0.3.24 Release after every listed `SHA256SUMS` entry passes. From the verified tree's root, run `python -m pip install -e .`.
-- **Release wheel:** download the wheel, complete source archive and `SHA256SUMS` from the published immutable Release [v0.3.24](https://github.com/Melvinanalytics/impacts-protokoll/releases/tag/v0.3.24) into one folder. Verify every listed asset with `shasum -a 256 -c SHA256SUMS` (macOS/Linux), then install with `python -m pip install ./impacts_protocol-0.3.24-py3-none-any.whl`.
+- **Complete checkout:** use the source tree extracted from the published immutable v0.3.25 Release after every listed `SHA256SUMS` entry passes. From the verified tree's root, run `python -m pip install -e .`.
+- **Release wheel:** download the wheel, complete source archive and `SHA256SUMS` from the published immutable Release [v0.3.25](https://github.com/Melvinanalytics/impacts-protokoll/releases/tag/v0.3.25) into one folder. Verify every listed asset with `shasum -a 256 -c SHA256SUMS` (macOS/Linux), then install with `python -m pip install ./impacts_protocol-0.3.25-py3-none-any.whl`.
 
 Follow [Version and entry points](#version-and-entry-points) to identify the installed package and obtain its complete source. Then, outside the intended new customer folder:
 
@@ -155,9 +155,9 @@ A valid `wartend` entry or pending human gate is not a validation failure. Exit 
 | `revision.invalid`, `run.invalid` | Restore the declared historical binding or correct the Run contract; preserve earlier bound work. |
 | `hash.mismatch`, `trust.invalid` | Investigate changed or unreadable hash surfaces, or invalid approval attribution. Recomputing a digest or writing an attribution does not authorize the change. |
 
-Fix parse or documented routing prerequisites before interpreting absent graph diagnostics: dependent checks can be withheld when their definitions cannot be read. Independent defects remain reportable. Rerun validation after repair. A rejection does not imply that every independent defect has already been reported.
+Fix parse errors, documented routing prerequisites and unresolved route targets before interpreting absent graph diagnostics: dependent checks can be withheld when their definitions cannot be read. Independent defects remain reportable. Rerun validation after repair. A rejection does not imply that every independent defect has already been reported.
 
-Markdown input accepts UTF-8 with one optional leading BOM and LF or CRLF line endings. Repeated leading BOMs are malformed input. Strict YAML ingestion rejects duplicate and non-string mapping keys; it retains the existing safe YAML scalar rules, so quote string values such as `NO`, `on` and `off`. Hashing always uses raw file bytes: BOMs, line endings and Unicode normalization can change a digest even when text looks the same.
+Markdown input accepts UTF-8 with one optional leading BOM and LF or CRLF line endings. Repeated leading BOMs are malformed input. Strict YAML ingestion rejects duplicate and non-string mapping keys; it retains the existing safe YAML scalar rules, so quote string values such as `NO`, `on` and `off`. BOMs, line endings and Unicode normalization can change a digest even when text looks the same ([hash rule](02_protocol/capabilities.md#snapshot-und-herkunftsnachweis)).
 
 ## Develop and contribute
 

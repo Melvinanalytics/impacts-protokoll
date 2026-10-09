@@ -173,4 +173,4 @@ def test_german_workstep_keeps_waiting_separate_from_completed_routes():
     body = template_text("arbeitsschritt", language="de")
 
     assert "jedes abgeschlossene Ergebnis eine deklarierte Arbeitsschritt- oder Endroute wählt" in body
-    assert "Ein wartender Versuch bleibt ohne Routenwahl im aktuellen Schritt" in body
+    assert "„Ablauf“ nennt für jedes Warten Ursache und Auslöser der Fortsetzung" in body
