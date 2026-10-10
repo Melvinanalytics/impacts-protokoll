@@ -239,7 +239,7 @@ The supplied quantity/price fixtures support preparation within their stated sco
 | Fulfill agreed scope | Evidenced acceptance and applicable agreement. | Fulfillment evidence for the affected item/version, retaining partial quantities. |
 | Prepare billing, if needed | Agreed billing rule and its actual premises. | Checked billing revision referring to items and rule; delivery alone establishes neither due date nor billability. |
 
-This is an example boundary choice, not three mandatory company processes. Independently accepted results determine the split. Offer acceptance need not be the last step of drafting. A route stays inside its Application; another Pipeline starts its own run and binds the needed preceding result/version/provenance. Larger companies compose these boundaries without duplicating domain definitions or delegating authority implicitly.
+This is an example boundary choice, not three mandatory company processes. Independently accepted results determine the split. Offer acceptance need not be the last step of drafting. For results crossing independent process boundaries, use the [source-input classification](../../capabilities.md#source-inputs-for-core-applications). Larger companies compose these boundaries without duplicating domain definitions or delegating authority implicitly.
 
 ## Reusable offer pipeline
 

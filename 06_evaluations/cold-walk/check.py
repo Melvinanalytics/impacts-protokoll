@@ -10,6 +10,7 @@ import shutil
 import subprocess
 import sys
 from tempfile import TemporaryDirectory
+import unicodedata
 
 import yaml
 
@@ -21,12 +22,14 @@ from impacts_protocol.io import (
     load_frontmatter,
     load_yaml_strict,
 )
+from impacts_protocol.validator import SchemaRegistry, _approval_problem
 
 BEISPIEL_ROOT = Path(__file__).resolve().parent / "beispiel"
 BEISPIEL = BEISPIEL_ROOT / "applications" / "prueffall"
 CAPABILITY = BEISPIEL_ROOT / "capabilities" / "vollstaendigkeitsgrad"
 GRUNDLAGEN = BEISPIEL_ROOT / "grundlagen"
-HUMAN_DECISION = BEISPIEL_ROOT / "fixtures" / "human-decision.yaml"
+HUMAN_DECISION = BEISPIEL_ROOT / "fixtures" / "human-decision-final.yaml"
+GATE_REVISION = BEISPIEL_ROOT / "fixtures" / "gate-final-rejection.md"
 APPLICATION = "prueffall"
 VORGANG = "prueffall-001"
 CALL_STEP = "vorpruefung/pruefen/CONTEXT.md"
@@ -164,14 +167,29 @@ class Harness:
         self.run_root = root / "vorgaenge" / VORGANG
         self.laufpfad: list[dict] = []
         self.steps = _application_steps(root, revision)
+        self._schemas = SchemaRegistry()
 
     def attempt(self, slug: str, versuch: int) -> Path:
         return self.run_root / slug / f"{versuch:03d}"
 
     def open(self, slug: str, versuch: int, inputs: dict[str, str]) -> dict:
+        if self.laufpfad or self.run_root.exists():
+            raise ProofError("Successor must open through a checked advance")
+        proposed = self._proposed_active_entry(slug, versuch)
+        self._preflight_run([proposed])
         if self.steps[slug].get("gate") == "human":
             raise ProofError("Human Gate must open through a proven producer handoff")
+        # Initial opening has no current Run, but still checks its bound entry
+        # and complete input set before creating any attempt files.
+        metadata, _ = _frontmatter_and_body(_git_show(self.root, self.revision, "CONTEXT.md").decode())
+        if metadata["einstieg_ref"] != f"arbeitsschritt:{slug}" or versuch != 1:
+            raise ProofError("Initial attempt differs from the Application entry")
+        self._require_inputs(slug, inputs)
+        report = validate(self.root)
+        if not report.valid:
+            raise ProofError("Initial workspace fails validation")
         attempt = self.attempt(slug, versuch)
+        _preflight_files(attempt, inputs)
         _write_files(attempt, inputs)
         entry = self._active_entry(slug, versuch, attempt)
         self.laufpfad.append(entry)
@@ -179,11 +197,15 @@ class Harness:
         return entry
 
     def wait(self, entry: dict, ausloeser: str, continuation_ref: str) -> None:
-        entry["status"] = "wartend"
-        entry["wiedereinstieg"] = {
+        self._preflight_current(entry)
+        resume = {
             "ausloeser": ausloeser,
             "continuation_ref": continuation_ref,
         }
+        proposed = dict(entry, status="wartend", wiedereinstieg=resume)
+        self._preflight_run([*self.laufpfad[:-1], proposed])
+        entry["status"] = "wartend"
+        entry["wiedereinstieg"] = resume
         self._write()
 
     def close(
@@ -193,28 +215,55 @@ class Harness:
         route: str,
         freigabe: dict | None = None,
     ) -> None:
+        self._preflight_current(entry)
+        slug = entry["arbeitsschritt_ref"].removeprefix("arbeitsschritt:")
+        if self.steps[slug].get("gate") == "human" or freigabe is not None:
+            raise ProofError("Human Gate must close through a checked decision")
+        self._preflight_terminal(slug, outputs, route)
+        self._preflight_completion(entry, route)
+        self._close_terminal(entry, outputs, route)
+
+    def _close_terminal(self, entry, outputs, route, freigabe=None) -> None:
         slug = entry["arbeitsschritt_ref"].removeprefix("arbeitsschritt:")
         attempt = self.attempt(slug, entry["versuch"])
+        _preflight_files(attempt, outputs)
         _write_outputs(attempt, outputs)
         self._complete_entry(entry, slug, attempt, route, freigabe)
         self._write()
 
     def close_human(self, entry: dict, decision: dict) -> None:
+        self._preflight_current(entry)
         slug = entry["arbeitsschritt_ref"].removeprefix("arbeitsschritt:")
         if self.steps[slug].get("gate") != "human":
             raise ProofError("human fixture supplied to a non-gate step")
+        if not isinstance(decision, dict):
+            raise ProofError("synthetic Human-Decision fixture must be a mapping")
         route = decision.get("route")
         freigabe = decision.get("freigabe")
         output = decision.get("output")
-        if route not in {"freigegeben", "abgelehnt"}:
+        if not isinstance(route, str) or route not in {"freigegeben", "abgelehnt"}:
             raise ProofError("synthetic Human-Decision fixture has no Gate route")
-        if not isinstance(freigabe, dict) or not str(freigabe.get("by", "")).startswith("human:"):
+        if not isinstance(freigabe, dict):
             raise ProofError("synthetic Human-Decision fixture has no human attribution")
-        if not isinstance(output, str) or not {"Prüfbericht:", "Begründung:"} <= set(
-            line.partition(" ")[0] for line in output.splitlines()
+        self._preflight_completion(entry, route, freigabe)
+        fields = _fields(output) if isinstance(output, str) else {}
+        if (
+            not all(fields.get(name) for name in ("Prüfbericht", "Entscheidung", "Begründung"))
+            or fields["Entscheidung"] != route
         ):
             raise ProofError("Gate output does not satisfy pruefung")
-        self.close(entry, {"output/entscheidung.md": output}, route, freigabe)
+        source = yaml.safe_dump(decision, allow_unicode=True, sort_keys=False)
+        report = self.attempt(slug, entry["versuch"]) / "input/pruefbericht.md"
+        evidence = (
+            output + "\n## Empfangene synthetische Entscheidung\n\n```yaml\n"
+            + source + "```\n\n"
+            + f"Gebundene Application: git-tree:{self.revision}\n"
+            + f"Gebundener Prüfbericht: sha256:{_content_digest(report.read_bytes())}\n"
+            + "Diese Quelle testet die Aufzeichnung; sie authentifiziert keine Person.\n"
+        )
+        outputs = {"output/entscheidung.md": evidence}
+        self._preflight_terminal(slug, outputs, route)
+        self._close_terminal(entry, outputs, route, freigabe)
 
     def advance(
         self,
@@ -226,11 +275,26 @@ class Harness:
         next_inputs: dict[str, str],
     ) -> dict:
         """Run mutation-free preflight, then perform one logical Harness transition."""
-        self._preflight_handoff(entry, outputs, route, next_slug, next_inputs)
-
+        self._preflight_current(entry)
+        proposed_next = self._proposed_active_entry(next_slug, next_versuch)
+        self._preflight_completion(entry, route, successor=proposed_next)
+        if self.attempt(next_slug, next_versuch).exists():
+            raise ProofError("Successor attempt already exists")
         slug = entry["arbeitsschritt_ref"].removeprefix("arbeitsschritt:")
+        if self.steps[slug].get("gate") == "human":
+            raise ProofError("Human Gate must close through a checked decision")
+        if self.steps[slug]["routen"].get(route) != f"arbeitsschritt:{next_slug}":
+            raise ProofError("Successor differs from the declared route")
+        self._require_outputs(slug, outputs)
+        self._require_inputs(next_slug, next_inputs)
         attempt = self.attempt(slug, entry["versuch"])
         next_attempt = self.attempt(next_slug, next_versuch)
+        # Both surfaces must be writable under known caller-controlled
+        # preconditions before either group creates files. This is not I/O rollback.
+        _preflight_files(attempt, outputs)
+        _preflight_files(next_attempt, next_inputs)
+        self._preflight_handoff(entry, outputs, route, next_slug, next_inputs)
+
         _write_outputs(attempt, outputs)
         _write_files(next_attempt, next_inputs)
         self._complete_entry(entry, slug, attempt, route)
@@ -250,6 +314,62 @@ class Harness:
             "status": "aktiv",
             "eingabe_hash": surface_hash(attempt, self.steps[slug]["eingaben"]),
         }
+
+    def _proposed_active_entry(self, slug: str, versuch: int) -> dict:
+        if not isinstance(slug, str) or slug not in self.steps:
+            raise ProofError("Attempt names no bound Arbeitsschritt")
+        if not isinstance(versuch, int):
+            raise ProofError("Attempt number must support integer folder naming")
+        # Schema-shaped placeholder is only for proposed metadata checks.
+        # _active_entry computes the stored hash from actual files after preflight.
+        return {
+            "arbeitsschritt_ref": f"arbeitsschritt:{slug}",
+            "versuch": versuch,
+            "status": "aktiv",
+            "eingabe_hash": "sha256:" + "0" * 64,
+        }
+
+    def _check_schema(self, name: str, metadata: dict) -> None:
+        errors = self._schemas.errors(name, metadata)
+        if errors:
+            details = "; ".join(
+                "/" + "/".join(str(part) for part in error.absolute_path)
+                + ": " + error.message for error in errors
+            )
+            raise ProofError(f"Proposed {name} metadata fails schema: {details}")
+
+    def _preflight_run(self, entries: list[dict]) -> None:
+        metadata = {
+            "type": "vorgang",
+            "id": f"vorgang:{VORGANG}",
+            "application_revision": f"git-tree:{self.revision}",
+            "laufpfad": entries,
+        }
+        self._check_schema("vorgang", metadata)
+        try:
+            json.dumps(metadata, ensure_ascii=False).encode("utf-8")
+        except UnicodeEncodeError as error:
+            raise ProofError("Proposed run metadata is not valid UTF-8") from error
+
+    def _preflight_completion(
+        self, entry: dict, route: str, freigabe: dict | None = None,
+        *, successor: dict | None = None,
+    ) -> None:
+        proposed = dict(entry)
+        proposed.pop("wiedereinstieg", None)
+        # Never store this placeholder or treat it as execution evidence.
+        # _complete_entry binds the actual output surface after files are written.
+        proposed.update(status="abgeschlossen", gewaehlte_route=route, ausgabe_hash="sha256:" + "0" * 64)
+        if freigabe is not None:
+            proposed["freigabe"] = freigabe
+        entries = [*self.laufpfad[:-1], proposed]
+        if successor is not None:
+            entries.append(successor)
+        self._preflight_run(entries)
+        if freigabe is not None:
+            problem = _approval_problem(freigabe)
+            if problem is not None:
+                raise ProofError(problem)
 
     def _complete_entry(
         self,
@@ -274,10 +394,10 @@ class Harness:
         next_slug: str,
         inputs: dict[str, str],
     ) -> None:
-        missing = set(self.steps[next_slug]["eingaben"]) - set(inputs)
-        if missing:
-            raise ProofError(f"Handoff inputs missing: {sorted(missing)}")
         producer_slug = entry["arbeitsschritt_ref"].removeprefix("arbeitsschritt:")
+        if self.steps[producer_slug]["routen"].get(route) != f"arbeitsschritt:{next_slug}":
+            raise ProofError("Successor differs from the declared route")
+        self._require_inputs(next_slug, inputs)
         handoff = _application_handoff(
             self.root, self.revision, producer_slug, route
         )
@@ -315,6 +435,41 @@ class Harness:
             if _fields(inputs[handoff.provenance_input]).get("Eingangsquelle") != receipt_ref:
                 raise ProofError("Nachreichung provenance omits received source")
 
+    def _preflight_current(self, entry: dict) -> None:
+        if not self.laufpfad or self.laufpfad[-1] is not entry or entry.get("status") not in {"aktiv", "wartend"}:
+            raise ProofError("Transition requires the current unresolved entry")
+        persisted = load_frontmatter(self.run_root / "CONTEXT.md")
+        binding = {"type": "vorgang", "id": f"vorgang:{VORGANG}", "application_revision": f"git-tree:{self.revision}"}
+        if any(persisted.get(key) != value for key, value in binding.items()):
+            raise ProofError("Run binding differs from the current harness binding")
+        if persisted.get("laufpfad") != self.laufpfad:
+            raise ProofError("Run state differs from the current harness state")
+        report = validate(self.root)
+        if not report.valid:
+            raise ProofError("Current run fails validation: " + ", ".join(sorted({issue.code for issue in report.issues})))
+
+    def _require_inputs(self, slug: str, inputs: dict[str, str]) -> None:
+        if not isinstance(inputs, dict):
+            raise ProofError("Handoff inputs must be a file mapping")
+        self._check_schema("arbeitsschritt", dict(self.steps[slug], eingaben=list(inputs)))
+        missing = set(self.steps[slug]["eingaben"]) - set(inputs)
+        if missing:
+            raise ProofError(f"Handoff inputs missing: {sorted(missing)}")
+
+    def _require_outputs(self, slug: str, outputs: dict[str, str]) -> None:
+        if not isinstance(outputs, dict):
+            raise ProofError("Declared outputs must be a file mapping")
+        self._check_schema("arbeitsschritt", dict(self.steps[slug], ausgaben=list(outputs)))
+        missing = set(self.steps[slug]["ausgaben"]) - set(outputs)
+        if missing:
+            raise ProofError(f"Declared outputs missing: {sorted(missing)}")
+
+    def _preflight_terminal(self, slug: str, outputs: dict[str, str], route: str) -> None:
+        target = self.steps[slug]["routen"].get(route, "")
+        if not target.startswith("end:"):
+            raise ProofError("Nonterminal route requires a checked advance")
+        self._require_outputs(slug, outputs)
+
     def _write(self) -> None:
         metadata = {
             "type": "vorgang",
@@ -344,7 +499,7 @@ class Harness:
         )
 
 
-def walk(base: Path) -> WalkResult:
+def walk(base: Path, *, decision_path: Path | None = None) -> WalkResult:
     """Initialize, bind, run and mutate every declared evidence chain."""
     root, source_commit, capability_tree, revision, workspace_revision = _prepare_workspace(
         Path(base)
@@ -636,6 +791,7 @@ def walk(base: Path) -> WalkResult:
     try:
         for unsafe in unsafe_paths:
             entry["wiedereinstieg"]["continuation_ref"] = unsafe
+            harness._write()
             candidate_inputs = {
                 **response_inputs,
                 response_handoff.provenance_input: response_provenance.replace(response_ref, unsafe),
@@ -646,6 +802,7 @@ def walk(base: Path) -> WalkResult:
             ))
     finally:
         entry["wiedereinstieg"]["continuation_ref"] = response_ref
+        harness._write()
         escape_link.unlink()
         external.unlink()
     if all(refused) and _directory_digest(harness.run_root) == before_response:
@@ -786,14 +943,15 @@ def walk(base: Path) -> WalkResult:
     if "gewaehlte_route" not in entry and "freigabe" not in entry:
         proofs.add("gate.open_has_no_decision")
 
-    decision = _load_human_decision(HUMAN_DECISION)
+    decision = _load_human_decision(decision_path or HUMAN_DECISION)
     harness.close_human(entry, decision)
     if (
         entry.get("freigabe") == decision["freigabe"]
         and entry.get("gewaehlte_route") == decision["route"]
     ):
         proofs.add("gate.external_decision_fixture_consumed")
-    states.append(harness.state("entscheiden 001 abgeschlossen freigegeben end:entschieden"))
+    ending = harness.steps["entscheiden"]["routen"][decision["route"]]
+    states.append(harness.state(f"entscheiden 001 abgeschlossen {decision['route']} {ending}"))
 
     (harness.attempt("pruefen", 1) / "input/antrag.md").write_text(
         "Antrag manipuliert\n", encoding="utf-8"
@@ -849,6 +1007,12 @@ def _prepare_workspace(base: Path) -> tuple[Path, str, str, str, str]:
     )
     _git(root, "add", f"applications/{APPLICATION}")
     _git(root, "commit", "-q", "-m", "bind application capability tuple")
+    # Retain the legacy bound definition in this workspace's history. The
+    # corrected gate is a new Application revision, and all new runs bind it.
+    gate = root / "applications" / APPLICATION / DECISION_STEP
+    gate.write_bytes(GATE_REVISION.read_bytes())
+    _git(root, "add", f"applications/{APPLICATION}")
+    _git(root, "commit", "-q", "-m", "revise gate to record decision and final rejection")
     workspace_revision = _git(root, "rev-parse", "HEAD")
     revision = _git(root, "rev-parse", f"HEAD:applications/{APPLICATION}")
     return root, source_commit, capability_tree, revision, workspace_revision
@@ -1100,7 +1264,7 @@ def _handoff_provenance(origin: str, payload: bytes) -> str:
 
 
 def _verify_handoff(
-    producer: bytes, consumer: bytes, provenance: str, expected_origin: str
+    producer: bytes, consumer: bytes, provenance: str, expected_origin: str,
 ) -> None:
     fields = _fields(provenance)
     digest = _content_digest(producer)
@@ -1125,10 +1289,14 @@ def _verify_handoff(
 
 def _fields(text: str) -> dict[str, str]:
     fields = {}
+    recognized = {"Herkunft", "Ursprung", "Stand", "Content-Digest", "Erforderliche Kontrolle", "Kontrollnachweis", "Eingangsquelle", "Prüfbericht", "Entscheidung", "Begründung"}
     for line in text.splitlines():
         name, separator, value = line.partition(":")
         if separator:
-            fields[name.strip()] = value.strip()
+            name = name.strip()
+            if name in recognized and name in fields:
+                raise ProofError(f"Duplicate recognized evidence label: {name}")
+            fields[name] = value.strip()
     return fields
 
 
@@ -1341,6 +1509,53 @@ def _write_outputs(attempt: Path, outputs: dict[str, str]) -> None:
         if path.exists() and path.read_bytes() != value.encode("utf-8"):
             raise ProofError(f"Existing output differs; read and review current file: {relative}")
     _write_files(attempt, outputs)
+
+
+def _preflight_files(attempt: Path, files: dict[str, str]) -> None:
+    """Reject predictable path/content failures without creating either surface."""
+    paths = set()
+    portable_paths = {}
+    for relative, content in files.items():
+        if (
+            not isinstance(relative, str)
+            or not relative
+            or Path(relative).is_absolute()
+            or ".." in Path(relative).parts
+            or Path(relative).as_posix() != relative
+            or "\\" in relative
+            or any(ord(char) < 32 for char in relative)
+        ):
+            raise ProofError(f"File mapping requires a canonical relative filename: {relative!r}")
+        if not isinstance(content, str):
+            raise ProofError(f"File mapping content must be text: {relative!r}")
+        try:
+            relative.encode("utf-8")
+            content.encode("utf-8")
+        except UnicodeEncodeError as error:
+            raise ProofError(f"File mapping is not valid UTF-8: {relative!r}") from error
+        path = Path(relative)
+        if any(len(part.encode("utf-8")) > 255 or part.endswith((".", " ")) for part in path.parts):
+            raise ProofError(f"File mapping has an unsupported filename component: {relative!r}")
+        portable_key = tuple(
+            unicodedata.normalize("NFC", part).casefold() for part in path.parts
+        )
+        if portable_key in portable_paths:
+            raise ProofError(f"File mapping has a portable filename alias: {relative!r}")
+        portable_paths[portable_key] = relative
+        paths.add(path)
+    for portable_key, relative in portable_paths.items():
+        if any(portable_key[:length] in portable_paths for length in range(1, len(portable_key))):
+            raise ProofError(f"File mapping has a parent-file collision: {relative!r}")
+    for relative in paths:
+        path = attempt / relative
+        if path.is_symlink() or (path.exists() and not path.is_file()):
+            raise ProofError(f"File mapping target is not a regular file: {relative.as_posix()!r}")
+        for parent in path.parents:
+            if parent.exists() and not parent.is_dir():
+                raise ProofError(f"File mapping parent is not a directory: {parent}")
+            if parent == attempt or attempt in parent.parents:
+                if parent.is_symlink():
+                    raise ProofError(f"File mapping parent is a symlink: {parent}")
 
 
 def _record_inputs(root: Path, path: str, payload: str) -> dict[str, str]:

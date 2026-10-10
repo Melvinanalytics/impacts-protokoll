@@ -133,7 +133,7 @@ def test_future_gates_are_unperformed_and_cover_all_requested_scoring():
     assert "No unperformed score, pass, benefit or reduction" in followup
 
 
-def test_retention_guidance_keeps_harness_boundary_and_deletion_design_open():
+def test_retention_guidance_preserves_core_mismatch_without_deletion_state():
     capabilities = (ROOT / "02_protocol" / "capabilities.md").read_text(encoding="utf-8")
     german = (ROOT / "02_protocol" / "translations" / "de.md").read_text(encoding="utf-8")
     for phrase in (
@@ -149,9 +149,11 @@ def test_retention_guidance_keeps_harness_boundary_and_deletion_design_open():
         "neither deleted content nor a content hash",
         "Unknown consumers remain unknown",
         "`hash.mismatch`, indistinguishable from tampering",
-        "no Core deletion state or schema",
+        "adds no Core deletion state",
+        "Never rehash missing or replaced bound bytes",
     ):
         assert phrase in capabilities
     assert "Aufbewahrung und Löschung an der Harness-Grenze" in german
     assert "`hash.mismatch`" in german
-    assert "Offene Designfrage" in german
+    assert "keinen Core-Löschzustand" in german
+    assert "nie neu hashen" in german

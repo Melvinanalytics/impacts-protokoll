@@ -171,6 +171,29 @@ def test_strict_mapping_constructor_runs_on_each_backend(
         yaml.load(source, Loader=io._StrictLoader)
 
 
+@pytest.mark.parametrize("tag", ["bool", "timestamp"])
+def test_native_scalar_constructor_failures_are_yaml_errors_at_source_node(strict_yaml_path, tag):
+    source = f"probe: !!{tag} CANARY_SCALAR\n"
+    with pytest.raises(yaml.YAMLError) as caught:
+        yaml.load(source, Loader=io._StrictLoader)
+    assert caught.value.problem_mark.line == 0
+    assert caught.value.problem_mark.column == 7
+    with pytest.raises(yaml.YAMLError, match=f"line 1, column 8: invalid YAML {tag} scalar"):
+        io.load_yaml_strict(source)
+
+
+def test_normalized_native_scalar_neighbors_keep_safe_yaml_types(strict_yaml_path):
+    from datetime import date, datetime
+    source = "flag: !!bool YES\nday: !!timestamp 2040-04-07\ntime: !!timestamp 2040-04-07T09:17:32+00:00\ncount: !!int 42\namount: !!float 2.5\n"
+    metadata = yaml.load(source, Loader=io._StrictLoader)
+    assert metadata["flag"] is True
+    assert type(metadata["day"]) is date
+    assert type(metadata["time"]) is datetime
+    assert metadata["count"] == 42 and type(metadata["count"]) is int
+    assert metadata["amount"] == 2.5 and type(metadata["amount"]) is float
+    assert io.load_yaml_strict(source) == metadata
+
+
 def test_safe_yaml_paths_keep_validator_findings(tmp_path, strict_yaml_path):
     root = init_workspace(tmp_path / "kunde")
     path = root / "CONTEXT.md"

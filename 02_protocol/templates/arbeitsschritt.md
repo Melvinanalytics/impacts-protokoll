@@ -7,7 +7,7 @@ eingaben:
 ausgaben:
   - output/entscheidung.md
 pruefung: Decision identifies the check report and its rationale
-gate: human  # only at an authority or risk boundary: 02_protocol/impacts-architect/references/zuschnitt.md#arbeitsschritt; otherwise remove this line
+gate: human  # only when a rule reserves a decision, approval or legal act: 02_protocol/impacts-architect/references/zuschnitt.md#arbeitsschritt; otherwise remove this line
 routen:
   freigegeben: end:entschieden
   abgelehnt: end:abgelehnt
@@ -24,13 +24,13 @@ One sentence: the result this job produces, its recipient and permitted use.
 
 ## Inputs
 
-This section implements Augment at the point of use. Declare only the minimum context each human, agent or deterministic contribution needs, its intended use and when it must be valid and available. For each source or handed-off file, name acquisition/producer, required content and opening control. Declare the file and its separate `*-herkunft.md` in `eingaben`; use the single copyable provenance-file example at `02_protocol/capabilities.md#provenance-file-example`. The harness materializes these bytes under `input/` and hashes the declared surface before opening. Include needed definitions, rules, prompt fragments and document blanks outside the Application; their live links do not bind them. Stable references retain their single home.
+This section implements Augment at the point of use. Declare only the minimum context each human, agent or deterministic contribution needs, its intended use and when it must be valid and available. For each source or handed-off file, name acquisition/producer, required content and opening control. Declare the file and its provenance, normally separate `*-herkunft.md`, in `eingaben` under `02_protocol/capabilities.md#snapshot-und-herkunftsnachweis`; use the single copyable provenance-file example at `02_protocol/capabilities.md#provenance-file-example`. The harness materializes these bytes under `input/` and hashes the declared surface before opening. Include needed definitions, rules, prompt fragments and document blanks outside the Application; their live links do not bind them. Stable references retain their single home.
 
 For acquisition, name the configured reader or responsible provider, starting identity, selection/time and destination file. Reuse the domain's keys and source mapping. Preserve references, rule premises and relevant contradictions; the question determines the excerpt. If the context is derived or generated, name the source inputs, sanctioned calculation or instruction, producer, destination and check; the result retains provenance and supplies no missing fact or authority. Declare the actual minimum control for the intended use and any freshness or reacquisition trigger. Missing access, unavailable values and conflicting meaning remain distinct blockers.
 
 ### Source requirement
 
-For each stable source input; preceding-step inputs use the producer's handoff mapping instead. These labels follow `02_protocol/capabilities.md#source-inputs-for-core-applications`:
+For each stable source input; inputs from preceding steps in the same run use the producer's handoff mapping instead; another run's result follows the source-input classification below. These labels follow `02_protocol/capabilities.md#source-inputs-for-core-applications`:
 
 - Quell-Eingabe: `input/<file>.md`
 - Herkunft: `<business identity of the source>`
@@ -78,7 +78,7 @@ Only for an earned Capability (`02_protocol/capabilities.md#wann-extrahieren`); 
 
 Files under `output/`. Drafts are readable edit surfaces. Bound or completed results require a traceable new revision; retain their original bytes.
 
-Specify the successor's needed product under the forward check in `02_protocol/impacts-method.md#reverse-engineer-a-product-or-service`. Keep internal review evidence separate where its use differs; include the evidence that the receiving job needs. Declare the actual files and, for each step route, the handoff mapping once at the producer, in the sentence form of `02_protocol/capabilities.md#sichtbare-ausgabe-und-übergabe`. The run adds attempt-qualified origin and Content-Digest in `input/<target>-herkunft.md`.
+Specify the successor's needed product under the forward check in `02_protocol/impacts-method.md#reverse-engineer-a-product-or-service`. Keep internal review evidence separate where its use differs; include the evidence that the receiving job needs. Declare the actual files and, for each step route, the handoff mapping once at the producer, in the sentence form of `02_protocol/capabilities.md#sichtbare-ausgabe-und-übergabe`. The run records the handoff's provenance in the consumer's declared provenance file, following `02_protocol/capabilities.md#snapshot-und-herkunftsnachweis`.
 
 For each record change, message or physical effect, name the target, the change, the current-state check before it, its confirmation and how a repeat stays safe, following `02_protocol/capabilities.md#rückübertragung-in-geschäftsrecords`. A request or draft does not establish the effect; an uncertain result needs reconciliation before retry. State the harm of a wrong output or effect, whether it is detected before that harm and whether it can be reversed, as `02_protocol/impacts-architect/references/zuschnitt.md#required-checks-and-review` asks.
 

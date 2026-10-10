@@ -706,7 +706,14 @@ class _ReachableApplications:
         return (oid, slug) in self.index
 
     def _build(self) -> set[tuple[str, str]]:
-        roots_text = _git(self.workspace, "rev-list", "--all", "--format=%T", "--no-commit-header")
+        # Ordinary retained history excludes stash/auxiliary refs. Detached HEAD
+        # remains a root; an unborn HEAD must not hide retained branch/tag history.
+        head = _git(self.workspace, "rev-parse", "--verify", "HEAD^{commit}")
+        head_root = (head,) if head is not None else ()
+        roots_text = _git(
+            self.workspace, "rev-list", "--branches", "--tags", "--remotes",
+            *head_root, "--format=%T", "--no-commit-header", "--",
+        )
         if roots_text is None:
             return set()
         roots = set(roots_text.splitlines())

@@ -115,6 +115,40 @@ def test_gap_note_does_not_claim_other_input_conditions_were_checked(tmp_path, m
     assert files(root) == before and walk.validate(root).valid
 
 
+@pytest.mark.parametrize("duplicate_key", ["data.json", "revision", "path", "sha256", None])
+def test_provenance_duplicate_keys_block_handoff_and_unique_neighbor_passes(tmp_path, duplicate_key):
+    root = walk.open_offer(tmp_path / "en", walk.fixture(), "en")
+    expected, _ = walk.checked_offer(root)
+    attempt = root / walk.RUN / "entwerfen/001"
+    path = attempt / "input/herkunft.json"
+    contents = path.read_text()
+    if duplicate_key == "data.json":
+        contents = '{"data.json":{"path":"conflicting-first-value"},' + contents.lstrip()[1:]
+    elif duplicate_key is not None:
+        value = json.loads(contents)["data.json"][duplicate_key]
+        pair = f'"{duplicate_key}": {json.dumps(value)}'
+        contents = contents.replace(pair, f'"{duplicate_key}": "conflicting-first-value", ' + pair, 1)
+    path.write_text(contents)
+    # Bind these bytes so the harness must inspect provenance instead of relying
+    # on an unrelated Core hash mismatch to reject the duplicate object.
+    metadata, body = walk.load_frontmatter_and_body(root / walk.RUN / "CONTEXT.md")
+    definition, _ = walk.load_frontmatter_and_body(root / walk.APP / "ausarbeitung/entwerfen/CONTEXT.md")
+    metadata["laufpfad"][0]["eingabe_hash"] = walk.surface_hash(attempt, definition["eingaben"])
+    walk.write_context(root / walk.RUN / "CONTEXT.md", metadata, body)
+    assert walk.validate(root).valid
+    before = files(root)
+    if duplicate_key is not None:
+        with pytest.raises(ValueError, match=f"duplicate JSON key: '{duplicate_key}'"):
+            walk.handoff(root, expected)
+        assert files(root) == before
+    else:
+        result, report = walk.checked_offer(root)
+        assert result == expected and report["result"] == "passed"
+        assert files(root) == before
+        walk.handoff(root, result)
+        assert walk.validate(root).valid
+
+
 def test_stale_bound_input_rejects_even_when_model_claims_verified(tmp_path):
     root = walk.open_offer(tmp_path / "de", walk.fixture(), "de")
     result, _ = walk.checked_offer(root)

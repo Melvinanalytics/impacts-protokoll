@@ -10,6 +10,7 @@ from hashlib import sha256
 from pathlib import Path
 import json
 import subprocess
+import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -18,6 +19,7 @@ from tests.c_owner_support import (
     HUMAN,
     codes,
     committed_workspace,
+    entry_active,
     entry_completed,
     git,
     issues_for,
@@ -28,6 +30,88 @@ from tests.support import read_context, replace_context
 
 CAPABILITIES = ROOT / "02_protocol" / "capabilities.md"
 METHOD = ROOT / "02_protocol" / "impacts-method.md"
+
+
+@pytest.mark.parametrize("kind,expected", [
+    ("branch", True), ("tag", True), ("annotated-tag", True),
+    ("remote", True), ("detached", True), ("unborn-branch", True),
+    ("unborn-tag", True), ("stash", False), ("stash-index", False),
+    ("staged", False), ("unreachable", False), ("auxiliary", False),
+])
+def test_application_history_uses_ordinary_roots_and_resolvable_head(tmp_path, kind, expected):
+    root, _ = committed_workspace(tmp_path)
+    base = git(root, "rev-parse", "HEAD")
+    marker = root / "applications/video/CONTEXT.md"
+    marker.write_text(marker.read_text() + f"\nSynthetic distinct tree: {kind}.\n")
+    if kind in {"stash", "stash-index"}:
+        if kind == "stash-index":
+            git(root, "add", "applications")
+        git(root, "stash", "push", "-m", "synthetic stash only")
+        ref = "refs/stash^2" if kind == "stash-index" else "refs/stash"
+        revision = git(root, "rev-parse", f"{ref}:applications/video")
+    elif kind == "staged":
+        git(root, "add", "applications")
+        revision = git(root, "rev-parse", f"{git(root, 'write-tree')}:applications/video")
+    else:
+        git(root, "checkout", "--detach", "HEAD")
+        git(root, "add", "applications")
+        git(root, "commit", "-m", "synthetic distinct commit")
+        commit = git(root, "rev-parse", "HEAD")
+        revision = git(root, "rev-parse", "HEAD:applications/video")
+        refs = {
+            "branch": "refs/heads/retained", "tag": "refs/tags/retained",
+            "remote": "refs/remotes/origin/retained", "auxiliary": "refs/probe/retained",
+            "unborn-branch": "refs/heads/retained", "unborn-tag": "refs/tags/retained",
+        }
+        if kind in refs:
+            git(root, "update-ref", refs[kind], commit)
+        elif kind == "annotated-tag":
+            git(root, "tag", "-a", "retained", "-m", "synthetic tag", commit)
+        if kind != "detached":
+            git(root, "checkout", "main")
+            assert git(root, "rev-parse", "HEAD") == base
+        if kind.startswith("unborn-"):
+            git(root, "symbolic-ref", "HEAD", "refs/heads/not-yet-born")
+
+    run = root / "vorgaenge/probe"
+    attempt = make_attempt(run, "start", 1, input_bytes="synthetic input")
+    write_run(root, "probe", revision, [entry_active("start", 1, attempt)])
+    report = validate(root)
+    assert report.valid is expected, report.issues
+    if not expected:
+        assert "revision.invalid" in {issue.code for issue in report.issues}
+
+
+def test_stash_duplicate_of_ordinary_history_remains_usable(tmp_path):
+    root, revision = committed_workspace(tmp_path)
+    (root / "synthetic-note.md").write_text("unrelated stash bytes")
+    git(root, "stash", "push", "--include-untracked")
+    _completed_run(root, revision)
+    assert validate(root).valid
+
+
+def test_shallow_history_does_not_use_hidden_ancestor_objects(tmp_path):
+    source, old_revision = committed_workspace(tmp_path, "source")
+    marker = source / "applications/video/CONTEXT.md"
+    marker.write_text(marker.read_text() + "\nSynthetic shallow tip.\n")
+    git(source, "add", "applications")
+    git(source, "commit", "-m", "shallow tip")
+    tip_revision = git(source, "rev-parse", "HEAD:applications/video")
+    root = tmp_path / "shallow"
+    subprocess.run(["git", "clone", "--depth=1", source.as_uri(), str(root)], check=True, capture_output=True)
+    _completed_run(root, tip_revision)
+    assert validate(root).valid
+    run = root / "vorgaenge/video-001/CONTEXT.md"
+    metadata = read_context(run)
+    metadata["application_revision"] = f"git-tree:{old_revision}"
+    replace_context(run, metadata)
+    assert "revision.invalid" in codes(root)
+    # Transfer old objects without altering the shallow boundary or selected refs.
+    git(root, "fetch", "--unshallow", "origin")
+    tip = git(root, "rev-parse", "HEAD")
+    (root / ".git/shallow").write_text(tip + "\n")
+    assert git(root, "cat-file", "-t", old_revision) == "tree"
+    assert "revision.invalid" in codes(root)
 
 
 def _completed_run(root: Path, revision: str, name: str = "video-001") -> Path:

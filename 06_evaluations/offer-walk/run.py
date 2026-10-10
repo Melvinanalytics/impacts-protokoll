@@ -66,6 +66,15 @@ def encode(value: object) -> str:
     return json.dumps(value, ensure_ascii=False, sort_keys=True, indent=2) + "\n"
 
 
+def unique_json_object(pairs: list[tuple[str, object]]) -> dict:
+    result = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError(f"duplicate JSON key: {key!r}")
+        result[key] = value
+    return result
+
+
 def git(root: Path, *args: str) -> str:
     return subprocess.check_output(["git", "-C", str(root), *args], text=True).strip()
 
@@ -222,7 +231,10 @@ def bound_inputs(root: Path) -> tuple[dict, Path, str, str]:
     if len(meta["laufpfad"]) != 1 or meta["laufpfad"][0]["status"] != "aktiv":
         raise ValueError("draft step is not active")
     attempt = root / RUN / "entwerfen/001"
-    provenance = json.loads((attempt / "input/herkunft.json").read_text())
+    provenance = json.loads(
+        (attempt / "input/herkunft.json").read_text(),
+        object_pairs_hook=unique_json_object,
+    )
     app_tree = meta["application_revision"].removeprefix("git-tree:")
     for name in ("data.json", "template.md", "language.md", "renderer.py", "language-contract.md"):
         source = provenance[name]
