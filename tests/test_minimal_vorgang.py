@@ -2,6 +2,7 @@ from pathlib import Path
 from collections import Counter
 from io import BytesIO
 import os
+import json
 import shutil
 import subprocess
 import sys
@@ -14,6 +15,102 @@ ROOT = Path(__file__).resolve().parents[1]
 from impacts_protocol import init_workspace, surface_hash, validate
 import impacts_protocol.validator as validator
 from tests.support import codes, git, read_context, replace_context, write_application, write_context
+
+
+@pytest.mark.parametrize("as_json", [False, True])
+def test_run_yaml_diagnostic_keeps_location_and_first_use_repair_hint(tmp_path, as_json):
+    root, run = _prepare_workspace(tmp_path)
+    (run / "CONTEXT.md").write_text(
+        "---\ntype: vorgang\nid: vorgang:bad: value\n---\n"
+    )
+    args = [sys.executable, "-B", "-m", "impacts_protocol.cli", "validate", str(root)]
+    if as_json:
+        args.append("--json")
+    result = subprocess.run(args, text=True, capture_output=True)
+    assert result.returncode == 1
+    assert "format.invalid" in result.stdout
+    assert "line 3, column" in result.stdout
+    assert "mapping values are not allowed here" in result.stdout
+    assert "quote ambiguous scalar text such as values containing ': '" in result.stdout
+    if as_json:
+        assert json.loads(result.stdout)["valid"] is False
+
+
+@pytest.mark.parametrize("as_json", [False, True])
+def test_invalid_approval_diagnostic_keeps_found_value_and_independent_error(tmp_path, as_json):
+    root, run = _prepare_workspace(tmp_path)
+    metadata = read_context(run / "CONTEXT.md")
+    metadata["laufpfad"][-1]["freigabe"] = {
+        "by": "agent:diagnostic-example",
+        "at": "2040-04-07T09:17:32+00:00",
+    }
+    replace_context(run / "CONTEXT.md", metadata)
+    (run / "start/001/input/auftrag.md").write_text("changed independent input")
+    args = [sys.executable, "-B", "-m", "impacts_protocol.cli", "validate", str(root)]
+    if as_json:
+        args.append("--json")
+    result = subprocess.run(args, text=True, capture_output=True)
+    assert result.returncode == 1
+    assert "freigabe.by must be human:<id>; found 'agent:diagnostic-example'" in result.stdout
+    assert "schema.invalid" in result.stdout
+    assert "trust.invalid" in result.stdout
+    assert "hash.mismatch" in result.stdout
+    if as_json:
+        assert json.loads(result.stdout)["valid"] is False
+
+
+@pytest.mark.parametrize("backend", ["python", "c"])
+@pytest.mark.parametrize("tag", ["int", "float", "bool", "timestamp"])
+@pytest.mark.parametrize("token", ["''", "'_'", "CANARY_NUMBER", "eins"])
+def test_invalid_native_scalar_constructor_keeps_value_cause_and_source_mark_on_each_backend(backend, tag, token):
+    import yaml
+    from impacts_protocol import io
+    if backend == "c" and io._C_SAFE_LOADER is None:
+        pytest.skip("PyYAML C extension unavailable")
+    loader = io._PythonStrictLoader if backend == "python" else io._strict_loader(io._C_SAFE_LOADER)
+    with pytest.raises(yaml.YAMLError) as caught:
+        yaml.load(f"probe: !!{tag} {token}\n", Loader=loader)
+    value = token.strip("'")
+    assert caught.value.problem.startswith(f"invalid YAML {tag} scalar {value!r}:")
+    assert str(caught.value.__cause__) in caught.value.problem
+    assert caught.value.problem_mark.line == 0
+    assert caught.value.problem_mark.column == 7
+    with pytest.raises(yaml.YAMLError) as normalized:
+        io.load_yaml_strict(f"probe: !!{tag} {token}\n")
+    assert caught.value.problem in str(normalized.value)
+
+
+@pytest.mark.parametrize("as_json", [False, True])
+def test_native_scalar_diagnostic_keeps_offending_value_and_original_cause(tmp_path, as_json):
+    root, run = _prepare_workspace(tmp_path)
+    path = run / "CONTEXT.md"
+    path.write_text(path.read_text().replace("type: vorgang", "type: vorgang\nprobe: !!int eins", 1))
+    args = [sys.executable, "-B", "-m", "impacts_protocol.cli", "validate", str(root)]
+    if as_json:
+        args.append("--json")
+    result = subprocess.run(args, text=True, capture_output=True)
+    assert result.returncode == 1
+    assert "format.invalid" in result.stdout
+    assert "line 3, column 8" in result.stdout
+    assert "invalid YAML int scalar 'eins': invalid literal for int() with base 10: 'eins'" in result.stdout
+    if as_json:
+        assert json.loads(result.stdout)["valid"] is False
+
+
+@pytest.mark.parametrize("failure", [RuntimeError, KeyError])
+def test_numeric_scalar_normalization_preserves_unexpected_constructor_failures(failure):
+    import yaml
+    from impacts_protocol import io
+
+    class BrokenLoader(yaml.SafeLoader):
+        pass
+
+    def broken_constructor(loader, node):
+        raise failure("unexpected constructor invariant")
+
+    BrokenLoader.add_constructor("tag:yaml.org,2002:int", broken_constructor)
+    with pytest.raises(failure, match="unexpected constructor invariant"):
+        yaml.load("probe: !!int 42\n", Loader=io._strict_loader(BrokenLoader))
 
 
 def _prepare_workspace(base: Path) -> tuple[Path, Path]:
@@ -105,6 +202,14 @@ def test_present_wrong_run_id_still_reports_folder_mismatch(tmp_path):
     assert issues[0].message == "Vorgang ID must match folder slug: found 'vorgang:other-run', expected vorgang:video-001"
 
 
+def test_current_head_path_does_not_break_application_reachability(tmp_path):
+    root, _ = _prepare_workspace(tmp_path)
+    assert validate(root).valid
+    head = git(root, "rev-parse", "HEAD")
+    (root / head).write_text("Synthetic filename sharing the current commit object ID.\n")
+    assert validate(root).valid
+
+
 def test_unreachable_application_tree_is_rejected():
     with TemporaryDirectory() as directory:
         root, run = _prepare_workspace(Path(directory))
@@ -164,17 +269,17 @@ def test_revision_history_is_reused_within_validation_but_rechecked_after_ref_ch
     monkeypatch.setattr(validator, "_git", tracked_git)
 
     assert validate(root).valid
-    assert commands.count(("rev-list", "--all", "--format=%T", "--no-commit-header")) == 1
+    assert sum(args[0] == "rev-list" for args in commands) == 1
     commit = git(root, "rev-parse", "HEAD")
     git(root, "update-ref", "-d", "refs/heads/main")
     report = validate(root)
     assert len(report.issues) == 3, report.issues
     assert all(issue.code == "revision.invalid" for issue in report.issues)
-    assert commands.count(("rev-list", "--all", "--format=%T", "--no-commit-header")) == 2
+    assert sum(args[0] == "rev-list" for args in commands) == 2
 
     git(root, "update-ref", "refs/heads/main", commit)
     assert validate(root).valid
-    assert commands.count(("rev-list", "--all", "--format=%T", "--no-commit-header")) == 3
+    assert sum(args[0] == "rev-list" for args in commands) == 3
 
 
 def test_unrelated_reachable_commit_with_missing_root_tree_does_not_invalidate_bound_application(tmp_path):
@@ -752,7 +857,7 @@ def test_invalid_definition_memo_attributes_each_run(tmp_path, monkeypatch):
     ('V6', ['trust.invalid'], ['/laufpfad/1', 'freigabe missing', "responsible human's decision", 'dependent transition unresolved']),
     ('V7', ['run.invalid'], ['/laufpfad/1', 'aktiv entry must not carry freigabe', 'leave a human-written freigabe unchanged']),
     ('V8', ['schema.invalid', 'trust.invalid'], ['/laufpfad/1', "freigabe.by must be human:<id>; found 'agent:x'", 'preserve decision evidence']),
-    ('V9', ['schema.invalid'], ['/laufpfad/1/freigabe/at', 'read this value as datetime', 'quote plain scalar text', '2026-08-30T10:00:00+02:00', "responsible human's decision"]),
+    ('V9', ['schema.invalid'], ['/laufpfad/1/freigabe/at', '2026-08-30T10:00:00+02:00', 'read this value as datetime', 'quote plain scalar text', "responsible human's decision"]),
     ('V10', ['run.invalid', 'run.invalid'], ['aktiv entry must not carry gewaehlte_route', 'aktiv entry must not carry ausgabe_hash']),
     ('V11', ['run.invalid'], ['/laufpfad/0', 'Attempt directory is missing or unsafe']),
 ])
@@ -859,6 +964,7 @@ def test_yaml_timestamp_type_does_not_hide_independent_invalid_actor(tmp_path):
     assert sorted(issue.code for issue in issues) == ['schema.invalid', 'schema.invalid', 'trust.invalid']
     assert any('/laufpfad/1/freigabe/at' in issue.message and 'datetime' in issue.message for issue in issues)
     trust = next(issue for issue in issues if issue.code == 'trust.invalid')
+    assert "freigabe.by must be human:<id>" in trust.message
     assert "found 'agent:x'" in trust.message
     assert 'freigabe.at' not in trust.message
 

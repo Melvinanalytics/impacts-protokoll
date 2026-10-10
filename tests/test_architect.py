@@ -763,7 +763,8 @@ def test_form_selection_states_file_orchestration_applicability_boundary():
     text = FORM_SELECTION.read_text(encoding="utf-8")
     selection = text[text.index("## Select the form") : text.index("## Work report before proposing a tree")]
 
-    assert "Human review belongs only at an identified" in selection
+    assert "Human decision boundaries follow" in selection
+    assert "required quality checking remains distinct from a human decision gate" in selection
     assert "Core has one sequential `laufpfad`" in selection
     for unsupported_runtime in (
         "concurrent-user queues",

@@ -7,14 +7,14 @@ eingaben:
 ausgaben:
   - output/entscheidung.md
 pruefung: Entscheidung nennt Prüfbericht und Begründung
-gate: human  # nur an einer Autoritäts- oder Risikogrenze: 02_protocol/impacts-architect/references/zuschnitt.md#arbeitsschritt; sonst diese Zeile löschen
+gate: human  # nur wenn eine Regel Entscheidung, Freigabe oder Rechtshandlung vorbehält: 02_protocol/impacts-architect/references/zuschnitt.md#arbeitsschritt; sonst diese Zeile löschen
 routen:
   freigegeben: end:entschieden
   abgelehnt: end:abgelehnt
 customer_touchpoint: sacred  # standard oder sacred: 02_protocol/impacts-method.md#identify; ohne Kundenkontakt diese Zeile löschen
 ---
 
-<!-- Translation source: 02_protocol/templates/arbeitsschritt.md; sha256: 8d6db3f22996ecee548bc9962bc43895ad7f6e6ec6d8b5046ea7c8db7549c7ba -->
+<!-- Translation source: 02_protocol/templates/arbeitsschritt.md; sha256: 29b677c9b85362a5cfb7f37dea524cd1f605828462603e9a829a588882d7c94d -->
 
 # Entscheiden
 
@@ -26,13 +26,13 @@ Ein Satz: Ergebnis dieses Jobs, Empfänger und erlaubte Nutzung.
 
 ## Eingaben
 
-Dieser Abschnitt setzt Augment am Ort der Arbeit um. Nur den Mindestkontext deklarieren, den der jeweilige menschliche, agentische oder deterministische Beitrag braucht, einschließlich beabsichtigter Nutzung sowie Zeitpunkt, zu dem er gültig und verfügbar sein muss. Für jede Quell- oder Übergabedatei Beschaffung/Producer, benötigten Inhalt und Eingangskontrolle benennen. Die Datei und ihre separate `*-herkunft.md` in `eingaben` deklarieren; das zentrale kopierbare Beispiel zur Herkunftsdatei unter `02_protocol/capabilities.md#provenance-file-example` verwenden. Das Harness materialisiert diese Bytes unter `input/` und hasht die deklarierte Fläche vor dem Öffnen. Benötigte Definitionen, Regeln, Promptbausteine und Dokumentrohlinge außerhalb der Application einschließen; ihre aktuellen Links binden sie nicht. Stabile Referenzen behalten ihre einzige Heimat.
+Dieser Abschnitt setzt Augment am Ort der Arbeit um. Nur den Mindestkontext deklarieren, den der jeweilige menschliche, agentische oder deterministische Beitrag braucht, einschließlich beabsichtigter Nutzung sowie Zeitpunkt, zu dem er gültig und verfügbar sein muss. Für jede Quell- oder Übergabedatei Beschaffung/Producer, benötigten Inhalt und Eingangskontrolle benennen. Die Datei und ihren Herkunftsnachweis, üblicherweise separate `*-herkunft.md`, gemäß `02_protocol/capabilities.md#snapshot-und-herkunftsnachweis` in `eingaben` deklarieren; das zentrale kopierbare Beispiel zur Herkunftsdatei unter `02_protocol/capabilities.md#provenance-file-example` verwenden. Das Harness materialisiert diese Bytes unter `input/` und hasht die deklarierte Fläche vor dem Öffnen. Benötigte Definitionen, Regeln, Promptbausteine und Dokumentrohlinge außerhalb der Application einschließen; ihre aktuellen Links binden sie nicht. Stabile Referenzen behalten ihre einzige Heimat.
 
 Für die Beschaffung eingerichteten Reader oder liefernde Person, Objektbezug, Auswahl/Zeitpunkt und Zieldatei benennen. Fachliche Schlüssel und Quellzuordnung wiederverwenden. Bezüge, Regelvoraussetzungen und relevante Widersprüche erhalten; die Arbeitsfrage bestimmt den Ausschnitt. Bei abgeleitetem oder erzeugtem Kontext Quelleingaben, sanktionierte Rechnung oder Anweisung, Producer, Ziel und Prüfung benennen; das Ergebnis behält seine Herkunft und liefert keine fehlende Tatsache oder Befugnis. Tatsächliche Mindestkontrolle für die beabsichtigte Nutzung sowie Auslöser für Aktualisierung oder Neubeschaffung deklarieren. Fehlender Zugriff, fehlende Werte und widersprüchliche Bedeutung bleiben verschiedene Blockaden.
 
 ### Quellenanforderung
 
-Für jede stabile Quelleingabe; Eingaben aus vorangegangenen Schritten verwenden stattdessen die Übergabeabbildung des Producers. Diese Kennungen folgen `02_protocol/capabilities.md#source-inputs-for-core-applications`:
+Für jede stabile Quelleingabe; Eingaben aus vorangegangenen Schritten desselben Vorgangs verwenden stattdessen die Übergabeabbildung des Producers; das Ergebnis eines anderen Vorgangs folgt der unten verlinkten Quelleneingabenregel. Diese Kennungen folgen `02_protocol/capabilities.md#source-inputs-for-core-applications`:
 
 - Quell-Eingabe: `input/<datei>.md`
 - Herkunft: `<fachliche Identität der Quelle>`
@@ -80,7 +80,7 @@ Nur für eine begründete Capability (`02_protocol/capabilities.md#wann-extrahie
 
 Dateien unter `output/`. Vorläufige Ausgaben sind lesbare, bearbeitbare Editierflächen. Änderungen an bereits gebundenen oder abgeschlossenen Ergebnissen erfordern eine neue nachvollziehbare Revision; die ursprünglichen Bytes bleiben erhalten.
 
-Das benötigte Produkt des Nachfolgers nach der Vorwärtsprüfung in `02_protocol/impacts-method.md#reverse-engineer-a-product-or-service` festlegen. Interne Reviewevidenz getrennt halten, wenn ihre Nutzung abweicht; die vom empfangenden Job benötigte Evidenz einschließen. Tatsächliche Dateien und für jede Schrittroute die Übergabeabbildung genau einmal beim Producer in der Satzform von `02_protocol/capabilities.md#sichtbare-ausgabe-und-übergabe` deklarieren. Der Vorgang ergänzt versuchsqualifizierten Ursprung und Content-Digest in `input/ziel-herkunft.md`.
+Das benötigte Produkt des Nachfolgers nach der Vorwärtsprüfung in `02_protocol/impacts-method.md#reverse-engineer-a-product-or-service` festlegen. Interne Reviewevidenz getrennt halten, wenn ihre Nutzung abweicht; die vom empfangenden Job benötigte Evidenz einschließen. Tatsächliche Dateien und für jede Schrittroute die Übergabeabbildung genau einmal beim Producer in der Satzform von `02_protocol/capabilities.md#sichtbare-ausgabe-und-übergabe` deklarieren. Der Vorgang hält den Übergabenachweis in der vom empfangenden Schritt deklarierten Herkunftsdatei nach `02_protocol/capabilities.md#snapshot-und-herkunftsnachweis` fest.
 
 Für jede Änderung an einem Record, jede Nachricht und jede physische Wirkung Ziel, Änderung, Prüfung des aktuellen Zustands davor, Bestätigung und den Schutz bei Wiederholung nach `02_protocol/capabilities.md#rückübertragung-in-geschäftsrecords` benennen. Eine Anfrage oder ein Entwurf belegt die Wirkung nicht; ein ungewisses Ergebnis muss vor erneutem Versuch geklärt werden. Den Schaden einer falschen Ausgabe oder Wirkung angeben, ob er vor dem Schaden erkannt wird und ob er sich rückgängig machen lässt, wie es `02_protocol/impacts-architect/references/zuschnitt.md#required-checks-and-review` verlangt.
 

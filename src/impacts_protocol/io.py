@@ -110,6 +110,31 @@ def _strict_loader(base_loader: type) -> type:
         return base_loader.construct_mapping(loader, node, deep=deep)
 
     StrictLoader.add_constructor(YAML_MAPPING_TAG, construct_unique_mapping)
+    # PyYAML's native scalar constructors can fail outside YAMLError for
+    # malformed explicit tags. Normalize only those known constructor failures,
+    # at their source node; unrelated loader/programming failures still escape.
+    for tag, failures in (
+        ("bool", (KeyError,)),
+        ("int", (IndexError, ValueError)),
+        ("float", (IndexError, ValueError)),
+        ("timestamp", (AttributeError, ValueError)),
+    ):
+        full_tag = "tag:yaml.org,2002:" + tag
+        constructor = base_loader.yaml_constructors[full_tag]
+
+        def construct_scalar(
+            loader, node, constructor=constructor, failures=failures, tag=tag
+        ):
+            try:
+                return constructor(loader, node)
+            except failures as error:
+                raise yaml.constructor.ConstructorError(
+                    None, None,
+                    f"invalid YAML {tag} scalar {node.value!r}: {error}",
+                    node.start_mark,
+                ) from error
+
+        StrictLoader.add_constructor(full_tag, construct_scalar)
     return StrictLoader
 
 

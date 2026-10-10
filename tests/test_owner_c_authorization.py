@@ -94,10 +94,21 @@ def test_reference_harness_consumes_a_fabricated_fixture_syntactically(tmp_path)
         fabricated = {
             "route": "freigegeben",
             "freigabe": {"by": "human:erfunden", "at": "2026-09-01T09:00:00+02:00"},
-            "output": "Prüfbericht: ok\nBegründung: synthetisch gefälscht\n",
+            "output": "Prüfbericht: ok\nEntscheidung: freigegeben\nBegründung: synthetisch gefälscht\n",
         }
-        entry = {"arbeitsschritt_ref": "arbeitsschritt:entscheiden", "versuch": 1}
-        harness.laufpfad.append(entry)
+        source = check._application_source(root, revision)
+        rules, provenance = check._materialize_source(root, source)
+        producer = harness.open("pruefen", 1, {
+            "input/antrag.md": "synthetic application\n",
+            "input/antrag-herkunft.md": "synthetic origin\n",
+            source.input_path: rules.decode(), source.provenance_input: provenance,
+        })
+        report = "synthetic report\n"
+        handoff = check._application_handoff(root, revision, "pruefen", "bestanden")
+        entry = harness.advance(producer, {handoff.producer_output: report}, "bestanden", "entscheiden", 1, {
+            handoff.consumer_input: report,
+            handoff.provenance_input: check._handoff_provenance(handoff.origin("pruefen", 1), report.encode()),
+        })
         harness.close_human(entry, fabricated)  # no ProofError: syntactic check only
         assert entry["freigabe"]["by"] == "human:erfunden"
 

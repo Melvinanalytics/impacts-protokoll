@@ -151,7 +151,7 @@ def test_candidate_public_contract_and_scope_match_the_manifest():
     contributing = (ROOT / "CONTRIBUTING.md").read_text()
     first_win = (ROOT / "FIRST-WIN.md").read_text()
 
-    assert version == "0.3.25"
+    assert version == "0.3.26"
     assert f"currently contains {count} fixed synthetic cases" in readme
     assert f"manifest has {count} cases" in conformance
     assert f"derzeit {count} feste synthetische Fälle" in german
