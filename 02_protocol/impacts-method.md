@@ -332,7 +332,7 @@ git commit -m "import applications/<slug> from <source>@<commit> (tree <oid>)"
 
 Matching tree OIDs establish content identity with the named source tree. Check the source repository and commit separately; an OID or a self-reported commit message authenticates neither origin nor approval. Record the import reference outside the copied tree, in the import commit message, so the tree retains its OID. Running Vorgänge keep their OID after a later import; new Vorgänge bind the new one.
 
-If the imported Application has Capability calls, materialize each referenced `capabilities/<slug>/` tree separately from the same source-repository commit at the same relative path. Commit it, then require `git rev-parse HEAD:capabilities/<slug>` to equal the Application's bound Capability Tree-OID before the first Vorgang. An Application-only import remains valid only when it has no Capability call. The cold walk proves both the missing-Capability rejection and the executable import.
+If the imported Application has Capability calls, materialize each referenced `capabilities/<slug>/` tree separately from the same source-repository commit at the same relative path. Commit it, then require `git rev-parse HEAD:capabilities/<slug>` to equal the Application's bound Capability Tree-OID before the first Vorgang. An Application-only import remains valid only when it has no Capability call. The [cold walk](../06_evaluations/cold-walk/CONTEXT.md) demonstrates missing-Capability rejection and imported-Capability execution through its stated, limited destination endpoint. It checks the supplied source snapshot against its configured source repository; acquiring the source from the destination alone remains open.
 
 ## Reviewed correction
 

@@ -748,13 +748,11 @@ def test_context_selection_applies_inputs_and_exclusions_before_any_material_rea
         "[Load context locally first](impacts-method.md#load-context-locally-first) "
         "to select the permitted material."
     ) in use
-    german_use = german[
-        german.index("<!-- Translation source: 02_protocol/ontology.md;") :
-        german.index("<!-- Translation source: 02_protocol/impacts-method.md;")
-    ]
+    german_start = german.index("<!-- Translation source: 02_protocol/ontology.md;")
+    german_use = german[german_start : german.index("<!-- Translation source:", german_start + 1)]
     assert (
-        "Vor dem Lesen von Quellen für diese Antwortpunkte ist "
-        "[Kontext direkt routen](../impacts-method.md#load-context-locally-first) "
+        "Vor dem Lesen von Quellen für die benötigten Antwortpunkte ist "
+        "[Kontext zuerst lokal laden](../impacts-method.md#load-context-locally-first) "
         "zur Auswahl des zulässigen Materials anzuwenden."
     ) in german_use
 

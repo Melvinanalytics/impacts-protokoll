@@ -3,6 +3,7 @@ from copy import deepcopy
 from importlib.util import module_from_spec, spec_from_file_location
 from io import StringIO
 from pathlib import Path
+import re
 import shutil
 import subprocess
 import sys
@@ -585,6 +586,189 @@ def test_walk_import_rejects_missing_capability_then_executes_materialized_tree(
 
     assert "import.capability_materialized_and_executed" in _proofs(result)
     assert "import.missing_capability" in _rejections(result)
+
+
+def test_import_executes_with_checked_snapshot_from_external_source_workspace(tmp_path):
+    check = _check_module()
+    root, _, _, revision, workspace_revision = check._prepare_workspace(tmp_path)
+    call = check._application_call(root, revision)
+    source = check._application_source(root, revision)
+    rules, provenance = check._materialize_source(root, source)
+
+    state, equal_oid, proofs, rejections = check._import_into_second_repository(
+        tmp_path, root, revision, workspace_revision, call, rules, provenance,
+    )
+
+    assert state.valid, state.codes
+    assert equal_oid
+    assert "import.capability_materialized_and_executed" in proofs
+    assert "import.missing_capability" in rejections
+    target = tmp_path / "kunde"
+    assert not (target / source.path).exists()
+    attempt = target / "vorgaenge" / check.VORGANG / "pruefen/001"
+    assert (attempt / source.input_path).read_bytes() == rules
+    assert (attempt / source.provenance_input).read_text(encoding="utf-8") == provenance
+
+
+def test_import_commits_name_a_resolvable_source_and_full_commit(tmp_path):
+    check = _check_module()
+    root, _, _, revision, workspace_revision = check._prepare_workspace(tmp_path)
+    call = check._application_call(root, revision)
+    source = check._application_source(root, revision)
+    rules, provenance = check._materialize_source(root, source)
+
+    check._import_into_second_repository(
+        tmp_path, root, revision, workspace_revision, call, rules, provenance,
+    )
+
+    subjects = subprocess.check_output(
+        ["git", "-C", str(tmp_path / "kunde"), "log", "--reverse", "--format=%s"], text=True,
+    ).splitlines()
+    pattern = re.compile(r"(?:import|materialize) (\S+) from (/.+)@([0-9a-f]+) \(tree ([0-9a-f]+)\)")
+    matches = [pattern.fullmatch(subject) for subject in subjects]
+    assert all(matches), subjects
+    records = [match.groups() for match in matches]
+
+    assert records == [
+        (f"applications/{check.APPLICATION}", root.resolve().as_posix(), workspace_revision, revision),
+        (Path(call.path).parent.as_posix(), root.resolve().as_posix(), workspace_revision, call.tree_oid),
+    ]
+    # Re-resolve each tree from the destination record alone.
+    for path, recorded_source, commit, tree in records:
+        assert subprocess.check_output(
+            ["git", "-C", recorded_source, "rev-parse", f"{commit}:{path}"], text=True,
+        ).strip() == tree
+
+
+def _observe_execution_and_opening(check, monkeypatch):
+    executions = []
+    openings = []
+    execute = check._execute_capability
+    open_attempt = check.Harness.open
+
+    def observe_execution(*args, **kwargs):
+        executions.append(args[0])
+        return execute(*args, **kwargs)
+
+    def observe_opening(harness, *args, **kwargs):
+        openings.append(harness.root)
+        return open_attempt(harness, *args, **kwargs)
+
+    monkeypatch.setattr(check, "_execute_capability", observe_execution)
+    monkeypatch.setattr(check.Harness, "open", observe_opening)
+    return executions, openings
+
+
+@pytest.mark.parametrize("field", ["Ursprung", "Stand"])
+def test_import_rejects_false_source_provenance_before_execution_or_opening(tmp_path, monkeypatch, field):
+    check = _check_module()
+    root, _, _, revision, workspace_revision = check._prepare_workspace(tmp_path)
+    call = check._application_call(root, revision)
+    source = check._application_source(root, revision)
+    rules, provenance = check._materialize_source(root, source)
+    check._verify_source(root, source, rules, provenance)
+    original = check._fields(provenance)[field]
+    replacement = "grundlagen/andere-regeln.md" if field == "Ursprung" else f"git:{workspace_revision}"
+    assert replacement != original
+    false_provenance = provenance.replace(f"{field}: {original}\n", f"{field}: {replacement}\n", 1)
+    executions, openings = _observe_execution_and_opening(check, monkeypatch)
+    with pytest.raises(check.ProofError, match=f"source provenance mismatch: {field}"):
+        check._import_into_second_repository(
+            tmp_path, root, revision, workspace_revision, call, rules, false_provenance,
+        )
+
+    assert executions == []
+    assert openings == []
+    assert not (tmp_path / "kunde/vorgaenge" / check.VORGANG).exists()
+
+
+@pytest.mark.parametrize(
+    ("configured", "destination_created"),
+    [
+        # Lacks the import commit: stop before the destination exists.
+        ("unrelated", False),
+        # Carries the import commit but not the older bound source revision.
+        ("shallow", True),
+    ],
+)
+def test_import_stops_on_unreachable_source_revision_before_execution_or_opening(
+    tmp_path, monkeypatch, configured, destination_created,
+):
+    check = _check_module()
+    root, _, _, revision, workspace_revision = check._prepare_workspace(tmp_path)
+    call = check._application_call(root, revision)
+    source = check._application_source(root, revision)
+    rules, provenance = check._materialize_source(root, source)
+    configured_source = tmp_path / configured
+    if configured == "shallow":
+        command = ["git", "clone", "-q", "--depth", "1", root.as_uri(), str(configured_source)]
+    else:
+        command = ["git", "init", "-q", str(configured_source)]
+    subprocess.run(command, check=True)
+    executions, openings = _observe_execution_and_opening(check, monkeypatch)
+
+    with pytest.raises(check.ProofError, match="source revision unreachable"):
+        check._import_into_second_repository(
+            tmp_path, configured_source, revision, workspace_revision, call, rules, provenance,
+        )
+
+    assert executions == []
+    assert openings == []
+    assert (tmp_path / "kunde").exists() == destination_created
+    assert not (tmp_path / "kunde/vorgaenge" / check.VORGANG).exists()
+
+
+def _blobless_source(root, tmp_path):
+    """Clone commits and trees without file bytes, then drop the remote that could supply them."""
+    subprocess.run(["git", "-C", str(root), "config", "uploadpack.allowFilter", "true"], check=True)
+    clone = tmp_path / "blobless"
+    subprocess.run(
+        ["git", "clone", "-q", "--no-checkout", "--filter=blob:none", root.as_uri(), str(clone)],
+        check=True,
+    )
+    subprocess.run(
+        ["git", "-C", str(clone), "remote", "set-url", "origin", (tmp_path / "gone").as_uri()],
+        check=True,
+    )
+    return clone
+
+
+def test_import_stops_on_unreadable_source_bytes_before_execution_or_opening(tmp_path, monkeypatch):
+    check = _check_module()
+    root, _, _, revision, workspace_revision = check._prepare_workspace(tmp_path)
+    call = check._application_call(root, revision)
+    source = check._application_source(root, revision)
+    rules, provenance = check._materialize_source(root, source)
+    blobless = _blobless_source(root, tmp_path)
+    executions, openings = _observe_execution_and_opening(check, monkeypatch)
+    expected = (
+        "source bytes unreadable in configured source repository: "
+        f"{workspace_revision}:applications/{check.APPLICATION}"
+    )
+
+    with pytest.raises(check.ProofError, match=re.escape(expected)):
+        check._import_into_second_repository(
+            tmp_path, blobless, revision, workspace_revision, call, rules, provenance,
+        )
+
+    assert executions == []
+    assert openings == []
+    assert not (tmp_path / "kunde/vorgaenge" / check.VORGANG).exists()
+
+
+def test_source_check_stops_on_unreadable_source_bytes(tmp_path):
+    check = _check_module()
+    root, _, _, revision, _ = check._prepare_workspace(tmp_path)
+    source = check._application_source(root, revision)
+    rules, provenance = check._materialize_source(root, source)
+    blobless = _blobless_source(root, tmp_path)
+    expected = (
+        "source bytes unreadable in configured source repository: "
+        f"{source.revision}:{source.path}"
+    )
+
+    with pytest.raises(check.ProofError, match=re.escape(expected)):
+        check._verify_source(blobless, source, rules, provenance)
 
 
 def test_permitted_preparation_keeps_wait_state_and_bound_inputs(walk_result):

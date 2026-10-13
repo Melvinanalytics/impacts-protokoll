@@ -23,7 +23,10 @@ PAIRS += [("02_protocol/language.md", "02_protocol/translations/de.md"),
           ("02_protocol/capabilities.md", "02_protocol/translations/de.md"),
           ("02_protocol/impacts-architect/references/formwahl.md", "02_protocol/translations/de.md"),
           ("02_protocol/impacts-architect/references/zuschnitt.md", "02_protocol/translations/de.md"),
+          ("CONTRIBUTING.md", "02_protocol/translations/de.md"),
           ("02_protocol/impacts-architect/templates/ist-prozess.md", "02_protocol/impacts-architect/templates/de/ist-prozess.md")]
+
+MARKER = re.compile(r"<!-- Translation source: (\S+); sha256: ([0-9a-f]{64}) -->")
 
 
 def translation_matches(source: Path, translation: Path) -> bool:
@@ -31,9 +34,38 @@ def translation_matches(source: Path, translation: Path) -> bool:
     return expected in translation.read_text()
 
 
+def marker_problems(text: str, paired_sources: set[str], root: Path) -> list[str]:
+    markers = MARKER.findall(text)
+    problems = [] if len(markers) == text.count("<!-- Translation source:") else ["malformed marker"]
+    for source, digest in markers:
+        if source not in paired_sources:
+            problems.append(f"unpaired source {source}")
+        elif digest != hashlib.sha256((root / source).read_bytes()).hexdigest():
+            problems.append(f"stale marker for {source}")
+    return problems
+
+
 @pytest.mark.parametrize("source,target", PAIRS)
 def test_every_supported_translation_identifies_current_source_bytes(source, target):
     assert translation_matches(ROOT / source, ROOT / target)
+
+
+@pytest.mark.parametrize("target", sorted({target for _, target in PAIRS}))
+def test_every_translation_marker_names_a_paired_source_and_its_current_bytes(target):
+    paired = {source for source, paired_target in PAIRS if paired_target == target}
+    assert marker_problems((ROOT / target).read_text(), paired, ROOT) == []
+
+
+def test_a_stale_or_unpaired_repeated_marker_fails(tmp_path):
+    (tmp_path / "en.md").write_text("Current rule.\n")
+    current = hashlib.sha256(b"Current rule.\n").hexdigest()
+    stale = hashlib.sha256(b"Earlier rule.\n").hexdigest()
+    marker = "<!-- Translation source: {}; sha256: {} -->\n"
+    text = marker.format("en.md", current) + "Block.\n" + marker.format("en.md", stale) + "Block.\n"
+    assert marker_problems(text, {"en.md"}, tmp_path) == ["stale marker for en.md"]
+    text = marker.format("en.md", current) + marker.format("other.md", current)
+    assert marker_problems(text, {"en.md"}, tmp_path) == ["unpaired source other.md"]
+    assert marker_problems("<!-- Translation source: en.md -->", {"en.md"}, tmp_path) == ["malformed marker"]
 
 
 def test_source_change_makes_translation_stale(tmp_path, monkeypatch):
@@ -174,3 +206,16 @@ def test_german_workstep_keeps_waiting_separate_from_completed_routes():
 
     assert "jedes abgeschlossene Ergebnis eine deklarierte Arbeitsschritt- oder Endroute wählt" in body
     assert "„Ablauf“ nennt für jedes Warten Ursache und Auslöser der Fortsetzung" in body
+
+
+def test_gate_expiry_rule_reads_the_same_in_waits_and_workstep_templates():
+    """Waits owns the rule; template-only readers lost it when the templates only linked there."""
+    homes = [
+        ("02_protocol/impacts-architect/references/zuschnitt.md", "02_protocol/templates/arbeitsschritt.md",
+         "At a human gate, expiry can trigger permitted escalation; it supplies no `freigabe` and selects neither `freigegeben` nor `abgelehnt`."),
+        ("02_protocol/translations/de.md", "02_protocol/templates/de/arbeitsschritt.md",
+         "Bei einem Human Gate kann Fristablauf eine erlaubte Eskalation auslösen; er liefert keine `freigabe` und wählt weder `freigegeben` noch `abgelehnt`."),
+    ]
+    for owner, template, sentence in homes:
+        assert sentence in (ROOT / owner).read_text(encoding="utf-8"), owner
+        assert sentence in (ROOT / template).read_text(encoding="utf-8"), template
