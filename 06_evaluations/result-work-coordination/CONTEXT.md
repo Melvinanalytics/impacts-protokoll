@@ -65,3 +65,29 @@ For each case, describe the process and data flow: which permitted work can proc
 | B8 — Changed approved revision | Logistics and Sales separately approved O-1/r3 through applicable preserved sources. Quantity later changes to O-1/r4 and changes capacity and the quantity-based price. The old statements explicitly cover r3; no r4 decision exists. The new price can be calculated from available sanctioned inputs, but delivery confirmation for r4 is outstanding. |
 
 Retain the answers and actually loaded sources before opening [the supplementary worked expectations](EXPECTED.md#supplementary-batch-decision-expectations). Expected text is not an observed review, customer decision or execution result; structural validation does not score these semantic answers.
+
+## Supplementary record-effect cases
+
+These synthetic reading cases apply the existing [record writeback](../../02_protocol/capabilities.md#rückübertragung-in-geschäftsrecords) and [action-boundary checks](../../02_protocol/ontology.md#enforcement-and-completion). They neither implement a write service nor establish a production target guarantee. A described target behaviour is a premise of the case.
+
+For each case, state the required condition, authority, actual effect evidence, concurrency scope, permitted independent work and remaining gaps. Preserve the distinction between a declared control and its executed result. Complete the answers before opening the [record-effect expectations](EXPECTED.md#record-effect-expectations); the original classification questions need not be repeated for this supplementary set.
+
+| Case | Synthetic premises |
+|---|---|
+| W1 — Changed commitment | A permitted offer-record update requires the currently approved price to remain 100 at the write. The worker reads and checks 100; another authorized writer approves 120 before the worker's unconditional update. The target supports a conditional update, but the worker has not used it. |
+| W2 — Guarded update | As W1, but the target applies the update only if the required approval and price still hold at that operation. Its authoritative response reports that the condition failed and the requested update was not applied. Independent internal preparation remains permitted. |
+| W3 — Independent annotation | An authorized append records a past observation with its actual time and source. It makes no current-price claim and does not alter or depend on the current approved price. Another writer changes that price. The configured append preserves existing records and has its own declared confirmation and repeat-handling controls. |
+| W4 — Private locks and pending intention | As W1. Two workers each hold a different local lock. Both have read the same current state and stored an intended-write record. Neither the target nor any shared control checks the condition at the write; a manual writer can also alter that state. |
+| W5 — Unknown outcome | A permitted record update times out after transmission. Its outcome could be success or failure. A saved pending intention survives, but there is no confirmed target outcome yet. The declared target readback is available. |
+
+## Timing and continuation cases
+
+These additional cases are synthetic. Answer from the ordinary protocol routes before reading the corresponding expectations. They test declared meaning and limits, not a running timer or effect guard.
+
+| Case | Premise |
+|---|---|
+| T1 — Unstated condition time | An authorized update requires the approved price to remain 100. It was checked as 100; another writer approves 120 before an unconditional update. The instruction does not explicitly state when its price condition must hold. What must the author clarify, and what may the executor infer? |
+| T2 — No response | A workstep waits for documents and declares only the arrival route. Its body names neither a due time nor a review time or non-arrival handling. No further response arrives. What is established by a structurally valid waiting entry? |
+| T3 — Continuing service | A service is authorized to continue until cancelled. Its controller runs repeatedly; the instruction declares no bound or handling for one activation or failed recovery. Does the service's duration authorize unlimited repetition inside an activation? |
+| T4 — Expiry without another writer | An update requires approval valid at its effect. All other writers are excluded, but the approval expires before the effect. May writer exclusion substitute for checking validity? |
+| T5 — Late confirmation | Approval must hold when a write takes effect. A response arrives after expiry but does not identify the effect time. Does late receipt establish a late write, and may the operation be retried? |

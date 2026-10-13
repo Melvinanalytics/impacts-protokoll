@@ -67,3 +67,27 @@ This separately scoped key covers only B1–B8 in the [supplementary cases](CONT
 | B8 | Preserve the r3 decision evidence without carrying its approval silently to r4. Calculate and check the supported r4 price; retain its delivery gap. Recheck the affected capacity, price and decision coverage and obtain the required r4 decisions before dependent commitment. Group their questions when the r4 object is sufficiently concrete. Preserve unrelated useful results and history rather than resetting all work. |
 
 The supplementary reading succeeds only if each answer keeps data dependencies, decision timing and authority coverage separate; identifies first dependent use, latest safe point and any evidenced earlier-point reason at the existing home; preserves missing or ambiguous decisions and source/decision-time evidence; and respects the current bound inputs and sequential gates. A packet, transcript, field value or green structural check supplies no missing decision or authority. Record actual reader outcomes separately from this frozen expected key.
+
+## Record-effect expectations
+
+Read the [record-effect cases](CONTEXT.md#supplementary-record-effect-cases) and retain answers before using this key. The authoritative [Record writeback](../../02_protocol/capabilities.md#rückübertragung-in-geschäftsrecords) clause owns required condition timing and coverage. These expected answers apply its rules to synthetic premises; they are neither executed reader results nor proof of runtime protection.
+
+| Case | Expected boundary |
+|---|---|
+| W1 | An earlier valid check does not establish the required condition at the later write. Approval of 120 makes the intended old update inapplicable. Do not infer that the existing check supports overwriting the changed commitment. Available target support is not evidence that the worker used it. |
+| W2 | Retain the confirmed rejection: this requested update was not applied. That does not establish an otherwise unchanged target. Reacquire relevant state and follow applicable source/revision and permission rules before a new dependent effect. Rejection approves no new price; independent permitted preparation continues. |
+| W3 | Do not require a whole-record lock or an unchanged current-price version merely because the append concerns the same case. Apply the append's own requirements, permitted scope, actual confirmation and repeat controls. The historical observation does not make an old price current. |
+| W4 | Neither private lock covers the other worker or manual writer. Their intended-write records establish no protection of the required condition at the effect. Establish the relevant control or leave that dependent update unresolved; independent permitted work continues. No exactly-once guarantee follows. |
+| W5 | Resolve the effect through the declared readback or authoritative confirmation before retrying. Evidence must identify the relevant operation and effect; an arbitrary current value alone need not do so. A saved pending intention does not distinguish failure before the effect from failure after it. Conflict protection, repeat handling and confirmed outcome remain separate. |
+
+## Timing and continuation expectations
+
+Actual reader answers stay separate. [Record writeback](../../02_protocol/capabilities.md#rückübertragung-in-geschäftsrecords), [Waits](../../02_protocol/impacts-architect/references/zuschnitt.md#waits) and [Loops](../../02_protocol/impacts-architect/references/zuschnitt.md#loops) own these rules.
+
+| Case | Expected boundary |
+|---|---|
+| T1 | Declare the condition's required time or interval. “Remain” supports a continuing-condition reading, but an executor cannot invent an alternative historical-only authorization. Leave ambiguous dependent effects unresolved; an earlier read supplies no protection against the later change. |
+| T2 | A waiting entry records a pause; structural validity supplies neither timed monitoring nor a non-arrival policy. Clarify timing, follow-up and permitted absence handling from their sources, preserving unresolved ownership. Keep the historical entry and useful preparation; invent neither expiry nor a completion/approval. |
+| T3 | Bound each activation or review interval and technical recovery under its own rule. The service need not end merely because an activation reaches its bound. Preserve legitimate ongoing service obligations and restrict the unresolved repetition; a restart cannot silently reset the applicable budget. |
+| T4 | No. The control must cover relevant expiry as well as concurrent changes. Retain expired authority and the unresolved effect; a fresh required decision or other valid authority follows the applicable rule. |
+| T5 | No. Receipt time and effect time differ. The outcome or its authorized timing remains unconfirmed to the extent unsupported; obtain the declared evidence before retrying. Do not claim either a timely effect or a violation solely from the response timestamp. |

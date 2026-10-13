@@ -103,6 +103,8 @@ Production use outside the declared inspected public repository scope is unknown
 
 An edition claim spans source text and public delivery. `pyproject.toml`, the annotated Git tag, GitHub Release, release assets, README URLs and filenames, the German guide, and installed package metadata must name the same version. A green documentation test establishes only the source-tree part.
 
+Run the complete repository checks in the clean public candidate tree. A source checkout with additional private directories is not that release surface; prepare the complete allowlisted export first rather than raising the budget or suppressing failures. Retain the candidate tree identity and check the actual predecessor selected by the complexity gate against the intended prior release. An uncommitted tree check does not establish the later release commit or its ancestry.
+
 Use this order:
 
 1. Create `release/vX.Y.Z` from current public `main`.

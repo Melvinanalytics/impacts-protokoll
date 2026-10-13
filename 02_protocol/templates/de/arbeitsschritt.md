@@ -14,7 +14,7 @@ routen:
 customer_touchpoint: sacred  # standard oder sacred: 02_protocol/impacts-method.md#identify; ohne Kundenkontakt diese Zeile löschen
 ---
 
-<!-- Translation source: 02_protocol/templates/arbeitsschritt.md; sha256: 29b677c9b85362a5cfb7f37dea524cd1f605828462603e9a829a588882d7c94d -->
+<!-- Translation source: 02_protocol/templates/arbeitsschritt.md; sha256: 53727903ce6fe5c47ed15a98a9017fe6778d8679402d0a118bc59513518ab577 -->
 
 # Entscheiden
 
@@ -102,7 +102,7 @@ Mit der Entscheidungsfrage und der Folge jeder erklärten Option beginnen, dann 
 
 Was löst diesen Job aus, wohin führt jedes Ergebnis, und was geschieht beim Warten? Die `routen` im Frontmatter ordnen jedes Ergebnis von `pruefung` einem Arbeitsschritt oder Ende zu; hier erklären, was jede Route bedeutet, auch Rückarbeitsziel und negatives Ende, ohne zweite Routentabelle. Ein fehlgeschlagener, fehlender oder veralteter erforderlicher Check blockiert die davon abhängige erfolgreiche Nutzung; seiner erklärten Fehlerroute folgen oder nach `02_protocol/ontology.md#enforcement-and-completion` den passenden Wartezustand beibehalten. Für Evidenz, die dieser Job während des Wartens beschafft, gilt `02_protocol/impacts-architect/references/zuschnitt.md#waits`. Ursache des Wartens, jeden anwendbaren Fortsetzungsauslöser und sein erklärtes Ergebnis nennen; der Vorgang hält die Fortsetzung in `wiedereinstieg` fest. Erlaubte Vorbereitung läuft unter „Verarbeitung“ weiter.
 
-Bei einem Warten oder einer ausstehenden menschlichen Entscheidung den anwendbaren Fälligkeitszeitpunkt oder Wiedervorlageauslöser und die zuständige Nachverfolgung nennen, mit erlaubtem Ausweichweg oder Eskalation, falls die Abhängigkeit nicht eintrifft. Ungeklärte Zeitbedingungen, Zuständigkeit oder Erlaubnis bleiben eine ausdrückliche Lücke mit nächster Aktion und Nutzungsgrenze; keine allgemeine Frist erfinden. Benachrichtigungen folgen den obigen Wirkungs- und Befugnisdeklarationen. Bei einem Human Gate kann Fristablauf eine erlaubte Eskalation auslösen; er liefert keine `freigabe` und wählt weder `freigegeben` noch `abgelehnt`.
+Für jedes Warten oder jede ausstehende menschliche Entscheidung die Zeit-, Verantwortungs- und Ausbleibensregeln in `02_protocol/impacts-architect/references/zuschnitt.md#waits` anwenden, für Wiederholungen dessen Regeln unter `#loops`. Benachrichtigungen folgen den obigen Wirkungs- und Befugnisdeklarationen. Bei einem Human Gate kann Fristablauf eine erlaubte Eskalation auslösen; er liefert keine `freigabe` und wählt weder `freigegeben` noch `abgelehnt`.
 
 Der letzte `laufpfad`-Eintrag bestimmt aktuellen Schritt und Versuch. Erlaubte Entwürfe dürfen bei `aktiv` oder `wartend` unter `output/` liegen; sie wählen keine Route und geben kein Gate frei. Wiederkehrende Blockaden können eine spätere Application-Revision begründen.
 

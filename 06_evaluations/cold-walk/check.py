@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Walk one synthetic Vorgang and prove local, non-Core evidence chains."""
 
+from collections.abc import Iterator
+from contextlib import contextmanager
 from dataclasses import dataclass, replace
 from hashlib import sha256
 import json
@@ -1243,7 +1245,9 @@ def _verify_source(root: Path, expected: SourceRef, payload: bytes, provenance: 
     for name, value in expected_fields.items():
         if fields.get(name) != value:
             raise ProofError(f"source provenance mismatch: {name}")
-    committed = _git_show(root, expected.revision, expected.path)
+    _reachable_commit(root, expected.revision)
+    with _source_bytes_readable(expected.revision, expected.path):
+        committed = _git_show(root, expected.revision, expected.path)
     if committed != payload:
         raise ProofError("source snapshot differs from bound Git object")
     expected_control = f"git:{expected.revision}:{expected.path} gelesen"
@@ -1331,10 +1335,14 @@ def _import_into_second_repository(
     rules_provenance: str,
 ) -> tuple[State, bool, frozenset[str], frozenset[str]]:
     """Import the Application, reject its missing Capability, then materialize and run it."""
+    source_commit = _reachable_commit(source, source_workspace_revision)
+    source_reference = f"{Path(source).resolve().as_posix()}@{source_commit}"
     kunde = init_workspace(Path(base) / "kunde", language="de")
     target = kunde / "applications" / APPLICATION
     target.mkdir()
-    archive = _git_archive(source, revision)
+    application_root = f"applications/{APPLICATION}"
+    with _source_bytes_readable(source_commit, application_root):
+        archive = _git_archive(source, f"{source_commit}:{application_root}")
     subprocess.run(["tar", "-x", "-C", str(target)], input=archive, check=True)
     _git(kunde, "init", "-q", "-b", "main")
     _git(kunde, "config", "user.email", "cold-walk@example.invalid")
@@ -1345,10 +1353,7 @@ def _import_into_second_repository(
         "commit",
         "-q",
         "-m",
-        (
-            f"import applications/{APPLICATION} from "
-            f"{source.name}@{source_workspace_revision[:12]} (tree {revision})"
-        ),
+        f"import applications/{APPLICATION} from {source_reference} (tree {revision})",
     )
     imported = _git(kunde, "rev-parse", f"HEAD:applications/{APPLICATION}")
     application_only_revision = _git(kunde, "rev-parse", "HEAD")
@@ -1357,6 +1362,7 @@ def _import_into_second_repository(
     record = b"Name: Kundenrepo\nGeburtsdatum: 01.01.1990\n"
     imported_call = _application_call(kunde, imported)
     imported_source = _application_source(kunde, imported)
+    _verify_source(source, imported_source, rules, rules_provenance)
 
     if _is_rejected(
         lambda: _execute_capability(
@@ -1373,9 +1379,10 @@ def _import_into_second_repository(
     capability_root = Path(call.path).parent
     target_capability = kunde / capability_root
     target_capability.mkdir(parents=True)
-    capability_archive = _git_archive(
-        source, f"{source_workspace_revision}:{capability_root.as_posix()}"
-    )
+    with _source_bytes_readable(source_commit, capability_root.as_posix()):
+        capability_archive = _git_archive(
+            source, f"{source_commit}:{capability_root.as_posix()}"
+        )
     subprocess.run(
         ["tar", "-x", "-C", str(target_capability)],
         input=capability_archive,
@@ -1389,8 +1396,7 @@ def _import_into_second_repository(
         "-m",
         (
             f"materialize {capability_root.as_posix()} from "
-            f"{source.name}@{source_workspace_revision[:12]} "
-            f"(tree {call.tree_oid})"
+            f"{source_reference} (tree {call.tree_oid})"
         ),
     )
     imported_workspace_revision = _git(kunde, "rev-parse", "HEAD")
@@ -1581,6 +1587,31 @@ def _write_files(attempt: Path, files: dict[str, str]) -> None:
 
 def _git(root: Path, *args: str) -> str:
     return subprocess.check_output(["git", "-C", str(root), *args], text=True).strip()
+
+
+def _reachable_commit(root: Path, revision: str) -> str:
+    """Return the full commit, or stop when the configured source lacks it."""
+    result = subprocess.run(
+        ["git", "-C", str(root), "rev-parse", "--verify", "--quiet", f"{revision}^{{commit}}"],
+        text=True,
+        capture_output=True,
+    )
+    if result.returncode != 0:
+        raise ProofError(
+            f"source revision unreachable in configured source repository: {revision}"
+        )
+    return result.stdout.strip()
+
+
+@contextmanager
+def _source_bytes_readable(revision: str, path: str) -> Iterator[None]:
+    """Stop when the configured source has the commit but cannot supply its bytes."""
+    try:
+        yield
+    except subprocess.CalledProcessError as error:
+        raise ProofError(
+            f"source bytes unreadable in configured source repository: {revision}:{path}"
+        ) from error
 
 
 def _git_show(root: Path, revision: str, path: str) -> bytes:

@@ -151,7 +151,7 @@ def test_candidate_public_contract_and_scope_match_the_manifest():
     contributing = (ROOT / "CONTRIBUTING.md").read_text()
     first_win = (ROOT / "FIRST-WIN.md").read_text()
 
-    assert version == "0.3.26"
+    assert version == "0.3.27"
     assert f"currently contains {count} fixed synthetic cases" in readme
     assert f"manifest has {count} cases" in conformance
     assert f"derzeit {count} feste synthetische Fälle" in german
@@ -193,12 +193,12 @@ def test_candidate_public_contract_and_scope_match_the_manifest():
     ):
         assert gate in contributing
     for gate in (
-        "unbegleiteter Erstgebrauch mit Quellenkorrektur",
-        "zweite Person nach 168 Stunden",
+        "unbegleiteter Erstgebrauch und Korrektur",
+        "zweite Betreiberperson nach 168 verstrichenen Stunden",
         "unabhängige Implementierung",
         "begrenzte Fachprüfung",
-        "reale Langdock-Integration",
-        "Geschäftsbaseline-Vergleich",
+        "Listening-Intake in autorisiertem Langdock",
+        "abgeglichener Geschäftsvergleich",
     ):
         assert gate in german
 
