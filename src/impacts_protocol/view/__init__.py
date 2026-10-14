@@ -63,8 +63,15 @@ def run(source: Path, out: Path, *, write_json: bool = False, language: str | No
         pages, protected = selection.workspace_site(source), source
     elif kind == "application":
         pages = {"index.html": selection.application_page(source)}
-        candidate = selection.workspace_of(source)
-        protected = candidate if candidate and (candidate / "CONTEXT.md").is_file() and load_frontmatter(candidate / "CONTEXT.md").get("type") == "workspace" else source
+        protected = source
+        for parent in source.parents:
+            context = parent / "CONTEXT.md"
+            try:
+                if context.is_file() and load_frontmatter(context).get("type") == "workspace":
+                    protected = parent
+                    break
+            except (OSError, ValueError):
+                continue
     else:
         pages = {"index.html": selection.single_vorgang(source)}
         protected = selection.workspace_of(source.parent) or source.parent

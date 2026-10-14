@@ -677,9 +677,9 @@ const WORDS = {
     "agent": "Agent",
     "mensch": "Human",
     "laut_verarbeitung": " in Processing",
-    "gepruft": "geprüft",
+    "gepruft": "verified",
     "durch_eine_prufbare_kontrolle_oder_bestatigte": "Supported by a check that can be reviewed or a confirmed decision.",
-    "berichtet": "berichtet",
+    "berichtet": "reported",
     "eine_quelle_oder_person_sagt_es": "A source or person says so; the content has not been checked.",
     "hypothese": "hypothesis",
     "deutung_oder_vorschlag_noch_nicht_bestatigt": "An interpretation or proposal, not yet confirmed.",
@@ -1492,9 +1492,9 @@ const necessityLegend = () => h("p", {class: "note", text: W.necessity_legend});
 
 /* Answers show the mockup icon; expanding keeps the exact cell, caveats and original labels readable. */
 const moveProse = move => {
-  const target = /(?<![\w:-])arbeitsschritt:[a-z0-9]+(?:-[a-z0-9]+)*(?![\w:-])/g;
+  const target = /(?<![\w:-])arbeitsschritt:[a-z0-9]+(?:-[a-z0-9]+)*(?![\w:/-]|\.\w)/g;
   return move.spans.map(([kind, text, ref]) => [kind,
-    kind === "code" && text === "entfaellt" ? "" : text.replace(target, ""), ref])
+    kind === "code" && text.trim() === "entfaellt" ? "" : text.replace(target, ""), ref])
     .filter(([, text]) => text).map(([kind, text, ref], i, all) => [kind,
       (i === all.length - 1 ? text.replace(/[\s;,]+$/, "") : text).replace(/\s+([,;])/g, "$1"), ref]);
 };

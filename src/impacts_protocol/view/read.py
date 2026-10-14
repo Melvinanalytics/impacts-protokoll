@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import hashlib
+import math
 import re
 from collections import deque
 from pathlib import Path
@@ -30,6 +31,8 @@ def check_metadata(value) -> None:
         count += 1
         if count > 20000 or depth > 64:
             raise Unreadable("metadata exceeds the viewer's bounded JSON projection")
+        if isinstance(item, float) and not math.isfinite(item):
+            raise Unreadable("nonfinite YAML numbers cannot be represented in the viewer JSON model")
         if isinstance(item, (set, frozenset)):
             raise Unreadable("YAML sets cannot be represented faithfully in the viewer's JSON model")
         if isinstance(item, (dict, list)):

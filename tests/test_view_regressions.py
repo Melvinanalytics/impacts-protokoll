@@ -7,9 +7,9 @@ from pathlib import Path
 
 import pytest
 
-from impacts_protocol.view import blocks, project, read, selection, working_language, write
+from impacts_protocol.view import blocks, project, read, selection, working_language, write, run
 from tests.support import git, write_application
-from tests.test_view import TEMPLATE_DE, _ist_workspace, _workspace, elements, render_page, text_content
+from tests.test_view import TEMPLATE_EN, TEMPLATE_DE, _ist_workspace, _workspace, elements, render_page, text_content
 
 
 @pytest.mark.parametrize('tail', ['    ', '\t', '    \n    '])
@@ -121,3 +121,41 @@ def test_workspace_language_skips_parent_fifo(tmp_path):
     env = dict(os.environ, PYTHONPATH=str(Path(__file__).resolve().parents[1] / 'src'))
     result = subprocess.run([sys.executable, '-c', code, str(child)], env=env, timeout=3, capture_output=True)
     assert result.returncode == 0, result.stderr.decode()
+
+
+@pytest.mark.parametrize('language,template,expected', [('en',TEMPLATE_EN,'reported'),('de',TEMPLATE_DE,'berichtet')])
+def test_status_labels_follow_selected_language(tmp_path,language,template,expected):
+ root=_ist_workspace(tmp_path,{'source.md':template.read_text()})
+ model={**selection.workspace_site(root)['i-source.html'],'language':language}
+ sheet=render_page(tmp_path,write.page_html(model))['sheet'];header=next(e for e in elements(sheet) if e['tagName']=='HEADER')
+ assert expected in text_content(header)
+ if language=='en': assert 'berichtet' not in text_content(header)
+
+@pytest.mark.parametrize('bad',['arbeitsschritt:start/missing','arbeitsschritt:start.md'])
+def test_malformed_target_is_kept_whole_in_visible_move(tmp_path,bad):
+ text=TEMPLATE_DE.read_text().replace('Trennung aufheben: Eingang legt die Fallakte direkt an (`hypothesis`)', 'Proposal; '+bad)
+ root=_ist_workspace(tmp_path,{'source.md':text});model={**selection.workspace_site(root)['i-source.html'],'language':'de'}
+ sheet=render_page(tmp_path,write.page_html(model))['sheet'];row=next(e for e in elements(sheet) if e['attrs'].get('class')=='nrow')
+ assert bad in text_content(row['children'][-1])
+
+@pytest.mark.parametrize('value',['.nan','.inf','-.inf'])
+def test_nonfinite_yaml_is_refused_before_json(tmp_path,value):
+ p=tmp_path/'ist.md';p.write_text('---\ntype: ist-prozess\nvalue: '+value+'\n---\n# Source\n')
+ with pytest.raises(read.Unreadable):read.read_file(p,'ist.md')
+
+def test_finite_yaml_stays_readable(tmp_path):
+ p=tmp_path/'ist.md';p.write_text('---\ntype: ist-prozess\nvalue: 1.5\n---\n# Source\n')
+ assert read.read_file(p,'ist.md')['meta']['value']==1.5
+
+@pytest.mark.parametrize('workspace',[False,True])
+def test_application_without_git_preserves_declared_workspace_boundary(tmp_path,monkeypatch,workspace):
+ root=_workspace(tmp_path) if workspace else write_application(tmp_path/'video')
+ source=root/'applications/video' if workspace else root
+ original=selection.subprocess.run
+ def missing_git(args,*a,**kw):
+  if args[0]=='git':raise FileNotFoundError('git is unavailable')
+  return original(args,*a,**kw)
+ monkeypatch.setattr(selection.subprocess,'run',missing_git)
+ assert run(source,tmp_path/'outside-view')==0
+ if workspace:
+  with pytest.raises(SystemExit,match='overlap'):run(source,root/'applications/out')

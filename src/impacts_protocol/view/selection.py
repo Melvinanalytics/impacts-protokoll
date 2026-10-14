@@ -39,7 +39,10 @@ IST = "grundlagen/ist-prozesse"  # source material, not a Core folder: kept out 
 
 
 def git(folder: Path, *args: str) -> str | None:
-    done = subprocess.run(["git", "--no-replace-objects", "-C", str(folder), *args], capture_output=True, text=True)
+    try:
+        done = subprocess.run(["git", "--no-replace-objects", "-C", str(folder), *args], capture_output=True, text=True)
+    except OSError:
+        return None
     return done.stdout.strip() if done.returncode == 0 else None
 
 
