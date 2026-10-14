@@ -296,6 +296,16 @@ def capture(xml: Path, source: str, run_url: str, attempt: int) -> dict:
     return report
 
 
+def release_scope(root: Path, tag: str) -> str:
+    """Read this edition's change description from its committed contribution record."""
+    path = root / "CONTRIBUTING.md"
+    if not path.is_file():
+        return ""
+    match = re.search(r"^### " + re.escape(tag) + r" [^\n]*\n(.*?)(?=^#{1,3} |\Z)",
+                      path.read_text(encoding="utf-8"), re.M | re.S)
+    return "## Changes in " + tag + "\n\n" + match[1].strip() if match else ""
+
+
 def release_patch(
     draft: dict, reports: list[dict], source: str, run_url: str, attempt: int, tag: str,
     root: Path | None = None,
@@ -375,6 +385,16 @@ def release_patch(
         body = body[:body.index(START)] + section + body[body.index(END) + len(END):]
     else:
         body = body.rstrip() + "\n\n" + section + "\n"
+    scope = release_scope(native_root, tag)
+    if scope:
+        first, last = "<!-- impacts-release-scope:start -->", "<!-- impacts-release-scope:end -->"
+        block = first + "\n" + scope + "\n" + last
+        if first in body or last in body:
+            if body.count(first) != 1 or body.count(last) != 1 or body.index(last) < body.index(first):
+                raise ValueError("ambiguous existing release scope section")
+            body = body[:body.index(first)] + block + body[body.index(last) + len(last):]
+        else:
+            body = body.rstrip() + "\n\n" + block + "\n"
     return {"tag_name": tag, "body": body}
 
 

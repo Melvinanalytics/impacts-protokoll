@@ -188,10 +188,15 @@ def test_tooling_stop_selects_checks_by_claim_and_preserves_relevant_git():
     text = FORM_SELECTION.read_text(encoding="utf-8")
     tooling = text[text.index("## Tooling stop") : text.index("## Knowledge Walk")]
     german = GERMAN_GUIDE.read_text(encoding="utf-8")
-    german_start = german.index(
-        "<!-- Translation source: 02_protocol/impacts-architect/references/formwahl.md;"
+    german_blocks = re.findall(
+        r"<!-- Translation source: 02_protocol/impacts-architect/references/formwahl\.md;[^>]* -->"
+        r".*?(?=<!-- Translation source:|\Z)",
+        german,
+        flags=re.S,
     )
-    german_block = german[german_start : german.index("<!-- Translation source:", german_start + 1)]
+    german_block = next(
+        block for block in german_blocks if "Jede Prüfung nach der Bedingung auswählen" in block
+    )
 
     assert "Select each check for the condition required by the task, changed surface or intended claim" in tooling
     assert (

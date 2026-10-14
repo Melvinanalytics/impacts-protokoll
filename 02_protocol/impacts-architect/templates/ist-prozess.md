@@ -64,14 +64,14 @@ One row per activity; a repeated pass gets its own row. The columns follow the s
 | 4 | Missing input for C2 | No | Yes | Yes; follows 3 (`hypothesis`) | No | No | The same correction as 3 |
 | 5 | C2 | Yes (`reported`) | No | Yes; follows 3 (`hypothesis`) | No; the material changed | No | The same correction as 3 |
 | 6 | Recorded decision findings required by C1 | Yes (`reported`) | No for producing the findings; classify their handoff separately if it manages a dependency | No | No | Yes: the copies serve no condition or dependency after checking relevant recipients and duties (`reported`) | Trim the report to findings with links |
-| 7 | C2 | Yes (`reported`) | No | No | Yes: the applicable check, 2 or the latest 5, checks C2 by the same catalog on the same file revision; no rule requiring a second check found (`hypothesis`) | No | Keep the applicable case-worker check and its evidence; the manager inspects cited items |
-| 8 | C1 | Yes (`reported`) | No | No | No | No | Keep; cannot be reduced further as far as C1 holds (`reported`) |
+| 7 | C2 | Yes (`reported`) | No | No | Yes: the applicable check, 2 or the latest 5, checks C2 by the same catalog on the same file revision; no rule requiring a second check found (`hypothesis`) | No | Keep the applicable case-worker check and its evidence; the manager inspects cited items; `entfaellt` |
+| 8 | C1 | Yes (`reported`) | No | No | No | No | Keep; cannot be reduced further as far as C1 holds (`reported`); arbeitsschritt:entscheiden |
 | 9 | C1 | Yes (`reported`) | No | No | No | No | Keep; cannot be reduced further as far as C1 holds (`reported`) |
 | 10 | C3 | Yes, own rule only (`reported`) | No | No | No | No | Ask the head of department to keep or change the rule |
 | 11 | C1 | Yes (`reported`) | No | No | No | No | Keep; cannot be reduced further as far as C1 holds (`reported`) |
 | 12 | C4 | Yes, third-party obligation (`reported`) | No | No | No | No | Keep (`reported`); confirm the legal basis before claiming more |
 
-Each activity names a condition or dependency, and each condition names an activity. Keep unresolved answers open. `Neither` is a Minimize question, not deletion authority. Correcting 3 prevents the wait before 4 in later cases; judge the queue before 2 under the timing rule. For comparisons under one result boundary, population, period and unit, count non-overlapping observed effort once, under its activity's combination and proposed move; keep waiting separate and do not force a 100 percent pie.
+In `Proposed move`, name each target step as `arbeitsschritt:<slug>` or mark a proposed removal with the code span `entfaellt`; the reason stays prose, and neither is a decision. Each activity must name a condition or dependency, and each condition an activity. Keep unresolved answers open. `Neither` is a Minimize question, not deletion authority. Correcting 3 prevents the wait before 4 in later cases; judge the queue before 2 under the timing rule. For comparisons under one result boundary, population, period and unit, count non-overlapping observed effort once, under its activity's combination and proposed move; keep waiting separate and do not force a 100 percent pie.
 
 ## Stops and checks
 

@@ -6,7 +6,9 @@ The contribution is an internal draft with supported scope, source references, m
 
 ## Give the work a home
 
-Use existing domain and case files in your business. For this exercise, create the four Markdown files below in a separate folder. They reuse the catalog, customer, inquiry and offer-blank roles from the [synthetic company example](02_protocol/impacts-architect/references/datenbezug.md#from-catalog-through-pipeline-to-a-filled-offer). P-10, S-20, C-1 and O-1 are synthetic identifiers. This exercise deliberately supplies no applicable price or delivery date; it changes no historical agreement or Run.
+For real work, use your existing inquiry, source material and document blank. Save the preparation at that case's existing home with its source references, open questions and next action.
+
+The four Markdown files below are a synthetic exercise for practicing those relationships. Create them in a separate exercise folder. They reuse the catalog, customer, inquiry and offer-blank roles from the [synthetic company example](02_protocol/impacts-architect/references/datenbezug.md#from-catalog-through-pipeline-to-a-filled-offer). P-10, S-20, C-1 and O-1 are synthetic identifiers. This exercise deliberately supplies no applicable price or delivery date; it changes no historical agreement or Run.
 
 `CONTEXT.md` is the entry point:
 

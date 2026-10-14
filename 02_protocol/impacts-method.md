@@ -38,6 +38,18 @@ Use the [Author or change](ontology.md#author-or-change) branch for new or chang
 
 For a question about the customer's market structure, follow [Market relationships](#market-relationships); ordinary process capture need not expand into a market inventory.
 
+### Guided interview
+
+Use this entry when someone asks to be interviewed about their business, offering or founder idea. State the requested scope in ordinary language and reuse supplied material. For an overall business, first locate its relevant offerings; deepen one concrete case at a time and keep the remaining coverage visible.
+
+Begin with one actual request, paid engagement, rejected proposal or intended result. If no actual case exists, use an explicitly hypothetical case. Ask one focused question per round, accepting brief answers. Prefer a concrete question such as “What happened that made this person seek your help, and what should they receive?” over asking the person to define an ontology or fill a whole model.
+
+After each answer, briefly reflect the supported understanding and preserve its source and uncertainty. Let the person correct it without requiring a confirmation ceremony. Choose the next question from the unresolved prerequisite that could change the description, decision or next evidence action. The capture questions above, [Market relationships](#market-relationships) and [Reverse-engineer](#reverse-engineer-a-product-or-service) supply the applicable depth; they are not a questionnaire to exhaust.
+
+For a commercial question, distinguish the user's work, the recipient's result, who buys or decides, actual access to that person, and evidence of request, agreement, payment and use. Keep an unclear offering, difficult buyer access, weak demand and limited delivery capacity as separate hypotheses until the cases support them. A rejected approach does not by itself establish why it failed; a polished description or encouraging comment does not establish repeatable demand.
+
+Give a short usable account of what is supported, what remains provisional and the next discriminating question or action. Retain it at the existing case or decision home only when saving is part of the task. Apply capture's completion condition to the requested scope; pause when a needed answer is pending. Independent permitted source work may continue. A missing answer remains a gap rather than a product claim. Form selection follows only when the intended use needs a maintained home or repeatable contract.
+
 ## Market relationships
 
 Describe the participants and relationships relevant to the requested result: who requests, delivers, uses, pays for or authorizes what, for whom and under which conditions. This scoped structure is the customer's market topology. [Ontology](ontology.md#domain-definition-pattern) governs the meaning and evidence of these customer relationships as well as protocol terms. Use the existing domain/process home under [Formwahl](impacts-architect/references/formwahl.md#native-topology-and-boundaries); a short account, relationship table or sketch can suffice.
@@ -95,7 +107,7 @@ Use ordinary files and explicit links at the existing domain homes; Core, a gate
 
 ## Reverse-engineer a product or service
 
-Use a supplied catalog, service description, agreement, finished artifact or observed case as evidence for [capture](#capture-business-meaning), even when no workflow is documented. A promise describes an intended result; it does not prove how work currently happens or that delivery is feasible. Preserve the observed process separately from the proposed target.
+Use a supplied catalog, service description, agreement, finished artifact or observed case as evidence for [capture](#capture-business-meaning), even when no workflow is documented. Apply [Separation of Concerns](impacts-architect/references/formwahl.md#separation-of-concerns) when distinguishing result content, representations or responsibilities. A promise describes an intended result; it does not prove how work currently happens or that delivery is feasible. Preserve the observed process separately from the proposed target.
 
 This section also governs setting up or materially redesigning work before a form or executor is selected. Start from an intended result and recipient, clarifying a provisional boundary when needed; documenting or executing established work does not reopen its design. Derive contributions from their prerequisites. Document material dependencies that determine a job boundary, order, handoff, wait, executor, acceptance or decision authority, applying the ontology's [evidence and obligations](ontology.md#evidence-and-obligations) rule at the existing design home. The observed process is evidence, not the default target. Apply the same result, protective-function and total-effort tests to retained and proposed arrangements under [Identify](#identify) and [Minimize](#minimize).
 
@@ -134,6 +146,8 @@ Check the list both ways: every delivered element maps to a component or joint w
 ## Compose an Arbeitsschritt
 
 This section owns selected Core workstep composition; ordinary process guidance follows the [existing-home boundary](impacts-architect/references/formwahl.md#tooling-stopp).
+
+For responsibility and representation choices, apply [Separation of Concerns](impacts-architect/references/formwahl.md#separation-of-concerns).
 
 First resolve the roles and paths in [Protocol vocabulary](ontology.md#protocol-vocabulary). Prompt, tools and data then have distinct jobs inside the existing step contract:
 

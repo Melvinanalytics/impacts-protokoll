@@ -40,8 +40,18 @@ This report is conversational, not a repository artifact, file or frontmatter fi
 
 Forms compose while retaining their responsibilities. A Record Library plus Knowledge Bundle alone is not an Umbrella. Other forms compose without one. Select an Umbrella only when several independent Pipelines already exist. When Core contracts are selected, only Pipelines become Applications; each selected Pipeline is exactly one Application.
 
+### Separation of Concerns
+
+**Separation of Concerns:** Keep distinct responsibilities understandable at their existing homes and declare their necessary dependencies. Ontology and classification distinguish meanings and categories; a distinction alone does not require its own workstep, file or skill.
+
+For example, presentation content and rendering it as PPTX or PDF have different responsibilities. Keep shared claims and sources at one content home; specify each recipient's required format, editability, standalone explanation and other applicable checks under the existing output and acceptance contract. Both formats may be produced within one coherent job. A format change may also change the needed content: a PDF read without a speaker must contain its required explanation. Recheck affected exports after a shared content change; a format correction retains the content's meaning and required checks.
+
+Apply the existing [workstep boundary criterion](zuschnitt.md#arbeitsschritt) when a separate result, route or authority boundary requires a split. Declare sending or publishing the rendered file as a separate permitted effect under [record writeback](../../capabilities.md#rückübertragung-in-geschäftsrecords).
+
 <a id="native-topologie-und-schnitt"></a>
 ## Native topology and boundaries
+
+When assigning shared content or output variants to homes, apply [Separation of Concerns](#separation-of-concerns).
 
 ```text
 Root router -> Domain router -> Fact home -> Source
@@ -74,6 +84,14 @@ For a new Core workspace, run `impacts init PATH --language en|de` ([what it wri
 An empty collection has an explicit authoritative empty state in its responsible router. Do not create an empty category, README or index merely to make absence clickable. Once entries exist, replace or extend the empty state with direct links. The Knowledge Walk may stop at an explicit empty state.
 
 That state describes only the captured collection. A claim of business absence requires its own reachable evidence; otherwise that question remains open. A successful navigation stop does not establish completeness of the company model.
+
+### Capability orientation
+
+Where a workspace uses Capabilities from a Fachrepo or another domain home, its root `CONTEXT.md` links the early responsible router. That router identifies their supported local uses and directly links the existing source/adoption, setup and domain-contract homes needed for those uses. Refer to the existing bindings to distinguish the locally adopted revision, historical use and a candidate. Keep domain payload at its authoritative home.
+
+Select the needed branch under [local context selection](../../impacts-method.md#load-context-locally-first). When that use combines domain meanings or relationships, apply [scoped harmonization](../../ontology.md#domain-addresses-and-relationships). The selected process explains the Fachcapability's contribution to its accepted result; the workstep binds its operation under the [Capability call contract](../../capabilities.md#capability-aufruf).
+
+Orientation is complete when the selected path from the actually loaded repository instructions or declared entry resolves the local use, applicable source/revision, required domain meanings and operation/check contract, or retains a specific gap and its dependent-use restriction. Before adopting a changed route, exercise a supported use, a missing or incompatible source, and a nearby task that does not need that Capability. Record the actual read path and outcome. Finding the contract establishes navigation; execution and domain-use checks follow [enforcement and completion](../../ontology.md#enforcement-and-completion).
 
 <a id="tooling-stopp"></a>
 ## Tooling stop

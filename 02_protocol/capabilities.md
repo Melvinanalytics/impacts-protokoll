@@ -2,6 +2,8 @@
 
 A Capability is an optional reusable operation inside a workstep. Its domain contract, implementation and checks live together outside the Application tree. This file owns Capability authority, source binding and handoffs. [Meaning and valid inference](ontology.md#meaning-and-valid-inference), [evidence and obligations](ontology.md#evidence-and-obligations), and [enforcement and completion](ontology.md#enforcement-and-completion) stay in the ontology instruction; the [language contract](language.md#enforce-at-use-boundaries) owns customer-readable presentation.
 
+For early workspace routing when connecting domain Capabilities, follow [Capability orientation](impacts-architect/references/formwahl.md#capability-orientation).
+
 ## Responsibilities
 
 | Concept | Responsibility |

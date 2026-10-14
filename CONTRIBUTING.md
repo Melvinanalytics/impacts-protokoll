@@ -2,6 +2,22 @@
 
 Changes enter `main` through a reviewed pull request. Keep customer material in its customer repository. Report the revision, expected and observed behavior, synthetic evidence, and checks not run.
 
+### v0.3.28 process viewer and domain capability entry
+
+The optional `impacts view` command generates a read-only process tree and detail pages with HP/TP/AS breadcrumbs, captured-source controls, Ist-to-target links and printable expanded prose. Tables stay open. Inline `reported` and `verified` annotations retain the mockup's unmarked appearance; their source remains available through the section's source control. Keyboard and touch interactions were exercised; screenreader use and contrast were not assessed.
+
+Observable input conventions changed since v0.3.27:
+
+- The Ist template's proposed move must name its target as `arbeitsschritt:<slug>` or propose removal with the code span `entfaellt`. The instruction changed from "names" to "must name". A malformed ID suffix or path is not silently matched to an ID prefix.
+- Processing contribution labels are `Deterministic system:`, `Classifier:`, `Agent:` and `Human:` (or their documented German labels). Free prose does not declare an execution kind.
+- Both workspace templates now point connected domain Capabilities to their early responsible router and existing source/adoption, setup and operation/meaning homes. This adds guidance, no required Core field or automatic adoption.
+
+Viewer labels follow the workspace language; without that setting `view` defaults to German, while `init` and `template` default to English. Workspace and Run views require a Git-root workspace; one Application works without Git. Output creation refuses filesystem aliases into the selected source and, for Applications in a workspace, into that workspace. Sets, nonfinite numbers, repeated YAML alias collections and metadata exceeding the bounded Viewer projection are refused as `view.unreadable`; Core validation semantics are unchanged.
+
+This edition also includes the guided-interview entry, Separation of Concerns clarification and the distinction between real existing-file work and the synthetic First-Win exercise. Core schemas and required fields are unchanged. Capacity planning remains optional. The wheel includes the static Viewer HTML resource and 14 templates: seven English and seven German. Complete attempt-evidence display and the separately proposed Teilprozess condition change are outside this edition's scope.
+
+The protected tag workflow includes this version's section from `CONTRIBUTING.md` in its generated Release body and appends the actual workflow test evidence. Local preparation notes are review inputs, not an uploaded Release body. The workflow rebuilds the wheel and source archive; only the resulting published `SHA256SUMS` identifies the published asset bytes.
+
 ## Hardening roadmap after v0.3.13
 
 The table records scoped milestones, not evidence of publication. Apply the publication checks below to identify what is live. The v0.4 row is a design gate, not an implemented sealing feature.
