@@ -1491,13 +1491,10 @@ const openItems = b => {
 const necessityLegend = () => h("p", {class: "note", text: W.necessity_legend});
 
 /* Answers show the mockup icon; expanding keeps the exact cell, caveats and original labels readable. */
-const moveProse = move => {
-  const target = /(?<![\w:-])arbeitsschritt:[a-z0-9]+(?:-[a-z0-9]+)*(?![\w:/-]|\.\w)/g;
-  return move.spans.map(([kind, text, ref]) => [kind,
-    kind === "code" && text.trim() === "entfaellt" ? "" : text.replace(target, ""), ref])
-    .filter(([, text]) => text).map(([kind, text, ref], i, all) => [kind,
-      (i === all.length - 1 ? text.replace(/[\s;,]+$/, "") : text).replace(/\s+([,;])/g, "$1"), ref]);
-};
+const moveProse = move => (move.prose || move.spans)
+  .filter(([, text]) => text).map(([kind, text, ref], i, all) => [kind,
+    (i === all.length - 1 ? text.replace(/[\s;,]+$/, "") : text).replace(/\s+([,;])/g, "$1"), ref]);
+
 function necessityTable(rows, options = {}) {
   const cols = ["E", "K", "F", "D", "Ü"];
   return (h("div", {class: "tablewrap"}, h("table", {class: "t nt"},

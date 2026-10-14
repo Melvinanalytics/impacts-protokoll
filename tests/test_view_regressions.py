@@ -159,3 +159,29 @@ def test_application_without_git_preserves_declared_workspace_boundary(tmp_path,
  assert run(source,tmp_path/'outside-view')==0
  if workspace:
   with pytest.raises(SystemExit,match='overlap'):run(source,root/'applications/out')
+
+
+@pytest.mark.parametrize('bad', ['arbeitsschritt:startä','arbeitsschritt:start.ä','äarbeitsschritt:start','`arbeitsschritt:start`ä','ä`arbeitsschritt:start`','arbeitsschritt:start, arbeitsschritt:start.ä'])
+def test_invalid_unicode_move_preserves_source_across_markup(tmp_path,bad):
+ text=TEMPLATE_DE.read_text().replace('Trennung aufheben: Eingang legt die Fallakte direkt an (`hypothesis`)', 'Proposal; '+bad)
+ root=_ist_workspace(tmp_path,{'source.md':text});model={**selection.workspace_site(root)['i-source.html'],'language':'de'}
+ row=model['necessity']['rows'][0];original=project.plain(row['move']['spans'])
+ sheet=render_page(tmp_path,write.page_html(model))['sheet'];visible=next(e for e in elements(sheet) if e['attrs'].get('class')=='nrow')['children'][-1]
+ expected=bad.replace('`','').split(', ')[-1]
+ assert expected in text_content(visible)
+ assert project.plain(row['move']['spans'])==original
+
+
+def test_valid_target_across_markup_uses_link_and_retains_original_spans(tmp_path):
+    text = TEMPLATE_DE.read_text().replace('Trennung aufheben: Eingang legt die Fallakte direkt an (`hypothesis`)',
+                                          'Proposal; arbeitsschritt:**start**')
+    root = _ist_workspace(tmp_path, {'source.md': text})
+    model = {**selection.workspace_site(root)['i-source.html'], 'language': 'de'}
+    move = model['necessity']['rows'][0]['move']
+    assert move['targets'] == ['start']
+    assert 'arbeitsschritt:start' in project.plain(move['spans'])
+    assert 'arbeitsschritt:' not in project.plain(move['prose'])
+    sheet = render_page(tmp_path, write.page_html(model))['sheet']
+    row = next(e for e in elements(sheet) if e['attrs'].get('class') == 'nrow')
+    assert any(e['tagName'] == 'A' and e['attrs']['href'].endswith('#arbeitsschritt%3Astart')
+               for e in elements(row))

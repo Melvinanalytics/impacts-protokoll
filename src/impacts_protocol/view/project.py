@@ -441,6 +441,28 @@ def _unique(items) -> list:
     return list(dict.fromkeys(items))
 
 
+def _move_prose(spans: list[list[str]], ranges: list[tuple[int, int]]) -> list[list[str]]:
+    """Remove exactly the whole-text target ranges, retaining original spans separately."""
+    result, offset, index = [], 0, 0
+    for kind, text, ref in spans:
+        finish, cursor, kept = offset + len(text), offset, []
+        while index < len(ranges) and ranges[index][0] < finish:
+            start, end = ranges[index]
+            if start > cursor:
+                kept.append(text[cursor - offset:start - offset])
+            cursor = max(cursor, min(end, finish))
+            if end <= finish:
+                index += 1
+            else:
+                break
+        if cursor < finish:
+            kept.append(text[cursor - offset:])
+        visible = "" if kind == "code" and text.strip() == REMOVED else "".join(kept)
+        result.append([kind, visible, ref])
+        offset = finish
+    return result
+
+
 def necessity(node: dict) -> dict:
     """The stored analysis as rows of markers, each answer kept whole. Unsupported shapes stay verbatim."""
     result = {"status": "none", "reason": None, "at": None, "heading_line": None, "conditions": None,
@@ -490,11 +512,13 @@ def necessity(node: dict) -> dict:
     known = set(result["conditions"] or {})
     for k, cells in enumerate(table["rows"]):
         nr, ids, unknown = plain(cells[0]).strip(), *condition_refs(plain(cells[1]), known)
+        targets = list(TARGET.finditer(plain(cells[7])))
         result["rows"].append({
             "nr": nr, "line": table["line"] + 2 + k, "activity": result["activities"].get(nr),
             "serves": {"spans": cells[1], "ids": ids, "unknown": unknown},
             "answers": [answer(c) for c in cells[2:7]],
-            "move": {"spans": cells[7], "labels": labels([cells[7]]), "targets": _unique(TARGET.findall(plain(cells[7]))),
+            "move": {"spans": cells[7], "labels": labels([cells[7]]), "targets": _unique(match.group(1) for match in targets),
+                     "prose": _move_prose(cells[7], [match.span() for match in targets]),
                      "removed": any(kind == "code" and text.strip() == REMOVED for kind, text, _ in cells[7]), "resolved": None}})
     reconcile_ist(result)
     result["status"] = "table"
