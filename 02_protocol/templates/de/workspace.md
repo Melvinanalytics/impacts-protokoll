@@ -2,7 +2,7 @@
 type: workspace
 ---
 
-<!-- Translation source: 02_protocol/templates/workspace.md; sha256: dcb56cc54dea1b21e3d089b0cc55669a322a19d3ece4a7f8380aa8f96aae60c4 -->
+<!-- Translation source: 02_protocol/templates/workspace.md; sha256: c222e59495db1777f54c61f7dff0252557c33d5451db7db626fee5e9d5357c0e -->
 
 Working language: de
 
@@ -23,6 +23,8 @@ Konfigurierte Fakten hier festhalten und den Betriebsvertrag erhalten. Änderung
 - Architect-Einstieg: `<auflösbarer Pfad von 02_protocol/impacts-architect/SKILL.md>`
 - Harness und Einrichtungsreferenz, wenn Core-Vorgänge ausgeführt werden: `<eingerichtetes Harness und seine Einrichtungsreferenz, oder nicht gewählt>`
 - Fachliche Heimaten: `<Link und Zweck jeder Heimat>`
+
+Bei Nutzung von Capabilities aus einem Fachrepo oder einer anderen fachlichen Heimat deren frühen zuständigen Router unter „Fachliche Heimaten“ verlinken und `02_protocol/impacts-architect/references/formwahl.md#capability-orientation` aus der benannten Protokollquelle anwenden.
 
 ## Einrichtung
 

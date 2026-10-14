@@ -16,7 +16,7 @@ touchpoint: standard
 evidence_status: reported
 ---
 
-<!-- Translation source: 02_protocol/impacts-architect/templates/ist-prozess.md; sha256: 487105a787c1f04d978598a4fa837da635640b55057140a257e73f558a7a7ebd -->
+<!-- Translation source: 02_protocol/impacts-architect/templates/ist-prozess.md; sha256: 2ac929228f6da15468dd857dea22517c94c7ba6b1a403855cb24f2aaa9502b8c -->
 
 # Antrag prüfen und entscheiden
 
@@ -66,14 +66,14 @@ Eine Zeile je Tätigkeit; ein wiederholter Durchlauf erhält eine eigene Zeile. 
 | 4 | Fehlende Eingabe für C2 | Nein | Ja | Ja; folgt aus 3 (`hypothesis`) | Nein | Nein | Dieselbe Korrektur wie bei 3 |
 | 5 | C2 | Ja (`reported`) | Nein | Ja; folgt aus 3 (`hypothesis`) | Nein; das Material hat sich geändert | Nein | Dieselbe Korrektur wie bei 3 |
 | 6 | Von C1 geforderte festgehaltene Entscheidungsbefunde | Ja (`reported`) | Nein für die Erzeugung der Befunde; eine Übergabe getrennt beurteilen, falls sie eine Abhängigkeit regelt | Nein | Nein | Ja: die Kopien dienen nach Prüfung relevanter Empfänger und Pflichten keiner Bedingung oder Abhängigkeit (`reported`) | Bericht auf Befunde mit Verweisen kürzen |
-| 7 | C2 | Ja (`reported`) | Nein | Nein | Ja: die anwendbare Prüfung, 2 oder das letzte 5, prüft C2 nach demselben Katalog an derselben Aktenfassung; keine Regel für eine zweite Prüfung gefunden (`hypothesis`) | Nein | Die anwendbare Prüfung der Sachbearbeitung samt Nachweis behalten; die Leitung sieht die zitierten Stellen ein |
-| 8 | C1 | Ja (`reported`) | Nein | Nein | Nein | Nein | Behalten; nicht weiter reduzierbar, soweit C1 trägt (`reported`) |
+| 7 | C2 | Ja (`reported`) | Nein | Nein | Ja: die anwendbare Prüfung, 2 oder das letzte 5, prüft C2 nach demselben Katalog an derselben Aktenfassung; keine Regel für eine zweite Prüfung gefunden (`hypothesis`) | Nein | Die anwendbare Prüfung der Sachbearbeitung samt Nachweis behalten; die Leitung sieht die zitierten Stellen ein; `entfaellt` |
+| 8 | C1 | Ja (`reported`) | Nein | Nein | Nein | Nein | Behalten; nicht weiter reduzierbar, soweit C1 trägt (`reported`); arbeitsschritt:entscheiden |
 | 9 | C1 | Ja (`reported`) | Nein | Nein | Nein | Nein | Behalten; nicht weiter reduzierbar, soweit C1 trägt (`reported`) |
 | 10 | C3 | Ja, nur für eine eigene Regel (`reported`) | Nein | Nein | Nein | Nein | Abteilungsleitung fragen, ob die Regel bleibt oder sich ändert |
 | 11 | C1 | Ja (`reported`) | Nein | Nein | Nein | Nein | Behalten; nicht weiter reduzierbar, soweit C1 trägt (`reported`) |
 | 12 | C4 | Ja, Pflicht eines Dritten (`reported`) | Nein | Nein | Nein | Nein | Behalten (`reported`); Rechtsgrundlage bestätigen, bevor mehr behauptet wird |
 
-Jede Tätigkeit nennt eine Bedingung oder Abhängigkeit, und jede Bedingung nennt eine Tätigkeit. Ungeklärte Antworten offenlassen. „Keines“ ist eine Minimize-Frage, keine Löschbefugnis. Die Korrektur von 3 verhindert das Warten vor 4 in späteren Fällen; das Warten in der Liste vor 2 nach der Zeitregel beurteilen. Für Vergleiche unter einer Ergebnisgrenze, Grundgesamtheit, Periode und Einheit nicht überlappenden beobachteten Aufwand genau einmal unter Kombination und Maßnahme seiner Tätigkeit zurechnen, Wartezeit getrennt halten und kein 100-Prozent-Kreisdiagramm erzwingen.
+In „Vorgeschlagene Maßnahme“ jeden Zielschritt als `arbeitsschritt:<slug>` nennen oder eine vorgeschlagene Streichung mit dem Codeabschnitt `entfaellt` kennzeichnen; die Begründung bleibt Text, und keines davon ist eine Entscheidung. Jede Tätigkeit muss eine Bedingung oder Abhängigkeit nennen, und jede Bedingung eine Tätigkeit. Ungeklärte Antworten offenlassen. „Keines“ ist eine Minimize-Frage, keine Löschbefugnis. Die Korrektur von 3 verhindert das Warten vor 4 in späteren Fällen; das Warten in der Liste vor 2 nach der Zeitregel beurteilen. Für Vergleiche unter einer Ergebnisgrenze, Grundgesamtheit, Periode und Einheit nicht überlappenden beobachteten Aufwand genau einmal unter Kombination und Maßnahme seiner Tätigkeit zurechnen, Wartezeit getrennt halten und kein 100-Prozent-Kreisdiagramm erzwingen.
 
 ## Wo wird angehalten und geprüft
 

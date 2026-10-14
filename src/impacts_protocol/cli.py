@@ -94,6 +94,12 @@ def build_parser() -> argparse.ArgumentParser:
     template_parser = subparsers.add_parser("template", help="Print a working template")
     template_parser.add_argument("kind", choices=CLI_TEMPLATE_KINDS)
     template_parser.add_argument("--language", choices=LANGUAGES, default="en", help="Customer working language (default: en)")
+
+    view_parser = subparsers.add_parser("view", help="Write a read-only HTML view of a workspace, Application or Vorgang")
+    view_parser.add_argument("source", help="Workspace folder, Application folder or vorgaenge/<slug>/CONTEXT.md")
+    view_parser.add_argument("--out", required=True, help="New folder for the pages; must not exist")
+    view_parser.add_argument("--json", action="store_true", help="Also write model.json, an export, never a source")
+    view_parser.add_argument("--language", choices=LANGUAGES, help="Page language when the workspace records none")
     return parser
 
 
@@ -113,6 +119,10 @@ def main(argv: list[str] | None = None) -> int:
             print(f"Workspace created. Next: read {target / 'CONTEXT.md'} and validate:")
         print(f"impacts validate {shlex.quote(str(target))}")
         return 0
+    if args.command == "view":
+        from .view import run
+
+        return run(Path(args.source), Path(args.out), write_json=args.json, language=args.language)
     if args.command == "template":
         print(template_text(args.kind, language=args.language), end="")
         return 0

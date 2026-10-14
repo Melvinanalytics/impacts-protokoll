@@ -22,6 +22,8 @@ Record configured facts here and preserve the operating contract. Changes to ins
 - Harness and setup reference, when Core Run execution is selected: `<configured harness and its setup reference, or not selected>`
 - Domain homes: `<link and purpose of each home>`
 
+When using Capabilities from a Fachrepo or another domain home, link their early responsible router under Domain homes and apply `02_protocol/impacts-architect/references/formwahl.md#capability-orientation` from the recorded protocol source.
+
 ## Setup
 
 `init` creates this router, `applications/`, `vorgaenge/` and `.gitattributes` (`* -text`, so a checkout keeps bound bytes and their hashes unchanged). Before a Core Run binds a revision, initialize Git at this root. Git omits empty directories; validation treats absent `applications/` or `vorgaenge/` collections as empty. Present collections must contain valid children; add no placeholder files. Add domain files only for actual content under the Architect's form selection. Before a Core Run, name the configured harness (`02_protocol/capabilities.md#responsibilities`) and its setup/dependency reference under Source, harness and homes; confirm support for the selected Application's operations, source access, checks, handoffs and human boundaries, including required history retention/checking under that responsibilities contract. Keep credentials in that execution environment. An empty valid workspace is not an executable process. The following rules apply to selected Core Application/Run contracts under `02_protocol/impacts-architect/references/formwahl.md#tooling-stopp`.

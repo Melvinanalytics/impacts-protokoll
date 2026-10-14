@@ -45,9 +45,9 @@ This diagram is orientation. The [ontology](02_protocol/ontology.md) owns eviden
 
 ## Get the protocol
 
-Use the published immutable Release [v0.3.27](https://github.com/Melvinanalytics/impacts-protokoll/releases/tag/v0.3.27) for new work. Download the wheel, complete source archive and `SHA256SUMS`; verify every listed checksum before installing or using the source archive.
+Use the published immutable Release [v0.3.28](https://github.com/Melvinanalytics/impacts-protokoll/releases/tag/v0.3.28) for new work. Download the wheel, complete source archive and `SHA256SUMS`; verify every listed checksum before installing or using the source archive.
 
-Keep the complete source together: method, Architect, references, templates and examples. Reading the archive needs no installation. A copied Architect folder is incomplete even when its `references/` folder is present: it also depends on parent protocol files and root guidance. The wheel contains only the CLI, schemas and templates; it does not contain the method, Architect, evaluations, tests or complete source guidance. Wheel users who need the source-provenance form can run `impacts template herkunft` (or add `--language de`). That template has nine evidence fields. Its field count describes this template; it is not a universal line-count rule.
+Keep the complete source together: method, Architect, references, templates and examples. Reading the archive needs no installation. A copied Architect folder is incomplete even when its `references/` folder is present: it also depends on parent protocol files and root guidance. The wheel contains the CLI, static Viewer HTML resource, schemas and templates; it does not contain the method, Architect, evaluations, tests or complete source guidance. Wheel users who need the source-provenance form can run `impacts template herkunft` (or add `--language de`). That template has nine evidence fields. Its field count describes this template; it is not a universal line-count rule.
 
 ## Version and entry points
 
@@ -88,18 +88,18 @@ Authorities: [workstep processing](02_protocol/templates/arbeitsschritt.md#proce
 |---|---|---|---|
 | Knowledge only | Complete tagged source retained as evidence, plus its reviewed text-only projection | Text editor or managed knowledge source | No code execution or automatic adoption of embedded instructions; retain source paths and release identity |
 | Read-only source use | Complete tagged source | Person or permitted file-capable agent | Review harness-recognized instruction files before use; other retrieved content grants no permission or action authority |
-| Local CLI | Complete tagged source or verified release wheel | Python 3.11+ in an isolated environment | `init`, `template`, `validate` and `hash`; no workstep execution |
+| Local CLI | Complete tagged source or verified release wheel | Python 3.11+ in an isolated environment | `init`, `template`, `validate`, `hash` and `view`; no workstep execution |
 | Executable action | Customer workspace and separately reviewed harness or service | Actual sources, permissions, operations and checks | Deployment-specific runtime and authority; least privilege and explicit effects |
 
 For managed enterprise knowledge use, start with **Knowledge only**: identify one named release, record its full source commit, hash the exact acquired source, retain it as a write-protected internal snapshot, and publish a reviewed text-only projection to tenant-controlled read-only storage. Record the source-to-projection mapping, approved revision, complete intake manifest and artifact hashes. Record approved dependencies and environment controls separately if code will be installed. This internal snapshot neither makes the public release immutable nor proves publisher or build provenance. Enable no tools, actions, live public-website grounding or automatic upstream refresh in the pinned knowledge configuration. Executable integration is a separate deployment review.
 
 The projection is a derived reading surface, not a replacement authority or a complete protocol source. Record its included source paths and omissions. For each intended question, make the required passages available to the selected retriever, including needed domain definitions, observation claims, rules and supporting evidence excerpts. Do not assume that the retriever follows links inside an indexed document. Required linked passages must remain reachable at the bound revision through separately included projection material or the retained source. An omitted, inaccessible or stale required passage remains an explicit gap and restricts only the dependent conclusion or action.
 
-Edition v0.3.27 documents this customer-prepared intake path; it does not supply a publisher-attested knowledge projection, enterprise intake manifest, dependency bundle, build-provenance attestation or connector integration. The enterprise custodian prepares and records those materials for its environment. Release checksums cover only the assets named in that checksum file. For **Local CLI**, checking the IMPACTS wheel does not verify or freeze its dependencies: ordinary `pip` can resolve and download them. The bounded Linux recipe below pins selected dependency wheel hashes for one declared target; it is not a universal dependency lock or publisher-authenticity claim. Enterprise executable intake outside that target must separately approve and bind its dependency set or use an approved internal package source.
+Edition v0.3.28 documents this customer-prepared intake path; it does not supply a publisher-attested knowledge projection, enterprise intake manifest, dependency bundle, build-provenance attestation or connector integration. The enterprise custodian prepares and records those materials for its environment. Release checksums cover only the assets named in that checksum file. For **Local CLI**, checking the IMPACTS wheel does not verify or freeze its dependencies: ordinary `pip` can resolve and download them. The bounded Linux recipe below pins selected dependency wheel hashes for one declared target; it is not a universal dependency lock or publisher-authenticity claim. Enterprise executable intake outside that target must separately approve and bind its dependency set or use an approved internal package source.
 
 Call machine validation for a needed check when a suitable checker is available. An unavailable or failed check leaves its condition unestablished: preparation continues while the dependent claim or action waits. Explain progress, consequence and next action; retain raw diagnostics for maintainers. [Form selection](02_protocol/impacts-architect/references/formwahl.md#tooling-stopp) owns this boundary.
 
-The CLI supplies `init`, `template`, `validate` and `hash`. Application-only validation checks Core structure, as [Enforcement and completion](02_protocol/ontology.md#enforcement-and-completion) bounds it, without Git. Run validation needs Git and committed Application binding. The [workspace operating contract, item 1](02_protocol/templates/workspace.md#operating-contract) states the supported history references. Neither validation establishes definition completeness or execution; a configured harness executes structured Runs.
+The CLI supplies `init`, `template`, `validate`, `hash` and `view`. Application-only validation checks Core structure, as [Enforcement and completion](02_protocol/ontology.md#enforcement-and-completion) bounds it, without Git. Run validation needs Git and committed Application binding. The [workspace operating contract, item 1](02_protocol/templates/workspace.md#operating-contract) states the supported history references. Neither validation establishes definition completeness or execution; a configured harness executes structured Runs.
 
 For the CLI, use Python 3.11+. In your chosen working folder, create and activate a virtual environment (shown for macOS/Linux):
 
@@ -110,8 +110,8 @@ source .venv/bin/activate
 
 Choose one installation source:
 
-- **Complete checkout:** use the source tree extracted from the published immutable v0.3.27 Release after every listed `SHA256SUMS` entry passes. From the verified tree's root, run `python -m pip install -e .`.
-- **Release wheel:** download the wheel, complete source archive and `SHA256SUMS` from the published immutable Release [v0.3.27](https://github.com/Melvinanalytics/impacts-protokoll/releases/tag/v0.3.27) into one folder. Verify every listed asset with `shasum -a 256 -c SHA256SUMS` (macOS/Linux), then install with `python -m pip install ./impacts_protocol-0.3.27-py3-none-any.whl`.
+- **Complete checkout:** use the source tree extracted from the published immutable v0.3.28 Release after every listed `SHA256SUMS` entry passes. From the verified tree's root, run `python -m pip install -e .`.
+- **Release wheel:** download the wheel, complete source archive and `SHA256SUMS` from the published immutable Release [v0.3.28](https://github.com/Melvinanalytics/impacts-protokoll/releases/tag/v0.3.28) into one folder. Verify every listed asset with `shasum -a 256 -c SHA256SUMS` (macOS/Linux), then install with `python -m pip install ./impacts_protocol-0.3.28-py3-none-any.whl`.
 
 Follow [Version and entry points](#version-and-entry-points) to identify the installed package and obtain its complete source. Then, outside the intended new customer folder:
 
@@ -125,6 +125,15 @@ impacts template herkunft
 `init` creates an empty Core workspace (`.gitattributes`, `CONTEXT.md`, `applications/`, `vorgaenge/`), writes exactly `* -text` plus a newline to `.gitattributes`, refuses an existing target and creates no Git repository or runnable process. Existing workspaces need the same line before their first bound Run. Keep the customer workspace separate from the protocol source. Add `--language de` to `init` or `template` for German. Initialize Git at the Core root before committing an Application for Run binding.
 
 Explore the [Application template](02_protocol/templates/application.md), [schemas](02_protocol/schemas/), [Capabilities](02_protocol/capabilities.md) and [Architect skill](02_protocol/impacts-architect/SKILL.md). The programmed [offer walk](06_evaluations/offer-walk/CONTEXT.md) retains checked synthetic preparation at a pending human gate; the [cold walk](06_evaluations/cold-walk/CONTEXT.md) exercises loops, waits, synthetic gates and transport.
+
+### Read-only view
+
+`impacts view <source> --out <folder>` writes static HTML pages for a workspace, one Application or one Run (`vorgaenge/<slug>/CONTEXT.md`). Workspace and Run views require a Git-root workspace; a single Application can be viewed without Git. The output folder must not exist yet. Add `--json` to also write `model.json`, an export and never a source. Generate a new folder after the files change.
+
+- **Shows:** the route map from Hauptprozess through Teilprozess to Arbeitsschritt; for each step its job, authority, flow and [execution mix](02_protocol/impacts-architect/references/zuschnitt.md#automation-boundary); for each Run the last `laufpfad` entry as its position; for each Ist-Prozess its analysis table. Where the table's proposed moves name `arbeitsschritt:<slug>` or the code span `entfaellt`, as the [as-is template](02_protocol/impacts-architect/templates/ist-prozess.md) describes, the page lists today's activities beside their proposed target steps. An Ist-Prozess without that table appears verbatim. Source controls show the captured section or parsed frontmatter with file, line and digest. Uncaptured Markdown targets remain explicit references; the viewer does not follow them.
+- **Never:** it invents no value; a missing or ambiguous entry stays visible as a gap, and titles are never matched. It decides, schedules, approves and changes nothing, and writes only the new folder. A target step on the page is a proposal; it proves neither coverage nor implementation.
+- **Language:** page labels follow the `Working language` recorded in the workspace `CONTEXT.md`. Without that setting the pages are German unless `--language en` is passed; `init` and `template` default to English unless a language is explicitly selected; a `--language` that differs from the setting is refused.
+- **Exit codes:** `0` when every selection is shown; `1` when some selections were refused and the pages show them as such, or when the source cannot be viewed, with the cause on stderr; `2` for invalid arguments.
 
 ### CLI output and text input
 
@@ -170,7 +179,7 @@ python -m pytest -q
 python3 06_evaluations/complexity-budget/check.py
 ```
 
-The test extra supplies pytest, Hypothesis for generated boundary cases, and setuptools for packaging tests using `--no-build-isolation`; these are not runtime dependencies. Run evaluations from their linked guides. Local checks cover Python 3.11/3.14 on macOS. The distribution supplies CLI, schemas and templates; use the complete checkout for method, Architect, examples and tests.
+The test extra supplies pytest, Hypothesis for generated boundary cases, and setuptools for packaging tests using `--no-build-isolation`; these are not runtime dependencies. Run evaluations from their linked guides. Local checks cover Python 3.11/3.14 on macOS. The distribution supplies CLI, the static Viewer HTML resource, schemas and templates; use the complete checkout for method, Architect, examples and tests.
 
 ### Bounded Linux dependency install
 
