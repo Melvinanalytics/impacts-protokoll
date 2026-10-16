@@ -46,7 +46,8 @@ def test_actual_run_checks_and_binds_both_outputs_before_pending_human_gate(tmp_
     metadata, body = walk.load_frontmatter_and_body(root / walk.RUN / "CONTEXT.md")
     assert metadata["laufpfad"][0]["gewaehlte_route"] == "bestanden"
     gate = metadata["laufpfad"][-1]
-    assert gate["status"] == "aktiv" and "freigabe" not in gate and "gewaehlte_route" not in gate
+    assert gate["status"] == "wartend" and gate["wiedereinstieg"]["continuation_ref"] == "freigeben/001/output/entscheidung.md"
+    assert "freigabe" not in gate and "gewaehlte_route" not in gate
     assert "ausgabe_hash" not in gate and not (root / walk.RUN / "freigeben/001" / decision_output).exists()
     assert ("menschliche entscheidung" if language == "de" else "human decision") in body.lower()
     for name in ("angebot.md", "pruefbericht.json"):
@@ -302,7 +303,7 @@ def test_historical_checks_and_handoff_do_not_load_the_factory_parser(tmp_path, 
     isolated.handoff(root, expected)
     assert isolated.validate(root).valid and isolated.validate(gap_root).valid
     metadata, _ = isolated.load_frontmatter_and_body(root / walk.RUN / "CONTEXT.md")
-    assert metadata["laufpfad"][-1]["status"] == "aktiv" and "gewaehlte_route" not in metadata["laufpfad"][-1]
+    assert metadata["laufpfad"][-1]["status"] == "wartend" and "gewaehlte_route" not in metadata["laufpfad"][-1]
     for name in ("angebot.md", "pruefbericht.json"):
         assert (root / walk.RUN / "freigeben/001/input" / name).read_bytes() == (root / walk.RUN / "entwerfen/001/output" / name).read_bytes()
     assert not marker.exists() and f"{isolated_spec.name}_source_answer" not in sys.modules
@@ -910,7 +911,7 @@ def test_retained_offer_discovery_is_inspectable_and_existing_target_is_preserve
         assert local_links
         assert all((router.parent / unquote(ref)).resolve().is_file() for ref in local_links)
     metadata = read_context(target / walk.RUN / 'CONTEXT.md')
-    assert metadata['laufpfad'][-1]['status'] == 'aktiv'
+    assert metadata['laufpfad'][-1]['status'] == 'wartend'
     assert 'freigabe' not in metadata['laufpfad'][-1]
     before = files(target)
     rerun = subprocess.run(command, capture_output=True, text=True)

@@ -10,7 +10,7 @@ leistung:
 einstieg_ref: arbeitsschritt:pruefen
 ---
 
-<!-- Translation source: 02_protocol/templates/hauptprozess.md; sha256: e3c4ce28110311257b6ea6934625bd1b175a43154eda8219f5cb621a557c636b -->
+<!-- Translation source: 02_protocol/templates/hauptprozess.md; sha256: 96f4e083c03151ff6d6ffdd5b00b7ef2a7938567a19eccde0682f3b597bf9dc2 -->
 
 # Prüffall entscheiden
 
@@ -42,7 +42,7 @@ Welche menschlichen Grenzen gelten, warum und wer darf sie ändern? Eingangsvari
 
 ## Weg zur Leistung
 
-Welche Teilprozesse zum Ergebnis beitragen, wie ihre Voraussetzungen beschafft werden und wie Erfolg, Ablehnung oder ein unvollständiger Fall endet beziehungsweise wartet. `einstieg_ref` und Arbeitsschrittrouten bestimmen die Reihenfolge; diese Erklärung führt keine zweite Routentabelle. Unabhängige Applications übergeben belegte Ergebnisse zwischen getrennten Vorgängen, nicht durch Application-übergreifende Schrittrouten.
+Welche Teilprozesse zum Ergebnis beitragen, wie ihre Voraussetzungen beschafft werden und wie Erfolg, Ablehnung oder ein unvollständiger Fall endet beziehungsweise wartet. Jedes `end:<slug>` nennen, das die Leistung erreicht; jedes andere Ende ist ein negatives Ende. `einstieg_ref` und Arbeitsschrittrouten bestimmen die Reihenfolge; diese Erklärung führt keine zweite Routentabelle. Unabhängige Applications übergeben belegte Ergebnisse zwischen getrennten Vorgängen, nicht durch Application-übergreifende Schrittrouten.
 
 ## Durchsatz und Durchlaufzeit
 

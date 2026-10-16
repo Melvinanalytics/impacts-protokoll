@@ -23,6 +23,7 @@
         "arbeitsschritt_ref": {"type": "string", "pattern": "^arbeitsschritt:[a-z0-9]+(?:-[a-z0-9]+)*$"},
         "versuch": {"type": "integer", "minimum": 1, "maximum": 999},
         "status": {"enum": ["aktiv", "wartend", "abgeschlossen"]},
+        "status_seit": {"$ref": "#/$defs/zeitpunkt"},
         "eingabe_hash": {"$ref": "#/$defs/hash"},
         "gewaehlte_route": {"type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"},
         "ausgabe_hash": {"$ref": "#/$defs/hash"},
@@ -32,12 +33,14 @@
       "required": ["arbeitsschritt_ref", "versuch", "status", "eingabe_hash"]
     },
     "hash": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "zeitpunkt": {"type": "string", "format": "date-time", "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|[+-]([01][0-9]|2[0-3]):[0-5][0-9])$"},
     "wiedereinstieg": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
         "ausloeser": {"type": "string", "minLength": 1, "pattern": ".*\\S.*"},
-        "continuation_ref": {"type": "string", "minLength": 1, "pattern": ".*\\S.*"}
+        "continuation_ref": {"type": "string", "minLength": 1, "pattern": ".*\\S.*"},
+        "faellig": {"$ref": "#/$defs/zeitpunkt"}
       },
       "required": ["ausloeser", "continuation_ref"]
     },
@@ -46,7 +49,7 @@
       "additionalProperties": false,
       "properties": {
         "by": {"type": "string", "pattern": "^human:[^:\\s][^\\s]*$"},
-        "at": {"type": "string", "format": "date-time", "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|[+-]([01][0-9]|2[0-3]):[0-5][0-9])$"}
+        "at": {"$ref": "#/$defs/zeitpunkt"}
       },
       "required": ["by", "at"]
     }

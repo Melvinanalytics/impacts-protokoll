@@ -4,10 +4,9 @@ This local walk uses the reference implementation and Git, and it runs the synth
 
 ```text
 pruefen 001       aktiv
-nachfordern 001   aktiv          after klaerung
-nachfordern 001   wartend        wiedereinstieg
+nachfordern 001   wartend        after klaerung, wiedereinstieg
 pruefen 002       aktiv          after nachgereicht (loop)
-entscheiden 001   aktiv          after bestanden, human gate, walk stops
+entscheiden 001   wartend        after bestanden, human gate, walk stops
 entscheiden 001   abgeschlossen  freigegeben -> end:entschieden
 mutation          one input byte changed -> hash.mismatch
 ```

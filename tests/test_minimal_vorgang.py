@@ -687,6 +687,61 @@ def test_completed_entry_must_not_carry_reentry_contract():
         assert "run.invalid" in codes(root)
 
 
+def _wait_at_gate(root: Path, run: Path, **fields) -> None:
+    metadata = read_context(run / "CONTEXT.md")
+    gate = metadata["laufpfad"][1]
+    for key in ("gewaehlte_route", "ausgabe_hash", "freigabe"):
+        gate.pop(key)
+    gate |= {"status": "wartend", "wiedereinstieg": {"ausloeser": "Entscheidung der Prüferin", "continuation_ref": "mail:entscheidung"}}
+    gate |= fields
+    replace_context(run / "CONTEXT.md", metadata)
+
+
+def test_status_start_and_next_check_are_optional_offset_timestamps(tmp_path):
+    root, run = _prepare_workspace(tmp_path)
+    metadata = read_context(run / "CONTEXT.md")
+    metadata["laufpfad"][0]["status_seit"] = "2026-10-19T16:30:00+02:00"
+    replace_context(run / "CONTEXT.md", metadata)
+    # A next check before the status start is no contradiction: the promised time may already have passed.
+    _wait_at_gate(root, run, status_seit="2026-10-20T09:00:00+02:00",
+                  wiedereinstieg={"ausloeser": "Entscheidung der Prüferin", "continuation_ref": "mail:entscheidung",
+                                  "faellig": "2026-10-18T12:00:00Z"})
+    report = validate(root)
+    assert report.valid, report.issues
+
+
+@pytest.mark.parametrize("field, value", [("status_seit", "2026-10-20T09:00:00"), ("status_seit", "2026-10-20"),
+                                          ("faellig", "2026-11-02"), ("faellig", "2026-11-02T17:00:00")])
+def test_time_fields_without_offset_are_schema_errors(tmp_path, field, value):
+    root, run = _prepare_workspace(tmp_path)
+    resume = {"ausloeser": "Entscheidung der Prüferin", "continuation_ref": "mail:entscheidung"}
+    if field == "faellig":
+        _wait_at_gate(root, run, wiedereinstieg=resume | {"faellig": value})
+    else:
+        _wait_at_gate(root, run, status_seit=value)
+    assert "schema.invalid" in codes(root)
+
+
+@pytest.mark.parametrize("field", ["status_seit", "faellig"])
+def test_time_fields_reject_impossible_calendar_dates(tmp_path, field):
+    root, run = _prepare_workspace(tmp_path)
+    impossible = "2026-02-31T09:00:00+01:00"
+    resume = {"ausloeser": "Entscheidung der Prüferin", "continuation_ref": "mail:entscheidung"}
+    if field == "faellig":
+        _wait_at_gate(root, run, wiedereinstieg=resume | {"faellig": impossible})
+    else:
+        _wait_at_gate(root, run, status_seit=impossible)
+    report = validate(root)
+    assert any(issue.code == "run.invalid" and "real calendar timestamp" in issue.message for issue in report.issues)
+
+
+def test_next_check_cannot_appear_on_an_active_entry(tmp_path):
+    root, run = _prepare_workspace(tmp_path)
+    _wait_at_gate(root, run, status="aktiv",
+                  wiedereinstieg={"ausloeser": "x", "continuation_ref": "y", "faellig": "2026-11-02T17:00:00+01:00"})
+    assert "run.invalid" in codes(root)
+
+
 def test_hash_surface_rejects_a_directory_symlink():
     with TemporaryDirectory() as directory:
         base = Path(directory)

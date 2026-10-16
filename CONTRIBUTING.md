@@ -2,19 +2,16 @@
 
 Changes enter `main` through a reviewed pull request. Keep customer material in its customer repository. Report the revision, expected and observed behavior, synthetic evidence, and checks not run.
 
-### v0.3.28 process viewer and domain capability entry
+### v0.3.29 run status times and loop display
 
-The optional `impacts view` command generates a read-only process tree and detail pages with HP/TP/AS breadcrumbs, captured-source controls, Ist-to-target links and printable expanded prose. Tables stay open. Inline `reported` and `verified` annotations retain the mockup's unmarked appearance; their source remains available through the section's source control. Keyboard and touch interactions were exercised; screenreader use and contrast were not assessed.
+This edition makes run status clearer without a new status or required field. Existing run files stay valid.
 
-Observable input conventions changed since v0.3.27:
+- Two optional `vorgang` fields share one timestamp definition with `freigabe.at`: quoted, with offset. `status_seit` on a Laufpfad entry states when the entry received its current status. `wiedereinstieg.faellig` states the next time the harness must check a wait; the wait's Flow declaration says whether that time is the expected event's due time or a timed review. A missing `status_seit` means unknown; a commit time is no substitute. A `faellig` before `status_seit` is valid and means the check is due at once. The validator rejects impossible calendar dates in both fields.
+- An attempt is `wartend` exactly when it can complete only after a declared outside trigger: a holder's decision at a human gate, another party's delivery or a date; otherwise it is `aktiv`. An open gate decision is therefore `wartend`. The run template example and both evaluation walks now open their gate as `wartend`. The validator still accepts an `aktiv` gate entry, so earlier runs stay valid.
+- The main-process template asks for each `end:<slug>` that achieves the accepted result; every other end is negative. The run template states that a closed attempt shows its route, not acceptance, and that a reached end shows which end, not success.
+- `impacts view` shows a recorded status start and next check verbatim and says when they are missing. It has no clock, so it judges no lateness. A step whose latest attempt closed before a back route reopened an earlier step now shows "run went back after it" instead of "done".
 
-- The Ist template's proposed move must name its target as `arbeitsschritt:<slug>` or propose removal with the code span `entfaellt`. The instruction changed from "names" to "must name". A malformed ID suffix or path is not silently matched to an ID prefix.
-- Processing contribution labels are `Deterministic system:`, `Classifier:`, `Agent:` and `Human:` (or their documented German labels). Free prose does not declare an execution kind.
-- Both workspace templates now point connected domain Capabilities to their early responsible router and existing source/adoption, setup and operation/meaning homes. This adds guidance, no required Core field or automatic adoption.
-
-Viewer labels follow the workspace language; without that setting `view` defaults to German, while `init` and `template` default to English. Workspace and Run views require a Git-root workspace; one Application works without Git. Output creation refuses filesystem aliases into the selected source and, for Applications in a workspace, into that workspace. Sets, nonfinite numbers, repeated YAML alias collections and metadata exceeding the bounded Viewer projection are refused as `view.unreadable`; Core validation semantics are unchanged.
-
-This edition also includes the guided-interview entry, Separation of Concerns clarification and the distinction between real existing-file work and the synthetic First-Win exercise. Core schemas and required fields are unchanged. Capacity planning remains optional. The wheel includes the static Viewer HTML resource and 14 templates: seven English and seven German. Complete attempt-evidence display and the separately proposed Teilprozess condition change are outside this edition's scope.
+Outside this edition: a terminal state for a run stopped without a declared end, validator enforcement of the gate rule, and the separately proposed Teilprozess condition change. Core required fields are unchanged. The wheel includes the static Viewer HTML resource and 14 templates: seven English and seven German.
 
 The protected tag workflow includes this version's section from `CONTRIBUTING.md` in its generated Release body and appends the actual workflow test evidence. Local preparation notes are review inputs, not an uploaded Release body. The workflow rebuilds the wheel and source archive; only the resulting published `SHA256SUMS` identifies the published asset bytes.
 

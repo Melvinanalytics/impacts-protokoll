@@ -446,6 +446,16 @@ def _validate_vorgang(
             )
         else:
             _add(issues, "run.invalid", run_root / "CONTEXT.md", workspace, prefix + f"Unknown run status: {status}")
+        # The schema pattern admits impossible dates such as February 31; parsing rejects them.
+        resume = entry.get("wiedereinstieg")
+        for label, value in (("status_seit", entry.get("status_seit")),
+                             ("wiedereinstieg.faellig", resume.get("faellig") if isinstance(resume, dict) else None)):
+            if isinstance(value, str):
+                try:
+                    datetime.fromisoformat(value.replace("Z", "+00:00"))
+                except ValueError:
+                    _add(issues, "run.invalid", run_root / "CONTEXT.md", workspace,
+                         prefix + f"{label} must be a real calendar timestamp with offset; found {value!r}")
 
         hash_start = len(issues)
         input_hash = _surface_hash(attempt_root, step.get("eingaben"), workspace, issues)
