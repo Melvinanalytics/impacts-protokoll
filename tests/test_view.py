@@ -12,7 +12,7 @@ from pathlib import Path
 import pytest
 
 from impacts_protocol import init_workspace, surface_hash
-from tests.support import git, write_application, write_context
+from tests.support import git, read_context, replace_context, write_application, write_context
 
 from impacts_protocol.cli import main
 from impacts_protocol.view import blocks, choose_language, project, read, selection, working_language, write
@@ -90,6 +90,7 @@ const location = {hash: FRAGMENT, pathname: 'index.html'};
 const history = {pushState() {}, replaceState() {}};
 const window = {innerWidth: 1280, innerHeight: 900, addEventListener() {}, scrollTo() {}};
 const matchMedia = () => ({matches: false});
+const CSS = {escape: value => String(value)};
 """
     code = re.search(r"<script>(.*?)</script>", html, re.S).group(1)
     script = tmp_path / "render.js"
@@ -363,6 +364,8 @@ def _workspace(base: Path, applications=("video",), runs=(("video-001", "video")
     for slug, application in runs:
         revision = git(root, "rev-parse", f"HEAD:applications/{application}")
         run, entries = root / "vorgaenge" / slug, []
+        # pruefen is a human gate. Its open decision is wartend under the current rule; an aktiv gate entry
+        # stays valid for runs recorded earlier, so this fixture keeps that older shape on purpose.
         for step, status in (("start", "abgeschlossen"), ("pruefen", "aktiv")):
             attempt = run / step / "001"
             (attempt / "input").mkdir(parents=True)
@@ -431,12 +434,95 @@ def test_phases_follow_rework_waiting_and_end():
               {"arbeitsschritt_ref": "arbeitsschritt:b", **done, "gewaehlte_route": "zurueck"},
               {"arbeitsschritt_ref": "arbeitsschritt:a", "status": "wartend"}]
     view = project.phases(nodes, rework)
-    assert view["phase"] == {"arbeitsschritt:a": "waiting", "arbeitsschritt:b": "done"}
+    # b's attempt closed, but its back route reopened a: a closed attempt is not shown as done.
+    assert view["phase"] == {"arbeitsschritt:a": "waiting", "arbeitsschritt:b": "looped"}
     assert view["current"] == "arbeitsschritt:a" and view["ended"] is None
+    # The forward route after rework is no return: a's rework result counts as done again.
+    redone = project.phases(nodes, rework[:2] + [{"arbeitsschritt_ref": "arbeitsschritt:a", **done, "gewaehlte_route": "weiter"},
+                                                 {"arbeitsschritt_ref": "arbeitsschritt:b", "status": "aktiv"}])
+    assert redone["phase"] == {"arbeitsschritt:a": "done", "arbeitsschritt:b": "current"}
     ended = project.phases(nodes, rework[:1] + [{"arbeitsschritt_ref": "arbeitsschritt:b", **done, "gewaehlte_route": "gut"}])
     assert ended["ended"] == "end:fertig" and ended["current"] is None
     handed = project.phases(nodes, rework[:1])
     assert handed["phase"]["arbeitsschritt:b"] == "next" and handed["current"] == "arbeitsschritt:b"
+
+
+def test_back_route_marks_every_step_closed_since_the_reopened_attempt():
+    step = lambda name, routes: {"id": f"arbeitsschritt:{name}", "kind": "arbeitsschritt", "parent": "teilprozess:t",
+                                 "meta": {"routen": routes}}
+    nodes = [{"id": "hauptprozess:h", "kind": "hauptprozess", "parent": None},
+             {"id": "teilprozess:t", "kind": "teilprozess", "parent": "hauptprozess:h"},
+             step("a", {"weiter": "arbeitsschritt:x"}), step("x", {"weiter": "arbeitsschritt:b"}),
+             step("b", {"gut": "end:fertig", "zurueck": "arbeitsschritt:a"})]
+    closed = lambda name, route: {"arbeitsschritt_ref": f"arbeitsschritt:{name}", "status": "abgeschlossen", "gewaehlte_route": route}
+    view = project.phases(nodes, [closed("a", "weiter"), closed("x", "weiter"), closed("b", "zurueck"),
+                                  {"arbeitsschritt_ref": "arbeitsschritt:a", "status": "aktiv"}])
+    assert view["phase"] == {"arbeitsschritt:a": "current", "arbeitsschritt:x": "looped", "arbeitsschritt:b": "looped"}
+
+
+def test_looped_follows_the_laufpfad_not_the_display_order():
+    # Route order puts c before b in the display, yet c -> b is the return and b -> c the forward step.
+    step = lambda name, routes: {"id": f"arbeitsschritt:{name}", "kind": "arbeitsschritt", "parent": "teilprozess:t",
+                                 "meta": {"routen": routes}}
+    nodes = [{"id": "hauptprozess:h", "kind": "hauptprozess", "parent": None},
+             {"id": "teilprozess:t", "kind": "teilprozess", "parent": "hauptprozess:h"},
+             step("a", {"skip": "arbeitsschritt:c", "normal": "arbeitsschritt:b"}),
+             step("c", {"nacharbeit": "arbeitsschritt:b", "gut": "end:fertig"}), step("b", {"weiter": "arbeitsschritt:c"})]
+    closed = lambda name, route: {"arbeitsschritt_ref": f"arbeitsschritt:{name}", "status": "abgeschlossen", "gewaehlte_route": route}
+    history = [closed("a", "normal"), closed("b", "weiter"), closed("c", "nacharbeit")]
+    returned = project.phases(nodes, history + [{"arbeitsschritt_ref": "arbeitsschritt:b", "status": "aktiv"}])
+    assert returned["phase"] == {"arbeitsschritt:a": "done", "arbeitsschritt:b": "current", "arbeitsschritt:c": "looped"}
+    finished = project.phases(nodes, history + [closed("b", "weiter"), closed("c", "gut")])
+    assert finished["phase"] == {"arbeitsschritt:a": "done", "arbeitsschritt:b": "done", "arbeitsschritt:c": "done"}
+    assert finished["ended"] == "end:fertig"
+
+
+def _waiting_run(root: Path, **entry) -> Path:
+    context = root / "vorgaenge" / "video-001" / "CONTEXT.md"
+    metadata = read_context(context)
+    metadata["laufpfad"][-1] |= {"status": "wartend", "wiedereinstieg": {"ausloeser": "Lieferschein", "continuation_ref": "mail:lieferschein"}}
+    metadata["laufpfad"][-1] |= entry
+    replace_context(context, metadata)
+    return context
+
+
+def test_waiting_run_shows_status_start_and_next_check_verbatim_without_judging_lateness(tmp_path):
+    root = _workspace(tmp_path)
+    context = _waiting_run(root, status_seit="2026-10-20T09:00:00+02:00",
+                           wiedereinstieg={"ausloeser": "Lieferschein", "continuation_ref": "mail:lieferschein",
+                                           "faellig": "2026-11-02T17:00:00+01:00"})
+    model = selection.single_vorgang(context)
+    assert model["issues"] == []
+    stand = model["stand"]
+    assert (stand["kind"], stand["status_seit"], stand["faellig"]) == ("waiting", "2026-10-20T09:00:00+02:00", "2026-11-02T17:00:00+01:00")
+    model["language"] = "de"
+    result = render_page(tmp_path, write.page_html(model))
+    text = text_content(result["head"]) + text_content(result["sheet"])
+    assert "Status seit: 2026-10-20T09:00:00+02:00" in text
+    assert "Nächste Prüfung: 2026-11-02T17:00:00+01:00" in text
+    assert "überfällig" not in text.lower()
+
+
+def test_overview_names_the_human_decision_of_a_waiting_gate(tmp_path):
+    root = _workspace(tmp_path)
+    _waiting_run(root)
+    overview = selection.workspace_site(root)["index.html"]
+    overview["language"] = "de"
+    text = text_content(render_page(tmp_path, write.page_html(overview))["sheet"])
+    assert "Mensch entscheidet: freigegeben · abgelehnt" in text and "Wartet auf: Lieferschein" in text
+
+
+def test_missing_time_fields_stay_unknown(tmp_path):
+    root = _workspace(tmp_path)
+    current = selection.single_vorgang(root / "vorgaenge" / "video-001" / "CONTEXT.md")
+    assert current["stand"]["status_seit"] is None and current["stand"]["faellig"] is None
+    current["language"] = "de"
+    text = text_content(render_page(tmp_path, write.page_html(current))["head"])
+    assert "Status seit: unbekannt" in text and "Nächste Prüfung" not in text
+    waiting = selection.single_vorgang(_waiting_run(root))
+    waiting["language"] = "en"
+    text = text_content(render_page(tmp_path, write.page_html(waiting))["head"])
+    assert "Status since: unknown" in text and "No next check stated in history" in text
 
 
 def test_workspace_site_lists_every_application_and_run(tmp_path):
@@ -841,6 +927,7 @@ def test_phases_keep_green_for_the_position_only():
 
 
 def test_stand_has_one_case_per_kind():
+    # The aktiv entry at gate b is the older, still valid shape; the viewer must keep showing it.
     nodes = _nodes(gate="human")
     stand = lambda entries: project.stand(nodes, _run(entries), project.phases(nodes, entries))
     current = stand([DONE_A, {"arbeitsschritt_ref": "arbeitsschritt:b", "versuch": 1, "status": "aktiv"}])

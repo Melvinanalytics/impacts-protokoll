@@ -97,6 +97,7 @@ aside h2{font-size:17px;margin:0}
 .b-next{border:1.5px dashed var(--now)}
 .b-wait{background:var(--soft);border:1px dashed var(--strong)}
 .b-done{color:var(--done);border-color:var(--done)}
+.b-looped{color:var(--muted);border:1px dashed var(--done)}
 .b-possible{border:1px dashed var(--line);color:var(--muted)}
 .b-option{border-color:var(--ink)}
 .b-past{border:1px dashed var(--muted);color:var(--muted)}
@@ -338,6 +339,14 @@ const WORDS = {
     "als_nachstes_abgeleitet": "als Nächstes (abgeleitet)",
     "wartend": "wartend",
     "erledigt": "erledigt",
+    "lauf_ging_danach_zuruck": "Lauf ging danach zurück",
+    "danach_ging_der_lauf_zuruck": " Danach ging der Lauf zu einem früheren Schritt zurück; das Ergebnis ist deshalb nicht als erledigt gezeigt.",
+    "status_seit": "Status seit: ",
+    "status_seit_unbekannt": "Status seit: unbekannt",
+    "status_seit_label": "Status seit",
+    "nachste_prufung": "Nächste Prüfung: ",
+    "nachste_prufung_nicht_angegeben": "Nächste Prüfung im Verlauf nicht angegeben",
+    "faellig_label": "Nächste Prüfung",
     "laut_routen_moglich": "laut Routen möglich",
     "jetzt_moglicher_ausgang": "jetzt möglicher Ausgang",
     "nicht_gewahlt": "nicht gewählt",
@@ -667,6 +676,14 @@ const WORDS = {
     "als_nachstes_abgeleitet": "next (derived)",
     "wartend": "waiting",
     "erledigt": "done",
+    "lauf_ging_danach_zuruck": "run went back after it",
+    "danach_ging_der_lauf_zuruck": " The run then went back to an earlier step, so this result is not shown as done.",
+    "status_seit": "Status since: ",
+    "status_seit_unbekannt": "Status since: unknown",
+    "status_seit_label": "Status since",
+    "nachste_prufung": "Next check: ",
+    "nachste_prufung_nicht_angegeben": "No next check stated in history",
+    "faellig_label": "Next check",
     "laut_routen_moglich": "possible under routes",
     "jetzt_moglicher_ausgang": "outcome possible now",
     "nicht_gewahlt": "not chosen",
@@ -1073,6 +1090,7 @@ const PHASE = {
   next: [W.als_nachstes_abgeleitet, "pos", "next"],
   waiting: [W.wartend, "pause", "wait"],
   done: [W.erledigt, "check", "done"],
+  looped: [W.lauf_ging_danach_zuruck, "back", "looped"],
   possible: [W.laut_routen_moglich, "maybe", "possible"],
   option: [W.jetzt_moglicher_ausgang, null, "option"],
   past: [W.nicht_gewahlt, null, "past"],
@@ -1092,6 +1110,11 @@ const afterLabel = spans => {
 };
 const execChip = kind => h("span", {class: "xk", title: EXEC[kind][1] + W.laut_verarbeitung}, icon(EXEC[kind][0], 12), EXEC[kind][1]);
 const STATUS = {abgeschlossen: "done", aktiv: "current", wartend: "waiting"};
+/* Status start and next check of an open entry, verbatim from the laufpfad; the page has no clock, so it never judges lateness. */
+const timeLines = st => st.kind === "current" || st.kind === "waiting"
+  ? [st.status_seit ? W.status_seit + st.status_seit : W.status_seit_unbekannt,
+     st.kind === "waiting" ? (st.faellig ? W.nachste_prufung + st.faellig : W.nachste_prufung_nicht_angegeben) : null].filter(Boolean)
+  : [];
 const PHASE_COLOR = {done: "c-done", current: "c-now", waiting: "c-wait"};
 const LABEL = {
   verified: [W.gepruft, "check", W.durch_eine_prufbare_kontrolle_oder_bestatigte],
@@ -1101,7 +1124,7 @@ const LABEL = {
 };
 const KEY_LABEL = {eingabe_hash: W.prufsumme_der_eingaben, ausgabe_hash: W.prufsumme_der_ausgaben, gewaehlte_route: W.gewahlte_route,
   arbeitsschritt_ref: W.schritt, versuch: W.versuch, wiedereinstieg: W.fortsetzung, ausloeser: W.weiter_wenn,
-  continuation_ref: W.fortsetzung_in, gate: W.freigabe, customer_touchpoint: W.kundenkontakt};
+  continuation_ref: W.fortsetzung_in, status_seit: W.status_seit_label, faellig: W.faellig_label, gate: W.freigabe, customer_touchpoint: W.kundenkontakt};
 const KIND = {hauptprozess: ["HP", W.hauptprozess], teilprozess: ["TP", W.teilprozess], arbeitsschritt: ["AS", W.arbeitsschritt], vorgang: ["V", W.vorgang]};
 const MARK_WORD = {WS: W.workspace, HP: W.hauptprozess, TP: W.teilprozess, AS: W.arbeitsschritt, V: W.vorgang, IST: W.ist_prozess};
 const FOOT = W.nur_ansicht_mageblich_sind_die_dateien;
@@ -1341,11 +1364,12 @@ function overviewPage() {
     if (st.kind === "ended") return [h("div", {class: "pills"}, h("span", {class: "badge b-reached"}, icon("stop", 14), W.ende + quote(st.end))),
       line(W.uber + quote(st.route) + W.aus, deep(r.page, st.from_step, quote(st.from_title)))];
     const parts = [h("div", {class: "line"}, badge(st.kind), deep(r.page, st.step, st.step_title))];
-    if (st.kind === "current" && st.gate === "human")
+    if ((st.kind === "current" || st.kind === "waiting") && st.gate === "human")
       parts.push(line(icon("user", 14), W.mensch_entscheidet_2 + st.routes.map(x => x[0]).join(" · ")));
     if (st.kind === "waiting")
       parts.push(st.ausloeser ? line(icon("hourglass", 14), W.wartet_auf + st.ausloeser) : line(icon("hourglass", 14), W.ausloser_im_verlauf_nicht_angegeben),
         st.continuation_ref ? h("small", {text: W.fortsetzung_2 + st.continuation_ref}) : null);
+    parts.push(...timeLines(st).map(text => line(h("small", {text}))));
     return parts;
   };
   const trail = r => {
@@ -1643,6 +1667,7 @@ function selectionPage() {
     if (st.kind === "definition") return [h("p", {text: W.definition_ohne_vorgang_aufgeklappt_zeigt_die})];
     if (st.kind === "current") return [h("p", null, runName + W.steht_bei, step(), " (" + st.part_title + W.versuch_2 + st.versuch
         + W.laut_verlauf_ist_dieser_versuch_begonnen),
+      ...timeLines(st).map(text => h("p", {class: "muted", text})),
       h("div", {class: "line"}, h("span", null, st.gate === "human" ? [icon("user", 14), W.weiter_nur_uber_die_entscheidung_eines] : W.ausgange_laut_definition),
         st.routes.map(row => routeChip(st.step, row)))];
     if (st.kind === "next") return [h("p", null, runName + W.steht_bei, step(), W.abgeleitet_eintrag + st.entry + W.schloss,
@@ -1650,7 +1675,8 @@ function selectionPage() {
     if (st.kind === "waiting") return [
       h("p", null, runName + W.wartet_bei, step(), W.versuch_3 + st.versuch + ". "
         + (st.ausloeser ? W.weiter_wenn_2 + st.ausloeser + "." : W.der_verlauf_nennt_keinen_ausloser_fur)),
-      st.continuation_ref ? h("p", {class: "muted", text: W.fortsetzung_in_2 + st.continuation_ref}) : null];
+      st.continuation_ref ? h("p", {class: "muted", text: W.fortsetzung_in_2 + st.continuation_ref}) : null,
+      ...timeLines(st).map(text => h("p", {class: "muted", text}))];
     return [h("p", null, runName + W.ist_beendet_ende + quote(st.end) + W.erreicht_uber_die_route + quote(st.route) + W.aus_2,
       "„", stepButton(st.from_step, st.from_title), W.eintrag_2 + st.entry + W.von + st.entries + W.ein_ende_ist_ein_fakt_kein)];
   }
@@ -1678,6 +1704,7 @@ function selectionPage() {
     if (phase === "next") return W.noch_kein_eintrag_die_route + quote(stand.route) + W.aus_2 + quote(stand.from_title) + W.fuhrt_hierher;
     if (phase === "current") return W.laut_verlauf_ist_ein_versuch_begonnen;
     if (phase === "done") { const mine = entriesOf(id); return W.letzter_versuch_abgeschlossen_mit_der_route + quote(mine[mine.length - 1][0].gewaehlte_route) + "."; }
+    if (phase === "looped") { const mine = entriesOf(id); return W.letzter_versuch_abgeschlossen_mit_der_route + quote(mine[mine.length - 1][0].gewaehlte_route) + "." + W.danach_ging_der_lauf_zuruck; }
     if (phase === "possible") return W.die_routen_von + quote(titleOf(view.current)) + W.erlauben_diesen_schritt_es_gibt_keinen;
     if (phase === "waiting") {
       const [e] = entriesOf(id).pop(), resume = e.wiedereinstieg || {};
@@ -1768,6 +1795,7 @@ function selectionPage() {
       case "next": set({stroke: "var(--now)", width: step ? 3 : 1.5, dash: step ? "6 4" : null}); break;
       case "waiting": set({stroke: "var(--strong)", width: step ? 2 : 1.5, dash: "5 4", fill: step ? "var(--soft)" : out.fill}); break;
       case "done": set({stroke: "var(--done)", width: 1.5, fill: step || n.kind === "route" ? "var(--done-tint)" : out.fill}); break;
+      case "looped": set({stroke: "var(--done)", width: 1.5, dash: "3 3"}); break;
       case "possible": set({stroke: "var(--line)", dash: "4 4", fill: "transparent"}); break;
       case "option": set({stroke: "var(--ink)", width: 1.5, fill: "transparent"}); break;
       case "past": set({stroke: "var(--muted)", dash: "3 3", ink: "var(--muted)"}); break;

@@ -249,7 +249,7 @@ def test_distinct_unicode_and_case_names_preserve_valid_handoff(tmp_path):
     inputs.update({"input/caf\u00e9-1.md": "first", "input/CAF\u00c9-2.md": "second"})
     outputs = {handoff.producer_output: payload, "output/caf\u00e9-1.md": "first", "output/CAF\u00c9-2.md": "second"}
     consumer = harness.advance(current, outputs, "bestanden", "entscheiden", 1, inputs)
-    assert consumer["status"] == "aktiv"
+    assert consumer["status"] == "wartend" and consumer["wiedereinstieg"]["continuation_ref"] == "entscheidung:entscheiden-001"
     assert (harness.attempt("entscheiden", 1) / "input/caf\u00e9-1.md").read_text() == "first"
     assert (harness.attempt("entscheiden", 1) / "input/CAF\u00c9-2.md").read_text() == "second"
     assert validate(harness.root).valid
@@ -425,10 +425,9 @@ def test_gate_cannot_bypass_dedicated_decision_check(tmp_path, operation):
 
 EXPECTED_STATES = (
     "pruefen 001 aktiv",
-    "nachfordern 001 aktiv nach klaerung",
-    "nachfordern 001 wartend",
+    "nachfordern 001 wartend nach klaerung",
     "pruefen 002 aktiv nach nachgereicht",
-    "entscheiden 001 aktiv nach bestanden human-gate",
+    "entscheiden 001 wartend nach bestanden human-gate",
     "entscheiden 001 abgeschlossen freigegeben end:entschieden",
 )
 

@@ -307,7 +307,12 @@ def handoff(root: Path, candidate: str) -> None:
     (gate / "input/herkunft.json").write_text(encode({name: {"origin": f"entwerfen/001/output/{name}", "sha256": digest(content.encode())} for name, content in outputs.items()}))
     entry = meta["laufpfad"][0]
     entry.update(status="abgeschlossen", gewaehlte_route="bestanden", ausgabe_hash=surface_hash(attempt, ["output/angebot.md", "output/pruefbericht.json"]))
-    meta["laufpfad"].append({"arbeitsschritt_ref": "arbeitsschritt:freigeben", "versuch": 1, "status": "aktiv", "eingabe_hash": surface_hash(gate, ["input/angebot.md", "input/pruefbericht.json", "input/herkunft.json"])})
+    # An open gate decision is wartend: the named person supplies it and the harness only records it.
+    meta["laufpfad"].append({"arbeitsschritt_ref": "arbeitsschritt:freigeben", "versuch": 1, "status": "wartend",
+                             "eingabe_hash": surface_hash(gate, ["input/angebot.md", "input/pruefbericht.json", "input/herkunft.json"]),
+                             "wiedereinstieg": {"ausloeser": "Begründete Entscheidung der benannten Person in output/entscheidung.md" if report["working_language"] == "de"
+                                                else "The named reviewer's reasoned decision in output/entscheidung.md",
+                                                "continuation_ref": "freigeben/001/output/entscheidung.md"}})
     write_context(root / RUN / "CONTEXT.md", meta,
                   ("Geprüfter Entwurf bereit. Menschliche Entscheidung und Versand stehen aus.\n\n[Angebot](freigeben/001/input/angebot.md) · [Prüfbericht](freigeben/001/input/pruefbericht.json) · [Herkunft](freigeben/001/input/herkunft.json)\n\n" if report["working_language"] == "de" else
                    "Checked draft ready. Human decision and sending remain pending.\n\n[Offer](freigeben/001/input/angebot.md) · [Check report](freigeben/001/input/pruefbericht.json) · [Provenance](freigeben/001/input/herkunft.json)\n\n") +

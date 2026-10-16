@@ -40,7 +40,7 @@ Which human boundaries apply, why, and who may change them? Input variance, resu
 
 ## Path to the result
 
-Which subprocesses contribute to the result, how their prerequisites are obtained, and how success, rejection or an incomplete case ends or waits. `einstieg_ref` and workstep routes own the sequence; this explanation does not maintain a second route table. Independent Applications exchange evidenced results through separate runs, not cross-Application step routes.
+Which subprocesses contribute to the result, how their prerequisites are obtained, and how success, rejection or an incomplete case ends or waits. Name each `end:<slug>` that achieves the accepted result; every other end is a negative end. `einstieg_ref` and workstep routes own the sequence; this explanation does not maintain a second route table. Independent Applications exchange evidenced results through separate runs, not cross-Application step routes.
 
 ## Throughput and lead time
 

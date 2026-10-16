@@ -275,10 +275,11 @@ class Harness:
         next_slug: str,
         next_versuch: int,
         next_inputs: dict[str, str],
+        resume: dict[str, str] | None = None,
     ) -> dict:
         """Run mutation-free preflight, then perform one logical Harness transition."""
         self._preflight_current(entry)
-        proposed_next = self._proposed_active_entry(next_slug, next_versuch)
+        proposed_next = self._opened_entry(self._proposed_active_entry(next_slug, next_versuch), resume)
         self._preflight_completion(entry, route, successor=proposed_next)
         if self.attempt(next_slug, next_versuch).exists():
             raise ProofError("Successor attempt already exists")
@@ -300,10 +301,21 @@ class Harness:
         _write_outputs(attempt, outputs)
         _write_files(next_attempt, next_inputs)
         self._complete_entry(entry, slug, attempt, route)
-        next_entry = self._active_entry(next_slug, next_versuch, next_attempt)
+        next_entry = self._opened_entry(self._active_entry(next_slug, next_versuch, next_attempt), resume)
         self.laufpfad.append(next_entry)
         self._write()
         return next_entry
+
+    def _opened_entry(self, entry: dict, resume: dict[str, str] | None = None) -> dict:
+        """An attempt that can complete only after a declared outside trigger opens wartend.
+
+        An open gate decision is one: the named human supplies it and the harness only records it.
+        """
+        slug = entry["arbeitsschritt_ref"].removeprefix("arbeitsschritt:")
+        if resume is None and self.steps[slug].get("gate") == "human":
+            resume = {"ausloeser": "Entscheidung der benannten prüfenden Person",
+                      "continuation_ref": f"entscheidung:{slug}-{entry['versuch']:03d}"}
+        return entry if resume is None else dict(entry, status="wartend", wiedereinstieg=dict(resume))
 
     def state(self, label: str) -> State:
         report = validate(self.root)
@@ -685,6 +697,8 @@ def walk(base: Path, *, decision_path: Path | None = None) -> WalkResult:
     first_report = _render_report(call, workspace_revision, first_result)
     clarification = _application_handoff(root, revision, "pruefen", "klaerung")
 
+    # nachfordern can complete only after the applicant delivers, so its attempt opens wartend.
+    response_ref = "records/antrag-001/nachreichung.md"
     entry = harness.advance(
         entry,
         {"output/pruefbericht.md": first_report},
@@ -697,12 +711,9 @@ def walk(base: Path, *, decision_path: Path | None = None) -> WalkResult:
                 clarification.origin("pruefen", 1), first_report.encode("utf-8")
             ),
         },
+        resume={"ausloeser": "unterlagen-nachgereicht", "continuation_ref": response_ref},
     )
-    states.append(harness.state("nachfordern 001 aktiv nach klaerung"))
-
-    response_ref = "records/antrag-001/nachreichung.md"
-    harness.wait(entry, "unterlagen-nachgereicht", response_ref)
-    states.append(harness.state("nachfordern 001 wartend"))
+    states.append(harness.state("nachfordern 001 wartend nach klaerung"))
 
     # Exercise file/state compatibility and the derived Stand, not autonomous permission checks.
     waiting_attempt = harness.attempt("nachfordern", 1)
@@ -934,7 +945,7 @@ def walk(base: Path, *, decision_path: Path | None = None) -> WalkResult:
         1,
         valid_gate_inputs,
     )
-    states.append(harness.state("entscheiden 001 aktiv nach bestanden human-gate"))
+    states.append(harness.state("entscheiden 001 wartend nach bestanden human-gate"))
 
     producer = harness.attempt("pruefen", 2) / "output/pruefbericht.md"
     consumer = harness.attempt("entscheiden", 1) / "input/pruefbericht.md"

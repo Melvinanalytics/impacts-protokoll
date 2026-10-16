@@ -172,6 +172,23 @@ def phases(nodes: list[dict], entries: list[dict]) -> dict:
     """Display state from the laufpfad: the latest entry per step wins. Core forbids an empty laufpfad."""
     steps = {n["id"]: n for n in nodes if n["kind"] == "arbeitsschritt"}
     phase = {entry["arbeitsschritt_ref"]: ENTRY_PHASE[entry["status"]] for entry in entries}
+    # A closed attempt is not an accepted result. Only the laufpfad decides, never the display order:
+    # re-entering a step on the run's current path returns the run there, and each step passed since
+    # then shows "looped" instead of "done" until a later attempt of its own.
+    path: list[str] = []
+    looped: set[str] = set()
+    for entry in entries:
+        ref = entry["arbeitsschritt_ref"]
+        looped.discard(ref)
+        if ref in path:
+            cut = path.index(ref) + 1
+            looped.update(path[cut:])
+            del path[cut:]
+        else:
+            path.append(ref)
+    for step in looped:
+        if phase[step] == "done":
+            phase[step] = "looped"
     last = entries[-1]
     current, ended = last["arbeitsschritt_ref"], None
     routes = steps[current]["meta"]["routen"]
@@ -237,11 +254,11 @@ def map_tree(nodes: list[dict], run: dict | None, view: dict | None) -> dict:
             chosen = bool(last and last["status"] == "abgeschlossen" and last.get("gewaehlte_route") == route)
             if phase in ("", "current", "waiting"):
                 rphase = {"": "", "current": "option", "waiting": "possible"}[phase]
-            elif chosen and phase in ("done", "next"):
+            elif chosen and phase in ("done", "next", "looped"):
                 # A reached end is a fact, not a success: it is marked, never coloured as done.
                 rphase = "reached" if way == "end" and view["ended"] == target else "done"
             else:
-                rphase = "past" if phase == "done" else "future"
+                rphase = "past" if phase in ("done", "looped") else "future"
             extra = {"attempt": chosen_in[route]} if route in chosen_in else {}
             node["children"].append(box(route, "route", rphase, route=route, target=target, target_title=target_title,
                                         dir=way, **extra))
@@ -265,8 +282,8 @@ def stand(nodes: list[dict], run: dict | None, view: dict | None) -> dict:
     entries = run["meta"]["laufpfad"]
     last = entries[-1]
     found = dict.fromkeys(("kind", "entry", "entries", "step", "step_title", "part_title", "versuch", "gate", "routes",
-                           "ausloeser", "continuation_ref", "from_step", "from_title", "route", "end"))
-    found.update(entry=len(entries), entries=len(entries))
+                           "ausloeser", "continuation_ref", "faellig", "status_seit", "from_step", "from_title", "route", "end"))
+    found.update(entry=len(entries), entries=len(entries), status_seit=last.get("status_seit"))
     source = last["arbeitsschritt_ref"]
     if last["status"] == "abgeschlossen":
         found.update(from_step=source, from_title=title_of(by_id[source]), route=last["gewaehlte_route"])
@@ -281,7 +298,7 @@ def stand(nodes: list[dict], run: dict | None, view: dict | None) -> dict:
     else:
         found.update(kind="current" if last["status"] == "aktiv" else "waiting", versuch=last["versuch"])
         resume = last.get("wiedereinstieg") or {}
-        found.update(ausloeser=resume.get("ausloeser"), continuation_ref=resume.get("continuation_ref"))
+        found.update(ausloeser=resume.get("ausloeser"), continuation_ref=resume.get("continuation_ref"), faellig=resume.get("faellig"))
     return found
 
 
