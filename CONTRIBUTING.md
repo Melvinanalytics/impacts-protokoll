@@ -2,14 +2,11 @@
 
 Changes enter `main` through a reviewed pull request. Keep customer material in its customer repository. Report the revision, expected and observed behavior, synthetic evidence, and checks not run.
 
-### v0.3.31 achieved ends, zero stage for negative ends and a stable in-process view
+### v0.3.32 selected Vorgang pages in process
 
-This edition adds the optional `leistung.erreicht` field and a public in-process view function. Required fields, issue codes, CLI commands and conformance cases are unchanged. Existing Applications and Vorgang files stay valid with the same meaning; the one exception is a stage key that ends in a line break (last item).
+This edition adds an optional argument to `impacts_protocol.view.site_model`. Schemas, required fields, issue codes, CLI commands and conformance cases are unchanged; existing Applications and Vorgang files stay valid with the same meaning.
 
-- `leistung.erreicht` lists the ends that achieve the Leistung; every other end is a negative end. The validator reports a listed end that no route reaches as `reference.unresolved`; an empty list or an entry that is not `end:<slug>` fails the schema. At a reached end the Viewer shows whether it achieves the Leistung, and `open` when the Leistung has no such list.
-- Every negative end takes stage 0, so evaluations count it as no progress. The end names the reason, and the last step shows how far the case came. The template example follows.
-- `impacts_protocol.view.site_model` returns the model that `impacts view <workspace> --json` writes, without the display language, in the calling process. The README names the stable interfaces: the CLI, `impacts view --json` with its `format`, the names in `impacts_protocol.__all__` and `site_model`. Other modules may change in any edition; a repository that imports them runs its own tests before changing its pin.
-- The validator now resolves every stage key the schema admits. v0.3.30 skipped a key that ends in a line break, such as `"end:abgebrochen\n"`, so it passed unresolved.
+- `site_model(workspace, vorgaenge=...)` takes a collection of slugs, validates the workspace once and builds only those Vorgang pages; overview, Application and Ist-Prozess pages are left out. Each page equals the page of the same name in `site_model(workspace)`. Validation still reads the whole workspace; only the selected Vorgang folders are captured and read as pages. A slug that names no entry in `vorgaenge/` raises `ValueError`; one string instead of a collection raises `TypeError`.
 
 Outside this edition: parallel branches inside one Vorgang, which needs a schema change, and preparing later steps ahead of their turn. Core required fields are unchanged. The wheel includes the static Viewer HTML resource and 14 templates: seven English and seven German.
 
