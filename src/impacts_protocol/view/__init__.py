@@ -13,6 +13,7 @@ from __future__ import annotations
 import json
 import re
 import sys
+from collections.abc import Iterable
 from pathlib import Path
 
 from ..io import load_frontmatter
@@ -58,15 +59,20 @@ def choose_language(source: Path, requested: str | None) -> str:
     return recorded or requested or "de"
 
 
-def site_model(workspace: Path) -> dict[str, dict]:
+def site_model(workspace: Path, vorgaenge: Iterable[str] | None = None) -> dict[str, dict]:
     """The pages `impacts view <workspace> --json` writes as model.json, without the display language.
 
     Stable like that export: each page's `format` names the version. Core validates the workspace once
     and reads bound trees through Git, as `impacts validate` does; a refused selection is a page with
-    its issues and stops no other. A path that is not a Git-root workspace raises ValueError."""
+    its issues and stops no other. With `vorgaenge`, a collection of slugs, only those Vorgang pages
+    are built, each equal to its page in the full model. A path that is not a Git-root workspace or a
+    slug with no entry in vorgaenge/ raises ValueError."""
+    if isinstance(vorgaenge, str):
+        raise TypeError("vorgaenge takes a collection of slugs, not one string")
+    only = None if vorgaenge is None else set(vorgaenge)
     try:
         # The same conversion as model.json, so YAML dates arrive as the export's strings.
-        return json.loads(json.dumps(selection.workspace_site(Path(workspace)), default=str))
+        return json.loads(json.dumps(selection.workspace_site(Path(workspace), only), default=str))
     except SystemExit as error:
         raise ValueError(str(error)) from None
 

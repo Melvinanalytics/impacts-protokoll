@@ -301,18 +301,23 @@ def entry_issues(report, rel: str, kind: str) -> list[dict]:
     return issues or [{"code": "structure.invalid", "path": rel, "message": message}]
 
 
-def workspace_site(workspace: Path) -> dict[str, dict]:
-    """Every Application and every Vorgang as its own page, plus an overview as index.html."""
+def workspace_site(workspace: Path, only: set[str] | None = None) -> dict[str, dict]:
+    """Every Application and every Vorgang as its own page, plus an overview as index.html.
+    With `only`, just the pages of those vorgaenge/ entries, each equal to its page in the full site."""
     workspace = workspace.resolve()
     if workspace_of(workspace) != workspace:
         raise SystemExit(f"{workspace} must be the root of a Git repository; Core resolves bound Vorgänge there")
     algorithm = git(workspace, "rev-parse", "--show-object-format") or "sha1"
     state = lambda: (inventory(workspace), git(workspace, "rev-parse", "--verify", "-q", "HEAD"))
     first = state()
-    vorgaenge = {name: capture(workspace / "vorgaenge" / name) for name, kind in first[0]["vorgaenge"] if kind == "dir"}
+    if only is not None and (unknown := sorted(only - {name for name, _ in first[0]["vorgaenge"]})):
+        raise SystemExit(f"no entry in vorgaenge/ is named {', '.join(unknown)}")
+    chosen = lambda name: only is None or name in only
+    vorgaenge = {name: capture(workspace / "vorgaenge" / name) for name, kind in first[0]["vorgaenge"]
+                 if kind == "dir" and chosen(name)}
     report = validate(workspace)
     used, pages, cache, heads = {"index.html"}, {}, {}, {}
-    for name, kind in first[0]["applications"]:
+    for name, kind in first[0]["applications"] if only is None else []:
         rel = f"applications/{name}"
         page = page_name("a", name, used)
         pages[page] = application_page(workspace / rel, algorithm) if kind == "dir" else \
@@ -321,20 +326,23 @@ def workspace_site(workspace: Path) -> dict[str, dict]:
         heads[name] = git(workspace, "rev-parse", f"{first[1]}:{rel}") if first[1] else None
     for name, kind in first[0]["vorgaenge"]:
         rel = f"vorgaenge/{name}"
-        page = page_name("v", name, used)
+        page = page_name("v", name, used)  # named for every entry, so a selected page keeps its full-site name
+        if not chosen(name):
+            continue
         pages[page] = vorgang_page(workspace / rel / "CONTEXT.md", workspace, report, vorgaenge[name], cache) if kind == "dir" else \
             refused("vorgang", {"application": None, "revision": None, "vorgang": rel}, entry_issues(report, rel, kind))
-    skipped = None if first[0][IST] is None else ist_pages(workspace, first[0][IST], used, pages)
+    skipped = None if first[0][IST] is None or only is not None else ist_pages(workspace, first[0][IST], used, pages)
     if state() != first:
         raise SystemExit("the workspace inventory, an Ist-Prozess file or HEAD changed while the view was generated; "
                          "nothing was written")
-    known = {f"{folder}/{name}" for folder in FOLDERS for name, _ in first[0][folder]}
-    workspace_issues = [i for i in issue_list(report.issues)
-                        if not i["path"].startswith(tuple(f + "/" for f in FOLDERS))
-                        or "/".join(i["path"].split("/")[:2]) not in known]
-    project.link_ist(pages)
-    pages["index.html"] = project.overview(workspace.name, pages, heads, workspace_issues, bool(first[1]), skipped,
-                                           SCHEMA_REGISTRY.schemas())
+    if only is None:
+        known = {f"{folder}/{name}" for folder in FOLDERS for name, _ in first[0][folder]}
+        workspace_issues = [i for i in issue_list(report.issues)
+                            if not i["path"].startswith(tuple(f + "/" for f in FOLDERS))
+                            or "/".join(i["path"].split("/")[:2]) not in known]
+        project.link_ist(pages)
+        pages["index.html"] = project.overview(workspace.name, pages, heads, workspace_issues, bool(first[1]), skipped,
+                                               SCHEMA_REGISTRY.schemas())
     for name, model in pages.items():
         model["site"] = {"index": "index.html", "self": name}
     return pages
