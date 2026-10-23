@@ -10,6 +10,7 @@ again into a new folder after the files change.
 """
 from __future__ import annotations
 
+import json
 import re
 import sys
 from pathlib import Path
@@ -21,6 +22,7 @@ from .blocks import FENCE, closes
 from .write import write_site
 
 SETTING = re.compile(r"^Working language: (\S+)\s*$", re.M)
+__all__ = ["site_model"]
 
 
 def working_language(source: Path) -> str | None:
@@ -54,6 +56,19 @@ def choose_language(source: Path, requested: str | None) -> str:
     if recorded and requested and recorded != requested:
         raise SystemExit(f"the workspace records working language {recorded}; --language {requested} cannot override it")
     return recorded or requested or "de"
+
+
+def site_model(workspace: Path) -> dict[str, dict]:
+    """The pages `impacts view <workspace> --json` writes as model.json, without the display language.
+
+    Stable like that export: each page's `format` names the version. Core validates the workspace once
+    and reads bound trees through Git, as `impacts validate` does; a refused selection is a page with
+    its issues and stops no other. A path that is not a Git-root workspace raises ValueError."""
+    try:
+        # The same conversion as model.json, so YAML dates arrive as the export's strings.
+        return json.loads(json.dumps(selection.workspace_site(Path(workspace)), default=str))
+    except SystemExit as error:
+        raise ValueError(str(error)) from None
 
 
 def run(source: Path, out: Path, *, write_json: bool = False, language: str | None = None) -> int:

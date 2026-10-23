@@ -871,7 +871,7 @@ def test_unreadable_ist_prozess_is_refused_not_skipped(tmp_path):
 def _nodes(gate=None):
     step = lambda name, routes, **meta: {"id": f"arbeitsschritt:{name}", "kind": "arbeitsschritt", "parent": "teilprozess:t", "children": [],
                                          "title": name.title(), "sections": [], "meta": {"routen": routes, **meta}, "routes": list(routes.items())}
-    nodes = [{"id": "hauptprozess:h", "kind": "hauptprozess", "parent": None, "children": ["teilprozess:t"], "title": "H", "sections": [], "meta": {}},
+    nodes = [{"id": "hauptprozess:h", "kind": "hauptprozess", "parent": None, "children": ["teilprozess:t"], "title": "H", "sections": [], "meta": {"leistung": {"ergebnis": "E"}}},
              {"id": "teilprozess:t", "kind": "teilprozess", "parent": "hauptprozess:h", "title": "T", "sections": [], "meta": {},
               "children": ["arbeitsschritt:a", "arbeitsschritt:b", "arbeitsschritt:c"]},
              step("a", {"weiter": "arbeitsschritt:b"}),

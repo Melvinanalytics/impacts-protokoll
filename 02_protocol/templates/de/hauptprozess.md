@@ -7,16 +7,18 @@ leistung:
   abnahme:
     - Prüfbericht liegt vor
     - Entscheidung ist menschlich freigegeben
+  erreicht:  # optional: jedes Ende, das die Leistung erreicht; jedes andere Ende ist negativ
+    - end:entschieden
 einstieg_ref: arbeitsschritt:pruefen
 stufen:  # optional, siehe Weg zur Leistung unten; sonst diesen Block entfernen
   stand:beantragt: 0
   arbeitsschritt:pruefen: 30
   arbeitsschritt:entscheiden: 70
   end:entschieden: 100
-  end:abgelehnt: 100
+  end:abgelehnt: 0
 ---
 
-<!-- Translation source: 02_protocol/templates/hauptprozess.md; sha256: 5faedd036acba0640805e04e2f1eb5c005f282f3a32b19d38ce8595be83a6872 -->
+<!-- Translation source: 02_protocol/templates/hauptprozess.md; sha256: 14da64a2c2fd9058cb91ec81582118b248db6d51dbabfa537527c91a1383b602 -->
 
 # Prüffall entscheiden
 
@@ -48,7 +50,7 @@ Welche menschlichen Grenzen gelten, warum und wer darf sie ändern? Eingangsvari
 
 ## Weg zur Leistung
 
-Welche Teilprozesse zum Ergebnis beitragen, wie ihre Voraussetzungen beschafft werden und wie Erfolg, Ablehnung oder ein unvollständiger Fall endet beziehungsweise wartet. Jedes `end:<slug>` nennen, das die Leistung erreicht; jedes andere Ende ist ein negatives Ende. `einstieg_ref` und Arbeitsschrittrouten bestimmen die Reihenfolge; diese Erklärung führt keine zweite Routentabelle. Unabhängige Applications übergeben belegte Ergebnisse zwischen getrennten Vorgängen, nicht durch Application-übergreifende Schrittrouten. Optional Stufen in `stufen` vergeben: eine ganze Zahl von 0 bis 100 für jeden Arbeitsschritt und jedes Ende sowie für die Record-Stände, die ein Fall vor `einstieg_ref` durchläuft, mit den Schlüsseln `arbeitsschritt:<slug>`, `end:<slug>` oder `stand:<slug>`, etwa `arbeitsschritt:pruefen: 40`. Eine Stufe ordnet die Position, nicht Aufwand, Wert oder Erfolgsaussicht; Nacharbeit kann sie senken.
+Welche Teilprozesse zum Ergebnis beitragen, wie ihre Voraussetzungen beschafft werden und wie Erfolg, Ablehnung oder ein unvollständiger Fall endet beziehungsweise wartet. Jedes `end:<slug>`, das die Leistung erreicht, in `leistung.erreicht` aufführen; jedes andere Ende ist ein negatives Ende. `einstieg_ref` und Arbeitsschrittrouten bestimmen die Reihenfolge; diese Erklärung führt keine zweite Routentabelle. Unabhängige Applications übergeben belegte Ergebnisse zwischen getrennten Vorgängen, nicht durch Application-übergreifende Schrittrouten. Optional Stufen in `stufen` vergeben: eine ganze Zahl von 0 bis 100 für jeden Arbeitsschritt und jedes Ende sowie für die Record-Stände, die ein Fall vor `einstieg_ref` durchläuft, mit den Schlüsseln `arbeitsschritt:<slug>`, `end:<slug>` oder `stand:<slug>`, etwa `arbeitsschritt:pruefen: 40`. Eine Stufe ordnet die Position, nicht Aufwand, Wert oder Erfolgsaussicht; Nacharbeit kann sie senken. Jedes negative Ende erhält Stufe 0, damit Auswertungen es als keinen Fortschritt zählen; das Ende nennt den Grund, der letzte Schritt zeigt, wie weit der Fall kam.
 
 ## Durchsatz und Durchlaufzeit
 

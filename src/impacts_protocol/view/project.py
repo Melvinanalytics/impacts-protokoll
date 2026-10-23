@@ -279,6 +279,12 @@ def stage(nodes: list[dict], ref: str) -> int | str | None:
     return None if not stages else stages.get(ref, "open")
 
 
+def achieved(nodes: list[dict], end: str) -> bool | str:
+    """Whether a reached end achieves the Leistung; open when the Hauptprozess does not say."""
+    ends = nodes[0]["meta"]["leistung"].get("erreicht")
+    return "open" if ends is None else end in ends
+
+
 def stand(nodes: list[dict], vorgang: dict | None, view: dict | None) -> dict:
     """Where the Vorgang stands, as plain fields for the page's fixed sentences."""
     if vorgang is None:
@@ -289,13 +295,14 @@ def stand(nodes: list[dict], vorgang: dict | None, view: dict | None) -> dict:
     last = entries[-1]
     found = dict.fromkeys(("kind", "entry", "entries", "step", "step_title", "part_title", "versuch", "gate", "routes",
                            "ausloeser", "continuation_ref", "faellig", "status_seit", "from_step", "from_title", "route", "end",
-                           "stufe"))
+                           "stufe", "erreicht"))
     found.update(entry=len(entries), entries=len(entries), status_seit=last.get("status_seit"))
     source = last["arbeitsschritt_ref"]
     if last["status"] == "abgeschlossen":
         found.update(from_step=source, from_title=title_of(by_id[source]), route=last["gewaehlte_route"])
     if view["ended"]:
-        found.update(kind="ended", end=short(view["ended"]), stufe=stage(nodes, view["ended"]))
+        found.update(kind="ended", end=short(view["ended"]), stufe=stage(nodes, view["ended"]),
+                     erreicht=achieved(nodes, view["ended"]))
         return found
     step = view["current"]
     found.update(step=step, step_title=title_of(by_id[step]), part_title=title_of(by_id[by_id[step]["parent"]]),

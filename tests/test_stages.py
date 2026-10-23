@@ -11,12 +11,14 @@ from tests.test_view import render_page, text_content
 STAGES = {"stand:angefragt": 0, "arbeitsschritt:start": 10, "arbeitsschritt:pruefen": 60, "end:abgebrochen": 100}
 
 
-def _application(root: Path, stages: dict | None) -> Path:
+def _application(root: Path, stages: dict | None, erreicht: list | None = None) -> Path:
     metadata = {"type": "hauptprozess", "id": f"hauptprozess:{root.name}",
                 "leistung": {"ergebnis": "Veröffentlichtes Video", "kennzahl": "Durchlaufzeit", "abnahme": ["Video veröffentlicht"]},
                 "einstieg_ref": "arbeitsschritt:start"}
     if stages is not None:
         metadata["stufen"] = stages
+    if erreicht is not None:
+        metadata["leistung"]["erreicht"] = erreicht
     write_context(root / "CONTEXT.md", metadata, "# Video-Produktion")
     part = root / "produktion"
     write_context(part / "CONTEXT.md", {"type": "teilprozess", "id": "teilprozess:produktion", "ergebnis": "Produziertes Video"}, "# Produktion")
@@ -34,7 +36,7 @@ def test_resolving_stages_are_valid(tmp_path):
     assert validate(root).valid, validate(root).issues
 
 
-@pytest.mark.parametrize("key", ["arbeitsschritt:fehlt", "end:fehlt"])
+@pytest.mark.parametrize("key", ["arbeitsschritt:fehlt", "end:fehlt", "end:abgebrochen\n"])
 def test_a_stage_for_a_missing_step_or_end_does_not_resolve(tmp_path, key):
     root = _application(tmp_path / "video", {**STAGES, key: 50})
     assert ("reference.unresolved", f"Stage key does not resolve: {key}") in _codes_and_messages(root)
@@ -52,10 +54,10 @@ def test_malformed_stages_violate_the_schema(tmp_path, stages):
     assert {issue.code for issue in validate(root).issues} == {"schema.invalid"}
 
 
-def _vorgang(tmp_path: Path, stages: dict | None, entries: list) -> Path:
+def _vorgang(tmp_path: Path, stages: dict | None, entries: list, erreicht: list | None = None) -> Path:
     """A workspace with one Vorgang whose laufpfad visits (step, status, chosen route) in order."""
     root = init_workspace(tmp_path / "kunde")
-    _application(root / "applications" / "video", stages)
+    _application(root / "applications" / "video", stages, erreicht)
     git(root, "init", "-b", "main")
     git(root, "config", "user.email", "test@example.invalid")
     git(root, "config", "user.name", "Test")
