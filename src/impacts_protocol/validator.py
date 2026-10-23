@@ -31,6 +31,7 @@ SCHEMA_NAMES = (
 )
 SLUG = re.compile(r"[a-z0-9]+(?:-[a-z0-9]+)*\Z")
 STAGE_REF = re.compile(r"(?:arbeitsschritt|end):[a-z0-9]+(?:-[a-z0-9]+)*\Z")
+END_REF = re.compile(r"end:[a-z0-9]+(?:-[a-z0-9]+)*\Z")
 GATE_RULE = "; freigabe and a gate route come only from the responsible human's decision"
 GATE_FIX = (
     "; preserve decision evidence; correct serialization only against its evidenced source, "
@@ -308,6 +309,13 @@ def _validate_graph(application: Application, issues: list[Issue]) -> None:
             else:
                 _add(issues, "reference.unresolved", path / "CONTEXT.md", root, f"Route target does not resolve: {target}")
                 uncertain_routes.add(step_id)
+
+    leistung = application.hauptprozess.get("leistung")
+    achieved = leistung.get("erreicht") if isinstance(leistung, dict) else None
+    if isinstance(achieved, list):
+        for ref in sorted({r for r in achieved if isinstance(r, str) and END_REF.match(r)}):
+            if ref not in ends:
+                _add(issues, "reference.unresolved", root / "CONTEXT.md", root, f"Achieving end does not resolve: {ref}")
 
     stages = application.hauptprozess.get("stufen")
     if isinstance(stages, dict):

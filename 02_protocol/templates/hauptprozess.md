@@ -7,13 +7,15 @@ leistung:
   abnahme:
     - Check report is available
     - Decision is approved by the responsible human
+  erreicht:  # optional: each end that achieves the result; every other end is negative
+    - end:entschieden
 einstieg_ref: arbeitsschritt:pruefen
 stufen:  # optional, see Path to the result below; otherwise remove this block
   stand:beantragt: 0
   arbeitsschritt:pruefen: 30
   arbeitsschritt:entscheiden: 70
   end:entschieden: 100
-  end:abgelehnt: 100
+  end:abgelehnt: 0
 ---
 
 # Decide a review case
@@ -46,7 +48,7 @@ Which human boundaries apply, why, and who may change them? Input variance, resu
 
 ## Path to the result
 
-Which subprocesses contribute to the result, how their prerequisites are obtained, and how success, rejection or an incomplete case ends or waits. Name each `end:<slug>` that achieves the accepted result; every other end is a negative end. `einstieg_ref` and workstep routes own the sequence; this explanation does not maintain a second route table. Independent Applications exchange evidenced results through separate Vorgänge, not cross-Application step routes. Optionally assign stages in `stufen`: an integer from 0 to 100 for every workstep and end and for the record states a case passes before `einstieg_ref`, keyed `arbeitsschritt:<slug>`, `end:<slug>` or `stand:<slug>`, such as `arbeitsschritt:pruefen: 40`. A stage ranks position, not effort, value or chance of success; rework may lower it.
+Which subprocesses contribute to the result, how their prerequisites are obtained, and how success, rejection or an incomplete case ends or waits. List each `end:<slug>` that achieves the accepted result in `leistung.erreicht`; every other end is a negative end. `einstieg_ref` and workstep routes own the sequence; this explanation does not maintain a second route table. Independent Applications exchange evidenced results through separate Vorgänge, not cross-Application step routes. Optionally assign stages in `stufen`: an integer from 0 to 100 for every workstep and end and for the record states a case passes before `einstieg_ref`, keyed `arbeitsschritt:<slug>`, `end:<slug>` or `stand:<slug>`, such as `arbeitsschritt:pruefen: 40`. A stage ranks position, not effort, value or chance of success; rework may lower it. Give every negative end stage 0, so that evaluations count it as no progress; the end names the reason, and the last step shows how far the case came.
 
 ## Throughput and lead time
 
