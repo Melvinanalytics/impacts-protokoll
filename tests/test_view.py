@@ -1502,7 +1502,7 @@ def test_legend_maps_labels_without_inventing_evidence(tmp_path):
     header = next(e for e in elements(sheet) if e["tagName"] == "HEADER")
     assert "Result." in text_content(header) and "Another sentence." not in text_content(header)
     assert "Verantwortlich" not in text_content(header)
-    assert "Definition, kein Laufstand" in text_content(header)
+    assert "Definition, kein Ausführungsstand" in text_content(header)
     assert not any(e["attrs"].get("class") == "triad" for e in elements(sheet))
     opened = next(e for e in elements(sheet) if e["attrs"].get("id") == "s-open")
     assert "Missing" in text_content(opened)

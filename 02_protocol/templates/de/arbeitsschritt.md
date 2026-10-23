@@ -14,7 +14,7 @@ routen:
 customer_touchpoint: sacred  # standard oder sacred: 02_protocol/impacts-method.md#identify; ohne Kundenkontakt diese Zeile löschen
 ---
 
-<!-- Translation source: 02_protocol/templates/arbeitsschritt.md; sha256: 53727903ce6fe5c47ed15a98a9017fe6778d8679402d0a118bc59513518ab577 -->
+<!-- Translation source: 02_protocol/templates/arbeitsschritt.md; sha256: dc79c815bd6ea5cd97f3954c51a0162e437638df28525142290af7d785ccb433 -->
 
 # Entscheiden
 
@@ -59,7 +59,7 @@ Wenn dieser Job Werkzeuge benötigt, auf die passende gemeinsame Deklaration ver
 
 ### Handgriffe
 
-Optional, wo eine Person oder ein Agent die Oberfläche eines Werkzeugs bedient. Die Operationen in Reihenfolge mit ihren relevanten Lese- oder Änderungsvorgängen aufführen; für Körnung, Bereichsverweise und Revisionsbindung gilt `02_protocol/impacts-method.md#step-areas`. Screenshots an der fachlichen Heimat ablegen und verlinken; ein Core-Lauf bindet die, die sein Ausführender nutzt, und sie zeigen keine echten personenbezogenen Daten.
+Optional, wo eine Person oder ein Agent die Oberfläche eines Werkzeugs bedient. Die Operationen in Reihenfolge mit ihren relevanten Lese- oder Änderungsvorgängen aufführen; für Körnung, Bereichsverweise und Revisionsbindung gilt `02_protocol/impacts-method.md#step-areas`. Screenshots an der fachlichen Heimat ablegen und verlinken; ein Core-Vorgang bindet die, die sein Ausführender nutzt, und sie zeigen keine echten personenbezogenen Daten.
 
 | Nr. | Handgriff | Detail | System und Daten | Screenshot |
 |---|---|---|---|---|

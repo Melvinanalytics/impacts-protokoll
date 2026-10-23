@@ -2,7 +2,7 @@
 type: workspace
 ---
 
-<!-- Translation source: 02_protocol/templates/workspace.md; sha256: 1250593b8a0e559212d14a278333d9259c7452a1a94083a2c117e2f9be4121e9 -->
+<!-- Translation source: 02_protocol/templates/workspace.md; sha256: a6efe3105018ecb37bf3caf273ae4d4374d5e8b62335fc1b399ad8e88abfdd9b -->
 
 Working language: de
 
@@ -43,4 +43,4 @@ Bei Nutzung von Capabilities aus einem Fachrepo oder einer anderen fachlichen He
 
 ## Arbeitssprache
 
-Kundenarbeit erfolgt auf Deutsch: Aufnahme, Fachdefinitionen, Arbeitsanweisungen, Entwürfe, Rückfragen und Entscheidungen; eine andere Sprache bindet ein Arbeitsschritt nur, soweit `02_protocol/language.md` es erlaubt. Maschinenkennungen und Quellenzitate bleiben unverändert; ihre Bedeutung und Nutzungsfolgen werden auf Deutsch erklärt. Die englische Protokollquelle ändert diese Auswahl nicht. `impacts template <art> --language de` liefert deutsche Vorlagen. Vor Kundennutzung prüft der Arbeitsschritt die tatsächliche Ausgabe einschließlich eingefügter Werte gemäß `02_protocol/language.md#enforce-at-use-boundaries`. Fehlender oder nicht bestandener Sprach-/Bedeutungscheck sperrt nur die davon abhängige Nutzung. Sprachvorgabe und Prüfnachweis werden im bestehenden Vertrag und in den deklarierten Laufdateien gebunden.
+Kundenarbeit erfolgt auf Deutsch: Aufnahme, Fachdefinitionen, Arbeitsanweisungen, Entwürfe, Rückfragen und Entscheidungen; eine andere Sprache bindet ein Arbeitsschritt nur, soweit `02_protocol/language.md` es erlaubt. Maschinenkennungen und Quellenzitate bleiben unverändert; ihre Bedeutung und Nutzungsfolgen werden auf Deutsch erklärt. Die englische Protokollquelle ändert diese Auswahl nicht. `impacts template <art> --language de` liefert deutsche Vorlagen. Vor Kundennutzung prüft der Arbeitsschritt die tatsächliche Ausgabe einschließlich eingefügter Werte gemäß `02_protocol/language.md#enforce-at-use-boundaries`. Fehlender oder nicht bestandener Sprach-/Bedeutungscheck sperrt nur die davon abhängige Nutzung. Sprachvorgabe und Prüfnachweis werden im bestehenden Vertrag und in den deklarierten Vorgangsdateien gebunden.

@@ -23,7 +23,7 @@ from impacts_protocol.io import load_frontmatter_and_body
 
 DOCUMENT = ROOT / "02_protocol/impacts-architect/references/datenbezug.md"
 # These exact unanchored section names and block kinds are this fixture's source interface.
-SOURCE_BLOCKS = {"Concrete run inputs": "json", "Document blank": "text", "English document blank": "text"}
+SOURCE_BLOCKS = {"Concrete Vorgang inputs": "json", "Document blank": "text", "English document blank": "text"}
 RUN = "vorgaenge/angebot-001"
 APP = "applications/angebot-erstellen"
 UNITS = {"P-10": {"de": "Stück", "en": "piece"}, "S-20": {"de": "Stunde", "en": "hour"}}
@@ -55,7 +55,7 @@ def block(heading: str, kind: str) -> str:
 
 
 def fixture() -> dict:
-    return json.loads(block("Concrete run inputs", "json"))
+    return json.loads(block("Concrete Vorgang inputs", "json"))
 
 
 def digest(value: bytes) -> str:

@@ -167,7 +167,7 @@ This compact view is specific to the one selected contract; multiple valid contr
 
 A German operator can read: “Der synthetische Quellausschnitt für Kunde C-1 zum Auswahlstand 2026-09-10 weist für A-1/2 2 Stück des Typs Beispielgerät und 12 Stunden Betreuung aus. Lieferung, Verbrauch und Preise sind damit noch nicht belegt.” Preserve the selection boundary in the readable claim. Its source/provenance must support the intended use; the projection, link or hash alone confirms neither source truth, completeness nor permission. The draft retains relevant gaps and inspectable position identities.
 
-## Run boundary
+## Vorgang boundary
 
 Bind the excerpt before processing. Newly acquired evidence is declared output with provenance; the next designated attempt binds new inputs. One acquisition job can read five tables without creating five agents or worksteps. Apply the existing [prerequisite/handoff contract](../../impacts-method.md#work-from-prerequisites).
 
@@ -196,7 +196,7 @@ These tests read the model/table blocks and mutate synthetic copies. They check 
 <a id="vom-katalog-über-die-pipeline-zum-ausgefüllten-angebot"></a>
 ## From catalog through pipeline to a filled offer
 
-**Separate synthetic request:** P-10, 2 pieces; S-20, 12 hours. The local price inputs below define this request only. They neither add prices to the historical agreement nor modify its bound inputs. A new request starts a new offer run.
+**Separate synthetic request:** P-10, 2 pieces; S-20, 12 hours. The local price inputs below define this request only. They neither add prices to the historical agreement nor modify its bound inputs. A new request starts a new offer Vorgang.
 
 For the historical agreement, read the [selected agreement excerpt](#bind-a-working-excerpt) and its [model/source tables](#domain-model-and-source-tables). The `grundlagen/` and `records/` paths here name embedded fixture blocks in this document, not additional files in this protocol repository.
 
@@ -206,10 +206,10 @@ For the historical agreement, read the [selected agreement excerpt](#bind-a-work
 | Catalog files or existing system | Product/service kinds P-10 and S-20. Price and availability need their applicable source. |
 | Customer/contract records | C-1, A-1/2 and items describe identities and agreed scope. |
 | `grundlagen/angebotsvorlage.md` | Reusable document blank; fill an output copy, preserve the template. |
-| `applications/angebot-erstellen/` | Reusable jobs, inputs, outputs, checks and routes. Each run binds its revision. |
+| `applications/angebot-erstellen/` | Reusable jobs, inputs, outputs, checks and routes. Each Vorgang binds its revision. |
 | `vorgaenge/angebot-001/` | Actual attempt inputs, calculated positions, draft, checks and pending decision. |
 
-An offer system may use `(offer_id, version)`; each position references that whole key and its catalog kind. Preserve quantities, units and prices with the offer revision. Later catalog updates do not overwrite it. Without that system, the versioned run document can carry the offer; an optional record links it instead of duplicating maintained content.
+An offer system may use `(offer_id, version)`; each position references that whole key and its catalog kind. Preserve quantities, units and prices with the offer revision. Later catalog updates do not overwrite it. Without that system, the versioned Vorgang document can carry the offer; an optional record links it instead of duplicating maintained content.
 
 ```text
 Katalog: Produktart P-10                  Serviceart S-20
@@ -311,7 +311,7 @@ behauptet deshalb keinen damit ausführbaren vollständigen Angebotslauf.
 
 `pruefung` is a string, inputs/outputs are lists, and routes map check outcomes to complete target IDs. Extra fields such as `role`, `input_spec` and `application_ref` are rejected by the [schema tests](../../../tests/test_linked_data.py). Core does not execute the body's domain checks.
 
-The intended attempt layout for two independent runs is:
+The intended attempt layout for two independent Vorgänge is:
 
 ```text
 vorgaenge/angebot-001/CONTEXT.md
@@ -337,7 +337,7 @@ vorgaenge/angebot-002/CONTEXT.md
     └── output/pruefbericht.md
 ```
 
-This explanatory tree does not establish an actual run, approval, acceptance or delivery. The omitted preparation/gate steps still need their own execution entries. Acceptance must identify the exact offer revision/document, not just the run folder. Preserve original values and leave proposed events explicitly unexecuted.
+This explanatory tree does not establish an actual Vorgang, approval, acceptance or delivery. The omitted preparation/gate steps still need their own execution entries. Acceptance must identify the exact offer revision/document, not just the Vorgang folder. Preserve original values and leave proposed events explicitly unexecuted.
 
 ### Document blank
 
@@ -369,9 +369,9 @@ Total of example items: {{total}} EUR
 Use: internal draft; sending and acceptance are not confirmed.
 ```
 
-### Concrete run inputs
+### Concrete Vorgang inputs
 
-Abbreviated `input/angebotsdaten.json`. AN-1 and PREIS-1 are synthetic fixtures; a real run needs their bound sources/control evidence. Calculate each `quantity × unit_price` then sum EUR positions. Quantities/prices are finite and nonnegative; IDs and price origins are explicit. Amounts must be exact to cents; otherwise a rounding rule is missing. There is no discount, conversion, tax or recurrence rule. This is not a complete binding commercial offer form.
+Abbreviated `input/angebotsdaten.json`. AN-1 and PREIS-1 are synthetic fixtures; a real Vorgang needs their bound sources/control evidence. Calculate each `quantity × unit_price` then sum EUR positions. Quantities/prices are finite and nonnegative; IDs and price origins are explicit. Amounts must be exact to cents; otherwise a rounding rule is missing. There is no discount, conversion, tax or recurrence rule. This is not a complete binding commercial offer form.
 
 ```json
 {
@@ -401,6 +401,6 @@ Verwendung: interner Entwurf; Versand und Annahme sind nicht bestätigt.
 
 The [filling tests](../../../tests/test_linked_data.py) use Decimal arithmetic, compare this output, reject missing values and incompatible currencies, and fill the same blank for a second independent case. They preserve inputs/templates and simulate no real human approval.
 
-The [paired offer walk](../../../06_evaluations/offer-walk/CONTEXT.md) adds actual run binding and a checked draft-to-human-gate handoff for German and English. It uses a smaller two-step Application starting from the prepared fixture; it does not claim to execute the entire three-step acquisition pipeline above. The existing cold-walk harness still supports one handoff per route; the offer walk demonstrates its own declared two-file handoff. Both remain local examples, not production services.
+The [paired offer walk](../../../06_evaluations/offer-walk/CONTEXT.md) adds actual Vorgang binding and a checked draft-to-human-gate handoff for German and English. It uses a smaller two-step Application starting from the prepared fixture; it does not claim to execute the entire three-step acquisition pipeline above. The existing cold-walk harness still supports one handoff per route; the offer walk demonstrates its own declared two-file handoff. Both remain local examples, not production services.
 
-A second customer receives separate inputs/output. Changed demand yields a traceable new offer revision; retain bound or sent versions. Only separately permitted [writeback](../../capabilities.md#rückübertragung-in-geschäftsrecords) updates leading business records. Reuse the blank and process definition; keep each filled result with its run.
+A second customer receives separate inputs/output. Changed demand yields a traceable new offer revision; retain bound or sent versions. Only separately permitted [writeback](../../capabilities.md#rückübertragung-in-geschäftsrecords) updates leading business records. Reuse the blank and process definition; keep each filled result with its Vorgang.

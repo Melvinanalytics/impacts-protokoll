@@ -30,7 +30,7 @@ For acquisition, name the configured reader or responsible provider, starting id
 
 ### Source requirement
 
-For each stable source input; inputs from preceding steps in the same run use the producer's handoff mapping instead; another run's result follows the source-input classification below. These labels follow `02_protocol/capabilities.md#source-inputs-for-core-applications`:
+For each stable source input; inputs from preceding steps in the same Vorgang use the producer's handoff mapping instead; another Vorgang's result follows the source-input classification below. These labels follow `02_protocol/capabilities.md#source-inputs-for-core-applications`:
 
 - Quell-Eingabe: `input/<file>.md`
 - Herkunft: `<business identity of the source>`
@@ -57,7 +57,7 @@ Where this job depends on tools, reference the applicable shared declaration or 
 
 ### Handgriffe
 
-Optional, where a person or an agent operates a tool's screen. List the operations in order with their relevant data reads or changes; apply `02_protocol/impacts-method.md#step-areas` for their granularity, area references and revision binding. Keep screenshots at the domain home and link them; a Core run binds those its executor uses, and they show no real personal data.
+Optional, where a person or an agent operates a tool's screen. List the operations in order with their relevant data reads or changes; apply `02_protocol/impacts-method.md#step-areas` for their granularity, area references and revision binding. Keep screenshots at the domain home and link them; a Core Vorgang binds those its executor uses, and they show no real personal data.
 
 | No. | Handgriff | Detail | System and data | Screenshot |
 |---|---|---|---|---|
@@ -78,7 +78,7 @@ Only for an earned Capability (`02_protocol/capabilities.md#wann-extrahieren`); 
 
 Files under `output/`. Drafts are readable edit surfaces. Bound or completed results require a traceable new revision; retain their original bytes.
 
-Specify the successor's needed product under the forward check in `02_protocol/impacts-method.md#reverse-engineer-a-product-or-service`. Keep internal review evidence separate where its use differs; include the evidence that the receiving job needs. Declare the actual files and, for each step route, the handoff mapping once at the producer, in the sentence form of `02_protocol/capabilities.md#sichtbare-ausgabe-und-übergabe`. The run records the handoff's provenance in the consumer's declared provenance file, following `02_protocol/capabilities.md#snapshot-und-herkunftsnachweis`.
+Specify the successor's needed product under the forward check in `02_protocol/impacts-method.md#reverse-engineer-a-product-or-service`. Keep internal review evidence separate where its use differs; include the evidence that the receiving job needs. Declare the actual files and, for each step route, the handoff mapping once at the producer, in the sentence form of `02_protocol/capabilities.md#sichtbare-ausgabe-und-übergabe`. The Vorgang records the handoff's provenance in the consumer's declared provenance file, following `02_protocol/capabilities.md#snapshot-und-herkunftsnachweis`.
 
 For each record change, message or physical effect, name the target, the change, the current-state check before it, its confirmation and how a repeat stays safe, following `02_protocol/capabilities.md#rückübertragung-in-geschäftsrecords`. A request or draft does not establish the effect; an uncertain result needs reconciliation before retry. State the harm of a wrong output or effect, whether it is detected before that harm and whether it can be reversed, as `02_protocol/impacts-architect/references/zuschnitt.md#required-checks-and-review` asks.
 
@@ -98,7 +98,7 @@ Lead with the decision question and the consequence of each declared option, the
 
 ## Flow
 
-What starts this job, where each outcome leads and what happens while it waits. The frontmatter `routen` map each `pruefung` outcome to a workstep or end; state here what each route means, including any rework target and negative end, without a second route table. A failed, missing or stale required check blocks dependent successful use; follow its declared failure route or retain the appropriate wait under `02_protocol/ontology.md#enforcement-and-completion`. For evidence this job acquires while waiting, follow `02_protocol/impacts-architect/references/zuschnitt.md#waits`. Name the wait's cause, each applicable continuation trigger and its declared outcome; the run records the continuation in `wiedereinstieg`. Permitted preparation continues under Processing.
+What starts this job, where each outcome leads and what happens while it waits. The frontmatter `routen` map each `pruefung` outcome to a workstep or end; state here what each route means, including any rework target and negative end, without a second route table. A failed, missing or stale required check blocks dependent successful use; follow its declared failure route or retain the appropriate wait under `02_protocol/ontology.md#enforcement-and-completion`. For evidence this job acquires while waiting, follow `02_protocol/impacts-architect/references/zuschnitt.md#waits`. Name the wait's cause, each applicable continuation trigger and its declared outcome; the Vorgang records the continuation in `wiedereinstieg`. Permitted preparation continues under Processing.
 
 Apply the timing, responsibility and non-arrival requirements in `02_protocol/impacts-architect/references/zuschnitt.md#waits` to each wait or pending human decision, and its `#loops` requirements to repetition. Notifications follow the effect and permission declarations above. At a human gate, expiry can trigger permitted escalation; it supplies no `freigabe` and selects neither `freigegeben` nor `abgelehnt`.
 

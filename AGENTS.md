@@ -15,7 +15,7 @@ Keep claims in definitions, records, reviews and completion reports with their s
 1. **Folders and Markdown are the architecture.** Extend an existing home before creating a system. (ICM folder-directed work; OKF directory bundles.)
 2. **Keep Core minimal.** OKF requires `type`; justify each additional required Core field in its commit.
 3. **Keep the interface fixed.** Core owns files, IDs and references; Git and harnesses own transport and execution.
-4. **Separate factory and run.** Runs preserve bound definitions; work and evidence live in the run. Continuing records change only through permitted [writeback](02_protocol/capabilities.md#rückübertragung-in-geschäftsrecords).
+4. **Separate factory and Vorgang.** Vorgänge preserve bound definitions; work and evidence live in the Vorgang. Continuing records change only through permitted [writeback](02_protocol/capabilities.md#rückübertragung-in-geschäftsrecords).
 5. **Load declared context.** Bound-input or completed-result changes create traceable revisions. Declared gates and permissions, not readability, govern human stops.
 6. **Keep review and authentication separate.** A `human:<id>` string proves neither identity nor approval. Agents do not produce human decisions.
 7. **Bind calculations.** Models may supply declared parameters; the sanctioned rule and deterministic check execute in the workstep or an earned [Capability](02_protocol/capabilities.md#wann-extrahieren).

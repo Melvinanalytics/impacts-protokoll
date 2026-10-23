@@ -898,7 +898,7 @@ def test_invalid_definition_memo_attributes_each_run(tmp_path, monkeypatch):
     assert [issue.path for issue in errors] == ['vorgaenge/video-001/CONTEXT.md', 'vorgaenge/video-002/CONTEXT.md']
     assert errors[0].message == errors[1].message
     assert 'preserve existing historical bindings' in errors[0].message
-    assert 'new Run' in errors[0].message
+    assert 'new Vorgang' in errors[0].message
     assert 're-bind' not in errors[0].message
 
 

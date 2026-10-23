@@ -1,6 +1,6 @@
 # Paired offer walk
 
-A synthetic, local two-step Application demonstrates the [ontology boundary](../../02_protocol/ontology.md#enforcement-and-completion) and [working language](../../02_protocol/language.md). It starts with the prepared request from the [company example](../../02_protocol/impacts-architect/references/datenbezug.md#concrete-run-inputs), renders a fixed offer, checks actual content and hands both draft and report to a pending human gate.
+A synthetic, local two-step Application demonstrates the [ontology boundary](../../02_protocol/ontology.md#enforcement-and-completion) and [working language](../../02_protocol/language.md). It starts with the prepared request from the [company example](../../02_protocol/impacts-architect/references/datenbezug.md#concrete-vorgang-inputs), renders a fixed offer, checks actual content and hands both draft and report to a pending human gate.
 
 Run from the repository root:
 

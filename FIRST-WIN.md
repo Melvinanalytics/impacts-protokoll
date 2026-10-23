@@ -8,7 +8,7 @@ The contribution is an internal draft with supported scope, source references, m
 
 For real work, use your existing inquiry, source material and document blank. Save the preparation at that case's existing home with its source references, open questions and next action.
 
-The four Markdown files below are a synthetic exercise for practicing those relationships. Create them in a separate exercise folder. They reuse the catalog, customer, inquiry and offer-blank roles from the [synthetic company example](02_protocol/impacts-architect/references/datenbezug.md#from-catalog-through-pipeline-to-a-filled-offer). P-10, S-20, C-1 and O-1 are synthetic identifiers. This exercise deliberately supplies no applicable price or delivery date; it changes no historical agreement or Run.
+The four Markdown files below are a synthetic exercise for practicing those relationships. Create them in a separate exercise folder. They reuse the catalog, customer, inquiry and offer-blank roles from the [synthetic company example](02_protocol/impacts-architect/references/datenbezug.md#from-catalog-through-pipeline-to-a-filled-offer). P-10, S-20, C-1 and O-1 are synthetic identifiers. This exercise deliberately supplies no applicable price or delivery date; it changes no historical agreement or Vorgang.
 
 `CONTEXT.md` is the entry point:
 
@@ -91,10 +91,10 @@ Keep this first use file based and optional-tool free. For a later, reproducible
 
 ## If the requested Git binding cannot be checked
 
-Suppose the owner now asks to prepare a Git-bound Run and validate its historical binding, but Git is unavailable. Keep the draft, sources, questions and any candidate definition at their existing homes. Record beside the preparation:
+Suppose the owner now asks to prepare a Git-bound Vorgang and validate its historical binding, but Git is unavailable. Keep the draft, sources, questions and any candidate definition at their existing homes. Record beside the preparation:
 
-> Preparation retained. Git-bound Run validation was not performed because Git is unavailable. This preparation is unbound; it is not a validated Run. Next: on a machine with Git and the Python CLI, complete the Application contract and required setup cases, commit that Application at the Core workspace root, bind the Run to its actual committed tree using the Run template, and run `impacts validate` on that workspace. Retain the actual result and correct any reported failure before claiming validated binding.
+> Preparation retained. Git-bound Vorgang validation was not performed because Git is unavailable. This preparation is unbound; it is not a validated Vorgang. Next: on a machine with Git and the Python CLI, complete the Application contract and required setup cases, commit that Application at the Core workspace root, bind the Vorgang to its actual committed tree using the Vorgang template, and run `impacts validate` on that workspace. Retain the actual result and correct any reported failure before claiming validated binding.
 
-Follow [Construct](02_protocol/impacts-method.md#construct) and the [Run template](02_protocol/templates/vorgang.md) for those steps. Do not invent a tree ID, hash, execution entry or approval. Resume from the preserved draft when tooling becomes available. Structural validation alone proves neither executed work nor a checked business result; required domain checks and human decisions still need their own evidence.
+Follow [Construct](02_protocol/impacts-method.md#construct) and the [Vorgang template](02_protocol/templates/vorgang.md) for those steps. Do not invent a tree ID, hash, execution entry or approval. Resume from the preserved draft when tooling becomes available. Structural validation alone proves neither executed work nor a checked business result; required domain checks and human decisions still need their own evidence.
 
 The [optional technical use](README.md#optional-technical-use) links the installer and existing programmed evaluations. [Form selection](02_protocol/impacts-architect/references/formwahl.md#tooling-stopp) owns the ordinary-files and machine-validation boundary. [Deutsch](02_protocol/translations/de.md) explains the same entry path in German.

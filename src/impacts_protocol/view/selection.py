@@ -305,7 +305,7 @@ def workspace_site(workspace: Path) -> dict[str, dict]:
     """Every Application and every Vorgang as its own page, plus an overview as index.html."""
     workspace = workspace.resolve()
     if workspace_of(workspace) != workspace:
-        raise SystemExit(f"{workspace} must be the root of a Git repository; Core resolves bound runs there")
+        raise SystemExit(f"{workspace} must be the root of a Git repository; Core resolves bound Vorgänge there")
     algorithm = git(workspace, "rev-parse", "--show-object-format") or "sha1"
     state = lambda: (inventory(workspace), git(workspace, "rev-parse", "--verify", "-q", "HEAD"))
     first = state()

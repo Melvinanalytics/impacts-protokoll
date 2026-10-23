@@ -10,7 +10,7 @@ leistung:
 einstieg_ref: arbeitsschritt:pruefen
 ---
 
-<!-- Translation source: 02_protocol/templates/hauptprozess.md; sha256: 96f4e083c03151ff6d6ffdd5b00b7ef2a7938567a19eccde0682f3b597bf9dc2 -->
+<!-- Translation source: 02_protocol/templates/hauptprozess.md; sha256: d10a62a980ab9b939873fa1918a8e4e835119ac56ab052fedb58b9d18c3071d2 -->
 
 # Prüffall entscheiden
 
@@ -42,7 +42,7 @@ Welche menschlichen Grenzen gelten, warum und wer darf sie ändern? Eingangsvari
 
 ## Weg zur Leistung
 
-Welche Teilprozesse zum Ergebnis beitragen, wie ihre Voraussetzungen beschafft werden und wie Erfolg, Ablehnung oder ein unvollständiger Fall endet beziehungsweise wartet. Jedes `end:<slug>` nennen, das die Leistung erreicht; jedes andere Ende ist ein negatives Ende. `einstieg_ref` und Arbeitsschrittrouten bestimmen die Reihenfolge; diese Erklärung führt keine zweite Routentabelle. Unabhängige Applications übergeben belegte Ergebnisse zwischen getrennten Vorgängen, nicht durch Application-übergreifende Schrittrouten.
+Welche Teilprozesse zum Ergebnis beitragen, wie ihre Voraussetzungen beschafft werden und wie Erfolg, Ablehnung oder ein unvollständiger Fall endet beziehungsweise wartet. Jedes `end:<slug>` nennen, das die Leistung erreicht; jedes andere Ende ist ein negatives Ende. `einstieg_ref` und Arbeitsschrittrouten bestimmen die Reihenfolge; diese Erklärung führt keine zweite Routentabelle. Unabhängige Applications übergeben belegte Ergebnisse zwischen getrennten Vorgängen, nicht durch Application-übergreifende Schrittrouten. Optional geordnete Stufen, etwa 0 bis 100, für jeden Arbeitsschritt und jedes Ende sowie für die Record-Stände vergeben, die ein Fall vor `einstieg_ref` durchläuft. Eine Stufe ordnet die Position, nicht Aufwand, Wert oder Erfolgsaussicht; Nacharbeit kann sie senken.
 
 ## Durchsatz und Durchlaufzeit
 

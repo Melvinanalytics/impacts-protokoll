@@ -445,7 +445,7 @@ def _validate_vorgang(
                 prefix,
             )
         else:
-            _add(issues, "run.invalid", run_root / "CONTEXT.md", workspace, prefix + f"Unknown run status: {status}")
+            _add(issues, "run.invalid", run_root / "CONTEXT.md", workspace, prefix + f"Unknown attempt status: {status}")
         # The schema pattern admits impossible dates such as February 31; parsing rejects them.
         resume = entry.get("wiedereinstieg")
         for label, value in (("status_seit", entry.get("status_seit")),
@@ -514,7 +514,7 @@ def _validate_completed_entry(
         if next_ref != target:
             _add(issues, "run.invalid", run_root / "CONTEXT.md", workspace, prefix + f"route {route!r} leads to {target}, but the next entry is {next_ref or 'missing'}")
     elif isinstance(target, str) and target.startswith("end:") and not is_last:
-        _add(issues, "run.invalid", run_root / "CONTEXT.md", workspace, prefix + f"route {route!r} ends the run at {target}, but the Laufpfad continues")
+        _add(issues, "run.invalid", run_root / "CONTEXT.md", workspace, prefix + f"route {route!r} ends the Vorgang at {target}, but the Laufpfad continues")
 
     approval = entry.get("freigabe")
     if step.get("gate") == "human":
@@ -589,7 +589,7 @@ def _resolve_application(
         )
         message = (
             f"Application {revision} does not satisfy the Core contract; "
-            "preserve existing historical bindings and use a corrected Application tree for a new Run"
+            "preserve existing historical bindings and use a corrected Application tree for a new Vorgang"
         )
         reject(f"{message}: {details}" if details else message)
         return None
@@ -865,12 +865,12 @@ def _attempt_directories(
         if step_root.name == "CONTEXT.md":
             continue
         if not step_root.is_dir() or step_root.is_symlink() or SLUG.fullmatch(step_root.name) is None:
-            message = _slug_message("Arbeitsschritt run") if SLUG.fullmatch(step_root.name) is None else "Invalid Arbeitsschritt run directory"
+            message = _slug_message("Arbeitsschritt") if SLUG.fullmatch(step_root.name) is None else "Invalid Arbeitsschritt directory in the Vorgang"
             _add(issues, "run.invalid", step_root, workspace, message)
             continue
         attempts = list(step_root.iterdir())
         if not attempts:
-            _add(issues, "run.invalid", step_root, workspace, "Unreached Arbeitsschritt run directory")
+            _add(issues, "run.invalid", step_root, workspace, "Unreached Arbeitsschritt directory in the Vorgang")
         for attempt in attempts:
             if not attempt.is_dir() or attempt.is_symlink() or re.fullmatch(r"[0-9]{3}", attempt.name) is None or int(attempt.name) < 1:
                 _add(issues, "run.invalid", attempt, workspace, "Attempt directory must be a positive three-digit number")

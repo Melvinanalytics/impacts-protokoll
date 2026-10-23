@@ -12,8 +12,6 @@ ONTOLOGY = ROOT / "02_protocol" / "ontology.md"
 PROTOCOL_ROUTER = ROOT / "02_protocol" / "CONTEXT.md"
 CAPABILITIES = ROOT / "02_protocol" / "capabilities.md"
 FORM_SELECTION = SKILL / "references/formwahl.md"
-TYPED_SELECTION = SKILL / "references/typed-selection.md"
-TYPED_EVALUATION = ROOT / "06_evaluations" / "typed-classification"
 GERMAN_GUIDE = ROOT / "02_protocol" / "translations" / "de.md"
 LINK = re.compile(r"\]\(([^)]+)\)")
 
@@ -239,7 +237,7 @@ def test_restructure_classifies_customer_instances_into_records():
     restructure = body[body.index("## Restructure mode") : body.index("## Import mode")]
     assert "references/formwahl.md#native-topologie-und-schnitt" in restructure
     record_row = next(line for line in FORM_SELECTION.read_text().splitlines() if "Continuing business instances" in line)
-    assert "Authoritative source system or maintained `records/`; runs bind excerpts" in record_row
+    assert "Authoritative source system or maintained `records/`; Vorgänge bind excerpts" in record_row
 
 
 def test_validate_scope_excludes_non_process_knowledge_topology():
@@ -271,7 +269,7 @@ def test_method_scopes_process_phases_and_optional_core_procedures():
 
     assert "seven phases" in before_identify
     assert "guide selected process work" in before_identify
-    assert "technical procedures apply when choosing Core Application/Run contracts" in before_identify
+    assert "technical procedures apply when choosing Core Application/Vorgang contracts" in before_identify
     assert "other non-process forms do not enter Identify" in before_identify
 
 
@@ -776,91 +774,6 @@ def test_form_selection_states_file_orchestration_applicability_boundary():
         "undeclared model-selected branching",
     ):
         assert unsupported_runtime in selection
-
-
-def test_optional_typed_branch_is_conditionally_routed_from_existing_architect():
-    skill = SKILL_FILE.read_text(encoding="utf-8")
-    router = PROTOCOL_ROUTER.read_text(encoding="utf-8")
-
-    assert "references/typed-selection.md" in skill
-    assert "explicitly requested for this task or enabled by an existing job-specific configuration" in skill
-    assert "Exact lookups, deterministic checks, known missing premises and one remaining action" in skill
-    restructure = skill[skill.index("## Restructure mode") : skill.index("## Import mode")]
-    assert "activation rule](references/typed-selection.md)" in restructure
-    assert "impacts-architect/references/typed-selection.md" in router
-    assert TYPED_SELECTION.is_file()
-
-
-def test_typed_branch_binds_classifiers_to_existing_authorities():
-    text = TYPED_SELECTION.read_text(encoding="utf-8")
-
-    for target in (
-        "formwahl.md#select-the-form",
-        "../../ontology.md#domain-addresses-and-relationships",
-        "../../impacts-method.md#reverse-engineer-a-product-or-service",
-        "zuschnitt.md#hauptprozess",
-        "zuschnitt.md#teilprozess",
-        "zuschnitt.md#arbeitsschritt",
-        "../../impacts-method.md#result-work-and-coordination",
-        "../../impacts-method.md#minimize",
-        "../../impacts-method.md#augment",
-        "zuschnitt.md#automation-boundary",
-    ):
-        assert target in text
-
-    assert "The governing tests remain at their existing homes" in text
-    assert "not a closed customer taxonomy" in text
-    assert "observation/process relationship remains many to many" in text
-    assert "Boundary discovery and completed Core construction remain separate checks" in text
-
-
-def test_typed_branch_keeps_value_execution_and_authority_axes_separate():
-    text = TYPED_SELECTION.read_text(encoding="utf-8")
-
-    assert "does not store a combination token" in text
-    assert "prefer `Ergebnisarbeit` and `Koordination`" in text
-    assert "Ask avoidability only for one explicit counter-design" in text
-    assert "exclusive step classes" in text
-    assert "Selection never invokes a tool or approves an effect" in text
-    assert "The selector never rewrites its own policy" in text
-
-
-def test_typed_branch_preserves_open_and_host_owned_evidence():
-    text = TYPED_SELECTION.read_text(encoding="utf-8")
-
-    assert "The backend returns only its raw typed judgment" in text
-    assert "do not attest which evidence the model internally used" in text
-    assert "Noul returns probability of yes; it does not natively create `open`" in text
-    assert "Omitted correct candidates are a candidate-construction failure" in text
-    assert "It ships no Jev, Laya or other adapter runtime" in text
-    assert "Customer or company-specific facts and results stay in their customer repositories" in text
-
-
-def test_typed_classification_walk_covers_backend_and_normal_paths():
-    context = (TYPED_EVALUATION / "CONTEXT.md").read_text(encoding="utf-8")
-    expected = (TYPED_EVALUATION / "EXPECTED.md").read_text(encoding="utf-8")
-    router = (ROOT / "06_evaluations" / "CONTEXT.md").read_text(encoding="utf-8")
-
-    assert "typed-classification/CONTEXT.md" in router
-    for scenario in (
-        "untrusted evidence",
-        "older captured state",
-        "out-of-range probability",
-        "omits the required `inspect-rule-owner` candidate",
-        "selects `inspect-adoption-decision`",
-        "two adopted instructions",
-        "Choice adaptation can return `open`",
-        "Normal Architect mode",
-    ):
-        assert scenario in context
-    for boundary in (
-        "forms and process roles from their own boundaries",
-        "Result work and Coordination independently",
-        "scopes avoidability to one counter-design",
-        "unexecuted-backend limit",
-        "normal mode as well",
-    ):
-        assert boundary in expected
 
 
 DATA_HANDLING = SKILL / "references/datenumgang.md"

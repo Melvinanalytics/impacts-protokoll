@@ -6,11 +6,11 @@ Three homes stay separate throughout:
 
 | Home | Owns | Does not own |
 |---|---|---|
-| Domain home | Meaning, keys, units, source mappings, leading system per attribute, responsibility | Values of a case, credentials, a run |
+| Domain home | Meaning, keys, units, source mappings, leading system per attribute, responsibility | Values of a case, credentials, a Vorgang |
 | Workstep | Selection for this job: which identity, purpose, time, fields, reader, effect and check | Reusable meaning; a second copy of the source mapping |
 | Harness | Access, credentials, execution of the bound operation, actual evidence | Business authority, meaning, permission for use |
 
-A step references the domain home by link and anchor instead of maintaining its own mapping. In a selected Core attempt, also bind the needed description or sufficient excerpt under [snapshot and provenance](../../capabilities.md#snapshot-und-herkunftsnachweis). That preserved input is evidence of the cited revision, not a second maintained authority. Ten steps on one customer table then share one description while their runs preserve the definitions actually used.
+A step references the domain home by link and anchor instead of maintaining its own mapping. In a selected Core attempt, also bind the needed description or sufficient excerpt under [snapshot and provenance](../../capabilities.md#snapshot-und-herkunftsnachweis). That preserved input is evidence of the cited revision, not a second maintained authority. Ten steps on one customer table then share one description while their Vorgänge preserve the definitions actually used.
 
 ## Data objects
 
@@ -22,17 +22,17 @@ Use only distinctions needed for the question. These are capture roles, not an e
 | Attribute | Property of a business object; refers to a value domain | none | The field that carries it; two fields can carry one attribute |
 | Value domain | Allowed values with meaning, type and unit: a code list or a rule | none | The code list and its maintained content (reference data) |
 | Event | Occurrence in the world with a time that produces data: offer sent | none | The record about it: “offer created” is not “offer sent” |
-| System | Application or channel that keeps or supplies data: ERP, CRM, shared mailbox, recurring manual input | `quelle:` | The table inside it |
+| System | Software system or channel that keeps or supplies data: ERP, CRM, shared mailbox, recurring manual input | `quelle:` | The table inside it |
 | Data collection | Named set of rows with one structure: table, report, export, file or hand list | `quelle:` | A report or export taken as the originating maintained system |
 | Field | Physical carrier of an attribute in a data collection | part of a source description | Entry date taken as event date |
 | Key mapping | Evidenced link between keys of two systems or collections, with multiplicity and match rate | scoped mapping home | Equal names or numbers taken as the same identity |
-| Lineage edge | Directed link: B derives from A, as designed flow or as actual run | none | The derivation rule: lineage says from where, the rule says how |
+| Lineage edge | Directed link: B derives from A, as designed flow or as actual execution | none | The derivation rule: lineage says from where, the rule says how |
 | Measure | Quantity that enters an aggregation, at the grain of an event or object | input variable of a rule | The metric; a price never aggregated is an attribute |
 | Derivation rule | Rule that derives, filters, aggregates, converts or checks | `rechenweg:` | Its implementation (workbook, SQL) or one execution |
 | Metric | Meaning of a quantity: what is counted, unit, population, grain, time basis | `kennzahl:` | Its value, target or threshold |
 | Hierarchy | Ordered roll-up levels over attributes of a business object; several per object, each with validity | none | The is-a hierarchy of terms |
 
-A concrete value, record or source state stays at its case/evidence home; a Core Run keeps its existing contract. A `beobachtung:` identifies a scoped claim, not the value or record itself. Composite terms combine these distinctions:
+A concrete value, record or source state stays at its case/evidence home; a Core Vorgang keeps its existing contract. A `beobachtung:` identifies a scoped claim, not the value or record itself. Composite terms combine these distinctions:
 
 | Term | Composed of |
 |---|---|
@@ -48,11 +48,11 @@ Each facet answers a separate question about a scoped definition or claim. Apply
 
 | Facet | Question | Values |
 |---|---|---|
-| Level | Definition or occurrence? | definition · occurrence (value, record, state, run) |
+| Level | Definition or occurrence? | definition · occurrence (value, record, state, execution) |
 | Data role | Which function in the business? | reference · master · transaction |
 | Origin | How did it arise? | captured · copied (export, replica) · derived · set by decision |
 | Time character | How does it relate to time? | point (event) · cut-off (stock) · period (flow) · timeless (value domain only) |
-| Value kind | Which claim does a value make? | actual · plan · forecast · target · threshold · comparison · assumption |
+| Value kind | Which claim does a value make? | actual · plan (planned data value) · forecast · target · threshold · comparison · assumption |
 | Aggregation | May it be summed? | additive · semi-additive (not across a named dimension, usually time) · non-additive |
 | Evidence | How established? | [evidence labels](zuschnitt.md#evidence) per claim |
 
@@ -60,7 +60,7 @@ Record these details at the object's domain home where they apply: grain and com
 
 ## The data path through one step
 
-Each station names the question, the existing contract slot that answers it and the evidence it leaves. Ordinary file work records the applicable selection, source state, checks and continuation at its existing case home. Attempt paths, `Quellenanforderung`, digests, `pruefung` and byte-identical routed handoff below apply to selected Core Runs; this sequence adds no mandatory stages or fields to other forms.
+Each station names the question, the existing contract slot that answers it and the evidence it leaves. Ordinary file work records the applicable selection, source state, checks and continuation at its existing case home. Attempt paths, `Quellenanforderung`, digests, `pruefung` and byte-identical routed handoff below apply to selected Core Vorgänge; this sequence adds no mandatory stages or fields to other forms.
 
 | Station | Question | Contract slot | Evidence left | Typical failure |
 |---|---|---|---|---|
@@ -76,17 +76,17 @@ Each station names the question, the existing contract slot that answers it and 
 
 ## When which data is used
 
-The attempt rows below apply to selected Core Runs; ordinary work keeps its source notes and checks at the existing case home without introducing attempts or digests.
+The attempt rows below apply to selected Core Vorgänge; ordinary work keeps its source notes and checks at the existing case home without introducing attempts or digests.
 
 | Moment | Data used | Rule |
 |---|---|---|
-| Design | Definitions, schemas, table metadata, a few inspected records | Reading metadata or samples informs the domain home; it binds no run |
-| Before the attempt opens | The declared source excerpt and rules | Acquire, materialize and hash before opening; missing access leaves a specific blocker |
-| During the attempt | Declared inputs and permitted tool operations | Transform bound inputs within the job. A permitted new read becomes output with provenance for a subsequent attempt; bound input/provenance bytes stay unchanged |
+| Design | Definitions, schemas, table metadata, a few inspected records | Reading metadata or samples informs the domain home; it binds no Vorgang |
+| Before the attempt opens | The declared source excerpt and rules | Apply [Snapshot and provenance](../../capabilities.md#snapshot-und-herkunftsnachweis); missing access blocks opening |
+| During the attempt | Declared inputs and permitted tool operations | Apply [Work from prerequisites](../../impacts-method.md#work-from-prerequisites) to transformations and newly acquired evidence |
 | After the result check | The result and actual check outcome | Follow its declared success, failure or recovery path. Failed-check evidence may be handed off for diagnosis; successful-use restrictions still apply |
-| Next attempt | New evidence from the previous output | Bound as new input; earlier input bytes stay unchanged |
+| Next attempt | New evidence from the previous output | Bind under [Snapshot and provenance](../../capabilities.md#snapshot-und-herkunftsnachweis) |
 
-A versioned source is read at its bound revision. A mutable source is captured with its actual response and read time; the read time proves neither freshness nor completeness.
+Source revision, mutable capture and read-time limits follow [Snapshot and provenance](../../capabilities.md#snapshot-und-herkunftsnachweis).
 
 Fixed calculations and formal checks execute deterministically under the sanctioned rule. A model may supply declared parameters, extract content or interpret evidence within its assigned job; retain its used configuration and decision-relevant result. Inspect extracted values against their source before a dependent calculation. Interpretation and nondeterministic extraction do not establish source truth or deterministic reproducibility.
 
@@ -155,14 +155,14 @@ The `*-herkunft.md` file follows the [stable-source provenance template](../../c
 
 Four ways a result leaves a step. Only the first changes a continuing business record.
 
-Attempt paths, digests and byte-identical handoff mappings apply to selected Core Runs. Ordinary work retains the applicable source, check and effect evidence at its existing case home. A Core failure-route handoff needs its own declared producer mapping, just as a success-route handoff does.
+Attempt paths, digests and byte-identical handoff mappings apply to selected Core Vorgänge. Ordinary work retains the applicable source, check and effect evidence at its existing case home. A Core failure-route handoff needs its own declared producer mapping, just as a success-route handoff does.
 
 | Way | When | How | Evidence |
 |---|---|---|---|
 | Permitted record writeback | After its required checks and any required gate are satisfied | Apply [Record writeback](../../capabilities.md#rückübertragung-in-geschäftsrecords): target, scope, authority, freshness, conflict and confirmation | Target, version, confirmed or unconfirmed |
 | Handoff to a successor | On the declared route | Byte-identical output into the successor's input with provenance | Handoff mapping, digest |
-| Visible output | With the attempt | Ordinary output file; a report or draft stays a run result | Output file and checks |
-| Change of meaning | When a definition or mapping must change | [Author or change](../../ontology.md#author-or-change) at the domain home; not a run effect | New definition revision |
+| Visible output | With the attempt | Ordinary output file; a report or draft stays a Vorgang result | Output file and checks |
+| Change of meaning | When a definition or mapping must change | [Author or change](../../ontology.md#author-or-change) at the domain home; not a Vorgang effect | New definition revision |
 
 The source mapping selects the leading system for an authoritative attribute update. A permitted copy, export or downstream record does not become another fact authority. Use the existing writeback contract for confirmation and retry handling; a business key alone does not make a write repeat-safe.
 

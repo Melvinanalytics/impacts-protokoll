@@ -1,4 +1,4 @@
-<!-- Translation source: 02_protocol/templates/application.md; sha256: b808fdf6e022ca16a1e4153deb6643cf94e6f052c7c794231ad3d72be913d06f -->
+<!-- Translation source: 02_protocol/templates/application.md; sha256: 0ceaae68c901f0925788e132ab1b6cb3c683535749be793a838d96bb824741aa -->
 
 # Schablone einer Application
 

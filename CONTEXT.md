@@ -1,6 +1,6 @@
 # IMPACTS Protocol navigation
 
-For an existing definition, follow [Use](02_protocol/ontology.md#use); for missing or changing meaning, follow [Author or change](02_protocol/ontology.md#author-or-change). Then select one intent below. Its completion check governs when to stop; the table locates the needed authority. Before changing a surface, read its closest `CONTEXT.md`; customer facts live in the customer repository and bound history in the run's router.
+For an existing definition, follow [Use](02_protocol/ontology.md#use); for missing or changing meaning, follow [Author or change](02_protocol/ontology.md#author-or-change). Then select one intent below. Its completion check governs when to stop; the table locates the needed authority. Before changing a surface, read its closest `CONTEXT.md`; customer facts live in the customer repository and bound history in the Vorgang's router.
 
 | Intent | Authority pointers |
 |---|---|

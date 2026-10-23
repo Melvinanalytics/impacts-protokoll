@@ -223,21 +223,21 @@ def test_notes_reject_a_draft_attached_to_a_different_tag():
 
 
 def test_current_release_scope_is_included_in_actual_workflow_body_and_retry():
-    tag = "v0.3.29"
+    tag = "v0.3.30"
     values = reports()
     for report in values:
         if "tag" in report:
             report["tag"] = tag
     patch = evidence.release_patch({"tag_name": tag, "draft": True, "body": "Generated changes."},
                                    values, SOURCE, RUN, 2, tag, ROOT)
-    for phrase in ["status_seit", "wiedereinstieg.faellig", "An open gate decision is therefore `wartend`", "judges no lateness", "14 templates"]:
+    for phrase in ["whether it runs once or recurs", "stays open until acceptance or cancellation", "recorded when its gate opens", "bound call identity", "14 templates"]:
         assert phrase in patch["body"]
     assert "Astra" not in patch["body"] and "All 24" not in patch["body"]
     assert evidence.release_patch({"draft": True, **patch}, values, SOURCE, RUN, 2, tag, ROOT) == patch
 
 
 def test_ambiguous_release_scope_markers_block_workflow_body():
-    tag = "v0.3.29"
+    tag = "v0.3.30"
     values = reports()
     for report in values:
         if "tag" in report:

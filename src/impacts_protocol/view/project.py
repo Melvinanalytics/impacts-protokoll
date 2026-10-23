@@ -27,7 +27,7 @@ SUBTITLE = {
     },
     "vorgang": {
         "betreff": "Wer oder was Gegenstand dieses Vorgangs ist.",
-        "subject": "Who or what this run concerns.",
+        "subject": "Who or what this Vorgang concerns.",
     },
 }
 JOB, AUTHORITY, FLOW = {"ein job", "one job"}, {"human check", "menschliche prüfung", "befugnis", "authority"}, {"ablauf", "flow"}
