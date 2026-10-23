@@ -45,21 +45,25 @@ def test_selected_vorgaenge_equal_their_pages_in_the_full_model(tmp_path):
     second = workspace / "vorgaenge" / "video-002"
     second.mkdir()
     (second / "CONTEXT.md").write_text("---\ntype: vorgang\n---\n", encoding="utf-8")
+    (workspace / "vorgaenge" / "video-003").write_text("a file, not a folder", encoding="utf-8")
     full = site_model(workspace)
-    for selected in [{"video-001"}, {"video-002"}, {"video-001", "video-002"}, set()]:
+    for selected in [{"video-001"}, {"video-002"}, {"video-003"}, {"video-001", "video-002", "video-003"}, set()]:
         pages = site_model(workspace, vorgaenge=selected)
         assert {page["selection"]["vorgang"] for page in pages.values()} == {f"vorgaenge/{slug}" for slug in selected}
         assert pages == {name: full[name] for name in pages}
 
 
-def test_only_selected_vorgang_folders_are_read(tmp_path, monkeypatch):
+def test_one_validation_and_only_selected_vorgang_folders_are_read(tmp_path, monkeypatch):
     workspace = _vorgang(tmp_path, STAGES, ENDED).parents[2]
     (workspace / "vorgaenge" / "video-002").mkdir()
-    read = []
-    original = selection.read_vorgang
-    monkeypatch.setattr(selection, "read_vorgang", lambda path, *rest: read.append(path.parent.name) or original(path, *rest))
+    calls = {"read_vorgang": [], "capture": [], "validate": []}
+    for name, key in (("read_vorgang", "read_vorgang"), ("capture", "capture"), ("validate", "validate")):
+        original = getattr(selection, name)
+        monkeypatch.setattr(selection, name, lambda path, *rest, _o=original, _k=key: calls[_k].append(path) or _o(path, *rest))
     site_model(workspace, vorgaenge=["video-001"])
-    assert read == ["video-001"]
+    assert [p.parent.name for p in calls["read_vorgang"]] == ["video-001"]
+    assert {p.name for p in calls["capture"]} == {"video-001"}  # captured before and after reading
+    assert len(calls["validate"]) == 1
 
 
 @pytest.mark.parametrize(("vorgaenge", "error"), [(["video-01"], ValueError), (["Video-001"], ValueError), ("video-001", TypeError)])
