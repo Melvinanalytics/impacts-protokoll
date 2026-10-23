@@ -102,7 +102,7 @@ What starts this job, where each outcome leads and what happens while it waits. 
 
 Apply the timing, responsibility and non-arrival requirements in `02_protocol/impacts-architect/references/zuschnitt.md#waits` to each wait or pending human decision, and its `#loops` requirements to repetition. Notifications follow the effect and permission declarations above. At a human gate, expiry can trigger permitted escalation; it supplies no `freigabe` and selects neither `freigegeben` nor `abgelehnt`.
 
-The last `laufpfad` entry owns the current step and attempt. Permitted drafts may exist under `output/` while `aktiv` or `wartend`; they select no route and release no gate. Recurring blockers can justify a later Application revision.
+Permitted drafts may exist under `output/` while `aktiv` or `wartend`; they select no route and release no gate. Recurring blockers can justify a later Application revision.
 
 ## Setup completion
 

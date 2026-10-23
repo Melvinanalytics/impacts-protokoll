@@ -17,7 +17,7 @@ Status: `open`. Copy and complete only during an actual independent reuse sessio
 
 ## Answers
 
-For every answer, cite record paths, IDs or passages actually available in the retained package. State `open` when the package does not support an answer. Do not consult source messages or memory.
+For every answer, cite record paths, IDs or passages actually available in the retained package. State `open` when the package does not support an answer. Do not consult original fixture messages outside the retained package or memory.
 
 ### Q1
 

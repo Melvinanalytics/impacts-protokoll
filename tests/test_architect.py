@@ -412,7 +412,7 @@ def test_german_guide_carries_result_first_meaning_and_scope_limits():
         "keine strukturelle Änderung nötig",
         "erforderliche Rückwärtsableitung nach der Abschlussbedingung der Aufnahme vollständig",
         "gebundene Definitionen und Eingaben erhalten",
-        "Reine Aufnahme bleibt Aufnahme",
+        "Die Dokumentation oder Ausführung feststehender Arbeit öffnet deren Entwurf nicht erneut",
     ):
         assert phrase in text
 
@@ -828,5 +828,6 @@ def test_router_sends_kpi_evaluation_to_definition_checks_and_system_of_record()
     ):
         assert target in row
     assert "A KPI already maintained or shown in a system of record, report or dashboard is such an item." in data
-    assert "Without access, its value stays `reported`" in data
+    assert "without verified live-system access, an already acquired mutable export with provenance can still support one recalculation within its stated scope if use for that purpose is permitted" in data
+    assert "keeps an unevidenced premise `open`" in data
     assert "führenden System, Bericht oder Dashboard" in german

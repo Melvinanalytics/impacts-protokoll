@@ -51,7 +51,7 @@ For a declared rework loop, route to the producer or a separate rework step whos
 
 First apply Identify's independent [result-work and coordination questions](../../impacts-method.md#result-work-and-coordination) and Minimize the observed arrangement. Those answers expose contribution and dependency without selecting executors, conferring authority or creating exclusive workstep types.
 
-Before selecting an executor, close [Augment's point-of-use context](../../impacts-method.md#augment) for each retained contribution: minimum required content, recipient and use, source/provider and selection, revision or validity time, acquisition or permitted derivation, required control, destination and missing-context route. Reuse the existing authoritative home. A routed excerpt, calculation, summary or draft retains provenance and cannot manufacture a missing fact or authority. Context that is available but stale, unchecked, late or unreachable at the workstep remains unavailable for the dependent use.
+Before selecting an executor, apply [Augment's point-of-use context](../../impacts-method.md#augment) requirements for each retained contribution.
 
 Use the human constraints established in Identify to choose only the contributions needed for the resulting job:
 

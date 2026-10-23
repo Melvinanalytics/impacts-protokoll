@@ -14,7 +14,7 @@ routen:
 customer_touchpoint: sacred  # standard oder sacred: 02_protocol/impacts-method.md#identify; ohne Kundenkontakt diese Zeile löschen
 ---
 
-<!-- Translation source: 02_protocol/templates/arbeitsschritt.md; sha256: dc79c815bd6ea5cd97f3954c51a0162e437638df28525142290af7d785ccb433 -->
+<!-- Translation source: 02_protocol/templates/arbeitsschritt.md; sha256: ad2ea8a5285eef3b0d0b040436c884848b84d883e36deb29f1eab06c1b1c407b -->
 
 # Entscheiden
 
@@ -104,7 +104,7 @@ Was löst diesen Job aus, wohin führt jedes Ergebnis, und was geschieht beim Wa
 
 Für jedes Warten oder jede ausstehende menschliche Entscheidung die Zeit-, Verantwortungs- und Ausbleibensregeln in `02_protocol/impacts-architect/references/zuschnitt.md#waits` anwenden, für Wiederholungen dessen Regeln unter `#loops`. Benachrichtigungen folgen den obigen Wirkungs- und Befugnisdeklarationen. Bei einem Human Gate kann Fristablauf eine erlaubte Eskalation auslösen; er liefert keine `freigabe` und wählt weder `freigegeben` noch `abgelehnt`.
 
-Der letzte `laufpfad`-Eintrag bestimmt aktuellen Schritt und Versuch. Erlaubte Entwürfe dürfen bei `aktiv` oder `wartend` unter `output/` liegen; sie wählen keine Route und geben kein Gate frei. Wiederkehrende Blockaden können eine spätere Application-Revision begründen.
+Erlaubte Entwürfe dürfen bei `aktiv` oder `wartend` unter `output/` liegen; sie wählen keine Route und geben kein Gate frei. Wiederkehrende Blockaden können eine spätere Application-Revision begründen.
 
 ## Einrichtungsabschluss
 

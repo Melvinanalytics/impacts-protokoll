@@ -84,7 +84,7 @@ Choose the branch established by form selection. For a selected Core Pipeline/Ap
 
 1. Open the root `CONTEXT.md`. Can it say where it is and how to advance a Vorgang from this one file?
 2. Validate the selected workspace or Application directory with `impacts validate`. Record the target and protocol revision; a different repository root is not automatically a Core workspace.
-3. Open `vorgaenge/<vorgang>/CONTEXT.md`. The current step is the last Laufpfad entry. Open that step's `CONTEXT.md`: inputs, outputs, `pruefung`, routes and applicable human check are all named. For an Application with no Vorgang yet, inspect its declared entry and mark Vorgang evidence as not yet demonstrated.
+3. Open `vorgaenge/<vorgang>/CONTEXT.md`. Derive its current step or reached end under [Progress](../templates/vorgang.md#progress). Open the last entry's workstep `CONTEXT.md`: inputs, outputs, `pruefung`, routes and applicable human check are all named. For an Application with no Vorgang yet, inspect its declared entry and mark Vorgang evidence as not yet demonstrated.
    Use `impacts hash` on declared attempt surfaces to check recorded hashes; this reads files and does not execute the Arbeitsschritt.
 4. Every Application body section holds the customer's facts, each labelled `verified`, `reported`, `hypothesis` or `open`. Read each Setup completion section and review its substantive case coverage, premises, expected outcomes and recorded review results; record missing, bare or unsupported cases and remaining review gaps as open. Expected text alone does not establish a successful review or observed execution.
 5. Report the loaded router, Arbeitsschritt and input paths. Aim for at most 8k tokens of actual task payload, not a minimum size. If the payload tokenizer is unavailable, report bytes/words and that limitation instead of an exact token-PASS.
@@ -101,5 +101,4 @@ Run the [Knowledge Walk](references/formwahl.md#knowledge-walk) only when the to
 
 - Keep work at its existing home under [Tooling stop](references/formwahl.md#tooling-stopp) while no Leistung, meaningful process boundary and declarable steps are established; form selection, not an arbitrary occurrence count, determines whether to build an Application. Apply [Minimize](../impacts-method.md#minimize) to the particular supported bindings/checks the task needs.
 - Stop question before any new term, field, folder kind or schema: name the existing structure that already does it.
-- Prepare human-gate evidence in the Architect role; decision origin and recording by a configured executing harness follow [Signals and human gates](../capabilities.md#signale-und-human-gate).
 - The responsible customer confirms the Application before its first real Vorgang. This release decision does not overwrite the individual claims' evidence labels or supply missing source evidence.

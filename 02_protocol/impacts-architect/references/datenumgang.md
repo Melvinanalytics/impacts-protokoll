@@ -162,13 +162,11 @@ Attempt paths, digests and byte-identical handoff mappings apply to selected Cor
 | Permitted record writeback | After its required checks and any required gate are satisfied | Apply [Record writeback](../../capabilities.md#rückübertragung-in-geschäftsrecords): target, scope, authority, freshness, conflict and confirmation | Target, version, confirmed or unconfirmed |
 | Handoff to a successor | On the declared route | Byte-identical output into the successor's input with provenance | Handoff mapping, digest |
 | Visible output | With the attempt | Ordinary output file; a report or draft stays a Vorgang result | Output file and checks |
-| Change of meaning | When a definition or mapping must change | [Author or change](../../ontology.md#author-or-change) at the domain home; not a Vorgang effect | New definition revision |
-
-The source mapping selects the leading system for an authoritative attribute update. A permitted copy, export or downstream record does not become another fact authority. Use the existing writeback contract for confirmation and retry handling; a business key alone does not make a write repeat-safe.
+| Change of meaning | When a definition or mapping must change | [Author or change](../../ontology.md#author-or-change) at the domain home | New definition revision |
 
 ## Checks before calculating
 
-Select checks required by the calculation's grain, rule and intended use; these are examples, not universal admission criteria. Keep any missing premise and its dependent-use restriction explicit. When a provider such as the leading system, a calculation service or a Capability delivers a derived item, the applicable rows below are premises its provider must evidence; the consuming step checks that evidence for fit to its use and keeps an unevidenced premise `open`. A KPI already maintained or shown in a system of record, report or dashboard is such an item. With verified access, read it there with its definition, filters and as-of time, and check it under the Metric row before counting, comparing or acting on it. Without access, its value stays `reported` and the access question stays `open`.
+Select checks required by the calculation's grain, rule and intended use; these are examples, not universal admission criteria. Keep any missing premise and its dependent-use restriction explicit. When a provider such as the leading system, a calculation service or a Capability delivers a derived item, the applicable rows below are premises its provider must evidence; the consuming step checks that evidence for fit to its use and keeps an unevidenced premise `open`. A KPI already maintained or shown in a system of record, report or dashboard is such an item. With verified access, read it there with its definition, filters and as-of time, and check it under the Metric row before counting, comparing or acting on it.
 
 | Object | Check |
 |---|---|
