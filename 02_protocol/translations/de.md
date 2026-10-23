@@ -545,14 +545,15 @@ Die [Messung vom 26.09.2026](../../06_evaluations/conformance/scale-2026-09-26.j
 
 Nach erfolgreichem, veröffentlichtem Tag-Workflow bleiben in den Release Notes workflowgemeldete Prüfnachweise erhalten: Quell-Commit, Tag, Workflow-Lauf und Build-Versuch; Testzahlen für Python 3.11 und 3.14; sowie genaue Windows-/macOS-Runnerplattform, Python-3.12-Laufzeit, Korpus-SHA-256, Fallzahl, bestandene Fälle und nicht unterstützte Fälle samt Gründen. Alle Berichte müssen aus demselben Build-Versuch stammen. Der dauerhafte Eintrag beschreibt nur diese Workflow-Läufe und benannten Eingaben; er ist keine unabhängige Verifikation, Build-Attestierung, Herausgeberauthentisierung oder Evidenz für andere Umgebungen. Eine öffentliche Wiederholung durch Dritte ersetzt er nicht.
 
-<!-- Translation source: CONTRIBUTING.md; sha256: da58e7daec01f92eb5971777a5224b34f87603229d3eeb28203d2195b9becb4d -->
+<!-- Translation source: CONTRIBUTING.md; sha256: 393a5418617f25d05e1a62de08b30ccef2de3917e5bc71a37c7aba9edb26bd95 -->
 ## Änderungen in v0.3.31
 
-Diese Ausgabe ergänzt das optionale Feld `leistung.erreicht` und eine öffentliche Funktion der Ansicht im Prozess. Pflichtfelder, Fehlercodes, CLI-Befehle und Konformanzfälle bleiben unverändert; bestehende Applications und Vorgangsdateien bleiben mit derselben Bedeutung gültig.
+Diese Ausgabe ergänzt das optionale Feld `leistung.erreicht` und eine öffentliche Funktion der Ansicht im Prozess. Pflichtfelder, Fehlercodes, CLI-Befehle und Konformanzfälle bleiben unverändert. Bestehende Applications und Vorgangsdateien bleiben mit derselben Bedeutung gültig; einzige Ausnahme ist ein Stufenschlüssel, der mit einem Zeilenumbruch endet (letzter Punkt).
 
 - `leistung.erreicht` führt die Enden auf, an denen die Leistung erreicht ist; jedes andere Ende ist ein negatives Ende. Der Validator meldet ein aufgeführtes Ende, das keine Route erreicht, als `reference.unresolved`; eine leere Liste oder ein Eintrag, der kein `end:<slug>` ist, scheitert am Schema. An einem erreichten Ende zeigt der Viewer, ob es die Leistung erreicht, und „offen“, wenn die Leistung keine solche Liste hat.
 - Jedes negative Ende erhält Stufe 0, damit Auswertungen es als keinen Fortschritt zählen. Das Ende nennt den Grund, der letzte Schritt zeigt, wie weit der Fall kam. Das Vorlagenbeispiel folgt.
 - `impacts_protocol.view.site_model` liefert im aufrufenden Prozess das Modell, das `impacts view <arbeitsbereich> --json` schreibt, ohne die Anzeigesprache. Die README nennt die stabilen Schnittstellen: die CLI, `impacts view --json` mit seinem `format`, die Namen in `impacts_protocol.__all__` und `site_model`. Andere Module können sich in jeder Fassung ändern; wer sie importiert, lässt vor einem Pin-Wechsel seine eigenen Tests laufen.
+- Der Validator löst jetzt jeden Stufenschlüssel auf, den das Schema zulässt. v0.3.30 übersprang einen Schlüssel, der mit einem Zeilenumbruch endet, etwa `"end:abgebrochen\n"`; er blieb ungeprüft.
 
 Nicht in dieser Ausgabe: parallele Zweige innerhalb eines Vorgangs, die eine Schemaänderung brauchen, und das Vorbereiten späterer Schritte vor ihrer Zeit. Core-Pflichtfelder bleiben unverändert. Das Wheel enthält die statische Viewer-HTML-Ressource und 14 Vorlagen, sieben englische und sieben deutsche.
 
