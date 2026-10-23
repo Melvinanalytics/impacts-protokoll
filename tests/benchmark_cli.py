@@ -65,10 +65,10 @@ def _history_fixture(base: Path, commits: int, blobs: int, mode: str) -> Path:
     elif mode == "distinct":
         selected = [revisions[index * (commits - 1) // 9] for index in range(10)]
     for number, revision in enumerate(selected, 1):
-        run = root / "vorgaenge" / f"video-{number:03}"
+        vorgang = root / "vorgaenge" / f"video-{number:03}"
         entries = []
         for step in steps:
-            attempt = run / step / "001"
+            attempt = vorgang / step / "001"
             (attempt / "input").mkdir(parents=True)
             (attempt / "output").mkdir()
             (attempt / "input" / "auftrag.md").write_text("Eingabe", encoding="utf-8")
@@ -80,7 +80,7 @@ def _history_fixture(base: Path, commits: int, blobs: int, mode: str) -> Path:
             if step == "pruefen":
                 entry["freigabe"] = {"by": "human:benchmark", "at": "2026-08-30T10:00:00+02:00"}
             entries.append(entry)
-        write_context(run / "CONTEXT.md", {
+        write_context(vorgang / "CONTEXT.md", {
             "type": "vorgang", "id": f"vorgang:video-{number:03}",
             "application_revision": f"git-tree:{revision}",
             "laufpfad": entries,

@@ -109,6 +109,6 @@ def read_application(root: Path, shown: str, *, check_slug: bool) -> tuple[list[
     return [], list(nodes.values())
 
 
-def read_run(path: Path, shown: str) -> dict:
-    run = read_file(path, shown)
-    return {"id": run["meta"]["id"], "kind": "vorgang", "parent": None, "children": [], **run}
+def read_vorgang(path: Path, shown: str) -> dict:
+    vorgang = read_file(path, shown)
+    return {"id": vorgang["meta"]["id"], "kind": "vorgang", "parent": None, "children": [], **vorgang}

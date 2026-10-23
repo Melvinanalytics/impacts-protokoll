@@ -8,7 +8,13 @@
     "type": {"const": "hauptprozess"},
     "id": {"type": "string", "pattern": "^hauptprozess:[a-z0-9]+(?:-[a-z0-9]+)*$"},
     "leistung": {"$ref": "urn:impacts:schema:leistung:v1"},
-    "einstieg_ref": {"type": "string", "pattern": "^arbeitsschritt:[a-z0-9]+(?:-[a-z0-9]+)*$"}
+    "einstieg_ref": {"type": "string", "pattern": "^arbeitsschritt:[a-z0-9]+(?:-[a-z0-9]+)*$"},
+    "stufen": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": {"pattern": "^(arbeitsschritt|end|stand):[a-z0-9]+(?:-[a-z0-9]+)*$"},
+      "additionalProperties": {"type": "integer", "minimum": 0, "maximum": 100}
+    }
   },
   "required": ["type", "id", "leistung", "einstieg_ref"]
 }

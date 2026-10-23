@@ -195,7 +195,7 @@ def test_offer_blank_becomes_the_documented_instance_without_changing_inputs(off
     assert offer == before
 
 
-def test_same_blank_fills_an_independent_second_run(offer):
+def test_same_blank_fills_an_independent_second_vorgang(offer):
     template, first, _ = offer
     first_result = fill_offer(template, first)
     second = copy.deepcopy(first)

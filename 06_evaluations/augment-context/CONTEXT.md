@@ -1,6 +1,6 @@
 # Augment point-of-use context walk
 
-This is a synthetic reading evaluation, not a customer record, retrieval engine or executed Run. Start at the [repository router](../../CONTEXT.md) and follow the ordinary Build route. Do not open [EXPECTED.md](EXPECTED.md) until the answers are complete.
+This is a synthetic reading evaluation, not a customer record, retrieval engine or executed Vorgang. Start at the [repository router](../../CONTEXT.md) and follow the ordinary Build route. Do not open [EXPECTED.md](EXPECTED.md) until the answers are complete.
 
 For each case, state:
 

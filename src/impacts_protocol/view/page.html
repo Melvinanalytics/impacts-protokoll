@@ -45,7 +45,7 @@ button.source-control,button.source-ref,button.stated{border:0;padding:0;display
 [hidden]{display:none!important}
 .ic{flex:none;vertical-align:-3px}
 h1,h2,h3,h4,p,li,dd,td,th{overflow-wrap:break-word;hyphens:auto}
-code{font:12.5px ui-monospace,SFMono-Regular,Menlo,monospace}
+code{font:12.5px ui-monospace,SFMono-Regular,Menlo,monospace;hyphens:manual}
 
 /* Karte */
 #map-head{padding:16px 16px 6px;display:grid;gap:8px;font:14px/1.5 -apple-system,BlinkMacSystemFont,"Inter","Segoe UI",Helvetica,Arial,sans-serif}
@@ -406,6 +406,21 @@ const WORDS = {
     "aktuelle_definition": "aktuelle Definition",
     "andere_fassung": "andere Fassung",
     "ende": "Ende ",
+    "stufe": "Stufe ",
+    "stufen_vergeben": "Stufen vergeben für ",
+    "schritten_und_enden": " Schritten und Enden",
+    "datenmodell": "Datenmodell",
+    "datenmodell_sub": "Die Dateiarten dieser Protokollfassung, aus ihren Schemas gelesen. Die Zahl zählt angezeigte Dateien in diesem Arbeitsbereich.",
+    "art": "Art",
+    "pflichtfelder": "Pflichtfelder",
+    "optionale_felder": "Optionale Felder",
+    "verweist_auf": "Verweist auf",
+    "hier": "Hier",
+    "keine": "keine",
+    "laufpfadeintrag": "Laufpfad-Eintrag (Versuch)",
+    "ende_ziel": "Ende",
+    "record_stand": "Record-Stand",
+    "application_fassung": "Application-Fassung (Git-Baum)",
     "uber": "über ",
     "aus": " aus",
     "mensch_entscheidet_2": "Mensch entscheidet: ",
@@ -629,7 +644,7 @@ const WORDS = {
     "verantwortlich": "Verantwortlich",
     "schicht": "Schicht",
     "definition_chip": "Definition, kein Ausführungsstand",
-    "run_chip": "Vorgang, gebundene Definition",
+    "vorgang_chip": "Vorgang, gebundene Definition",
     "ist_chip": "Ist-Aufnahme",
     "aus_der_datei": "ohne Markierung: aus der Datei",
     "abgeleitet": "abgeleitet",
@@ -743,6 +758,21 @@ const WORDS = {
     "aktuelle_definition": "current definition",
     "andere_fassung": "different version",
     "ende": "End ",
+    "stufe": "Stage ",
+    "stufen_vergeben": "Stages assigned to ",
+    "schritten_und_enden": " steps and ends",
+    "datenmodell": "Data model",
+    "datenmodell_sub": "The file kinds of this protocol version, read from its schemas. The count covers files shown in this workspace.",
+    "art": "Kind",
+    "pflichtfelder": "Required fields",
+    "optionale_felder": "Optional fields",
+    "verweist_auf": "Refers to",
+    "hier": "Here",
+    "keine": "none",
+    "laufpfadeintrag": "Laufpfad entry (attempt)",
+    "ende_ziel": "End",
+    "record_stand": "Record state",
+    "application_fassung": "Application revision (Git tree)",
     "uber": "via ",
     "aus": " from",
     "mensch_entscheidet_2": "Human decides: ",
@@ -966,7 +996,7 @@ const WORDS = {
     "verantwortlich": "Responsible",
     "schicht": "Layer",
     "definition_chip": "Definition, no execution position",
-    "run_chip": "Vorgang, bound definition",
+    "vorgang_chip": "Vorgang, bound definition",
     "ist_chip": "As-is capture",
     "aus_der_datei": "unmarked: stated in the file",
     "abgeleitet": "derived",
@@ -1131,6 +1161,8 @@ const FOOT = W.nur_ansicht_mageblich_sind_die_dateien;
 
 /* ---------- shared parts ---------- */
 const badge = key => { const [word, name, cls] = PHASE[key]; return h("span", {class: "badge b-" + cls}, name && icon(name, 14), word); };
+// The Hauptprozess's stage of the current step or reached end; absent when it assigns no stages.
+const stagePill = st => st.stufe == null ? null : h("span", {class: "badge" + (st.stufe === "open" ? " b-open" : ""), text: W.stufe + (st.stufe === "open" ? W.offen : st.stufe)});
 const phaseIcon = (key, size = 16) => PHASE[key] && PHASE[key][1] ? icon(PHASE[key][1], size, {class: "ic " + (own(PHASE_COLOR, key) || "")}) : null;
 function showSource(title, content) {
   const dialog = h("dialog", {class: "source-dialog", "aria-labelledby": "source-title"},
@@ -1361,9 +1393,9 @@ function overviewPage() {
   const fassung = r => r.matches_head === null ? W.kein_vergleich_moglich : r.matches_head ? W.aktuelle_definition : W.andere_fassung;
   const standCell = r => {
     const st = r.stand;
-    if (st.kind === "ended") return [h("div", {class: "pills"}, h("span", {class: "badge b-reached"}, icon("stop", 14), W.ende + quote(st.end))),
+    if (st.kind === "ended") return [h("div", {class: "pills"}, h("span", {class: "badge b-reached"}, icon("stop", 14), W.ende + quote(st.end)), stagePill(st)),
       line(W.uber + quote(st.route) + W.aus, deep(r.page, st.from_step, quote(st.from_title)))];
-    const parts = [h("div", {class: "line"}, badge(st.kind), deep(r.page, st.step, st.step_title))];
+    const parts = [h("div", {class: "line"}, badge(st.kind), stagePill(st), deep(r.page, st.step, st.step_title))];
     if ((st.kind === "current" || st.kind === "waiting") && st.gate === "human")
       parts.push(line(icon("user", 14), W.mensch_entscheidet_2 + st.routes.map(x => x[0]).join(" · ")));
     if (st.kind === "waiting")
@@ -1377,22 +1409,22 @@ function overviewPage() {
     return [h("span", {class: "trail", role: "img", "aria-label": count(r.statuses.length, W.eintrag, W.eintrage) + ": " + words.join(", ")},
       r.statuses.map(x => icon(PHASE[STATUS[x]][1], 12, {class: "ic " + PHASE_COLOR[STATUS[x]]}))), h("small", {text: count(r.statuses.length, W.eintrag, W.eintrage)})];
   };
-  const runRow = (r, a) => {
+  const vorgangRow = (r, a) => {
     if (r.issues.length) return h("tr", null, h("td", {"data-label": W.vorgang}, link(r.page, short(r.id))),
       h("td", {colspan: "3", "data-label": W.stand}, h("span", {class: "badge b-open"}, icon("q", 14), W.nicht_angezeigt_2), issuesBlock(r.issues)));
     return h("tr", null, h("td", {"data-label": W.vorgang}, link(r.page, r.title || short(r.id))),
       h("td", {"data-label": W.stand}, standCell(r)), h("td", {"data-label": W.verlauf}, trail(r)),
       h("td", {"data-label": W.lauft_nach_fassung}, deep(r.page, a ? a.id : null, h("code", {text: rev8(r.revision), title: r.revision})), " " + fassung(r)));
   };
-  const runsTable = (runs, a) => runs.length ? h("div", {class: "tablewrap"}, h("table", {class: "t rt"},
+  const vorgaengeTable = (vorgaenge, a) => vorgaenge.length ? h("div", {class: "tablewrap"}, h("table", {class: "t rt"},
       h("thead", null, h("tr", null, [W.vorgang, W.stand, W.verlauf, W.lauft_nach_fassung].map(t => h("th", {text: t})))),
-      h("tbody", null, runs.map(r => runRow(r, a))))) : h("p", {text: W.keine_vorgange});
+      h("tbody", null, vorgaenge.map(r => vorgangRow(r, a))))) : h("p", {text: W.keine_vorgange});
   let no = 0;
   const application = a => {
     no++;
-    if (a.issues.length) return card(pad(no), a.folder, W.leistung_nicht_angezeigt, "applications/" + a.folder, [issuesBlock(a.issues), runsTable(a.runs, null)], true);
+    if (a.issues.length) return card(pad(no), a.folder, W.leistung_nicht_angezeigt, "applications/" + a.folder, [issuesBlock(a.issues), vorgaengeTable(a.vorgaenge, null)], true);
     const l = a.leistung || {};
-    const other = a.runs.some(r => !r.issues.length && r.matches_head === false);
+    const other = a.vorgaenge.some(r => !r.issues.length && r.matches_head === false);
     const definition = a.current
       ? h("div", {class: "line"}, link(a.page, W.definition_ansehen), count(a.steps, W.arbeitsschritt, W.arbeitsschritte) + W.definition_im_arbeitsstand
         + (a.head === null ? W.nicht_committet : a.same_as_head === true ? W.gleich_der_committeten_fassung + a.head.slice(0, 8)
@@ -1400,10 +1432,11 @@ function overviewPage() {
       : h("p", {text: W.nur_aus_vorgangen_bekannt_leistung_aus});
     return card(pad(no), a.title || short(a.id), a.current ? W.leistung_und_ihre_vorgange : W.leistung_nur_aus_vorgangen_bekannt,
       a.current ? "applications/" + a.folder + W.context_md_wortlaut_der_definition : W.gebundene_fassung + rev8(a.revision),
-      [kv(W.ergebnis, l.ergebnis == null ? missing() : String(l.ergebnis)), h("h4", {text: W.vorgange}), runsTable(a.runs, a),
+      [kv(W.ergebnis, l.ergebnis == null ? missing() : String(l.ergebnis)), h("h4", {text: W.vorgange}), vorgaengeTable(a.vorgaenge, a),
        other && a.head ? h("p", {class: "note", text: W.andere_fassung_der_vorgang_lauft_nach
          + a.head.slice(0, 8) + W.ein_klick_auf_die_fassung_zeigt}) : null,
        definition,
+       a.stufen ? h("p", {class: "muted", text: W.stufen_vergeben + a.stufen.assigned + W.von + a.stufen.of + W.schritten_und_enden}) : null,
        h("details", null, h("summary", {text: W.kennzahl_und_abnahme}),
          kv(W.kennzahl, l.kennzahl == null ? missing() : String(l.kennzahl)),
          kv(W.abnahme, Array.isArray(l.abnahme) ? h("ul", null, l.abnahme.map(x => h("li", {text: String(x)}))) : value(l.abnahme)))], true);
@@ -1426,15 +1459,35 @@ function overviewPage() {
         : h("p", {text: W.keine_datei_mit_type_ist_prozess}),
        ist.skipped.map(x => h("p", {class: "note", text: W.nicht_gelesen + x.file + " (" + skippedReason(x) + ")"}))], true);
   };
-  const refused = p.applications_refused + p.runs_refused;
+  // The packaged schemas as rows: what each file kind must and may hold, and what it points to.
+  const KIND_WORD = {hauptprozess: W.hauptprozess, leistung: W.leistung, teilprozess: W.teilprozess, arbeitsschritt: W.arbeitsschritt,
+    vorgang: W.vorgang, laufpfadeintrag: W.laufpfadeintrag, end: W.ende_ziel, stand: W.record_stand, "git-tree": W.application_fassung};
+  const fieldList = names => names.length ? names.flatMap((f, i) => i ? [", ", h("code", {text: f})] : [h("code", {text: f})]) : h("small", {text: W.keine});
+  const refersList = refers => {
+    const by = new Map();
+    refers.forEach(([field, kind]) => by.set(field, [...(by.get(field) || []), KIND_WORD[kind]]));
+    return by.size ? [...by].map(([field, kinds]) => h("div", null, h("code", {text: field}), " → " + kinds.join(", "))) : h("small", {text: W.keine});
+  };
+  const dataModelCard = () => {
+    no++;
+    const rows = MODEL.data_model.map(r => h("tr", null,
+      h("td", {"data-label": W.art}, h("strong", {text: KIND_WORD[r.name]}), h("div", null, h("small", null, h("code", {text: r.home})))),
+      h("td", {"data-label": W.pflichtfelder}, fieldList(r.required)), h("td", {"data-label": W.optionale_felder}, fieldList(r.optional)),
+      h("td", {"data-label": W.verweist_auf}, refersList(r.refers)), h("td", {"data-label": W.hier, text: String(r.count)})));
+    return card(pad(no), W.datenmodell, W.datenmodell_sub, "02_protocol/schemas/", h("div", {class: "tablewrap"}, h("table", {class: "t rt"},
+      h("thead", null, h("tr", null, [W.art, W.pflichtfelder, W.optionale_felder, W.verweist_auf, W.hier].map(t => h("th", {text: t})))),
+      h("tbody", null, rows))), true);
+  };
+  const refused = p.applications_refused + p.vorgaenge_refused;
   put(h("header", {class: "head"}, markHead("WS", W.workspace),
       h("div", {class: "headmain"}, h("h1", {text: MODEL.selection.workspace}),
-        h("p", {text: count(p.applications, W.leistung, W.leistungen) + " · " + count(p.runs, W.vorgang, W.vorgange) + (p.ist ? " · " + count(p.ist, W.ist_prozess, W.ist_prozesse) : "")}),
-        refused ? h("p", {class: "warnline", text: W.nicht_angezeigt_3 + count(p.applications_refused, W.leistung, W.leistungen) + " · " + count(p.runs_refused, W.vorgang, W.vorgange)}) : null,
+        h("p", {text: count(p.applications, W.leistung, W.leistungen) + " · " + count(p.vorgaenge, W.vorgang, W.vorgange) + (p.ist ? " · " + count(p.ist, W.ist_prozess, W.ist_prozesse) : "")}),
+        refused ? h("p", {class: "warnline", text: W.nicht_angezeigt_3 + count(p.applications_refused, W.leistung, W.leistungen) + " · " + count(p.vorgaenge_refused, W.vorgang, W.vorgange)}) : null,
         p.historic ? h("p", {class: "muted", text: count(p.historic, W.leistung, W.leistungen) + W.nur_aus_vorgangen_bekannt}) : null)),
     MODEL.issues.length ? card("!!", W.workspace_meldungen, W.meldungen_des_validators_die_keiner_angezeigten, null, issuesBlock(MODEL.issues), true) : null,
     h("div", {class: "stack"}, MODEL.applications.map(application), ist ? istCard() : null,
-      MODEL.unassigned.length ? (no++, card(pad(no), W.nicht_zugeordnet, W.vorgange_ohne_lesbare_gebundene_leistung, "vorgaenge/", runsTable(MODEL.unassigned, null), true)) : null),
+      MODEL.unassigned.length ? (no++, card(pad(no), W.nicht_zugeordnet, W.vorgange_ohne_lesbare_gebundene_leistung, "vorgaenge/", vorgaengeTable(MODEL.unassigned, null), true)) : null,
+      dataModelCard()),
     footer());
   document.title = W.workspace_2 + MODEL.selection.workspace;
 }
@@ -1635,23 +1688,23 @@ function istPage() {
 /* ---------- map and sheets of one Application or Vorgang ---------- */
 function selectionPage() {
   const nodes = new Map(MODEL.nodes.map(n => [n.id, n]));
-  const run = MODEL.run;
-  if (run) nodes.set(run.id, run);
+  const vorgang = MODEL.vorgang;
+  if (vorgang) nodes.set(vorgang.id, vorgang);
   const view = MODEL.view || {phase: {}, current: null, ended: null};
-  const entries = run ? run.meta.laufpfad : [];
+  const entries = vorgang ? vorgang.meta.laufpfad : [];
   const stand = MODEL.stand;
   const hp = MODEL.nodes[0];
   const title = n => n.title || short(n.id);
   const titleOf = id => nodes.has(id) ? title(nodes.get(id)) : short(id);
-  const runTitle = run ? run.title || short(run.id) : "";
+  const vorgangTitle = vorgang ? vorgang.title || short(vorgang.id) : "";
   const revision = MODEL.selection.revision;
   const tree = MODEL.map;
   const panel = document.getElementById("panel");
   panel.inert = true;
   const stepButton = (id, label) => { const b = h("button", {class: "plain", type: "button", text: label || titleOf(id)}); b.addEventListener("click", () => open(id)); return b; };
-  const ref = text => nodes.has(text) && text !== run?.id ? stepButton(text) : null;
+  const ref = text => nodes.has(text) && text !== vorgang?.id ? stepButton(text) : null;
   const entriesOf = id => entries.map((e, i) => [e, i + 1]).filter(([e]) => e.arbeitsschritt_ref === id);
-  const phaseOf = id => run ? view.phase[id] || "future" : "";
+  const phaseOf = id => vorgang ? view.phase[id] || "future" : "";
 
   function routeChip(stepId, [route, target, targetTitle, dir]) {
     const chosen = entriesOf(stepId).filter(([e]) => e.gewaehlte_route === route).map(([e]) => e.versuch);
@@ -1662,34 +1715,34 @@ function selectionPage() {
 
   /* The Stand sentence, from the fixed copy table; step names open their sheets. */
   function standSentence(st) {
-    const runName = quote(runTitle);
+    const vorgangName = quote(vorgangTitle);
     const step = () => ["„", stepButton(st.step, st.step_title), "“"];
     if (st.kind === "definition") return [h("p", {text: W.definition_ohne_vorgang_aufgeklappt_zeigt_die})];
-    if (st.kind === "current") return [h("p", null, runName + W.steht_bei, step(), " (" + st.part_title + W.versuch_2 + st.versuch
+    if (st.kind === "current") return [h("p", null, vorgangName + W.steht_bei, step(), " (" + st.part_title + W.versuch_2 + st.versuch
         + W.laut_verlauf_ist_dieser_versuch_begonnen),
       ...timeLines(st).map(text => h("p", {class: "muted", text})),
       h("div", {class: "line"}, h("span", null, st.gate === "human" ? [icon("user", 14), W.weiter_nur_uber_die_entscheidung_eines] : W.ausgange_laut_definition),
         st.routes.map(row => routeChip(st.step, row)))];
-    if (st.kind === "next") return [h("p", null, runName + W.steht_bei, step(), W.abgeleitet_eintrag + st.entry + W.schloss,
+    if (st.kind === "next") return [h("p", null, vorgangName + W.steht_bei, step(), W.abgeleitet_eintrag + st.entry + W.schloss,
       quote(st.from_title) + W.mit_der_route + quote(st.route) + W.ab_und_diese_route_fuhrt_hierher)];
     if (st.kind === "waiting") return [
-      h("p", null, runName + W.wartet_bei, step(), W.versuch_3 + st.versuch + ". "
+      h("p", null, vorgangName + W.wartet_bei, step(), W.versuch_3 + st.versuch + ". "
         + (st.ausloeser ? W.weiter_wenn_2 + st.ausloeser + "." : W.der_verlauf_nennt_keinen_ausloser_fur)),
       st.continuation_ref ? h("p", {class: "muted", text: W.fortsetzung_in_2 + st.continuation_ref}) : null,
       ...timeLines(st).map(text => h("p", {class: "muted", text}))];
-    return [h("p", null, runName + W.ist_beendet_ende + quote(st.end) + W.erreicht_uber_die_route + quote(st.route) + W.aus_2,
+    return [h("p", null, vorgangName + W.ist_beendet_ende + quote(st.end) + W.erreicht_uber_die_route + quote(st.route) + W.aus_2,
       "„", stepButton(st.from_step, st.from_title), W.eintrag_2 + st.entry + W.von + st.entries + W.ein_ende_ist_ein_fakt_kein)];
   }
   const standBadge = st => st.kind === "ended" ? h("span", {class: "badge b-reached"}, icon("stop", 14), W.ende + quote(st.end)) : Object.hasOwn(PHASE, st.kind) ? badge(st.kind) : null;
 
   /* ----- triad per element: only what the files state; a missing part says so ----- */
-  const filePath = n => run ? n.path_in_revision + W.in_fassung + rev8(revision) : site ? "applications/" + n.path_in_revision : n.path_in_revision;
-  const where = n => [src(filePath(n), n.path), run ? null : src(W.fassung + rev8(revision), revision), src(W.prufsumme + n.sha256.slice(0, 8), n.sha256),
+  const filePath = n => vorgang ? n.path_in_revision + W.in_fassung + rev8(revision) : site ? "applications/" + n.path_in_revision : n.path_in_revision;
+  const where = n => [src(filePath(n), n.path), vorgang ? null : src(W.fassung + rev8(revision), revision), src(W.prufsumme + n.sha256.slice(0, 8), n.sha256),
     n.meta_lines ? src(W.dateikopf_zeilen + n.meta_lines[0] + "–" + n.meta_lines[1]) : null];
   const leistung = () => hp.meta.leistung || {};
   const toHp = () => stepButton(hp.id, String(leistung().ergebnis ?? title(hp)));
   /* On a Vorgang the Leistung comes from the bound revision, which may differ from the current definition. */
-  const leistungRef = () => run ? [W.leistung_laut_gebundener_fassung, src(rev8(revision), revision), ": ", toHp()] : [W.leistung_2, toHp()];
+  const leistungRef = () => vorgang ? [W.leistung_laut_gebundener_fassung, src(rev8(revision), revision), ": ", toHp()] : [W.leistung_2, toHp()];
   let currentSheet = null;
   const sectionButton = (id, place) => {
     const b = h("button", {class: "plain", type: "button", text: quote(place.heading) + W.zeile_2 + place.line + ")"});
@@ -1699,7 +1752,7 @@ function selectionPage() {
 
   function stepPhaseSentence(id) {
     const phase = phaseOf(id);
-    if (!run) return W.schritt_der_definition_ohne_vorgang_kein;
+    if (!vorgang) return W.schritt_der_definition_ohne_vorgang_kein;
     /* The full Stand sentence already stands in the page head; here only what this step adds. */
     if (phase === "next") return W.noch_kein_eintrag_die_route + quote(stand.route) + W.aus_2 + quote(stand.from_title) + W.fuhrt_hierher;
     if (phase === "current") return W.laut_verlauf_ist_ein_versuch_begonnen;
@@ -1725,7 +1778,7 @@ function selectionPage() {
   }
   function stepTriad(id) {
     const n = nodes.get(id), phase = phaseOf(id);
-    return triad([line(where(n)), run ? line(entriesOf(id).map(([, i]) => src(W.laufpfad_eintrag + i + W.von + entries.length))) : null],
+    return triad([line(where(n)), vorgang ? line(entriesOf(id).map(([, i]) => src(W.laufpfad_eintrag + i + W.von + entries.length))) : null],
       [h("div", null, stepPhaseSentence(id)), n.job ? h("p", null, W.der_schritt_sagt_uber_sich, inline(n.job), "“") : line(W.der_schritt_sagt_uber_sich_2, missing()),
        phase === "current" || phase === "waiting" ? h("p", {text: W.ob_jede_deklarierte_eingabe_vorliegt_pruft}) : null],
       stepWhy(id));
@@ -1740,7 +1793,7 @@ function selectionPage() {
       leistung().ergebnis == null ? null : h("p", {text: W.wortlaut_der_definition + quote(leistung().ergebnis)}),
       [leistung().kennzahl == null ? null : h("p", {text: W.kennzahl_2 + leistung().kennzahl}),
        Array.isArray(leistung().abnahme) && leistung().abnahme.length ? [h("p", {text: W.abnahme_2}), h("ul", {class: "plain"}, leistung().abnahme.map(x => h("li", {text: String(x)})))] : null]);
-    return triad(line(src(run.path), src(W.prufsumme + run.sha256.slice(0, 8), run.sha256), src(W.gebunden_an_fassung + rev8(run.meta.application_revision), String(run.meta.application_revision)),
+    return triad(line(src(vorgang.path), src(W.prufsumme + vorgang.sha256.slice(0, 8), vorgang.sha256), src(W.gebunden_an_fassung + rev8(vorgang.meta.application_revision), String(vorgang.meta.application_revision)),
         src(entries.length + W.laufpfad_eintrage)),
       h("p", {text: W.ein_vorgang_lauft_nach_der_fassung}),
       leistung().ergebnis == null ? null : h("p", null, leistungRef()));
@@ -1749,7 +1802,7 @@ function selectionPage() {
     const e = entries[index - 1], id = e.arbeitsschritt_ref, key = STATUS[e.status];
     const resume = e.wiedereinstieg || {};
     const sums = [["eingabe_hash", W.prufsumme_der_eingaben], ["ausgabe_hash", W.prufsumme_der_ausgaben]].filter(([k]) => e[k] != null);
-    return triad([h("p", {text: W.laufpfad_eintrag + index + W.von + entries.length + W.in + run.path}),
+    return triad([h("p", {text: W.laufpfad_eintrag + index + W.von + entries.length + W.in + vorgang.path}),
         sums.length ? h("details", null, h("summary", {text: W.prufsummen}), sums.map(([k, label]) => h("p", null, label + ": ", src(hash12(e[k]), String(e[k])))),
           h("p", {class: "note", text: W.fingerabdruck_der_gebundenen_eingaben_beim_offnen})) : null],
       h("p", {text: W.versuch_4 + e.versuch + ": " + PHASE[key][0] + (e.gewaehlte_route ? W.route + quote(e.gewaehlte_route) : "")
@@ -1780,7 +1833,7 @@ function selectionPage() {
     boxes.push(n);
     n.children.forEach(c => index(c, depth + 1, n));
   })(tree, 0, null);
-  const initial = n => !run ? n.depth < 2 : n.kind === "hp" || (n.kind === "tp" ? n.children.some(c => c.phase !== "future") : n.kind === "as" && n.phase !== "future");
+  const initial = n => !vorgang ? n.depth < 2 : n.kind === "hp" || (n.kind === "tp" ? n.children.some(c => c.phase !== "future") : n.kind === "as" && n.phase !== "future");
   boxes.forEach(n => { n.open = initial(n); });
   const position = boxes.find(n => n.kind === "as" && ["current", "next", "waiting"].includes(n.phase)) || boxes.find(n => n.kind === "route" && n.phase === "reached") || null;
   let selected = null, expanded = false;
@@ -1974,7 +2027,7 @@ function selectionPage() {
         "stroke-width": Math.min(st.width, 2), "stroke-dasharray": st.dash, opacity: st.opacity})); };
     const kinds = ["hp", "tp", "as"].filter(k => boxes.some(n => n.kind === k)).map(k => h("span", {class: "li"}, h("span", {class: "kchip", text: k.toUpperCase()}), MARK_WORD[k.toUpperCase()]));
     const items = [...kinds, ...Object.keys(PHASE).filter(k => keys.has(k)).map(k => h("span", {class: "li"}, swatch(k), phaseIcon(k, 14), PHASE[k][0]))];
-    if (run) items.push(h("span", {class: "li"}, icon("doc", 14), W.verlauf_liste_laufpfad_im_dateikopf_des));
+    if (vorgang) items.push(h("span", {class: "li"}, icon("doc", 14), W.verlauf_liste_laufpfad_im_dateikopf_des));
     if (dirs.has("back")) items.push(h("span", {class: "li"}, icon("back", 14), W.schleife_fuhrt_zum_selben_oder_einem));
     if (dirs.has("end")) items.push(h("span", {class: "li"}, icon("stop", 14), W.ende_2));
     if (flags.has("gate")) items.push(h("span", {class: "li"}, icon("user", 14), W.mensch_entscheidet));
@@ -1997,14 +2050,14 @@ function selectionPage() {
     const svg = h("button", {type: "button", text: W.svg});
     svg.addEventListener("click", exportSvg);
     /* The h1 names the selection; this crumb says where it leads, and keeps its words on narrow screens. */
-    const up = run ? crumb("V", W.vorgangsblatt_mit_verlauf, () => open(run.id)) : crumb("HP", W.blatt_des_hauptprozesses, () => open(hp.id));
+    const up = vorgang ? crumb("V", W.vorgangsblatt_mit_verlauf, () => open(vorgang.id)) : crumb("HP", W.blatt_des_hauptprozesses, () => open(hp.id));
     up.append(icon("arrow", 14));
     up.classList.add("keep");
-    up.setAttribute("aria-label", run ? W.vorgangsblatt_mit_verlauf_offnen + runTitle : W.blatt_des_hauptprozesses_offnen + title(hp));
+    up.setAttribute("aria-label", vorgang ? W.vorgangsblatt_mit_verlauf_offnen + vorgangTitle : W.blatt_des_hauptprozesses_offnen + title(hp));
     fill(document.getElementById("map-head"), crumbs([up]),
-      h("h1", {text: run ? runTitle : title(hp)}),
-      run ? h("p", {class: "lede muted", text: W.ablauf + title(hp)}) : null,
-      h("div", {class: "lede"}, run ? h("div", {class: "pills"}, standBadge(stand)) : null, standSentence(stand)),
+      h("h1", {text: vorgang ? vorgangTitle : title(hp)}),
+      vorgang ? h("p", {class: "lede muted", text: W.ablauf + title(hp)}) : null,
+      h("div", {class: "lede"}, vorgang ? h("div", {class: "pills"}, standBadge(stand), stagePill(stand)) : null, standSentence(stand)),
       h("div", {class: "bar"}, toggle, json, svg),
       legend());
   }
@@ -2020,7 +2073,7 @@ function selectionPage() {
     if (!n.children.length) return null;
     return card(null, n.kind === "hauptprozess" ? W.teilprozesse : W.arbeitsschritte, W.in_routenreihenfolge, null,
       h("ul", {class: "plain"}, n.children.map(c => h("li", {class: "line"}, nodes.get(c).kind === "arbeitsschritt" ? phaseIcon(phaseOf(c)) : null, stepButton(c),
-        nodes.get(c).kind === "arbeitsschritt" && run ? h("small", {text: PHASE[phaseOf(c)][0]}) : null))), false);
+        nodes.get(c).kind === "arbeitsschritt" && vorgang ? h("small", {text: PHASE[phaseOf(c)][0]}) : null))), false);
   }
 
   function timeline(list) {
@@ -2136,40 +2189,40 @@ function selectionPage() {
     const owner = owners.length ? kv(W.verantwortlich, owners) : null;
     const part = nodes.get(n.parent);
     const jobPart = parts.find(p => p.area === "job");
-    put(sheetNav(crumbs([run ? crumb("V", runTitle, () => open(run.id)) : null,
+    put(sheetNav(crumbs([vorgang ? crumb("V", vorgangTitle, () => open(vorgang.id)) : null,
       ...chain(id).map(c => crumb(KIND[nodes.get(c).kind][0], titleOf(c), c === id ? null : () => open(c)))], toMap)),
       sheetHead("AS", W.arbeitsschritt,
         [n.title ? kv(W.name, h("h1", {text: n.title, title: n.path + W.zeile_3 + n.title_line})) : null,
           n.job_summary ? kv(W.auftrag, sourced(n, jobPart ? (jobPart.blocks.find(b => b.type === "para") || jobPart).line : metaLine, inline(n.job_summary))) : null,
           part ? kv(W.gehort_zu, [stepButton(part.id), " · ", stepButton(hp.id)]) : null],
-        [owner, kv(W.stand, [run ? sourced(run, run.meta_lines ? run.meta_lines[0] : 1, [standBadge(stand),
+        [owner, kv(W.stand, [vorgang ? sourced(vorgang, vorgang.meta_lines ? vorgang.meta_lines[0] : 1, [standBadge(stand), stagePill(stand),
           stand.step ? stepButton(stand.step, stand.step_title) : null, stand.versuch ? h("small", {text: W.versuch_2 + stand.versuch}) : null]) : h("small", {text: rev8(revision), title: String(revision)}), fileStand(n)]),
-          kv(W.schicht, [run ? W.vorgang : W.definition, h("span", {class: "tag", text: run ? W.run_chip : W.definition_chip})])]),
+          kv(W.schicht, [vorgang ? W.vorgang : W.definition, h("span", {class: "tag", text: vorgang ? W.vorgang_chip : W.definition_chip})])]),
         row(section("job"), section("inputs"), section("processing")),
       areaContent("handgrips").length ? row(section("handgrips", "wide"), h("div", {class: "stack"}, section("outputs"), section("check")))
         : row(section("outputs"), section("check")),
       row(section("authority"), section("flow", "wide")),
       extras.length ? row(extras) : null,
       row(nec, openSection),
-      run && entriesOf(id).length ? row(sheetSection(null, W.versuche, W.jeder_eintrag_dieses_schritts_im_verlauf,
-        originOf(run, "laufpfad", run.meta_lines ? run.meta_lines[0] : 1), timeline(entriesOf(id)), "full")) : null,
+      vorgang && entriesOf(id).length ? row(sheetSection(null, W.versuche, W.jeder_eintrag_dieses_schritts_im_verlauf,
+        originOf(vorgang, "laufpfad", vorgang.meta_lines ? vorgang.meta_lines[0] : 1), timeline(entriesOf(id)), "full")) : null,
       h("div", {id: "sheet-meta"}, rawDetails(W.alle_angaben_aus_dem_dateikopf, withoutKeys(n.meta, ["type", "id", "laufpfad", "application_revision"]), ref)), footer());
     document.title = W.arbeitsschritt + ": " + title(n);
   }
 
   function sheet(id) {
     const n = nodes.get(id);
-    if (n.kind === "vorgang") return runSheet();
+    if (n.kind === "vorgang") return vorgangSheet();
     if (n.kind === "arbeitsschritt") return workstepSheet(n);
     sheetMode(false);
     const [mark, level] = KIND[n.kind], phase = "";
     const gate = n.meta.gate === "human", sacred = n.meta.customer_touchpoint === "sacred";
     const cards = [];
-    put(crumbs([run ? crumb("V", runTitle, () => open(run.id)) : null, ...chain(id).map(c => crumb(KIND[nodes.get(c).kind][0], titleOf(c), c === id ? null : () => open(c)))], toMap),
+    put(crumbs([vorgang ? crumb("V", vorgangTitle, () => open(vorgang.id)) : null, ...chain(id).map(c => crumb(KIND[nodes.get(c).kind][0], titleOf(c), c === id ? null : () => open(c)))], toMap),
       h("header", {class: "head"}, markHead(mark, level),
         h("div", {class: "headmain"}, h("h1", {text: title(n)}),
           h("div", {class: "pills"}, phase ? badge(phase) : null, gate ? gatePill() : null, sacred ? sacredPill() : null),
-          run ? h("div", null, standSentence(stand)) : null)),
+          vorgang ? h("div", null, standSentence(stand)) : null)),
       nodeTriad(id),
       h("div", {class: "grid"}, cards, sectionCards(n), children(n)),
       rawDetails(W.alle_angaben_aus_dem_dateikopf, withoutKeys(n.meta, ["type", "id", "laufpfad", "application_revision"]), ref),
@@ -2177,20 +2230,20 @@ function selectionPage() {
     document.title = level + ": " + title(n);
   }
 
-  function runSheet() {
+  function vorgangSheet() {
     sheetMode(false);
     const st = stand;
     const possible = st.kind === "waiting" ? st.routes.filter(r => r[3] !== "end" && view.phase[r[1]] === "possible") : [];
-    put(crumbs([crumb("V", runTitle)], toMap),
+    put(crumbs([crumb("V", vorgangTitle)], toMap),
       h("header", {class: "head"}, markHead("V", W.vorgang),
-        h("div", {class: "headmain"}, h("h1", {text: runTitle}), h("div", {class: "pills"}, standBadge(st)), h("div", null, standSentence(st)),
+        h("div", {class: "headmain"}, h("h1", {text: vorgangTitle}), h("div", {class: "pills"}, standBadge(st), stagePill(st)), h("div", null, standSentence(st)),
           possible.length ? kv(W.laut_routen_moglich_3, [possible.map(r => h("span", {class: "tag", text: r[2]})), W.aus_2 + quote(st.step_title)]) : null)),
-      nodeTriad(run.id),
-      h("div", {class: "grid"}, card(null, W.verlauf, W.jeder_eintrag_in_reihenfolge_der_datei, run.path + " · laufpfad", timeline(entries.map((e, i) => [e, i + 1])), true),
-        sectionCards(run)),
-      rawDetails(W.alle_angaben_aus_dem_dateikopf, withoutKeys(run.meta, ["type", "id", "laufpfad"]), ref),
+      nodeTriad(vorgang.id),
+      h("div", {class: "grid"}, card(null, W.verlauf, W.jeder_eintrag_in_reihenfolge_der_datei, vorgang.path + " · laufpfad", timeline(entries.map((e, i) => [e, i + 1])), true),
+        sectionCards(vorgang)),
+      rawDetails(W.alle_angaben_aus_dem_dateikopf, withoutKeys(vorgang.meta, ["type", "id", "laufpfad"]), ref),
       footer());
-    document.title = W.vorgang_2 + runTitle;
+    document.title = W.vorgang_2 + vorgangTitle;
   }
 
   function render() {
@@ -2199,7 +2252,7 @@ function selectionPage() {
     if (nodes.has(id)) { hidePanel(false); show("sheet-view"); sheet(id); currentSheet = id; window.scrollTo(0, 0); return false; }
     currentSheet = null;
     show("map-view");
-    document.title = (run ? runTitle : title(hp)) + W.karte_2;
+    document.title = (vorgang ? vorgangTitle : title(hp)) + W.karte_2;
     return true;
   }
 
@@ -2209,7 +2262,7 @@ function selectionPage() {
   draw();
   window.addEventListener("popstate", render);
   window.addEventListener("hashchange", render);
-  if (render() && run && position) {
+  if (render() && vorgang && position) {
     const box = boxElement(position.key);
     /* Scroll by arithmetic: scrollIntoView would move the browser's sequential focus start past the page head. */
     const wrap = document.querySelector("#map-view .wrap");

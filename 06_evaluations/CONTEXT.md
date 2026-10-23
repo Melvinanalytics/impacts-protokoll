@@ -17,4 +17,4 @@ This directory contains optional deterministic Core checks and a reading evaluat
 
 - [Listening-intake screen](listening-intake/CONTEXT.md): implementation-independent synthetic 20-message screening protocol, frozen reuse questions and blinded scoring; no run or runtime claim.
 
-Package evaluations live with their package. Customer regression material stays in the customer repository. Do not load sibling walks or exhaust their outgoing links.
+Cases frozen before v0.3.30 keep their wording; there, Run names a Vorgang. Package evaluations live with their package. Customer regression material stays in the customer repository. Do not load sibling walks or exhaust their outgoing links.

@@ -23,7 +23,7 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
 
 from impacts_protocol import surface_hash
-from tests.c_owner_support import committed_workspace, make_attempt, write_run
+from tests.c_owner_support import committed_workspace, make_attempt, write_vorgang
 from tests.support import git, read_context, replace_context
 
 
@@ -45,14 +45,14 @@ def measure(base: Path, count: int, repetitions: int) -> dict:
     git(root, "add", "applications")
     git(root, "commit", "-qm", "declare aggregate input")
     revision = git(root, "rev-parse", "HEAD:applications/video")
-    run = root / "vorgaenge/video-001"
-    attempt = make_attempt(run, "start", 1)
+    vorgang = root / "vorgaenge/video-001"
+    attempt = make_attempt(vorgang, "start", 1)
     (attempt / "input/items").mkdir()
     payload = b"synthetic scale input\n"
     for index in range(count):
         (attempt / "input/items" / f"item-{index:06}.txt").write_bytes(payload)
     digest = surface_hash(attempt, ["input/items"])
-    write_run(root, "video-001", revision, [{
+    write_vorgang(root, "video-001", revision, [{
         "arbeitsschritt_ref": "arbeitsschritt:start", "versuch": 1,
         "status": "aktiv", "eingabe_hash": digest,
     }])

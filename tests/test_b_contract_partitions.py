@@ -403,8 +403,8 @@ def test_versuch_boundaries(versuch, expected):
     assert _schema_valid("vorgang", doc) is expected
 
 
-def test_versuch_1000_is_rejected_by_schema_and_run_validation(tmp_path):
-    """The run schema caps attempts at 999, matching templates/application.md."""
+def test_versuch_1000_is_rejected_by_schema_and_vorgang_validation(tmp_path):
+    """The Vorgang schema caps attempts at 999, matching templates/application.md."""
     doc = _vorgang()
     doc["laufpfad"][0]["versuch"] = 1000
     assert not _schema_valid("vorgang", doc)
@@ -431,7 +431,7 @@ def test_versuch_1000_is_rejected_by_schema_and_run_validation(tmp_path):
     assert "schema.invalid" in {issue.code for issue in report.issues}
 
 
-def test_freigabe_at_invalid_shape_is_rejected_by_schema_and_run_validation(tmp_path):
+def test_freigabe_at_invalid_shape_is_rejected_by_schema_and_vorgang_validation(tmp_path):
     """The pattern in schemas/vorgang.schema.json rejects this lexical shape.
     Calendar validation remains in validator._valid_human_approval."""
     doc = _vorgang()
@@ -503,7 +503,7 @@ def test_self_loop_with_exit_remains_valid(app_root):
 
 
 def test_cross_application_step_route_rejected(app_root):
-    """Templates: independent Applications exchange results via separate runs,
+    """Templates: independent Applications exchange results via separate Vorgaenge,
     never cross-Application step routes."""
     write_application(app_root / "applications/andere")
     path = app_root / "applications/andere/CONTEXT.md"
@@ -585,6 +585,6 @@ def test_continuation_ref_is_not_an_execution_route(tmp_path):
                       "eingabe_hash": surface_hash(attempt, ["input/auftrag.md"]),
                       "wiedereinstieg": {"ausloeser": "Kundenanruf",
                                          "continuation_ref": "arbeitsschritt:pruefen"}}]})
-    # The look-alike step reference stays an event reference: run is valid and
+    # The look-alike step reference stays an event reference: Vorgang is valid and
     # the current step remains 'start' (no transition semantics attached).
     assert validate(root).valid

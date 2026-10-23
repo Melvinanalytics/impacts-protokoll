@@ -8,6 +8,12 @@ leistung:
     - Check report is available
     - Decision is approved by the responsible human
 einstieg_ref: arbeitsschritt:pruefen
+stufen:  # optional, see Path to the result below; otherwise remove this block
+  stand:beantragt: 0
+  arbeitsschritt:pruefen: 30
+  arbeitsschritt:entscheiden: 70
+  end:entschieden: 100
+  end:abgelehnt: 100
 ---
 
 # Decide a review case
@@ -40,7 +46,7 @@ Which human boundaries apply, why, and who may change them? Input variance, resu
 
 ## Path to the result
 
-Which subprocesses contribute to the result, how their prerequisites are obtained, and how success, rejection or an incomplete case ends or waits. Name each `end:<slug>` that achieves the accepted result; every other end is a negative end. `einstieg_ref` and workstep routes own the sequence; this explanation does not maintain a second route table. Independent Applications exchange evidenced results through separate Vorgänge, not cross-Application step routes. Optionally assign ordered stage labels, such as 0 to 100, to every workstep and end and to the record states a case passes before `einstieg_ref`. A stage ranks position, not effort, value or chance of success; rework may lower it.
+Which subprocesses contribute to the result, how their prerequisites are obtained, and how success, rejection or an incomplete case ends or waits. Name each `end:<slug>` that achieves the accepted result; every other end is a negative end. `einstieg_ref` and workstep routes own the sequence; this explanation does not maintain a second route table. Independent Applications exchange evidenced results through separate Vorgänge, not cross-Application step routes. Optionally assign stages in `stufen`: an integer from 0 to 100 for every workstep and end and for the record states a case passes before `einstieg_ref`, keyed `arbeitsschritt:<slug>`, `end:<slug>` or `stand:<slug>`, such as `arbeitsschritt:pruefen: 40`. A stage ranks position, not effort, value or chance of success; rework may lower it.
 
 ## Throughput and lead time
 

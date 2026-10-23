@@ -166,22 +166,22 @@ class Harness:
     def __init__(self, root: Path, revision: str):
         self.root = root
         self.revision = revision
-        self.run_root = root / "vorgaenge" / VORGANG
+        self.vorgang_root = root / "vorgaenge" / VORGANG
         self.laufpfad: list[dict] = []
         self.steps = _application_steps(root, revision)
         self._schemas = SchemaRegistry()
 
     def attempt(self, slug: str, versuch: int) -> Path:
-        return self.run_root / slug / f"{versuch:03d}"
+        return self.vorgang_root / slug / f"{versuch:03d}"
 
     def open(self, slug: str, versuch: int, inputs: dict[str, str]) -> dict:
-        if self.laufpfad or self.run_root.exists():
+        if self.laufpfad or self.vorgang_root.exists():
             raise ProofError("Successor must open through a checked advance")
         proposed = self._proposed_active_entry(slug, versuch)
-        self._preflight_run([proposed])
+        self._preflight_vorgang([proposed])
         if self.steps[slug].get("gate") == "human":
             raise ProofError("Human Gate must open through a proven producer handoff")
-        # Initial opening has no current Run, but still checks its bound entry
+        # Initial opening has no current Vorgang, but still checks its bound entry
         # and complete input set before creating any attempt files.
         metadata, _ = _frontmatter_and_body(_git_show(self.root, self.revision, "CONTEXT.md").decode())
         if metadata["einstieg_ref"] != f"arbeitsschritt:{slug}" or versuch != 1:
@@ -205,7 +205,7 @@ class Harness:
             "continuation_ref": continuation_ref,
         }
         proposed = dict(entry, status="wartend", wiedereinstieg=resume)
-        self._preflight_run([*self.laufpfad[:-1], proposed])
+        self._preflight_vorgang([*self.laufpfad[:-1], proposed])
         entry["status"] = "wartend"
         entry["wiedereinstieg"] = resume
         self._write()
@@ -352,7 +352,7 @@ class Harness:
             )
             raise ProofError(f"Proposed {name} metadata fails schema: {details}")
 
-    def _preflight_run(self, entries: list[dict]) -> None:
+    def _preflight_vorgang(self, entries: list[dict]) -> None:
         metadata = {
             "type": "vorgang",
             "id": f"vorgang:{VORGANG}",
@@ -363,7 +363,7 @@ class Harness:
         try:
             json.dumps(metadata, ensure_ascii=False).encode("utf-8")
         except UnicodeEncodeError as error:
-            raise ProofError("Proposed run metadata is not valid UTF-8") from error
+            raise ProofError("Proposed Vorgang metadata is not valid UTF-8") from error
 
     def _preflight_completion(
         self, entry: dict, route: str, freigabe: dict | None = None,
@@ -379,7 +379,7 @@ class Harness:
         entries = [*self.laufpfad[:-1], proposed]
         if successor is not None:
             entries.append(successor)
-        self._preflight_run(entries)
+        self._preflight_vorgang(entries)
         if freigabe is not None:
             problem = _approval_problem(freigabe)
             if problem is not None:
@@ -452,15 +452,15 @@ class Harness:
     def _preflight_current(self, entry: dict) -> None:
         if not self.laufpfad or self.laufpfad[-1] is not entry or entry.get("status") not in {"aktiv", "wartend"}:
             raise ProofError("Transition requires the current unresolved entry")
-        persisted = load_frontmatter(self.run_root / "CONTEXT.md")
+        persisted = load_frontmatter(self.vorgang_root / "CONTEXT.md")
         binding = {"type": "vorgang", "id": f"vorgang:{VORGANG}", "application_revision": f"git-tree:{self.revision}"}
         if any(persisted.get(key) != value for key, value in binding.items()):
-            raise ProofError("Run binding differs from the current harness binding")
+            raise ProofError("Vorgang binding differs from the current harness binding")
         if persisted.get("laufpfad") != self.laufpfad:
-            raise ProofError("Run state differs from the current harness state")
+            raise ProofError("Vorgang state differs from the current harness state")
         report = validate(self.root)
         if not report.valid:
-            raise ProofError("Current run fails validation: " + ", ".join(sorted({issue.code for issue in report.issues})))
+            raise ProofError("Current Vorgang fails validation: " + ", ".join(sorted({issue.code for issue in report.issues})))
 
     def _require_inputs(self, slug: str, inputs: dict[str, str]) -> None:
         if not isinstance(inputs, dict):
@@ -500,15 +500,15 @@ class Harness:
             path = attempt / output
             if path.is_file():
                 label = "Abgeschlossene Ausgabe" if current["status"] == "abgeschlossen" else "Entwurf; noch nicht abgeschlossen"
-                stand.append(f"{label}: [{output}]({path.relative_to(self.run_root).as_posix()}).")
+                stand.append(f"{label}: [{output}]({path.relative_to(self.vorgang_root).as_posix()}).")
         if current["status"] == "wartend":
             resume = current["wiedereinstieg"]
             stand.append(f"Offen: belegter Eingang zu {resume['ausloeser']} ({resume['continuation_ref']}).")
             stand.append("Der Antragsteller liefert die Angaben; ein Mensch führt den Kontakt. Erlaubt bleibt die Vorbereitung der Rückfrage; kein automatischer Versand.")
         body = "\n\n".join(stand)
-        self.run_root.mkdir(parents=True, exist_ok=True)
-        (self.run_root / "CONTEXT.md").write_text(
-            f"---\n{frontmatter}\n---\n\n# Prüffall 001\n\nSynthetischer Lauf des Cold Walk.\n\n## Stand\n\n{body}\n",
+        self.vorgang_root.mkdir(parents=True, exist_ok=True)
+        (self.vorgang_root / "CONTEXT.md").write_text(
+            f"---\n{frontmatter}\n---\n\n# Prüffall 001\n\nSynthetischer Vorgang des Cold Walk.\n\n## Stand\n\n{body}\n",
             encoding="utf-8",
         )
 
@@ -719,8 +719,8 @@ def walk(base: Path, *, decision_path: Path | None = None) -> WalkResult:
     waiting_attempt = harness.attempt("nachfordern", 1)
     waiting_input = waiting_attempt / "input/pruefbericht.md"
     bound_report = waiting_input.read_bytes()
-    run_file = harness.run_root / "CONTEXT.md"
-    waiting_state = load_frontmatter(run_file)
+    vorgang_file = harness.vorgang_root / "CONTEXT.md"
+    waiting_state = load_frontmatter(vorgang_file)
     finding = next(
         (line.removeprefix("Befund: fehlt: ")
         for line in bound_report.decode("utf-8").splitlines()
@@ -733,10 +733,10 @@ def walk(base: Path, *, decision_path: Path | None = None) -> WalkResult:
     draft_path = waiting_attempt / "output/nachforderung.md"
     _write_files(waiting_attempt, {"output/nachforderung.md": draft})
     harness._write()
-    visible_state = run_file.read_text(encoding="utf-8")
+    visible_state = vorgang_file.read_text(encoding="utf-8")
     if (
         draft_path.read_text(encoding="utf-8") == draft
-        and load_frontmatter(run_file) == waiting_state
+        and load_frontmatter(vorgang_file) == waiting_state
         and waiting_input.read_bytes() == bound_report
         and not {"gewaehlte_route", "freigabe", "ausgabe_hash"} & entry.keys()
         and "nachfordern/001/output/nachforderung.md" in visible_state
@@ -778,12 +778,12 @@ def walk(base: Path, *, decision_path: Path | None = None) -> WalkResult:
         **common_inputs,
     }
     outputs = {"output/nachforderung.md": draft, response_handoff.producer_output: second_record}
-    before_response = _directory_digest(harness.run_root)
+    before_response = _directory_digest(harness.vorgang_root)
     if _is_rejected(
         lambda: harness.advance(entry, outputs, "nachgereicht", "pruefen", 2, response_inputs),
         "no received source file",
     ):
-        if _directory_digest(harness.run_root) == before_response:
+        if _directory_digest(harness.vorgang_root) == before_response:
             rejections.add("wait.missing_response")
 
     # External receipt and a human edit are synthetic fixtures, not agent-generated approval.
@@ -792,7 +792,7 @@ def walk(base: Path, *, decision_path: Path | None = None) -> WalkResult:
         lambda: harness.advance(entry, outputs, "nachgereicht", "pruefen", 2, response_inputs),
         "differs from received source",
     ):
-        if _directory_digest(harness.run_root) == before_response:
+        if _directory_digest(harness.vorgang_root) == before_response:
             rejections.add("wait.response_mismatch")
     _write_files(root, {response_ref: second_record})
     external = root.parent / "outside-response.md"
@@ -818,15 +818,15 @@ def walk(base: Path, *, decision_path: Path | None = None) -> WalkResult:
         harness._write()
         escape_link.unlink()
         external.unlink()
-    if all(refused) and _directory_digest(harness.run_root) == before_response:
+    if all(refused) and _directory_digest(harness.vorgang_root) == before_response:
         rejections.add("wait.unsafe_response_path")
     edited_draft = draft + "Bitte geben Sie bei der Rückmeldung das Aktenzeichen an.\n"
     draft_path.write_text(edited_draft, encoding="utf-8")
-    before_retry = _directory_digest(harness.run_root)
+    before_retry = _directory_digest(harness.vorgang_root)
     try:
         harness.advance(entry, outputs, "nachgereicht", "pruefen", 2, response_inputs)
     except ProofError as error:
-        if "Existing output differs" in str(error) and _directory_digest(harness.run_root) == before_retry:
+        if "Existing output differs" in str(error) and _directory_digest(harness.vorgang_root) == before_retry:
             rejections.add("wait.stale_draft_overwrite")
 
     # Use the reviewed on-disk draft and actual receipt, not stale in-memory drafts.
@@ -914,7 +914,7 @@ def walk(base: Path, *, decision_path: Path | None = None) -> WalkResult:
     unchanged_rejections = 0
     for code, mutated_inputs in gate_mutations.items():
         before = (
-            _directory_digest(harness.run_root),
+            _directory_digest(harness.vorgang_root),
             json.dumps(harness.laufpfad, sort_keys=True),
         )
         rejected = _is_rejected(
@@ -928,7 +928,7 @@ def walk(base: Path, *, decision_path: Path | None = None) -> WalkResult:
             )
         )
         after = (
-            _directory_digest(harness.run_root),
+            _directory_digest(harness.vorgang_root),
             json.dumps(harness.laufpfad, sort_keys=True),
         )
         if rejected and before == after:
@@ -1021,7 +1021,7 @@ def _prepare_workspace(base: Path) -> tuple[Path, str, str, str, str]:
     _git(root, "add", f"applications/{APPLICATION}")
     _git(root, "commit", "-q", "-m", "bind application capability tuple")
     # Retain the legacy bound definition in this workspace's history. The
-    # corrected gate is a new Application revision, and all new runs bind it.
+    # corrected gate is a new Application revision, and all new Vorgaenge bind it.
     gate = root / "applications" / APPLICATION / DECISION_STEP
     gate.write_bytes(GATE_REVISION.read_bytes())
     _git(root, "add", f"applications/{APPLICATION}")

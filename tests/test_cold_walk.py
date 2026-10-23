@@ -63,10 +63,10 @@ def _terminal(tmp_path, *, open_attempt=True):
     return check, harness, entry
 
 
-def _run_snapshot(harness):
+def _vorgang_snapshot(harness):
     return (
-        _tree_bytes(harness.run_root),
-        {p.relative_to(harness.run_root).as_posix() for p in harness.run_root.rglob("*")},
+        _tree_bytes(harness.vorgang_root),
+        {p.relative_to(harness.vorgang_root).as_posix() for p in harness.vorgang_root.rglob("*")},
         deepcopy(harness.laufpfad),
     )
 
@@ -74,10 +74,10 @@ def _run_snapshot(harness):
 @pytest.mark.parametrize("attempt", [True, False, 0, -1, 1000, "1", None, 1.0])
 def test_proposed_successor_attempt_rejects_before_writes(tmp_path, attempt):
     check, harness, entry, handoff, payload, inputs = _producer(tmp_path)
-    before = _run_snapshot(harness)
+    before = _vorgang_snapshot(harness)
     with pytest.raises(check.ProofError):
         harness.advance(entry, {handoff.producer_output: payload}, "bestanden", "entscheiden", attempt, inputs)
-    assert _run_snapshot(harness) == before
+    assert _vorgang_snapshot(harness) == before
 
 
 @pytest.mark.parametrize("trigger,reference", [
@@ -86,10 +86,10 @@ def test_proposed_successor_attempt_rejects_before_writes(tmp_path, attempt):
 ])
 def test_proposed_wait_metadata_rejects_before_writes(tmp_path, trigger, reference):
     check, harness, entry, *_ = _producer(tmp_path)
-    before = _run_snapshot(harness)
+    before = _vorgang_snapshot(harness)
     with pytest.raises(check.ProofError):
         harness.wait(entry, trigger, reference)
-    assert _run_snapshot(harness) == before
+    assert _vorgang_snapshot(harness) == before
 
 
 @pytest.mark.parametrize("approval", [
@@ -111,10 +111,10 @@ def test_proposed_human_approval_rejects_before_writes(tmp_path, approval):
     gate = harness.advance(entry, {handoff.producer_output: payload}, "bestanden", "entscheiden", 1, inputs)
     decision = check._load_human_decision(check.HUMAN_DECISION)
     decision["freigabe"] = approval
-    before = _run_snapshot(harness)
+    before = _vorgang_snapshot(harness)
     with pytest.raises(check.ProofError):
         harness.close_human(gate, decision)
-    assert _run_snapshot(harness) == before
+    assert _vorgang_snapshot(harness) == before
 
 
 @pytest.mark.parametrize("surface", ["input", "output"])
@@ -139,7 +139,7 @@ def test_proposed_handoff_mapping_rejects_before_either_surface_writes(tmp_path,
     elif mutation == "surrogate-key":
         files[f"{surface}/extra\ud800.md"] = "extra"
     elif mutation == "absolute-path":
-        files[(harness.run_root / "outside.md").as_posix()] = "extra"
+        files[(harness.vorgang_root / "outside.md").as_posix()] = "extra"
     elif mutation == "parent-path":
         files[f"{surface}/../../outside.md"] = "extra"
     elif mutation == "wrong-folder":
@@ -150,16 +150,16 @@ def test_proposed_handoff_mapping_rejects_before_either_surface_writes(tmp_path,
         files[f"{surface}/./extra.md"] = "extra"
     else:
         if surface == "input":
-            (harness.run_root / "entscheiden").write_text("existing parent file")
+            (harness.vorgang_root / "entscheiden").write_text("existing parent file")
         else:
             blocker = harness.attempt("pruefen", 1) / "output/blocker"
             blocker.parent.mkdir()
             blocker.write_text("existing parent file")
             files["output/blocker/child"] = "extra"
-    before = _run_snapshot(harness)
+    before = _vorgang_snapshot(harness)
     with pytest.raises(check.ProofError):
         harness.advance(current, outputs, "bestanden", "entscheiden", 1, inputs)
-    assert _run_snapshot(harness) == before
+    assert _vorgang_snapshot(harness) == before
 
 
 @pytest.mark.parametrize("surface", ["input", "output"])
@@ -171,10 +171,10 @@ def test_unsupported_filename_components_reject_before_either_surface_writes(tmp
     files = inputs if surface == "input" else outputs
     relative = f"{surface}/{component}" + ("/child.md" if position == "parent" else "")
     files[relative] = "Synthetic extra file.\n"
-    before = _run_snapshot(harness)
+    before = _vorgang_snapshot(harness)
     with pytest.raises(check.ProofError, match="unsupported filename component"):
         harness.advance(entry, outputs, "bestanden", "entscheiden", 1, inputs)
-    assert _run_snapshot(harness) == before
+    assert _vorgang_snapshot(harness) == before
 
 
 @pytest.mark.parametrize("position", ["leaf", "parent"])
@@ -197,29 +197,29 @@ def test_255_byte_filename_components_preserve_valid_handoff_and_raw_hashes(tmp_
 def test_proposed_terminal_mapping_rejects_existing_directory_before_writes(tmp_path):
     check, harness, entry = _terminal(tmp_path)
     (harness.attempt("finish", 1) / "output/directory").mkdir(parents=True)
-    before = _run_snapshot(harness)
+    before = _vorgang_snapshot(harness)
     with pytest.raises(check.ProofError):
         harness.close(entry, {"output/ergebnis.md": "final", "output/directory": "extra"}, "fertig")
-    assert _run_snapshot(harness) == before
+    assert _vorgang_snapshot(harness) == before
 
 
 @pytest.mark.parametrize("component", ["a" * 256, "é" * 128, "trailing.", "trailing "])
 def test_initial_filename_components_reject_before_writes(tmp_path, component):
     check, harness, _ = _terminal(tmp_path, open_attempt=False)
-    before = _run_snapshot(harness)
+    before = _vorgang_snapshot(harness)
     with pytest.raises(check.ProofError, match="unsupported filename component"):
         harness.open("finish", 1, {"input/auftrag.md": "task", f"input/{component}": "extra"})
-    assert _run_snapshot(harness) == before
-    assert not harness.run_root.exists()
+    assert _vorgang_snapshot(harness) == before
+    assert not harness.vorgang_root.exists()
 
 
 @pytest.mark.parametrize("component", ["a" * 256, "é" * 128, "trailing.", "trailing "])
 def test_terminal_filename_components_reject_before_writes(tmp_path, component):
     check, harness, entry = _terminal(tmp_path)
-    before = _run_snapshot(harness)
+    before = _vorgang_snapshot(harness)
     with pytest.raises(check.ProofError, match="unsupported filename component"):
         harness.close(entry, {"output/ergebnis.md": "final", f"output/{component}": "extra"}, "fertig")
-    assert _run_snapshot(harness) == before
+    assert _vorgang_snapshot(harness) == before
 
 
 @pytest.mark.parametrize("surface", ["input", "output"])
@@ -238,10 +238,10 @@ def test_proposed_portable_name_collisions_reject_before_writes(tmp_path, surfac
     if collision.endswith("parent"):
         alias += "/child.md"
     files[alias] = "different alias content"
-    before = _run_snapshot(harness)
+    before = _vorgang_snapshot(harness)
     with pytest.raises(check.ProofError):
         harness.advance(current, outputs, "bestanden", "entscheiden", 1, inputs)
-    assert _run_snapshot(harness) == before
+    assert _vorgang_snapshot(harness) == before
 
 
 def test_distinct_unicode_and_case_names_preserve_valid_handoff(tmp_path):
@@ -273,7 +273,7 @@ def test_valid_proposed_transition_neighbors_keep_extra_files_and_real_hashes(tm
 
 
 @pytest.mark.parametrize("mutation", ["input", "stale-entry", "stale-router", "stale-revision", "stale-id", "stale-type", "wrong-route", "existing-successor"])
-def test_transition_rejects_before_any_run_writes(tmp_path, mutation):
+def test_transition_rejects_before_any_vorgang_writes(tmp_path, mutation):
     check, harness, entry, handoff, payload, inputs = _producer(tmp_path)
     candidate = entry
     if mutation == "input":
@@ -282,23 +282,23 @@ def test_transition_rejects_before_any_run_writes(tmp_path, mutation):
     elif mutation == "stale-entry":
         candidate = dict(entry)
     elif mutation == "stale-router":
-        path = harness.run_root / "CONTEXT.md"
+        path = harness.vorgang_root / "CONTEXT.md"
         path.write_text(path.read_text().replace("status: aktiv", "status: wartend"))
     elif mutation == "existing-successor":
         (harness.attempt("entscheiden", 1) / "input").mkdir(parents=True)
     elif mutation.startswith("stale-"):
         from tests.support import read_context, replace_context
-        path = harness.run_root / "CONTEXT.md"
+        path = harness.vorgang_root / "CONTEXT.md"
         metadata = read_context(path)
         field = {"stale-revision": "application_revision", "stale-id": "id", "stale-type": "type"}[mutation]
         metadata[field] = ("git-tree:" + check._git(harness.root, "rev-parse", "HEAD^:applications/prueffall") if field == "application_revision" else "vorgang:other" if field == "id" else "workspace")
         replace_context(path, metadata)
         if field == "application_revision":
             assert validate(harness.root).valid
-    before = _tree_bytes(harness.run_root)
+    before = _tree_bytes(harness.vorgang_root)
     with pytest.raises(check.ProofError):
         harness.advance(candidate, {handoff.producer_output: payload}, "klaerung" if mutation == "wrong-route" else "bestanden", "entscheiden", 1, inputs)
-    assert _tree_bytes(harness.run_root) == before
+    assert _tree_bytes(harness.vorgang_root) == before
 
 
 @pytest.mark.parametrize("operation", ["wait", "close", "open", "advance"])
@@ -306,7 +306,7 @@ def test_all_local_successor_mutations_recheck_current_bound_input(tmp_path, ope
     check, harness, entry, handoff, payload, inputs = _producer(tmp_path)
     (harness.attempt("pruefen", 1) / "input/antrag.md").write_text("tampered")
     assert "hash.mismatch" in {issue.code for issue in validate(harness.root).issues}
-    before = _run_snapshot(harness)
+    before = _vorgang_snapshot(harness)
     with pytest.raises(check.ProofError):
         if operation == "wait":
             harness.wait(entry, "resume", "response.md")
@@ -316,7 +316,7 @@ def test_all_local_successor_mutations_recheck_current_bound_input(tmp_path, ope
             harness.open("entscheiden", 1, inputs)
         else:
             harness.advance(entry, {handoff.producer_output: payload}, "bestanden", "entscheiden", 1, inputs)
-    assert _run_snapshot(harness) == before
+    assert _vorgang_snapshot(harness) == before
 
 
 @pytest.mark.parametrize("mutation", ["wrong-route", "missing-input", "missing-output"])
@@ -325,10 +325,10 @@ def test_immediate_consumer_requires_declared_route_and_complete_surfaces(tmp_pa
     if mutation == "missing-input":
         inputs.pop(handoff.provenance_input)
     outputs = {} if mutation == "missing-output" else {handoff.producer_output: payload}
-    before = _run_snapshot(harness)
+    before = _vorgang_snapshot(harness)
     with pytest.raises(check.ProofError):
         harness.advance(entry, outputs, "absent" if mutation == "wrong-route" else "bestanden", "entscheiden", 1, inputs)
-    assert _run_snapshot(harness) == before
+    assert _vorgang_snapshot(harness) == before
 
 
 @pytest.mark.parametrize("label", ["Ursprung", "Content-Digest", "Kontrollnachweis"])
@@ -353,7 +353,7 @@ def test_new_gate_revision_preserves_legacy_definition_bytes(tmp_path):
     assert check._git(root, "rev-parse", "HEAD^:applications/prueffall") != revision
 
 
-def test_final_rejection_ends_new_run_negatively(tmp_path):
+def test_final_rejection_ends_new_vorgang_negatively(tmp_path):
     check = _check_module()
     import yaml
     decision = yaml.safe_load(check.HUMAN_DECISION.read_text())
@@ -376,18 +376,18 @@ def test_gate_requires_actual_matching_decision_output_before_writes(tmp_path, o
     gate = harness.advance(entry, {handoff.producer_output: payload}, "bestanden", "entscheiden", 1, inputs)
     decision = check._load_human_decision(check.HUMAN_DECISION)
     decision["output"] = output
-    before = _tree_bytes(harness.run_root)
+    before = _tree_bytes(harness.vorgang_root)
     with pytest.raises(check.ProofError, match="Gate output"):
         harness.close_human(gate, decision)
-    assert _tree_bytes(harness.run_root) == before
+    assert _tree_bytes(harness.vorgang_root) == before
 
 
-def test_public_close_cannot_leave_a_half_closed_nonterminal_run(tmp_path):
+def test_public_close_cannot_leave_a_half_closed_nonterminal_vorgang(tmp_path):
     check, harness, entry, handoff, payload, inputs = _producer(tmp_path)
-    before = _tree_bytes(harness.run_root)
+    before = _tree_bytes(harness.vorgang_root)
     with pytest.raises(check.ProofError, match="Nonterminal"):
         harness.close(entry, {handoff.producer_output: payload}, "bestanden")
-    assert _tree_bytes(harness.run_root) == before
+    assert _tree_bytes(harness.vorgang_root) == before
     assert entry["status"] == "aktiv"
 
 
@@ -398,14 +398,14 @@ def test_terminal_close_rechecks_current_inputs_and_identity_before_writes(tmp_p
         (harness.attempt("finish", 1) / "input/auftrag.md").write_text("tampered")
     else:
         from tests.support import read_context, replace_context
-        path = harness.run_root / "CONTEXT.md"
+        path = harness.vorgang_root / "CONTEXT.md"
         metadata = read_context(path)
         metadata["id"] = "vorgang:other"
         replace_context(path, metadata)
-    before = _run_snapshot(harness)
+    before = _vorgang_snapshot(harness)
     with pytest.raises(check.ProofError):
         harness.close(entry, {"output/ergebnis.md": "final result"}, "fertig")
-    assert _run_snapshot(harness) == before
+    assert _vorgang_snapshot(harness) == before
     assert entry["status"] == "aktiv"
 
 
@@ -413,7 +413,7 @@ def test_terminal_close_rechecks_current_inputs_and_identity_before_writes(tmp_p
 def test_gate_cannot_bypass_dedicated_decision_check(tmp_path, operation):
     check, harness, entry, handoff, payload, inputs = _producer(tmp_path)
     gate = harness.advance(entry, {handoff.producer_output: payload}, "bestanden", "entscheiden", 1, inputs)
-    before = _tree_bytes(harness.run_root)
+    before = _tree_bytes(harness.vorgang_root)
     with pytest.raises(check.ProofError):
         if operation == "close":
             harness.close(gate, {"output/entscheidung.md": "unverified"}, "freigegeben", {"by": "human:synthetic", "at": "2040-01-01T00:00:00Z"})
@@ -421,7 +421,7 @@ def test_gate_cannot_bypass_dedicated_decision_check(tmp_path, operation):
             harness.advance(gate, {"output/entscheidung.md": "unverified"}, "freigegeben", "pruefen", 2, {})
         else:
             harness.open("entscheiden", 2, inputs)
-    assert _tree_bytes(harness.run_root) == before
+    assert _tree_bytes(harness.vorgang_root) == before
 
 EXPECTED_STATES = (
     "pruefen 001 aktiv",

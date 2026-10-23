@@ -59,22 +59,22 @@ def document(body: str, first_line: int) -> tuple[str | None, int | None, list[d
 
 def spans(text: str) -> list[list[str]]:
     """Inline text as [kind, text, title]; every character outside markup survives."""
-    runs = list(re.finditer(r"`+", text))
+    ticks = list(re.finditer(r"`+", text))
     closing, seen = {}, {}
-    for i in range(len(runs) - 1, -1, -1):
-        length = len(runs[i][0])
+    for i in range(len(ticks) - 1, -1, -1):
+        length = len(ticks[i][0])
         closing[i] = seen.get(length)
         seen[length] = i
     markup = list(INLINE.finditer(text))
     out, last, code_at, other_at = [], 0, 0, 0
-    while code_at < len(runs) or other_at < len(markup):
-        if code_at < len(runs) and (other_at == len(markup) or runs[code_at].start() < markup[other_at].start()):
-            opening = runs[code_at]
+    while code_at < len(ticks) or other_at < len(markup):
+        if code_at < len(ticks) and (other_at == len(markup) or ticks[code_at].start() < markup[other_at].start()):
+            opening = ticks[code_at]
             end = closing[code_at]
             code_at += 1
             if opening.start() < last or end is None:
                 continue
-            close = runs[end]
+            close = ticks[end]
             start, stop = opening.start(), close.end()
             item = ["code", text[opening.end():close.start()], ""]
         else:
