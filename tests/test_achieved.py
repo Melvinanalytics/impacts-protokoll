@@ -18,6 +18,12 @@ def test_an_end_no_route_reaches_does_not_resolve(tmp_path):
     assert found == {("reference.unresolved", "Achieving end does not resolve: end:gibt-es-nicht")}
 
 
+@pytest.mark.parametrize("erreicht", [["end:gibt-es-nicht\n"], ["end:video-veroeffentlicht\n"]])
+def test_a_trailing_newline_the_schema_admits_still_must_resolve(tmp_path, erreicht):
+    root = _application(tmp_path / "video", STAGES, erreicht)
+    assert {i.code for i in validate(root).issues} == {"reference.unresolved"}
+
+
 @pytest.mark.parametrize("erreicht", [[], ["arbeitsschritt:start"], ["end:video-veroeffentlicht", "end:video-veroeffentlicht"], ["end:"]])
 def test_malformed_lists_violate_the_schema_only(tmp_path, erreicht):
     root = _application(tmp_path / "video", STAGES, erreicht)

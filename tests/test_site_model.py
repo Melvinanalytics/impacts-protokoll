@@ -10,6 +10,9 @@ from tests.test_stages import AT_PRUEFEN, ENDED, STAGES, _vorgang
 
 def test_equals_the_exported_model_without_language(tmp_path):
     workspace = _vorgang(tmp_path, STAGES, AT_PRUEFEN).parents[2]
+    ist = workspace / "grundlagen" / "ist-prozesse"
+    ist.mkdir(parents=True)
+    (ist / "angebot.md").write_text("---\ntype: ist-prozess\nname: Angebot\ndate: 2026-10-23\n---\n\n# Angebot\n", encoding="utf-8")
     out = tmp_path / "out"
     assert main(["view", str(workspace), "--out", str(out), "--json"]) == 0
     exported = json.loads((out / "model.json").read_text(encoding="utf-8"))
@@ -18,6 +21,7 @@ def test_equals_the_exported_model_without_language(tmp_path):
     assert pages == exported
     assert {page["format"] for page in pages.values()} == {"impacts-view/3"}
     assert pages["index.html"]["population"]["vorgaenge"] == 1
+    assert '2026-10-23' in json.dumps(pages["i-angebot.html"])
 
 
 def test_a_refused_vorgang_is_a_page_and_stops_no_other(tmp_path):

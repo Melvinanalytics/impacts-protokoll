@@ -10,6 +10,7 @@ again into a new folder after the files change.
 """
 from __future__ import annotations
 
+import json
 import re
 import sys
 from pathlib import Path
@@ -64,7 +65,8 @@ def site_model(workspace: Path) -> dict[str, dict]:
     and reads bound trees through Git, as `impacts validate` does; a refused selection is a page with
     its issues and stops no other. A path that is not a Git-root workspace raises ValueError."""
     try:
-        return selection.workspace_site(Path(workspace))
+        # The same conversion as model.json, so YAML dates arrive as the export's strings.
+        return json.loads(json.dumps(selection.workspace_site(Path(workspace)), default=str))
     except SystemExit as error:
         raise ValueError(str(error)) from None
 

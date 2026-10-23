@@ -36,7 +36,7 @@ def test_resolving_stages_are_valid(tmp_path):
     assert validate(root).valid, validate(root).issues
 
 
-@pytest.mark.parametrize("key", ["arbeitsschritt:fehlt", "end:fehlt"])
+@pytest.mark.parametrize("key", ["arbeitsschritt:fehlt", "end:fehlt", "end:abgebrochen\n"])
 def test_a_stage_for_a_missing_step_or_end_does_not_resolve(tmp_path, key):
     root = _application(tmp_path / "video", {**STAGES, key: 50})
     assert ("reference.unresolved", f"Stage key does not resolve: {key}") in _codes_and_messages(root)
