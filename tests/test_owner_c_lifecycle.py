@@ -23,8 +23,8 @@ from tests.c_owner_support import (
     entry_waiting,
     issues_for,
     make_attempt,
-    rewrite_run,
-    write_run,
+    rewrite_vorgang,
+    write_vorgang,
 )
 from tests.support import read_context
 
@@ -87,11 +87,11 @@ def test_declaration_and_creation_order_do_not_change_hash(tmp_path):
 
 def test_active_entry_must_be_last(tmp_path):
     root, revision = committed_workspace(tmp_path)
-    run = root / "vorgaenge" / "video-001"
-    first = make_attempt(run, "start", 1, input_bytes="eins")
-    second = make_attempt(run, "pruefen", 1, input_bytes="zwei")
+    vorgang = root / "vorgaenge" / "video-001"
+    first = make_attempt(vorgang, "start", 1, input_bytes="eins")
+    second = make_attempt(vorgang, "pruefen", 1, input_bytes="zwei")
     entries = [entry_active("start", 1, first), entry_active("pruefen", 1, second)]
-    write_run(root, "video-001", revision, entries)
+    write_vorgang(root, "video-001", revision, entries)
 
     assert "run.invalid" in codes(root)
 
@@ -107,11 +107,11 @@ def test_active_entry_must_be_last(tmp_path):
 )
 def test_active_entry_carries_no_decision_fields(tmp_path, field, value):
     root, revision = committed_workspace(tmp_path)
-    run = root / "vorgaenge" / "video-001"
-    attempt = make_attempt(run, "start", 1, input_bytes="eins")
+    vorgang = root / "vorgaenge" / "video-001"
+    attempt = make_attempt(vorgang, "start", 1, input_bytes="eins")
     entry = entry_active("start", 1, attempt)
     entry[field] = value
-    write_run(root, "video-001", revision, [entry])
+    write_vorgang(root, "video-001", revision, [entry])
 
     assert "run.invalid" in codes(root)
 
@@ -126,31 +126,31 @@ def test_active_entry_carries_no_decision_fields(tmp_path, field, value):
 )
 def test_waiting_entry_carries_only_its_reentry_contract(tmp_path, field, value):
     root, revision = committed_workspace(tmp_path)
-    run = root / "vorgaenge" / "video-001"
-    attempt = make_attempt(run, "start", 1, input_bytes="eins")
+    vorgang = root / "vorgaenge" / "video-001"
+    attempt = make_attempt(vorgang, "start", 1, input_bytes="eins")
     entry = entry_waiting("start", 1, attempt)
     entry[field] = value
-    write_run(root, "video-001", revision, [entry])
+    write_vorgang(root, "video-001", revision, [entry])
 
     assert "run.invalid" in codes(root)
 
 
 def test_waiting_entry_must_be_last(tmp_path):
     root, revision = committed_workspace(tmp_path)
-    run = root / "vorgaenge" / "video-001"
-    first = make_attempt(run, "start", 1, input_bytes="eins", output_bytes="a1")
-    second = make_attempt(run, "pruefen", 1, input_bytes="zwei")
+    vorgang = root / "vorgaenge" / "video-001"
+    first = make_attempt(vorgang, "start", 1, input_bytes="eins", output_bytes="a1")
+    second = make_attempt(vorgang, "pruefen", 1, input_bytes="zwei")
     entries = [
         entry_completed("start", 1, first, "weiter"),
         entry_waiting("pruefen", 1, second),
     ]
-    write_run(root, "video-001", revision, entries)
+    write_vorgang(root, "video-001", revision, entries)
     assert validate(root).valid, list(validate(root).issues)
 
     # A later entry after the waiting one violates the single-current-step rule.
-    third = make_attempt(run, "pruefen", 2, input_bytes="drei")
+    third = make_attempt(vorgang, "pruefen", 2, input_bytes="drei")
     entries.append(entry_active("pruefen", 2, third))
-    rewrite_run(root, run, entries)
+    rewrite_vorgang(root, vorgang, entries)
 
     assert "run.invalid" in codes(root)
 
@@ -166,8 +166,8 @@ def test_waiting_entry_must_be_last(tmp_path):
 )
 def test_completed_entry_contract(tmp_path, mutation):
     root, revision = committed_workspace(tmp_path)
-    run = root / "vorgaenge" / "video-001"
-    attempt = make_attempt(run, "start", 1, input_bytes="eins", output_bytes="a1")
+    vorgang = root / "vorgaenge" / "video-001"
+    attempt = make_attempt(vorgang, "start", 1, input_bytes="eins", output_bytes="a1")
     entry = entry_completed("start", 1, attempt, "weiter")
     if mutation == "no_route":
         del entry["gewaehlte_route"]
@@ -177,37 +177,37 @@ def test_completed_entry_contract(tmp_path, mutation):
         del entry["ausgabe_hash"]
     elif mutation == "reentry_present":
         entry["wiedereinstieg"] = {"ausloeser": "x", "continuation_ref": "y"}
-    write_run(root, "video-001", revision, [entry])
+    write_vorgang(root, "video-001", revision, [entry])
 
     assert "run.invalid" in codes(root)
 
 
 def test_successor_must_follow_selected_route(tmp_path):
     root, revision = committed_workspace(tmp_path)
-    run = root / "vorgaenge" / "video-001"
-    first = make_attempt(run, "start", 1, input_bytes="eins", output_bytes="a1")
-    second = make_attempt(run, "start", 2, input_bytes="zwei")
+    vorgang = root / "vorgaenge" / "video-001"
+    first = make_attempt(vorgang, "start", 1, input_bytes="eins", output_bytes="a1")
+    second = make_attempt(vorgang, "start", 2, input_bytes="zwei")
     entries = [
         entry_completed("start", 1, first, "weiter"),  # route targets pruefen
-        entry_active("start", 2, second),  # but the run continues at start
+        entry_active("start", 2, second),  # but the Vorgang continues at start
     ]
-    write_run(root, "video-001", revision, entries)
+    write_vorgang(root, "video-001", revision, entries)
 
     assert "run.invalid" in codes(root)
 
 
 def test_laufpfad_must_not_continue_after_end_route(tmp_path):
     root, revision = committed_workspace(tmp_path)
-    run = root / "vorgaenge" / "video-001"
-    first = make_attempt(run, "start", 1, input_bytes="eins", output_bytes="a1")
-    second = make_attempt(run, "pruefen", 1, input_bytes="zwei", output_bytes="a2")
-    third = make_attempt(run, "start", 2, input_bytes="drei")
+    vorgang = root / "vorgaenge" / "video-001"
+    first = make_attempt(vorgang, "start", 1, input_bytes="eins", output_bytes="a1")
+    second = make_attempt(vorgang, "pruefen", 1, input_bytes="zwei", output_bytes="a2")
+    third = make_attempt(vorgang, "start", 2, input_bytes="drei")
     entries = [
         entry_completed("start", 1, first, "weiter"),
         entry_completed("pruefen", 1, second, "freigegeben", freigabe=HUMAN),
         entry_active("start", 2, third),
     ]
-    write_run(root, "video-001", revision, entries)
+    write_vorgang(root, "video-001", revision, entries)
 
     assert "run.invalid" in codes(root)
 
@@ -215,18 +215,18 @@ def test_laufpfad_must_not_continue_after_end_route(tmp_path):
 def test_rejection_loop_retry_is_valid(tmp_path):
     """Negative end -> new attempt of the earlier step (O1.5)."""
     root, revision = committed_workspace(tmp_path)
-    run = root / "vorgaenge" / "video-001"
-    a1 = make_attempt(run, "start", 1, input_bytes="eins", output_bytes="a1")
-    p1 = make_attempt(run, "pruefen", 1, input_bytes="zwei", output_bytes="p1")
-    a2 = make_attempt(run, "start", 2, input_bytes="drei", output_bytes="a2")
-    p2 = make_attempt(run, "pruefen", 2, input_bytes="vier", output_bytes="p2")
+    vorgang = root / "vorgaenge" / "video-001"
+    a1 = make_attempt(vorgang, "start", 1, input_bytes="eins", output_bytes="a1")
+    p1 = make_attempt(vorgang, "pruefen", 1, input_bytes="zwei", output_bytes="p1")
+    a2 = make_attempt(vorgang, "start", 2, input_bytes="drei", output_bytes="a2")
+    p2 = make_attempt(vorgang, "pruefen", 2, input_bytes="vier", output_bytes="p2")
     entries = [
         entry_completed("start", 1, a1, "weiter"),
         entry_completed("pruefen", 1, p1, "abgelehnt", freigabe=HUMAN),
         entry_completed("start", 2, a2, "weiter"),
         entry_completed("pruefen", 2, p2, "freigegeben", freigabe=HUMAN),
     ]
-    write_run(root, "video-001", revision, entries)
+    write_vorgang(root, "video-001", revision, entries)
 
     report = validate(root)
     assert report.valid, report.issues
@@ -235,14 +235,14 @@ def test_rejection_loop_retry_is_valid(tmp_path):
 def test_resumption_after_context_loss(tmp_path):
     """A fresh validator process sees the waiting state; resume preserves bytes."""
     root, revision = committed_workspace(tmp_path)
-    run = root / "vorgaenge" / "video-001"
-    first = make_attempt(run, "start", 1, input_bytes="eins", output_bytes="a1")
-    second = make_attempt(run, "pruefen", 1, input_bytes="zwei", output_bytes="p2")
+    vorgang = root / "vorgaenge" / "video-001"
+    first = make_attempt(vorgang, "start", 1, input_bytes="eins", output_bytes="a1")
+    second = make_attempt(vorgang, "pruefen", 1, input_bytes="zwei", output_bytes="p2")
     entries = [
         entry_completed("start", 1, first, "weiter"),
         entry_waiting("pruefen", 1, second),
     ]
-    write_run(root, "video-001", revision, entries)
+    write_vorgang(root, "video-001", revision, entries)
     bound_input = (second / "input" / "auftrag.md").read_bytes()
 
     # Context loss: a separate OS process re-reads only the files on disk.
@@ -263,7 +263,7 @@ def test_resumption_after_context_loss(tmp_path):
 
     # Resume: complete the waiting step via its declared route.
     entries[1] = entry_completed("pruefen", 1, second, "freigegeben", freigabe=HUMAN)
-    rewrite_run(root, run, entries)
+    rewrite_vorgang(root, vorgang, entries)
 
     report = validate(root)
     assert report.valid, report.issues
@@ -273,30 +273,30 @@ def test_resumption_after_context_loss(tmp_path):
 def test_permitted_draft_while_active_preserves_binding(tmp_path):
     """Independent preparation: undeclared draft under output/ of an active attempt."""
     root, revision = committed_workspace(tmp_path)
-    run = root / "vorgaenge" / "video-001"
-    attempt = make_attempt(run, "start", 1, input_bytes="eins")
+    vorgang = root / "vorgaenge" / "video-001"
+    attempt = make_attempt(vorgang, "start", 1, input_bytes="eins")
     entry = entry_active("start", 1, attempt)
-    write_run(root, "video-001", revision, [entry])
+    write_vorgang(root, "video-001", revision, [entry])
     assert validate(root).valid
 
     _write(attempt / "output" / "entwurf.md", "ungebundener Entwurf")
 
     report = validate(root)
     assert report.valid, report.issues
-    metadata = read_context(run / "CONTEXT.md")
+    metadata = read_context(vorgang / "CONTEXT.md")
     assert metadata["laufpfad"][0]["eingabe_hash"] == entry["eingabe_hash"]
 
 
 def test_attempt_numbering_accepts_999_and_rejects_1000(tmp_path):
-    """The run schema and templates/application.md bound attempts at 999.
+    """The Vorgang schema and templates/application.md bound attempts at 999.
     Preserve the valid 999 fixture; a 1000 attempt fails schema validation."""
     root, revision = committed_workspace(tmp_path)
-    run = root / "vorgaenge" / "video-001"
-    attempt = make_attempt(run, "start", 999, input_bytes="eins")
-    write_run(root, "video-001", revision, [entry_active("start", 999, attempt)])
+    vorgang = root / "vorgaenge" / "video-001"
+    attempt = make_attempt(vorgang, "start", 999, input_bytes="eins")
+    write_vorgang(root, "video-001", revision, [entry_active("start", 999, attempt)])
     assert validate(root).valid
 
-    attempt1000 = run / "start" / "1000"
+    attempt1000 = vorgang / "start" / "1000"
     (attempt1000 / "input").mkdir(parents=True)
     (attempt1000 / "input" / "auftrag.md").write_text("eins", encoding="utf-8")
     entry = {
@@ -305,7 +305,7 @@ def test_attempt_numbering_accepts_999_and_rejects_1000(tmp_path):
         "status": "aktiv",
         "eingabe_hash": surface_hash(attempt1000, ["input/auftrag.md"]),
     }
-    write_run(root, "video-001", revision, [entry])
+    write_vorgang(root, "video-001", revision, [entry])
     report = validate(root)
     assert not report.valid
     assert "schema.invalid" in {issue.code for issue in report.issues}
@@ -314,10 +314,10 @@ def test_attempt_numbering_accepts_999_and_rejects_1000(tmp_path):
 def test_duplicate_attempt_in_laufpfad_is_rejected(tmp_path):
     """The same (step, versuch) pair may not appear twice (reference.duplicate)."""
     root, revision = committed_workspace(tmp_path)
-    run = root / "vorgaenge" / "video-001"
-    attempt = make_attempt(run, "start", 1, input_bytes="eins")
+    vorgang = root / "vorgaenge" / "video-001"
+    attempt = make_attempt(vorgang, "start", 1, input_bytes="eins")
     entry = entry_active("start", 1, attempt)
-    write_run(root, "video-001", revision, [entry, dict(entry)])
+    write_vorgang(root, "video-001", revision, [entry, dict(entry)])
 
     assert "reference.duplicate" in codes(root)
 
@@ -325,11 +325,11 @@ def test_duplicate_attempt_in_laufpfad_is_rejected(tmp_path):
 @pytest.mark.parametrize("versuch", [0, -1, True, "1"])
 def test_versuch_must_be_a_positive_integer(tmp_path, versuch):
     root, revision = committed_workspace(tmp_path)
-    run = root / "vorgaenge" / "video-001"
-    attempt = make_attempt(run, "start", 1, input_bytes="eins")
+    vorgang = root / "vorgaenge" / "video-001"
+    attempt = make_attempt(vorgang, "start", 1, input_bytes="eins")
     entry = entry_active("start", 1, attempt)
     entry["versuch"] = versuch
-    write_run(root, "video-001", revision, [entry])
+    write_vorgang(root, "video-001", revision, [entry])
 
     report = validate(root)  # must fail closed, not raise
     assert not report.valid
@@ -341,26 +341,26 @@ def test_versuch_must_be_a_positive_integer(tmp_path, versuch):
 
 def test_orphan_attempt_directory_is_detected(tmp_path):
     root, revision = committed_workspace(tmp_path)
-    run = root / "vorgaenge" / "video-001"
-    attempt = make_attempt(run, "start", 1, input_bytes="eins")
-    write_run(root, "video-001", revision, [entry_active("start", 1, attempt)])
+    vorgang = root / "vorgaenge" / "video-001"
+    attempt = make_attempt(vorgang, "start", 1, input_bytes="eins")
+    write_vorgang(root, "video-001", revision, [entry_active("start", 1, attempt)])
     assert validate(root).valid
 
-    make_attempt(run, "start", 2, input_bytes="ungebunden")
+    make_attempt(vorgang, "start", 2, input_bytes="ungebunden")
 
     assert "run.invalid" in codes(root)
 
 
-def test_torn_run_router_fails_closed_without_exception(tmp_path):
+def test_torn_vorgang_router_fails_closed_without_exception(tmp_path):
     root, revision = committed_workspace(tmp_path)
-    run = root / "vorgaenge" / "video-001"
-    attempt = make_attempt(run, "start", 1, input_bytes="eins")
-    write_run(root, "video-001", revision, [entry_active("start", 1, attempt)])
+    vorgang = root / "vorgaenge" / "video-001"
+    attempt = make_attempt(vorgang, "start", 1, input_bytes="eins")
+    write_vorgang(root, "video-001", revision, [entry_active("start", 1, attempt)])
     assert validate(root).valid
 
     # Simulate an interrupted write: frontmatter truncated, no closing delimiter.
-    text = (run / "CONTEXT.md").read_text(encoding="utf-8")
-    (run / "CONTEXT.md").write_text(text[: len(text) // 3], encoding="utf-8")
+    text = (vorgang / "CONTEXT.md").read_text(encoding="utf-8")
+    (vorgang / "CONTEXT.md").write_text(text[: len(text) // 3], encoding="utf-8")
 
     report = validate(root)
     assert not report.valid
@@ -369,11 +369,11 @@ def test_torn_run_router_fails_closed_without_exception(tmp_path):
 
 def test_duplicate_frontmatter_key_fails_closed(tmp_path):
     root, revision = committed_workspace(tmp_path)
-    run = root / "vorgaenge" / "video-001"
-    attempt = make_attempt(run, "start", 1, input_bytes="eins")
-    write_run(root, "video-001", revision, [entry_active("start", 1, attempt)])
+    vorgang = root / "vorgaenge" / "video-001"
+    attempt = make_attempt(vorgang, "start", 1, input_bytes="eins")
+    write_vorgang(root, "video-001", revision, [entry_active("start", 1, attempt)])
 
-    path = run / "CONTEXT.md"
+    path = vorgang / "CONTEXT.md"
     text = path.read_text(encoding="utf-8")
     path.write_text(text.replace("---\n", "---\ntype: vorgang\n", 1), encoding="utf-8")
 
@@ -382,9 +382,9 @@ def test_duplicate_frontmatter_key_fails_closed(tmp_path):
 
 def test_half_created_attempt_reports_hash_mismatch_not_crash(tmp_path):
     root, revision = committed_workspace(tmp_path)
-    run = root / "vorgaenge" / "video-001"
-    attempt = make_attempt(run, "start", 1, input_bytes="eins")
-    write_run(root, "video-001", revision, [entry_active("start", 1, attempt)])
+    vorgang = root / "vorgaenge" / "video-001"
+    attempt = make_attempt(vorgang, "start", 1, input_bytes="eins")
+    write_vorgang(root, "video-001", revision, [entry_active("start", 1, attempt)])
 
     # Interruption left the declared input missing.
     (attempt / "input" / "auftrag.md").unlink()
@@ -399,14 +399,14 @@ def test_half_created_attempt_reports_hash_mismatch_not_crash(tmp_path):
 
 def test_input_mutation_invalidates_only_the_affected_binding(tmp_path):
     root, revision = committed_workspace(tmp_path)
-    run = root / "vorgaenge" / "video-001"
-    a1 = make_attempt(run, "start", 1, input_bytes="eins", output_bytes="a1")
-    p1 = make_attempt(run, "pruefen", 1, input_bytes="zwei")
+    vorgang = root / "vorgaenge" / "video-001"
+    a1 = make_attempt(vorgang, "start", 1, input_bytes="eins", output_bytes="a1")
+    p1 = make_attempt(vorgang, "pruefen", 1, input_bytes="zwei")
     entries = [
         entry_completed("start", 1, a1, "weiter"),
         entry_active("pruefen", 1, p1),
     ]
-    write_run(root, "video-001", revision, entries)
+    write_vorgang(root, "video-001", revision, entries)
     assert validate(root).valid
 
     (a1 / "input" / "auftrag.md").write_text("manipuliert", encoding="utf-8")
@@ -420,11 +420,11 @@ def test_input_mutation_invalidates_only_the_affected_binding(tmp_path):
 
 def test_unrelated_extra_content_changes_no_binding(tmp_path):
     root, revision = committed_workspace(tmp_path)
-    run = root / "vorgaenge" / "video-001"
-    attempt = make_attempt(run, "start", 1, input_bytes="eins", output_bytes="a1")
+    vorgang = root / "vorgaenge" / "video-001"
+    attempt = make_attempt(vorgang, "start", 1, input_bytes="eins", output_bytes="a1")
     entry = entry_completed("start", 1, attempt, "weiter")
-    p1 = make_attempt(run, "pruefen", 1, input_bytes="zwei")
-    write_run(root, "video-001", revision, [entry, entry_active("pruefen", 1, p1)])
+    p1 = make_attempt(vorgang, "pruefen", 1, input_bytes="zwei")
+    write_vorgang(root, "video-001", revision, [entry, entry_active("pruefen", 1, p1)])
     assert validate(root).valid
 
     # Content outside every declared surface authorizes nothing and breaks nothing.
@@ -433,5 +433,5 @@ def test_unrelated_extra_content_changes_no_binding(tmp_path):
 
     report = validate(root)
     assert report.valid, report.issues
-    metadata = read_context(run / "CONTEXT.md")
+    metadata = read_context(vorgang / "CONTEXT.md")
     assert metadata["laufpfad"][0]["ausgabe_hash"] == entry["ausgabe_hash"]

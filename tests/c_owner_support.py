@@ -35,14 +35,14 @@ def committed_workspace(base: Path, name: str = "kunde") -> tuple[Path, str]:
 
 
 def make_attempt(
-    run: Path,
+    vorgang: Path,
     slug: str,
     versuch: int,
     *,
     input_bytes: str | None = None,
     output_bytes: str | None = None,
 ) -> Path:
-    attempt = run / slug / f"{versuch:03d}"
+    attempt = vorgang / slug / f"{versuch:03d}"
     (attempt / "input").mkdir(parents=True, exist_ok=True)
     if input_bytes is not None:
         (attempt / "input" / "auftrag.md").write_text(input_bytes, encoding="utf-8")
@@ -91,10 +91,10 @@ def entry_completed(
 HUMAN = {"by": "human:prueferin", "at": "2026-08-30T10:00:00+02:00"}
 
 
-def write_run(root: Path, name: str, revision: str, entries: list[dict]) -> Path:
-    run = root / "vorgaenge" / name
+def write_vorgang(root: Path, name: str, revision: str, entries: list[dict]) -> Path:
+    vorgang = root / "vorgaenge" / name
     write_context(
-        run / "CONTEXT.md",
+        vorgang / "CONTEXT.md",
         {
             "type": "vorgang",
             "id": f"vorgang:{name}",
@@ -103,7 +103,7 @@ def write_run(root: Path, name: str, revision: str, entries: list[dict]) -> Path
         },
         f"# {name}",
     )
-    return run
+    return vorgang
 
 
 def issues_for(root: Path, prefix: str):
@@ -112,7 +112,7 @@ def issues_for(root: Path, prefix: str):
     ]
 
 
-def rewrite_run(root: Path, run: Path, entries: list[dict]) -> None:
-    metadata = read_context(run / "CONTEXT.md")
+def rewrite_vorgang(root: Path, vorgang: Path, entries: list[dict]) -> None:
+    metadata = read_context(vorgang / "CONTEXT.md")
     metadata["laufpfad"] = entries
-    replace_context(run / "CONTEXT.md", metadata)
+    replace_context(vorgang / "CONTEXT.md", metadata)

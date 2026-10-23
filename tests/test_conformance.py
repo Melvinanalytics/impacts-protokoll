@@ -408,7 +408,7 @@ def test_all_unsupported_selection_is_not_reported_as_pass(monkeypatch, capsys):
     assert "applicable=0 passed=0 unsupported=1 failed=0 total=1" in output
 
 
-def test_invalid_utf8_run_fixture_is_valid_before_filename_corruption(tmp_path):
+def test_invalid_utf8_vorgang_fixture_is_valid_before_filename_corruption(tmp_path):
     runner = _runner_module()
     manifest, cases = runner._load_manifest()
     case = next(case for case in cases if case["id"] == "run-invalid-utf8-filename")

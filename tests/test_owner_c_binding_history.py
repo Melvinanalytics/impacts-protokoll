@@ -3,7 +3,7 @@
 Authoritative meaning: impacts-method.md §Scale ("Existing Vorgänge remain bound to
 their historical revision"; move path via git archive; "an OID ... authenticates
 neither origin nor approval"), capabilities.md §Record writeback ("Bound definitions
-and historical run bytes remain unchanged"; "Core provides no write service").
+and historical Vorgang bytes remain unchanged"; "Core provides no write service").
 """
 
 from hashlib import sha256
@@ -24,7 +24,7 @@ from tests.c_owner_support import (
     git,
     issues_for,
     make_attempt,
-    write_run,
+    write_vorgang,
 )
 from tests.support import read_context, replace_context
 
@@ -73,9 +73,9 @@ def test_application_history_uses_ordinary_roots_and_resolvable_head(tmp_path, k
         if kind.startswith("unborn-"):
             git(root, "symbolic-ref", "HEAD", "refs/heads/not-yet-born")
 
-    run = root / "vorgaenge/probe"
-    attempt = make_attempt(run, "start", 1, input_bytes="synthetic input")
-    write_run(root, "probe", revision, [entry_active("start", 1, attempt)])
+    vorgang = root / "vorgaenge/probe"
+    attempt = make_attempt(vorgang, "start", 1, input_bytes="synthetic input")
+    write_vorgang(root, "probe", revision, [entry_active("start", 1, attempt)])
     report = validate(root)
     assert report.valid is expected, report.issues
     if not expected:
@@ -86,7 +86,7 @@ def test_stash_duplicate_of_ordinary_history_remains_usable(tmp_path):
     root, revision = committed_workspace(tmp_path)
     (root / "synthetic-note.md").write_text("unrelated stash bytes")
     git(root, "stash", "push", "--include-untracked")
-    _completed_run(root, revision)
+    _completed_vorgang(root, revision)
     assert validate(root).valid
 
 
@@ -99,12 +99,12 @@ def test_shallow_history_does_not_use_hidden_ancestor_objects(tmp_path):
     tip_revision = git(source, "rev-parse", "HEAD:applications/video")
     root = tmp_path / "shallow"
     subprocess.run(["git", "clone", "--depth=1", source.as_uri(), str(root)], check=True, capture_output=True)
-    _completed_run(root, tip_revision)
+    _completed_vorgang(root, tip_revision)
     assert validate(root).valid
-    run = root / "vorgaenge/video-001/CONTEXT.md"
-    metadata = read_context(run)
+    vorgang = root / "vorgaenge/video-001/CONTEXT.md"
+    metadata = read_context(vorgang)
     metadata["application_revision"] = f"git-tree:{old_revision}"
-    replace_context(run, metadata)
+    replace_context(vorgang, metadata)
     assert "revision.invalid" in codes(root)
     # Transfer old objects without altering the shallow boundary or selected refs.
     git(root, "fetch", "--unshallow", "origin")
@@ -114,16 +114,16 @@ def test_shallow_history_does_not_use_hidden_ancestor_objects(tmp_path):
     assert "revision.invalid" in codes(root)
 
 
-def _completed_run(root: Path, revision: str, name: str = "video-001") -> Path:
-    run = root / "vorgaenge" / name
-    a1 = make_attempt(run, "start", 1, input_bytes="eins", output_bytes="a1")
-    p1 = make_attempt(run, "pruefen", 1, input_bytes="zwei", output_bytes="p1")
+def _completed_vorgang(root: Path, revision: str, name: str = "video-001") -> Path:
+    vorgang = root / "vorgaenge" / name
+    a1 = make_attempt(vorgang, "start", 1, input_bytes="eins", output_bytes="a1")
+    p1 = make_attempt(vorgang, "pruefen", 1, input_bytes="zwei", output_bytes="p1")
     entries = [
         entry_completed("start", 1, a1, "weiter"),
         entry_completed("pruefen", 1, p1, "freigegeben", freigabe=HUMAN),
     ]
-    write_run(root, name, revision, entries)
-    return run
+    write_vorgang(root, name, revision, entries)
+    return vorgang
 
 
 def _tree_digest(root: Path) -> str:
@@ -140,9 +140,9 @@ def _tree_digest(root: Path) -> str:
 # --- O3: history --------------------------------------------------------------
 
 
-def test_current_application_change_does_not_rebind_old_run(tmp_path):
+def test_current_application_change_does_not_rebind_old_vorgang(tmp_path):
     root, revision = committed_workspace(tmp_path)
-    _completed_run(root, revision)
+    _completed_vorgang(root, revision)
     assert validate(root).valid
 
     # Change TODAY's definition: different routes and input declaration.
@@ -157,13 +157,13 @@ def test_current_application_change_does_not_rebind_old_run(tmp_path):
     report = validate(root)
     # The current application is invalid on its own (gate route set) ...
     assert any(issue.code == "process.gate" for issue in report.issues)
-    # ... but the historical run is still judged against the OLD bound definition.
+    # ... but the historical Vorgang is still judged against the OLD bound definition.
     assert issues_for(root, "vorgaenge/") == []
 
 
-def test_deleted_current_application_leaves_historical_run_valid(tmp_path):
+def test_deleted_current_application_leaves_historical_vorgang_valid(tmp_path):
     root, revision = committed_workspace(tmp_path)
-    _completed_run(root, revision)
+    _completed_vorgang(root, revision)
     assert validate(root).valid
 
     git(root, "rm", "-r", "-q", "applications/video")
@@ -182,7 +182,7 @@ def test_same_tree_under_fabricated_commit_is_only_content_identity(tmp_path):
     claimed authentication, that claim would be false.
     """
     root, revision = committed_workspace(tmp_path)
-    _completed_run(root, revision)
+    _completed_vorgang(root, revision)
     assert validate(root).valid
 
     # Fabricate provenance: identical tree, different author/message/parent chain.
@@ -206,29 +206,29 @@ def test_same_tree_under_fabricated_commit_is_only_content_identity(tmp_path):
 
 def test_wrong_revision_shape_is_rejected(tmp_path):
     root, revision = committed_workspace(tmp_path)
-    run = _completed_run(root, revision)
+    vorgang = _completed_vorgang(root, revision)
 
-    # Bind the run to the repository ROOT tree instead of the application tree.
-    metadata = read_context(run / "CONTEXT.md")
+    # Bind the Vorgang to the repository ROOT tree instead of the application tree.
+    metadata = read_context(vorgang / "CONTEXT.md")
     metadata["application_revision"] = "git-tree:" + git(root, "rev-parse", "HEAD^{tree}")
-    replace_context(run / "CONTEXT.md", metadata)
+    replace_context(vorgang / "CONTEXT.md", metadata)
 
     assert "revision.invalid" in codes(root)
 
 
-# --- O5: writeback vs immutable run evidence -----------------------------------
+# --- O5: writeback vs immutable Vorgang evidence -----------------------------------
 
 
-def test_writeback_to_continuing_record_preserves_run_evidence(tmp_path):
-    """Permitted writeback: result lands in a business record outside the run (O5.1)."""
+def test_writeback_to_continuing_record_preserves_vorgang_evidence(tmp_path):
+    """Permitted writeback: result lands in a business record outside the Vorgang (O5.1)."""
     root, revision = committed_workspace(tmp_path)
-    run = _completed_run(root, revision)
+    vorgang = _completed_vorgang(root, revision)
     assert validate(root).valid
-    before = read_context(run / "CONTEXT.md")
+    before = read_context(vorgang / "CONTEXT.md")
 
     record = root / "records" / "kunde.md"
     record.parent.mkdir(parents=True)
-    output = (run / "pruefen/001/output/ergebnis.md").read_text(encoding="utf-8")
+    output = (vorgang / "pruefen/001/output/ergebnis.md").read_text(encoding="utf-8")
     record.write_text(
         f"# Kunde\n\nLetztes Prüfergebnis (aus vorgang:video-001):\n{output}",
         encoding="utf-8",
@@ -236,18 +236,18 @@ def test_writeback_to_continuing_record_preserves_run_evidence(tmp_path):
 
     report = validate(root)
     assert report.valid, report.issues
-    assert read_context(run / "CONTEXT.md") == before
-    attempt = run / "pruefen/001"
+    assert read_context(vorgang / "CONTEXT.md") == before
+    attempt = vorgang / "pruefen/001"
     assert surface_hash(attempt, ["output/ergebnis.md"]) == before["laufpfad"][1]["ausgabe_hash"]
 
 
 def test_writeback_into_completed_attempt_breaks_binding(tmp_path):
-    """Run evidence is immutable: using a bound output as writeback target fails (O5.2)."""
+    """Vorgang evidence is immutable: using a bound output as writeback target fails (O5.2)."""
     root, revision = committed_workspace(tmp_path)
-    run = _completed_run(root, revision)
+    vorgang = _completed_vorgang(root, revision)
     assert validate(root).valid
 
-    (run / "pruefen/001/output/ergebnis.md").write_text(
+    (vorgang / "pruefen/001/output/ergebnis.md").write_text(
         "nachträglich überschrieben", encoding="utf-8"
     )
 
@@ -261,9 +261,9 @@ def test_writeback_into_completed_attempt_breaks_binding(tmp_path):
 def test_validate_is_read_only_and_idempotent(tmp_path):
     """Core provides no write service: validation never changes the workspace (O5.3/O5.4)."""
     root, revision = committed_workspace(tmp_path)
-    run = _completed_run(root, revision)
+    vorgang = _completed_vorgang(root, revision)
     # Introduce detectable damage: the checker must SEE it, not fix or worsen it.
-    (run / "start/001/input/auftrag.md").write_text("manipuliert", encoding="utf-8")
+    (vorgang / "start/001/input/auftrag.md").write_text("manipuliert", encoding="utf-8")
 
     before_digest = _tree_digest(root)
     before_objects = git(root, "count-objects")
@@ -282,19 +282,19 @@ def test_validate_is_read_only_and_idempotent(tmp_path):
 # --- O6: transport ---------------------------------------------------------------
 
 
-def _build_run_in(root: Path) -> tuple[str, Path]:
+def _build_vorgang_in(root: Path) -> tuple[str, Path]:
     revision = git(root, "rev-parse", "HEAD:applications/video")
-    run = _completed_run(root, revision)
-    # Runs are evidence: commit them so clone/transport preserves old attempts.
+    vorgang = _completed_vorgang(root, revision)
+    # Vorgaenge are evidence: commit them so clone/transport preserves old attempts.
     git(root, "add", "vorgaenge")
     git(root, "commit", "-m", "record run evidence")
-    return revision, run
+    return revision, vorgang
 
 
-def test_documented_transport_preserves_tree_oid_and_old_runs(tmp_path):
+def test_documented_transport_preserves_tree_oid_and_old_vorgaenge(tmp_path):
     """impacts-method.md §Scale move path: byte copy keeps OID; old attempts survive (O6.1)."""
     source, _ = committed_workspace(tmp_path / "src_repo")
-    revision, run = _build_run_in(source)
+    revision, vorgang = _build_vorgang_in(source)
     assert validate(source).valid
 
     # Documented path: archive the application tree into a second repository.
@@ -323,7 +323,7 @@ def test_documented_transport_preserves_tree_oid_and_old_runs(tmp_path):
     report = validate(clone)
     assert report.valid, report.issues
     assert (clone / "vorgaenge/video-001/start/001/input/auftrag.md").read_bytes() == (
-        run / "start/001/input/auftrag.md"
+        vorgang / "start/001/input/auftrag.md"
     ).read_bytes()
 
 
@@ -332,7 +332,7 @@ def test_export_attributes_inside_application_tree_fail_closed(tmp_path):
 
     This fixture checks that archiving the Application subtree honors its
     export-ignore attribute. The layout in 02_protocol/templates/application.md
-    forbids these extra files, so binding a run to this tree is rejected with
+    forbids these extra files, so binding a Vorgang to this tree is rejected with
     revision.invalid.
     """
     source, _ = committed_workspace(tmp_path / "src_repo")
@@ -352,8 +352,8 @@ def test_export_attributes_inside_application_tree_fail_closed(tmp_path):
     subprocess.run(["tar", "-x", "-C", str(target)], input=archive, check=True)
     assert not (target / "intern.md").exists()
 
-    # ... but no run can ever be bound to that poisoned tree.
-    _completed_run(source, revision)
+    # ... but no Vorgang can ever be bound to that poisoned tree.
+    _completed_vorgang(source, revision)
     report = validate(source)
     assert not report.valid
     assert "revision.invalid" in {issue.code for issue in report.issues}

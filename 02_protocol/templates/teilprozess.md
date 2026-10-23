@@ -10,7 +10,7 @@ A subprocess is a coherent domain section of the main process. Its worksteps are
 
 ## Contribution to the result
 
-State one coherent result this section contributes, its recipient or consuming section and its permitted use. Name the Leistungsstückliste component it produces or completes, with the joints it owns, under `02_protocol/impacts-architect/references/zuschnitt.md`, "Teilprozess". Do not restate the main process or child worksteps.
+State one coherent result this section contributes, its recipient or consuming section and its permitted use. Name the Leistungsstückliste component it produces or completes, with the joints it owns, or the prerequisite it establishes, under `02_protocol/impacts-architect/references/zuschnitt.md`, "Teilprozess". Do not restate the main process or child worksteps.
 
 ## Inputs and boundaries
 
@@ -26,4 +26,4 @@ Definition setup is complete when every result component has a producing workste
 
 ## Leading indicator
 
-Include only when an early observation supports a concrete steering decision: name the indicator, proposed relationship to the result metric and possible action. The relationship remains `hypothesis` until observed runs support it. Otherwise omit this section; contribution and section result remain required.
+Include only when an early observation supports a concrete steering decision: name the indicator, proposed relationship to the result metric and possible action. The relationship remains `hypothesis` until observed outcomes support it. Otherwise omit this section; contribution and section result remain required.

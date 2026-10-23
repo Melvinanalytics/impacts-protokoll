@@ -348,9 +348,9 @@ def test_list_with_indented_code_stays_verbatim():
     assert blocks.blocks(text) == [{"type": "text", "text": text, "line": 1}]
 
 
-# ---------- runs and workspaces ----------
+# ---------- Vorgaenge and workspaces ----------
 
-def _workspace(base: Path, applications=("video",), runs=(("video-001", "video"),)) -> Path:
+def _workspace(base: Path, applications=("video",), vorgaenge=(("video-001", "video"),)) -> Path:
     root = init_workspace(base / "kunde")
     for name in applications:
         write_application(root / "applications" / name)
@@ -361,13 +361,13 @@ def _workspace(base: Path, applications=("video",), runs=(("video-001", "video")
     git(root, "config", "user.name", "Test")
     git(root, "add", ".")
     git(root, "commit", "-m", "applications v1")
-    for slug, application in runs:
+    for slug, application in vorgaenge:
         revision = git(root, "rev-parse", f"HEAD:applications/{application}")
-        run, entries = root / "vorgaenge" / slug, []
+        vorgang, entries = root / "vorgaenge" / slug, []
         # pruefen is a human gate. Its open decision is wartend under the current rule; an aktiv gate entry
-        # stays valid for runs recorded earlier, so this fixture keeps that older shape on purpose.
+        # stays valid for Vorgaenge recorded earlier, so this fixture keeps that older shape on purpose.
         for step, status in (("start", "abgeschlossen"), ("pruefen", "aktiv")):
-            attempt = run / step / "001"
+            attempt = vorgang / step / "001"
             (attempt / "input").mkdir(parents=True)
             (attempt / "output").mkdir()
             (attempt / "input" / "auftrag.md").write_text(step, encoding="utf-8")
@@ -377,7 +377,7 @@ def _workspace(base: Path, applications=("video",), runs=(("video-001", "video")
                 (attempt / "output" / "ergebnis.md").write_text("fertig", encoding="utf-8")
                 entry |= {"gewaehlte_route": "weiter", "ausgabe_hash": surface_hash(attempt, ["output/ergebnis.md"])}
             entries.append(entry)
-        write_context(run / "CONTEXT.md", {"type": "vorgang", "id": f"vorgang:{slug}",
+        write_context(vorgang / "CONTEXT.md", {"type": "vorgang", "id": f"vorgang:{slug}",
                                            "application_revision": f"git-tree:{revision}", "laufpfad": entries}, f"# {slug}")
     return root
 
@@ -394,7 +394,7 @@ def test_vorgang_shows_the_bound_revision_not_the_working_tree(tmp_path):
                              "current": "arbeitsschritt:pruefen", "ended": None}
 
 
-def test_invalid_run_is_refused(tmp_path):
+def test_invalid_vorgang_is_refused(tmp_path):
     root = _workspace(tmp_path)
     (root / "vorgaenge" / "video-001" / "start" / "001" / "input" / "auftrag.md").write_text("verändert", encoding="utf-8")
     model = selection.single_vorgang(root / "vorgaenge" / "video-001" / "CONTEXT.md")
@@ -409,7 +409,7 @@ def test_vorgang_outside_vorgaenge_is_refused(tmp_path):
         selection.single_vorgang(copy / "CONTEXT.md")
 
 
-def test_broken_workspace_router_blocks_the_run(tmp_path):
+def test_broken_workspace_router_blocks_the_vorgang(tmp_path):
     root = _workspace(tmp_path)
     router = root / "CONTEXT.md"
     router.write_text(router.read_text(encoding="utf-8").replace("type: workspace", "type: kaputt"), encoding="utf-8")
@@ -417,7 +417,7 @@ def test_broken_workspace_router_blocks_the_run(tmp_path):
     assert "nodes" not in model and model["issues"]
 
 
-def test_output_never_inside_the_workspace_of_a_run(tmp_path):
+def test_output_never_inside_the_workspace_of_a_vorgang(tmp_path):
     root = _workspace(tmp_path)
     with pytest.raises(SystemExit):
         run_cli(root / "vorgaenge" / "video-001" / "CONTEXT.md", "--out", root / "ansicht")
@@ -477,7 +477,7 @@ def test_looped_follows_the_laufpfad_not_the_display_order():
     assert finished["ended"] == "end:fertig"
 
 
-def _waiting_run(root: Path, **entry) -> Path:
+def _waiting_vorgang(root: Path, **entry) -> Path:
     context = root / "vorgaenge" / "video-001" / "CONTEXT.md"
     metadata = read_context(context)
     metadata["laufpfad"][-1] |= {"status": "wartend", "wiedereinstieg": {"ausloeser": "Lieferschein", "continuation_ref": "mail:lieferschein"}}
@@ -486,9 +486,9 @@ def _waiting_run(root: Path, **entry) -> Path:
     return context
 
 
-def test_waiting_run_shows_status_start_and_next_check_verbatim_without_judging_lateness(tmp_path):
+def test_waiting_vorgang_shows_status_start_and_next_check_verbatim_without_judging_lateness(tmp_path):
     root = _workspace(tmp_path)
-    context = _waiting_run(root, status_seit="2026-10-20T09:00:00+02:00",
+    context = _waiting_vorgang(root, status_seit="2026-10-20T09:00:00+02:00",
                            wiedereinstieg={"ausloeser": "Lieferschein", "continuation_ref": "mail:lieferschein",
                                            "faellig": "2026-11-02T17:00:00+01:00"})
     model = selection.single_vorgang(context)
@@ -505,7 +505,7 @@ def test_waiting_run_shows_status_start_and_next_check_verbatim_without_judging_
 
 def test_overview_names_the_human_decision_of_a_waiting_gate(tmp_path):
     root = _workspace(tmp_path)
-    _waiting_run(root)
+    _waiting_vorgang(root)
     overview = selection.workspace_site(root)["index.html"]
     overview["language"] = "de"
     text = text_content(render_page(tmp_path, write.page_html(overview))["sheet"])
@@ -519,39 +519,39 @@ def test_missing_time_fields_stay_unknown(tmp_path):
     current["language"] = "de"
     text = text_content(render_page(tmp_path, write.page_html(current))["head"])
     assert "Status seit: unbekannt" in text and "Nächste Prüfung" not in text
-    waiting = selection.single_vorgang(_waiting_run(root))
+    waiting = selection.single_vorgang(_waiting_vorgang(root))
     waiting["language"] = "en"
     text = text_content(render_page(tmp_path, write.page_html(waiting))["head"])
     assert "Status since: unknown" in text and "No next check stated in history" in text
 
 
-def test_workspace_site_lists_every_application_and_run(tmp_path):
+def test_workspace_site_lists_every_application_and_vorgang(tmp_path):
     root = _workspace(tmp_path, applications=("video", "schnitt"),
-                      runs=(("video-001", "video"), ("video-002", "video"), ("schnitt-001", "schnitt")))
+                      vorgaenge=(("video-001", "video"), ("video-002", "video"), ("schnitt-001", "schnitt")))
     (root / "vorgaenge" / "video-002" / "start" / "001" / "input" / "auftrag.md").write_text("kaputt", encoding="utf-8")
     pages = selection.workspace_site(root)
     assert set(pages) == {"index.html", "a-schnitt.html", "a-video.html",
                           "v-schnitt-001.html", "v-video-001.html", "v-video-002.html"}
     overview = pages["index.html"]
-    assert overview["population"] == {"applications": 2, "applications_refused": 0, "historic": 0, "runs": 3, "runs_refused": 1, "ist": 0}
+    assert overview["population"] == {"applications": 2, "applications_refused": 0, "historic": 0, "vorgaenge": 3, "vorgaenge_refused": 1, "ist": 0}
     assert overview["ist"] is None
     by_folder = {a["folder"]: a for a in overview["applications"]}
-    assert [r["page"] for r in by_folder["video"]["runs"]] == ["v-video-001.html"]
-    assert [r["page"] for r in by_folder["schnitt"]["runs"]] == ["v-schnitt-001.html"]
+    assert [r["page"] for r in by_folder["video"]["vorgaenge"]] == ["v-video-001.html"]
+    assert [r["page"] for r in by_folder["schnitt"]["vorgaenge"]] == ["v-schnitt-001.html"]
     assert [r["page"] for r in overview["unassigned"]] == ["v-video-002.html"]
     assert overview["unassigned"][0]["issues"]
-    assert all(r["matches_head"] for a in overview["applications"] for r in a["runs"])
+    assert all(r["matches_head"] for a in overview["applications"] for r in a["vorgaenge"])
     assert all(m["site"]["index"] == "index.html" for m in pages.values())
 
 
-def test_workspace_marks_runs_bound_to_an_older_definition(tmp_path):
+def test_workspace_marks_vorgaenge_bound_to_an_older_definition(tmp_path):
     root = _workspace(tmp_path)
     step = root / "applications" / "video" / "produktion" / "start" / "CONTEXT.md"
     step.write_text(step.read_text(encoding="utf-8").replace("Erzeuge", "Erstelle"), encoding="utf-8")
     git(root, "commit", "-qam", "application v2")
     overview = selection.workspace_site(root)["index.html"]
-    run = overview["applications"][0]["runs"][0]
-    assert run["matches_head"] is False and run["stand"]["kind"] == "current"
+    vorgang = overview["applications"][0]["vorgaenge"][0]
+    assert vorgang["matches_head"] is False and vorgang["stand"]["kind"] == "current"
 
 
 def test_workspace_inventory_keeps_files_and_links(tmp_path):
@@ -560,7 +560,7 @@ def test_workspace_inventory_keeps_files_and_links(tmp_path):
     (root / "applications" / "alias").symlink_to(root / "applications" / "video")
     pages = selection.workspace_site(root)
     overview = pages["index.html"]
-    assert overview["population"]["runs_refused"] == 1 and overview["population"]["applications_refused"] == 1
+    assert overview["population"]["vorgaenge_refused"] == 1 and overview["population"]["applications_refused"] == 1
     assert {r["id"] for r in overview["unassigned"]} == {"vorgaenge/notiz.md"}
 
 
@@ -578,25 +578,25 @@ def test_workspace_change_during_generation_writes_nothing(tmp_path, monkeypatch
         selection.workspace_site(root)
 
 
-def test_unreadable_run_is_listed_not_fatal(tmp_path):
-    root = _workspace(tmp_path, runs=(("video-001", "video"), ("video-002", "video")))
+def test_unreadable_vorgang_is_listed_not_fatal(tmp_path):
+    root = _workspace(tmp_path, vorgaenge=(("video-001", "video"), ("video-002", "video")))
     locked = root / "vorgaenge" / "video-002" / "CONTEXT.md"
     locked.chmod(0)
     try:
         overview = selection.workspace_site(root)["index.html"]
     finally:
         locked.chmod(0o644)
-    assert overview["population"]["runs"] == 2 and overview["population"]["runs_refused"] == 1
+    assert overview["population"]["vorgaenge"] == 2 and overview["population"]["vorgaenge_refused"] == 1
 
 
-def test_run_whose_application_left_the_working_files_keeps_its_leistung(tmp_path):
+def test_vorgang_whose_application_left_the_working_files_keeps_its_leistung(tmp_path):
     root = _workspace(tmp_path)
     shutil.rmtree(root / "applications" / "video")
     git(root, "commit", "-qam", "remove application")
     overview = selection.workspace_site(root)["index.html"]
     historic = [a for a in overview["applications"] if not a["current"]]
     assert len(historic) == 1 and historic[0]["id"] == "hauptprozess:video"
-    assert historic[0]["runs"][0]["page"] == "v-video-001.html" and not overview["unassigned"]
+    assert historic[0]["vorgaenge"][0]["page"] == "v-video-001.html" and not overview["unassigned"]
 
 
 def test_waiting_and_reached_ends_are_not_progress():
@@ -605,12 +605,12 @@ def test_waiting_and_reached_ends_are_not_progress():
              {"id": "arbeitsschritt:a", "kind": "arbeitsschritt", "parent": "teilprozess:t", "children": [],
               "meta": {"routen": {"stop": "end:abgebrochen"}}, "routes": [["stop", "end:abgebrochen"]]}]
     waiting = [{"arbeitsschritt_ref": "arbeitsschritt:a", "versuch": 1, "status": "wartend"}]
-    run = {"id": "vorgang:r", "meta": {"laufpfad": waiting}}
-    tree = project.map_tree(nodes, run, project.phases(nodes, waiting))
+    vorgang = {"id": "vorgang:r", "meta": {"laufpfad": waiting}}
+    tree = project.map_tree(nodes, vorgang, project.phases(nodes, waiting))
     assert tree["children"][0]["children"][0]["phase"] == "waiting"
     ended = [{"arbeitsschritt_ref": "arbeitsschritt:a", "versuch": 1, "status": "abgeschlossen", "gewaehlte_route": "stop"}]
-    run = {"id": "vorgang:r", "meta": {"laufpfad": ended}}
-    tree = project.map_tree(nodes, run, project.phases(nodes, ended))
+    vorgang = {"id": "vorgang:r", "meta": {"laufpfad": ended}}
+    tree = project.map_tree(nodes, vorgang, project.phases(nodes, ended))
     route = tree["children"][0]["children"][0]["children"][0]
     assert route["phase"] == "reached" and route["dir"] == "end" and tree["phase"] == "reached"
     assert tree["children"][0]["phase"] == ""  # a container never takes done or a lime colour
@@ -642,9 +642,9 @@ def test_vanished_application_keeps_each_bound_leistung(tmp_path):
     git(root, "commit", "-qam", "applications v2")
     second = root / "vorgaenge" / "video-002"
     shutil.copytree(root / "vorgaenge" / "video-001", second)
-    run = second / "CONTEXT.md"
+    vorgang = second / "CONTEXT.md"
     v1, v2 = (git(root, "rev-parse", ref) for ref in ("HEAD~1:applications/video", "HEAD:applications/video"))
-    run.write_text(run.read_text(encoding="utf-8").replace(v1, v2).replace("vorgang:video-001", "vorgang:video-002"),
+    vorgang.write_text(vorgang.read_text(encoding="utf-8").replace(v1, v2).replace("vorgang:video-001", "vorgang:video-002"),
                    encoding="utf-8")
     shutil.rmtree(root / "applications" / "video")
     git(root, "add", "-A")
@@ -652,10 +652,10 @@ def test_vanished_application_keeps_each_bound_leistung(tmp_path):
     overview = selection.workspace_site(root)["index.html"]
     historic = [a for a in overview["applications"] if not a["current"]]
     assert sorted(a["leistung"]["ergebnis"] for a in historic) == ["Veröffentlichtes Video", "Zweite Leistung"]
-    assert all(len(a["runs"]) == 1 for a in historic) and overview["population"]["historic"] == 2
+    assert all(len(a["vorgaenge"]) == 1 for a in historic) and overview["population"]["historic"] == 2
 
 
-def test_run_evidence_changed_after_validation_is_refused(tmp_path, monkeypatch):
+def test_vorgang_evidence_changed_after_validation_is_refused(tmp_path, monkeypatch):
     root = _workspace(tmp_path)
     real = selection.validate
 
@@ -665,8 +665,8 @@ def test_run_evidence_changed_after_validation_is_refused(tmp_path, monkeypatch)
         return report
 
     monkeypatch.setattr(selection, "validate", validate_then_change)
-    run = selection.workspace_site(root)["v-video-001.html"]
-    assert "nodes" not in run and run["issues"][0]["code"] == "view.unreadable"
+    vorgang = selection.workspace_site(root)["v-video-001.html"]
+    assert "nodes" not in vorgang and vorgang["issues"][0]["code"] == "view.unreadable"
 
 
 def test_head_moved_and_restored_cannot_relabel_the_definition(tmp_path, monkeypatch):
@@ -691,7 +691,7 @@ def test_head_moved_and_restored_cannot_relabel_the_definition(tmp_path, monkeyp
     assert overview["applications"][0]["head"] == git(root, "rev-parse", f"{first}:applications/video")
 
 
-def test_fifo_in_a_run_is_recorded_not_read(tmp_path):
+def test_fifo_in_a_vorgang_is_recorded_not_read(tmp_path):
     root = _workspace(tmp_path)
     os.mkfifo(root / "vorgaenge" / "video-001" / "pruefen" / "001" / "extra-fifo")
     state = selection.capture(root / "vorgaenge" / "video-001")
@@ -887,7 +887,7 @@ def _boxes(tree):
         yield from _boxes(child)
 
 
-def _run(entries):
+def _vorgang(entries):
     return {"id": "vorgang:r", "title": None, "meta": {"laufpfad": entries}}
 
 
@@ -907,7 +907,7 @@ def test_phases_keep_green_for_the_position_only():
     }
     for kind, entries in cases.items():
         view = project.phases(nodes, entries)
-        tree = project.map_tree(nodes, _run(entries), view)
+        tree = project.map_tree(nodes, _vorgang(entries), view)
         boxes = list(_boxes(tree))
         assert not any(b["phase"] == "done" for b in boxes if b["kind"] in ("hp", "tp")), kind
         b = next(x for x in boxes if x.get("ref") == "arbeitsschritt:b")
@@ -929,7 +929,7 @@ def test_phases_keep_green_for_the_position_only():
 def test_stand_has_one_case_per_kind():
     # The aktiv entry at gate b is the older, still valid shape; the viewer must keep showing it.
     nodes = _nodes(gate="human")
-    stand = lambda entries: project.stand(nodes, _run(entries), project.phases(nodes, entries))
+    stand = lambda entries: project.stand(nodes, _vorgang(entries), project.phases(nodes, entries))
     current = stand([DONE_A, {"arbeitsschritt_ref": "arbeitsschritt:b", "versuch": 1, "status": "aktiv"}])
     assert (current["kind"], current["step_title"], current["part_title"], current["gate"], current["versuch"]) == ("current", "B", "T", "human", 1)
     assert [r[0] for r in current["routes"]] == ["freigegeben", "abgelehnt"]
@@ -946,13 +946,13 @@ def test_stand_has_one_case_per_kind():
     assert project.stand(nodes, None, None) == {"kind": "definition"}
 
 
-def test_run_summary_copies_the_wait_verbatim(tmp_path):
+def test_vorgang_summary_copies_the_wait_verbatim(tmp_path):
     root = _workspace(tmp_path)
-    run = root / "vorgaenge" / "video-001" / "CONTEXT.md"
-    run.write_text(run.read_text(encoding="utf-8").replace("status: aktiv", "status: wartend\n  wiedereinstieg:\n"
+    vorgang = root / "vorgaenge" / "video-001" / "CONTEXT.md"
+    vorgang.write_text(vorgang.read_text(encoding="utf-8").replace("status: aktiv", "status: wartend\n  wiedereinstieg:\n"
                    "    ausloeser: Freigabe liegt vor\n    continuation_ref: records/video.md"), encoding="utf-8")
     overview = selection.workspace_site(root)["index.html"]
-    summary = overview["applications"][0]["runs"][0]
+    summary = overview["applications"][0]["vorgaenge"][0]
     assert summary["issues"] == [], summary["issues"]
     assert (summary["stand"]["kind"], summary["stand"]["ausloeser"], summary["statuses"]) == ("waiting", "Freigabe liegt vor", ["abgeschlossen", "wartend"])
 
@@ -1084,7 +1084,7 @@ def test_ist_targets_resolve_only_within_this_view(tmp_path):
 
 
 def test_a_step_in_two_applications_is_a_gap_not_a_choice(tmp_path):
-    root = _workspace(tmp_path, applications=("video", "schnitt"), runs=())
+    root = _workspace(tmp_path, applications=("video", "schnitt"), vorgaenge=())
     folder = root / "grundlagen" / "ist-prozesse"
     folder.mkdir(parents=True)
     ist_text(folder / "antrag.md", lambda t: t.replace("Trennung aufheben: Eingang legt die Fallakte direkt an (`hypothesis`)",
@@ -1417,7 +1417,7 @@ def test_english_waiting_history_preserves_status_token(tmp_path):
     model = selection.workspace_site(root)["v-video-001.html"]
     model["language"] = "en"
     result = render_page(tmp_path, write.page_html(model), "#vorgang:video-001")
-    assert model["run"]["meta"]["laufpfad"][-1]["status"] == "wartend"
+    assert model["vorgang"]["meta"]["laufpfad"][-1]["status"] == "wartend"
     assert "Continue when: Freigabe liegt vor" in words(result["sheet"])
     assert "Continue in: records/video.md" in words(result["sheet"])
     assert "waiting" in words(result["sheet"])
@@ -1502,7 +1502,7 @@ def test_legend_maps_labels_without_inventing_evidence(tmp_path):
     header = next(e for e in elements(sheet) if e["tagName"] == "HEADER")
     assert "Result." in text_content(header) and "Another sentence." not in text_content(header)
     assert "Verantwortlich" not in text_content(header)
-    assert "Definition, kein Laufstand" in text_content(header)
+    assert "Definition, kein Ausführungsstand" in text_content(header)
     assert not any(e["attrs"].get("class") == "triad" for e in elements(sheet))
     opened = next(e for e in elements(sheet) if e["attrs"].get("id") == "s-open")
     assert "Missing" in text_content(opened)

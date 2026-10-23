@@ -23,15 +23,15 @@ from tempfile import TemporaryDirectory
 import yaml
 
 from impacts_protocol.io import load_frontmatter
-from impacts_protocol.validator import validate
+from impacts_protocol.validator import SCHEMA_REGISTRY, validate
 
 # Private on purpose: a bound revision must be materialized exactly as the validator does.
 from impacts_protocol.validator import _materialize_tree
 
 from . import project
-from .read import Unreadable, issue_list, read_application, read_file, read_run
+from .read import Unreadable, issue_list, read_application, read_file, read_vorgang
 
-FORMAT = "impacts-view/2"
+FORMAT = "impacts-view/3"
 TREE = re.compile(r"git-tree:([0-9a-f]{40}|[0-9a-f]{64})")
 SLUG = re.compile(r"[a-z0-9]+(?:-[a-z0-9]+)*")
 FOLDERS = ("applications", "vorgaenge")
@@ -133,15 +133,15 @@ def application_page(root: Path, algorithm: str | None = None) -> dict:
     project.annotate(nodes)
     selection.update(application=nodes[0]["id"], revision=digest(nodes))
     return {"format": FORMAT, "kind": "application", "selection": selection, "issues": [],
-            "nodes": nodes, "run": None, "view": None, "stand": project.stand(nodes, None, None),
+            "nodes": nodes, "vorgang": None, "view": None, "stand": project.stand(nodes, None, None),
             "map": project.map_tree(nodes, None, None)}
 
 
-def run_issues(report, run_rel: str) -> list[dict]:
-    """This run's issues plus every issue outside other runs and Applications: a broken
-    workspace router or folder means Core may not have checked this run at all."""
+def vorgang_issues(report, vorgang_rel: str) -> list[dict]:
+    """This Vorgang's issues plus every issue outside other Vorgänge and Applications: a broken
+    workspace router or folder means Core may not have checked this Vorgang at all."""
     return issue_list([i for i in report.issues
-                       if i.path == run_rel or i.path.startswith(run_rel + "/") or not i.path.startswith(tuple(f + "/" for f in FOLDERS))])
+                       if i.path == vorgang_rel or i.path.startswith(vorgang_rel + "/") or not i.path.startswith(tuple(f + "/" for f in FOLDERS))])
 
 
 def bound_application(workspace: Path, revision: str, cache: dict) -> tuple[list[dict], list[dict]]:
@@ -156,35 +156,35 @@ def bound_application(workspace: Path, revision: str, cache: dict) -> tuple[list
 
 
 def vorgang_page(path: Path, workspace: Path, report, before: dict | Exception, cache: dict) -> dict:
-    """`report` is Core's validation of `workspace`; `before` is the run folder's state captured before it."""
-    run_rel = path.parent.relative_to(workspace).as_posix()
-    selection = {"application": None, "revision": None, "vorgang": run_rel}
-    issues = run_issues(report, run_rel)
+    """`report` is Core's validation of `workspace`; `before` is the Vorgang folder's state captured before it."""
+    vorgang_rel = path.parent.relative_to(workspace).as_posix()
+    selection = {"application": None, "revision": None, "vorgang": vorgang_rel}
+    issues = vorgang_issues(report, vorgang_rel)
     if issues:
         return refused("vorgang", selection, issues)
     try:
         if isinstance(before, Exception):
             raise before
-        run = read_run(path, f"{run_rel}/CONTEXT.md")
-        if before.get("CONTEXT.md") != run["sha256"] or capture(path.parent) != before:
-            raise Unreadable(f"{run_rel} changed during generation; generate the view again")
-        revision = TREE.fullmatch(str(run["meta"]["application_revision"]))
+        vorgang = read_vorgang(path, f"{vorgang_rel}/CONTEXT.md")
+        if before.get("CONTEXT.md") != vorgang["sha256"] or capture(path.parent) != before:
+            raise Unreadable(f"{vorgang_rel} changed during generation; generate the view again")
+        revision = TREE.fullmatch(str(vorgang["meta"]["application_revision"]))
         if revision is None:
             raise Unreadable("the validated Vorgang has no application_revision")
         issues, nodes = bound_application(workspace, revision.group(0), cache)
     except (Unreadable, OSError, ValueError) as error:
-        return unreadable("vorgang", selection, run_rel, error)
+        return unreadable("vorgang", selection, vorgang_rel, error)
     if issues:
         return refused("vorgang", selection, issues)
     selection.update(application=nodes[0]["id"], revision=revision.group(0))
-    project.annotate([run])
-    view = project.phases(nodes, run["meta"]["laufpfad"])
-    return {"format": FORMAT, "kind": "vorgang", "selection": selection, "issues": [], "nodes": nodes, "run": run,
-            "view": view, "stand": project.stand(nodes, run, view), "map": project.map_tree(nodes, run, view)}
+    project.annotate([vorgang])
+    view = project.phases(nodes, vorgang["meta"]["laufpfad"])
+    return {"format": FORMAT, "kind": "vorgang", "selection": selection, "issues": [], "nodes": nodes, "vorgang": vorgang,
+            "view": view, "stand": project.stand(nodes, vorgang, view), "map": project.map_tree(nodes, vorgang, view)}
 
 
 def capture(folder: Path) -> dict | Exception:
-    """Every entry of a run folder with its content hash or link target; the run's evidence included."""
+    """Every entry of a Vorgang folder with its content hash or link target; the Vorgang's evidence included."""
     def fail(error: OSError):
         raise error  # an unreadable subfolder must not vanish from the state
 
@@ -305,11 +305,11 @@ def workspace_site(workspace: Path) -> dict[str, dict]:
     """Every Application and every Vorgang as its own page, plus an overview as index.html."""
     workspace = workspace.resolve()
     if workspace_of(workspace) != workspace:
-        raise SystemExit(f"{workspace} must be the root of a Git repository; Core resolves bound runs there")
+        raise SystemExit(f"{workspace} must be the root of a Git repository; Core resolves bound Vorgänge there")
     algorithm = git(workspace, "rev-parse", "--show-object-format") or "sha1"
     state = lambda: (inventory(workspace), git(workspace, "rev-parse", "--verify", "-q", "HEAD"))
     first = state()
-    runs = {name: capture(workspace / "vorgaenge" / name) for name, kind in first[0]["vorgaenge"] if kind == "dir"}
+    vorgaenge = {name: capture(workspace / "vorgaenge" / name) for name, kind in first[0]["vorgaenge"] if kind == "dir"}
     report = validate(workspace)
     used, pages, cache, heads = {"index.html"}, {}, {}, {}
     for name, kind in first[0]["applications"]:
@@ -322,7 +322,7 @@ def workspace_site(workspace: Path) -> dict[str, dict]:
     for name, kind in first[0]["vorgaenge"]:
         rel = f"vorgaenge/{name}"
         page = page_name("v", name, used)
-        pages[page] = vorgang_page(workspace / rel / "CONTEXT.md", workspace, report, runs[name], cache) if kind == "dir" else \
+        pages[page] = vorgang_page(workspace / rel / "CONTEXT.md", workspace, report, vorgaenge[name], cache) if kind == "dir" else \
             refused("vorgang", {"application": None, "revision": None, "vorgang": rel}, entry_issues(report, rel, kind))
     skipped = None if first[0][IST] is None else ist_pages(workspace, first[0][IST], used, pages)
     if state() != first:
@@ -333,7 +333,8 @@ def workspace_site(workspace: Path) -> dict[str, dict]:
                         if not i["path"].startswith(tuple(f + "/" for f in FOLDERS))
                         or "/".join(i["path"].split("/")[:2]) not in known]
     project.link_ist(pages)
-    pages["index.html"] = project.overview(workspace.name, pages, heads, workspace_issues, bool(first[1]), skipped)
+    pages["index.html"] = project.overview(workspace.name, pages, heads, workspace_issues, bool(first[1]), skipped,
+                                           SCHEMA_REGISTRY.schemas())
     for name, model in pages.items():
         model["site"] = {"index": "index.html", "self": name}
     return pages

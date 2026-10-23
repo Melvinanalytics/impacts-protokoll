@@ -79,9 +79,9 @@ In this example, the manager reads the report before deciding. Clarify why the h
 
 For duration, define start and accepted end. Distinguish active work, missing inputs, handoffs, decisions and rework. Name sources/reported ranges; leave missing measurement open. While waiting, identify the missing information or decision and the contributions already possible within known rules and authority. Keep observations separate from proposed improvements.
 
-## Reused definition and new run values
+## Reused definition and new Vorgang values
 
-The check catalog, notice blank and responsibilities recur. Requests, attachments and questions belong to the case; its business record may outlive several process runs. Each run binds the necessary excerpt. Identify relevant offerings or domain subjects, instances/versions and their evidence. Link existing definitions and records rather than duplicating them.
+The check catalog, notice blank and responsibilities recur. Requests, attachments and questions belong to the case; its business record may outlive several Vorgänge. Each Vorgang binds the necessary excerpt. Identify relevant offerings or domain subjects, instances/versions and their evidence. Link existing definitions and records rather than duplicating them.
 
 ## Result and acceptance
 

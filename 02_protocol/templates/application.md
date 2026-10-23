@@ -28,9 +28,9 @@ vorgaenge/<vorgang>/
 - Placeholders and `routen` keys are slugs matching `[a-z0-9]+(?:-[a-z0-9]+)*`. Each ID is `<type>:<folder-name>`.
 - An Application contains only `CONTEXT.md` files and folders. Each main process has at least one subprocess, each subprocess at least one workstep; worksteps have no subfolders.
 - Workstep IDs are unique across the Application. Routes target `arbeitsschritt:<slug>` or `end:<slug>`; every step can reach an end.
-- `<versuch>` has three digits; `versuch: 1` means `001`. Only steps and attempts reached by `laufpfad` have run folders.
+- `<versuch>` has three digits; `versuch: 1` means `001`. Only steps and attempts reached by `laufpfad` have folders in the Vorgang.
 
-The workstep body contains its prompt and tool invocation contract. Shared rules, prompt fragments and document blanks keep their existing domain home outside this tree and enter attempts as declared inputs with provenance. Tool implementations remain dependencies or earned Capabilities; actual values, intermediate work and result evidence belong to the run. Use the recorded protocol's `impacts-method.md`, “Compose an Arbeitsschritt”, and the workstep template to fill this contract.
+The workstep body contains its prompt and tool invocation contract. Shared rules, prompt fragments and document blanks keep their existing domain home outside this tree and enter attempts as declared inputs with provenance. Tool implementations remain dependencies or earned Capabilities; actual values, intermediate work and result evidence belong to the Vorgang. Use the recorded protocol's `impacts-method.md`, “Compose an Arbeitsschritt”, and the workstep template to fill this contract.
 
 ## Example
 

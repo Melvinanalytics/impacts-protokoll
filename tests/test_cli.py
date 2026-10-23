@@ -354,8 +354,8 @@ def test_hash_json_subprocess_reports_digest_and_expected_failure(tmp_path):
 def test_validate_json_subprocess_reports_tampered_attempt_hash(tmp_path):
     from tests.test_minimal_vorgang import _prepare_workspace
 
-    root, run = _prepare_workspace(tmp_path)
-    (run / "start" / "001" / "input" / "auftrag.md").write_text(
+    root, vorgang = _prepare_workspace(tmp_path)
+    (vorgang / "start" / "001" / "input" / "auftrag.md").write_text(
         "Tampered input\n", encoding="utf-8"
     )
 

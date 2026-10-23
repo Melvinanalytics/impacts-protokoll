@@ -1,4 +1,4 @@
-"""Pure projections from read nodes to what the page draws: run state, map tree, overview,
+"""Pure projections from read nodes to what the page draws: Vorgang state, map tree, overview,
 and the Notwendigkeit table of an Ist-Prozess.
 
 These are derived views. They show the laufpfad's execution state, never a business state,
@@ -27,7 +27,7 @@ SUBTITLE = {
     },
     "vorgang": {
         "betreff": "Wer oder was Gegenstand dieses Vorgangs ist.",
-        "subject": "Who or what this run concerns.",
+        "subject": "Who or what this Vorgang concerns.",
     },
 }
 JOB, AUTHORITY, FLOW = {"ein job", "one job"}, {"human check", "menschliche prüfung", "befugnis", "authority"}, {"ablauf", "flow"}
@@ -173,7 +173,7 @@ def phases(nodes: list[dict], entries: list[dict]) -> dict:
     steps = {n["id"]: n for n in nodes if n["kind"] == "arbeitsschritt"}
     phase = {entry["arbeitsschritt_ref"]: ENTRY_PHASE[entry["status"]] for entry in entries}
     # A closed attempt is not an accepted result. Only the laufpfad decides, never the display order:
-    # re-entering a step on the run's current path returns the run there, and each step passed since
+    # re-entering a step on the Vorgang's current path returns the Vorgang there, and each step passed since
     # then shows "looped" instead of "done" until a later attempt of its own.
     path: list[str] = []
     looped: set[str] = set()
@@ -228,11 +228,11 @@ def route_rows(by_id: dict, order: list[str], step_id: str) -> list[list[str]]:
             for route, target, *_ in by_id[step_id]["routes"]]
 
 
-def map_tree(nodes: list[dict], run: dict | None, view: dict | None) -> dict:
+def map_tree(nodes: list[dict], vorgang: dict | None, view: dict | None) -> dict:
     """HP → TP → AS → attempts and routes, each box with its phase key."""
     by_id = {n["id"]: n for n in nodes}
     order = [n["id"] for n in nodes if n["kind"] == "arbeitsschritt"]
-    entries = run["meta"]["laufpfad"] if run else []
+    entries = vorgang["meta"]["laufpfad"] if vorgang else []
     box = lambda label, kind, phase="", **extra: {"label": label, "kind": kind, "phase": phase, "children": [], **extra}
 
     def container(kids: list[dict]) -> str:
@@ -241,7 +241,7 @@ def map_tree(nodes: list[dict], run: dict | None, view: dict | None) -> dict:
 
     def step(step_id: str) -> dict:
         meta = by_id[step_id]["meta"]
-        phase = "" if not run else view["phase"].get(step_id, "future")
+        phase = "" if not vorgang else view["phase"].get(step_id, "future")
         flags = [f for f, on in (("gate", meta.get("gate") == "human"), ("sacred", meta.get("customer_touchpoint") == "sacred")) if on]
         node = box(title_of(by_id[step_id]), "as", phase, ref=step_id, flags=flags)
         mine = [(i, e) for i, e in enumerate(entries, 1) if e["arbeitsschritt_ref"] == step_id]
@@ -273,26 +273,33 @@ def map_tree(nodes: list[dict], run: dict | None, view: dict | None) -> dict:
     return box(title_of(root), "hp", "reached" if view and view["ended"] else container(parts), ref=root["id"], children=parts)
 
 
-def stand(nodes: list[dict], run: dict | None, view: dict | None) -> dict:
-    """Where the run stands, as plain fields for the page's fixed sentences."""
-    if run is None:
+def stage(nodes: list[dict], ref: str) -> int | str | None:
+    """The Hauptprozess's stage for a step or end; open when it assigns stages but not this one."""
+    stages = nodes[0]["meta"].get("stufen")
+    return None if not stages else stages.get(ref, "open")
+
+
+def stand(nodes: list[dict], vorgang: dict | None, view: dict | None) -> dict:
+    """Where the Vorgang stands, as plain fields for the page's fixed sentences."""
+    if vorgang is None:
         return {"kind": "definition"}
     by_id = {n["id"]: n for n in nodes}
     order = [n["id"] for n in nodes if n["kind"] == "arbeitsschritt"]
-    entries = run["meta"]["laufpfad"]
+    entries = vorgang["meta"]["laufpfad"]
     last = entries[-1]
     found = dict.fromkeys(("kind", "entry", "entries", "step", "step_title", "part_title", "versuch", "gate", "routes",
-                           "ausloeser", "continuation_ref", "faellig", "status_seit", "from_step", "from_title", "route", "end"))
+                           "ausloeser", "continuation_ref", "faellig", "status_seit", "from_step", "from_title", "route", "end",
+                           "stufe"))
     found.update(entry=len(entries), entries=len(entries), status_seit=last.get("status_seit"))
     source = last["arbeitsschritt_ref"]
     if last["status"] == "abgeschlossen":
         found.update(from_step=source, from_title=title_of(by_id[source]), route=last["gewaehlte_route"])
     if view["ended"]:
-        found.update(kind="ended", end=short(view["ended"]))
+        found.update(kind="ended", end=short(view["ended"]), stufe=stage(nodes, view["ended"]))
         return found
     step = view["current"]
     found.update(step=step, step_title=title_of(by_id[step]), part_title=title_of(by_id[by_id[step]["parent"]]),
-                 gate=by_id[step]["meta"].get("gate"), routes=route_rows(by_id, order, step))
+                 gate=by_id[step]["meta"].get("gate"), routes=route_rows(by_id, order, step), stufe=stage(nodes, step))
     if last["status"] == "abgeschlossen":
         found["kind"] = "next"
     else:
@@ -302,14 +309,14 @@ def stand(nodes: list[dict], run: dict | None, view: dict | None) -> dict:
     return found
 
 
-def run_summary(name: str, model: dict, head: str | None) -> dict:
+def vorgang_summary(name: str, model: dict, head: str | None) -> dict:
     summary = {"page": name, "id": model["selection"]["vorgang"], "issues": model["issues"]}
     if model["issues"]:
         return summary
-    run = model["run"]
+    vorgang = model["vorgang"]
     summary.update(
-        id=run["id"], title=run["title"], revision=model["selection"]["revision"], path=run["path"],
-        stand=model["stand"], statuses=[e["status"] for e in run["meta"]["laufpfad"]],
+        id=vorgang["id"], title=vorgang["title"], revision=model["selection"]["revision"], path=vorgang["path"],
+        stand=model["stand"], statuses=[e["status"] for e in vorgang["meta"]["laufpfad"]],
         matches_head=None if head is None else model["selection"]["revision"] == f"git-tree:{head}")
     return summary
 
@@ -324,8 +331,20 @@ def ist_title(model: dict) -> str:
     return name if isinstance(name, str) and name.strip() else node["title"] or stem
 
 
+def stage_coverage(nodes: list[dict]) -> dict | None:
+    """How many steps and ends of an Application its Hauptprozess assigns a stage; None without stages."""
+    stages = nodes[0]["meta"].get("stufen")
+    if not stages:
+        return None
+    steps = [n for n in nodes if n["kind"] == "arbeitsschritt"]
+    ends = {target for n in steps for target in n["meta"]["routen"].values() if target.startswith("end:")}
+    refs = [n["id"] for n in steps] + sorted(ends)
+    return {"assigned": sum(ref in stages for ref in refs), "of": len(refs)}
+
+
 def overview(workspace: str, pages: dict[str, dict], heads: dict[str, str | None],
-             workspace_issues: list[dict], has_head: bool, ist_skipped: list[dict] | None = None) -> dict:
+             workspace_issues: list[dict], has_head: bool, ist_skipped: list[dict] | None,
+             schemas: dict[str, dict]) -> dict:
     """Leistungen, each with its Vorgänge, and the Ist-Prozess files. No edges between Hauptprozesse:
     Core declares none, and the view does not invent them. A Vorgang whose Application is
     no longer in the working files keeps the Leistung of the revision it binds."""
@@ -336,11 +355,12 @@ def overview(workspace: str, pages: dict[str, dict], heads: dict[str, str | None
         folder = model["selection"]["folder"]
         head, tree = heads.get(folder), model["selection"].get("tree")
         entry = {"page": name, "folder": folder, "current": True, "issues": model["issues"], "head": head,
-                 "same_as_head": None if head is None or tree is None else tree == head, "runs": []}
+                 "same_as_head": None if head is None or tree is None else tree == head, "vorgaenge": []}
         if not model["issues"]:
             hp = model["nodes"][0]
             entry.update(id=hp["id"], title=hp["title"], leistung=hp["meta"]["leistung"],
-                         steps=sum(1 for n in model["nodes"] if n["kind"] == "arbeitsschritt"))
+                         steps=sum(1 for n in model["nodes"] if n["kind"] == "arbeitsschritt"),
+                         stufen=stage_coverage(model["nodes"]))
             by_hp[hp["id"]] = entry
         applications.append(entry)
     unassigned = []
@@ -348,19 +368,20 @@ def overview(workspace: str, pages: dict[str, dict], heads: dict[str, str | None
         if model["kind"] != "vorgang":
             continue
         if model["issues"]:
-            unassigned.append(run_summary(name, model, None))
+            unassigned.append(vorgang_summary(name, model, None))
             continue
         hp, revision = model["nodes"][0], model["selection"]["revision"]
         # A vanished Application is known only per bound revision; each may state another Leistung.
         key = hp["id"] if hp["id"] in by_hp else (hp["id"], revision)
         if key not in by_hp:
             by_hp[key] = {"page": None, "folder": None, "current": False, "issues": [], "head": None,
-                          "same_as_head": None, "runs": [], "id": hp["id"], "revision": revision,
+                          "same_as_head": None, "vorgaenge": [], "id": hp["id"], "revision": revision,
                           "title": hp["title"], "leistung": hp["meta"]["leistung"],
-                          "steps": sum(1 for n in model["nodes"] if n["kind"] == "arbeitsschritt")}
+                          "steps": sum(1 for n in model["nodes"] if n["kind"] == "arbeitsschritt"),
+                          "stufen": stage_coverage(model["nodes"])}
             applications.append(by_hp[key])
         owner = by_hp[key]
-        owner["runs"].append(run_summary(name, model, owner["head"]))
+        owner["vorgaenge"].append(vorgang_summary(name, model, owner["head"]))
     ist = None
     if ist_skipped is not None:
         ist = {"pages": [{"page": name, "file": m["selection"]["ist_prozess"], "title": ist_title(m), "issues": m["issues"],
@@ -369,15 +390,72 @@ def overview(workspace: str, pages: dict[str, dict], heads: dict[str, str | None
                           "rows": 0 if m["issues"] else len(m["necessity"]["rows"])}
                          for name, m in pages.items() if m["kind"] == "ist-prozess"],
                "skipped": ist_skipped}
-    runs = [m for m in pages.values() if m["kind"] == "vorgang"]
+    vorgaenge = [m for m in pages.values() if m["kind"] == "vorgang"]
     current = [a for a in applications if a["current"]]
     population = {"applications": len(current), "applications_refused": sum(bool(a["issues"]) for a in current),
                   "historic": len(applications) - len(current),
-                  "runs": len(runs), "runs_refused": sum(bool(m["issues"]) for m in runs),
+                  "vorgaenge": len(vorgaenge), "vorgaenge_refused": sum(bool(m["issues"]) for m in vorgaenge),
                   "ist": len(ist["pages"]) if ist else 0}
-    return {"format": "impacts-view/2", "kind": "overview", "selection": {"workspace": workspace, "head": has_head},
+    shown = [m for m in pages.values() if m["kind"] == "application" and not m["issues"]]
+    counts = {kind: sum(n["kind"] == kind for m in shown for n in m["nodes"]) for kind in ("hauptprozess", "teilprozess", "arbeitsschritt")}
+    counts |= {"leistung": counts["hauptprozess"], "vorgang": sum(not m["issues"] for m in vorgaenge),
+               "laufpfadeintrag": sum(len(m["vorgang"]["meta"]["laufpfad"]) for m in vorgaenge if not m["issues"])}
+    return {"format": "impacts-view/3", "kind": "overview", "selection": {"workspace": workspace, "head": has_head},
             "issues": workspace_issues, "population": population,
-            "applications": applications, "unassigned": unassigned, "ist": ist}
+            "applications": applications, "unassigned": unassigned, "ist": ist,
+            "data_model": data_model(schemas, counts)}
+
+
+# ---------- Data model: the packaged schemas, read and never restated ----------
+
+ENTITIES = ("hauptprozess", "leistung", "teilprozess", "arbeitsschritt", "vorgang")
+# Where each kind lives in a workspace; a list item names its file and field.
+HOMES = {"hauptprozess": "applications/<slug>/CONTEXT.md", "leistung": "applications/<slug>/CONTEXT.md · leistung",
+         "teilprozess": "applications/<slug>/<teil>/CONTEXT.md", "arbeitsschritt": "applications/<slug>/<teil>/<schritt>/CONTEXT.md",
+         "vorgang": "vorgaenge/<slug>/CONTEXT.md", "laufpfadeintrag": "vorgaenge/<slug>/CONTEXT.md · laufpfad"}
+# A reference names its target kind as the prefix of a pattern, such as ^(?:arbeitsschritt|end):.
+PREFIX = re.compile(r"^\^(?:\((?:\?:)?([a-z-]+(?:\|[a-z-]+)*)\)|([a-z-]+)):")
+# Prefixes that point at something: a kind, an end, a record state or the bound Application tree.
+POINTS = {*ENTITIES, "laufpfadeintrag", "end", "stand", "git-tree"}
+
+
+def targets(schema: dict, defs: dict) -> list[str]:
+    """What a field's values or keys point to, read from its $ref and prefix patterns."""
+    found = []
+    ref = schema.get("$ref", "")
+    if ref.startswith("urn:impacts:schema:"):
+        found.append(ref.split(":")[3])
+    elif ref.startswith("#/$defs/"):
+        name = ref.removeprefix("#/$defs/")
+        found += [name] if "properties" in defs[name] else targets(defs[name], defs)
+    for key in ("items", "additionalProperties", "propertyNames"):
+        if isinstance(schema.get(key), dict):
+            found += targets(schema[key], defs)
+    if match := PREFIX.match(schema.get("pattern", "")):
+        found += (match.group(1) or match.group(2)).split("|")
+    return [kind for kind in dict.fromkeys(found) if kind in POINTS]
+
+
+def entity(name: str, schema: dict, defs: dict, count: int) -> dict:
+    required, fields = schema.get("required", []), schema["properties"]
+    return {"name": name, "home": HOMES[name], "count": count, "required": required,
+            "optional": [f for f in fields if f not in required],
+            "refers": [[f, kind] for f, s in fields.items() if f != "id" for kind in targets(s, defs)]}
+
+
+def data_model(schemas: dict[str, dict], counts: dict[str, int]) -> list[dict]:
+    """One row per Core file kind and per list item kind inside it, in definition order."""
+    rows = []
+    for name in ENTITIES:
+        schema = schemas[name]
+        defs = schema.get("$defs", {})
+        rows.append(entity(name, schema, defs, counts[name]))
+        for field in schema["properties"].values():
+            item = field.get("items", {}).get("$ref", "")
+            if item.startswith("#/$defs/"):
+                child = item.removeprefix("#/$defs/")
+                rows.append(entity(child, defs[child], defs, counts[child]))
+    return rows
 
 
 # ---------- Notwendigkeit: the analysis table of an Ist-Prozess, read, never judged ----------

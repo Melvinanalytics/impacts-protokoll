@@ -1,25 +1,27 @@
 # ICM form selection
 
-Start with the unit that grows or repeats. For business intake, use [Capture business meaning](../../impacts-method.md#capture-business-meaning). Given an offering or finished result, or when work is being set up or materially redesigned from an intended result, use [Reverse-engineer a product or service](../../impacts-method.md#reverse-engineer-a-product-or-service) before selecting a form or executor. This derivation can precede an established repeatable result. Refine the form and populated home as evidence arrives. A provisional form does not confirm a process boundary.
+Start with the unit that grows or repeats, or the bounded result whose steps can be declared. For business intake, use [Capture business meaning](../../impacts-method.md#capture-business-meaning). Given an offering or finished result, or when work is being set up or materially redesigned from an intended result, use [Reverse-engineer a product or service](../../impacts-method.md#reverse-engineer-a-product-or-service) before selecting a form or executor. This derivation can precede an established repeatable result. Refine form and populated home as evidence arrives; a provisional form confirms no process boundary.
 
-Apply [Author or change](../../ontology.md#author-or-change) for missing or changing meaning and [Use](../../ontology.md#use) for existing definitions. This applies to every form, including work without a Pipeline; apply [evidence and obligations](../../ontology.md#evidence-and-obligations) at each use boundary. Customer-facing capture follows the [working language](../../language.md#enforce-at-use-boundaries).
+Apply [Author or change](../../ontology.md#author-or-change) for missing or changing meaning and [Use](../../ontology.md#use) for existing definitions. This covers every form, including work without a Pipeline; apply [evidence and obligations](../../ontology.md#evidence-and-obligations) at each use boundary. Customer-facing capture follows the [working language](../../language.md#enforce-at-use-boundaries).
 
 ## Select the form
 
 | Unit | ICM form | Home |
 |---|---|---|
-| Repeatable work with an accepted result | Pipeline | Existing process/case home; `applications/` and `vorgaenge/` when choosing Core contracts |
+| Work with an accepted result and declarable steps | Pipeline | Existing process/case home; `applications/` and `vorgaenge/` when choosing Core contracts |
 | Accumulating domain instance | Record Library | `records/` when real content needs it |
 | Navigable stable knowledge | Knowledge Bundle | Existing domain and source files |
 | Observed organization, work and data handoffs | Context Map | Links between records and observed processes |
 | Several independent Pipelines | Umbrella | Small router to independent process homes; selected Core Pipelines use Applications |
 | Repository that agents modify | System Map | Existing repository routers and files |
 
-Selected Core Pipeline contracts fit bounded, repeatable work whose next permitted step can be expressed through declared inputs, visible outputs, checks and routes. Use [Tooling stop](#tooling-stopp) and [Minimize](../../impacts-method.md#minimize) to compare the particular supported bindings/checks needed with native work. Repetition, seriousness or tool availability alone does not require Core. Human decision boundaries follow [Arbeitsschritt](zuschnitt.md#arbeitsschritt); required quality checking remains distinct from a human decision gate.
+A project is a commitment that stays open until acceptance or cancellation; an agreed change can alter its scope without ending it. It is a [domain object](../../ontology.md#protocol-vocabulary), not a form; its identity and state can outlast any Vorgang. Its plan, open questions and progress stay at its case home under [Tooling stop](#tooling-stopp), including in Markdown. Its work can be a Pipeline covering even its whole result. When its work spans several Vorgänge, cut them at stable accepted sub-results; each Vorgang keeps only its own execution state in its `laufpfad`. A changed Application definition binds new Vorgänge only. Continuing after a restart explicitly selects, acquires and checks the predecessor's outputs as [declared source inputs](../../capabilities.md#source-inputs-for-core-applications).
+
+Selected Core Pipeline contracts fit bounded work whose next permitted step can be expressed through declared inputs, visible outputs, checks and routes, whether it runs once or recurs. Use [Tooling stop](#tooling-stopp) and [Minimize](../../impacts-method.md#minimize) to compare the particular supported bindings/checks needed with native work. Repetition, seriousness or tool availability alone does not require Core. Human decision boundaries follow [Arbeitsschritt](zuschnitt.md#arbeitsschritt); required quality checking remains distinct from a human decision gate.
 
 Core has one sequential `laufpfad`. It does not supply concurrent-user queues, runtime state isolation, real-time multi-agent messaging, deployment or undeclared model-selected branching. Keep those operations in their existing external system or configured harness and describe only the bounded interfaces, results and evidence needed by the selected form. If the intended runtime depends on those capabilities and no declared sequential boundary exists, do not present a folder pipeline as its orchestrator.
 
-When several open decisions need coordination, use a dated list in the existing case or record home linking each question to its responsible decider, needed inputs and consequence until decided; it coordinates, is not a fact home, and derives any run status from `laufpfad`.
+When several open decisions need coordination, use a dated list in the existing case or record home linking each question to its responsible decider, needed inputs and consequence until decided; it coordinates, is not a fact home, and derives any execution status from `laufpfad`. Record each decision, with its holder, date, evidence and the revision it was given on, at the home it changes; its entry then links there.
 
 <a id="arbeitsbericht-vor-baumvorschlag"></a>
 ## Work report before proposing a tree
@@ -28,10 +30,18 @@ Before any tree proposal, briefly state:
 
 For work being set up or materially redesigned, first apply [Reverse-engineer a product or service](../../impacts-method.md#reverse-engineer-a-product-or-service) to derive a provisional result boundary and necessary contributions. Use that derivation in the report below before selecting a form; it may establish that no repeatable process form exists yet.
 
-1. Observed units that grow or repeat.
+1. Observed units that grow or repeat, and bounded results whose steps can be declared.
 2. [Selected existing forms](#select-the-form) and their rationale.
 3. Explicitly deferred forms.
 4. Smallest populated starting home.
+
+These orientation questions apply existing rules without adding duties:
+
+- **Home:** Is there [one authoritative home](datenumgang.md#data-handling-in-a-workstep), with bound snapshots distinguished from competing maintained copies?
+- **Control:** Is the [control structure fixed before binding](../../capabilities.md#snapshot-und-herkunftsnachweis)? Forecasts and calendars are not frozen by it.
+- **Worth:** Does the chosen form earn its burden under [Tooling stop](#tooling-stopp) and [Minimize](../../impacts-method.md#minimize)?
+- **Enforcement:** Does a [configured harness](../../ontology.md#enforcement-and-completion) enforce the selected execution checks?
+- **Authority:** Does the right-holder or an [owned delegation rule](../../impacts-method.md#step-areas) authorize the decision or effect, without manufacturing a human decision under [Signals and human gates](../../capabilities.md#signale-und-human-gate)?
 
 This report is conversational, not a repository artifact, file or frontmatter field.
 
@@ -44,7 +54,7 @@ Forms compose while retaining their responsibilities. A Record Library plus Know
 
 **Separation of Concerns:** Keep distinct responsibilities understandable at their existing homes and declare their necessary dependencies. Ontology and classification distinguish meanings and categories; a distinction alone does not require its own workstep, file or skill.
 
-For example, presentation content and rendering it as PPTX or PDF have different responsibilities. Keep shared claims and sources at one content home; specify each recipient's required format, editability, standalone explanation and other applicable checks under the existing output and acceptance contract. Both formats may be produced within one coherent job. A format change may also change the needed content: a PDF read without a speaker must contain its required explanation. Recheck affected exports after a shared content change; a format correction retains the content's meaning and required checks.
+For example, presentation content and PPTX or PDF rendering have different responsibilities. Keep shared claims and sources at one content home; specify each recipient's required format, editability, standalone explanation and other applicable checks under the existing output and acceptance contract. One coherent job may produce both formats. Format changes may also change required content: a PDF read without a speaker must contain its required explanation. Recheck affected exports after a shared content change; a format correction retains the content's meaning and required checks.
 
 Apply the existing [workstep boundary criterion](zuschnitt.md#arbeitsschritt) when a separate result, route or authority boundary requires a split. Declare sending or publishing the rendered file as a separate permitted effect under [record writeback](../../capabilities.md#rückübertragung-in-geschäftsrecords).
 
@@ -57,28 +67,28 @@ When assigning shared content or output variants to homes, apply [Separation of 
 Root router -> Domain router -> Fact home -> Source
 ```
 
-The `CONTEXT.md` created by `impacts init` is the Core workspace's root router. Link domain routers and fact homes under its Domain homes line; no second entry point is needed. Use these homes according to ownership:
+`impacts init` creates the Core workspace's root `CONTEXT.md` router. Link domain routers and fact homes under its Domain homes line; no second entry point is needed. Use these homes according to ownership:
 
 | Content | Existing home |
 |---|---|
 | Protocol instructions and Core implementation | Protocol checkout, identified by source and revision from the customer router |
 | Customer orientation and working language | Customer root `CONTEXT.md`; direct links explain each selected area's purpose |
 | Domain meaning, source mappings, reusable rules, document blanks | Existing domain/source home; populated `grundlagen/` files only where needed |
-| Continuing business instances | Authoritative source system or maintained `records/`; runs bind excerpts |
+| Continuing business instances | Authoritative source system or maintained `records/`; Vorgänge bind excerpts |
 | Reusable process and local prompt | Existing process/domain home; selected Core Applications use HP/TP/AS `CONTEXT.md` bodies with no code, data or prompt subfolders inside a workstep |
 | Executable operation | Existing dependency or tool implementation; earned `capabilities/<slug>/` outside the Application |
-| Actual work and evidence | Existing case/record home; selected Core Runs use [exact attempt paths](../../ontology.md#protocol-vocabulary) for `input/` and `output/`, with only `laufpfad` owning run state |
+| Actual work and evidence | Existing case/record home; selected Core Vorgänge use [exact attempt paths](../../ontology.md#protocol-vocabulary) for `input/` and `output/`, with only `laufpfad` owning execution state |
 
-For a new Core workspace, run `impacts init PATH --language en|de` ([what it writes](../../../README.md#optional-technical-use)). Before binding a Core Run, initialize Git at that root; `init` neither creates Git nor installs a harness or source access. Resolve the protocol/Architect links, working language and selected domain homes before capture. Before a real run, the chosen harness must support the bound operations, source reads, checks, handoffs and human boundaries. Record its actual setup/dependency reference in the existing root body; placeholders or structural validity alone do not establish readiness. Existing repositories follow Restructure mode instead of running `init` over them.
+For a new Core workspace, run `impacts init PATH --language en|de` ([what it writes](../../../README.md#optional-technical-use)). Before binding a Core Vorgang, initialize Git at that root; `init` neither creates Git nor installs a harness or source access. Resolve the protocol/Architect links, working language and selected domain homes before capture. Before a real Vorgang, the chosen harness must support the bound operations, source reads, checks, handoffs and human boundaries. Record its actual setup/dependency reference in the existing root body; placeholders or structural validity alone do not establish readiness. Existing repositories follow Restructure mode instead of running `init` over them.
 
 - Routers hold identity, boundaries and links, not domain payload. Each claim and its evidence status have one fact home.
 - Navigate through relative Markdown links without copying claims. Apply [domain addresses and relationships](../../ontology.md#domain-addresses-and-relationships) when a definition, derivation, source description or observation is independently cited, reused or changed. Domain keys connect table rows under [Tables and relationships](../../capabilities.md#tabellen-und-beziehungen).
-- A link label, compact table or adjacent sentence may name a relationship only when it carries the ontology's required direction, endpoints, applicable scope and evidence, plus relevant time or validity conditions. Maintain each relationship once at the dependent item's home or one scoped mapping home; other surfaces link to it. Folder membership, knowledge navigation, data dependency and execution route are distinct. Application roles and transitions come from the [Application tree rules](../../templates/application.md#rules) and each workstep's frontmatter, not router ordering.
+- A link label, compact table or adjacent sentence may state a relationship under [Domain addresses and relationships](../../ontology.md#domain-addresses-and-relationships); other surfaces link to its maintained home. Apply [Use](../../ontology.md#use) to distinguish folder membership, knowledge navigation, data dependency and execution route. Application roles and transitions come from the [Application tree rules](../../templates/application.md#rules) and each workstep's frontmatter, not router ordering.
 - Create folders for existing content, not empty categories for possible future use.
 - Customer types remain local vocabulary. `type` suffices until a real query needs another field.
 - Instances sharing a lifecycle start in one fact file or table. A file per instance requires an independent query, independent change, its own evidence or its own relationships. The work report names the qualifying criterion for each split.
 - Every `reported` handover claim resolves to the preserved handover or source artifact. A source register is a router or index, not a replacement for the actual artifact.
-- An unknown workflow remains a gap; mark reconstructed work `hypothesis`. Supplied descriptions alone prove neither execution nor feasibility. Create an Application only with a repeatable run, accepted result and supported boundary.
+- An unknown workflow remains a gap; mark reconstructed work `hypothesis`. Supplied descriptions alone prove neither execution nor feasibility. Create an Application only for work that fits [selected Core contracts](#select-the-form), with an accepted result and supported boundary.
 - Explicitly internal material stays separate from customer facts and is excluded from customer questions.
 
 An empty collection has an explicit authoritative empty state in its responsible router. Do not create an empty category, README or index merely to make absence clickable. Once entries exist, replace or extend the empty state with direct links. The Knowledge Walk may stop at an explicit empty state.
@@ -87,7 +97,7 @@ That state describes only the captured collection. A claim of business absence r
 
 ### Capability orientation
 
-Where a workspace uses Capabilities from a Fachrepo or another domain home, its root `CONTEXT.md` links the early responsible router. That router identifies their supported local uses and directly links the existing source/adoption, setup and domain-contract homes needed for those uses. Refer to the existing bindings to distinguish the locally adopted revision, historical use and a candidate. Keep domain payload at its authoritative home.
+Where a workspace uses Capabilities from a Fachrepo or another domain home, its root `CONTEXT.md` links the early responsible router. That router identifies their supported local uses and directly links the existing source/adoption, setup and domain-contract homes needed for those uses. Use existing bindings to distinguish locally adopted revisions, historical use and candidates. Keep domain payload at its authoritative home.
 
 Select the needed branch under [local context selection](../../impacts-method.md#load-context-locally-first). When that use combines domain meanings or relationships, apply [scoped harmonization](../../ontology.md#domain-addresses-and-relationships). The selected process explains the Fachcapability's contribution to its accepted result; the workstep binds its operation under the [Capability call contract](../../capabilities.md#capability-aufruf).
 
@@ -96,11 +106,11 @@ Orientation is complete when the selected path from the actually loaded reposito
 <a id="tooling-stopp"></a>
 ## Tooling stop
 
-Ordinary files, folders and readable instructions support complete useful method use, including process guidance. Reuse existing domain, process, case and record homes for supported work, sources, open questions and continuation. This use needs neither Git, Python nor a harness and does not claim machine-validated Core Run conformance. Choosing a particular check selects only its actual contract: Application-only structural validation and hashing need Python without Git; Core Run validation additionally requires its Git-bound Application and attempt surfaces. Git binding preserves a definition revision; it proves neither execution nor authenticated approval.
+Ordinary files, folders and readable instructions support complete useful method use, including process guidance. Reuse existing domain, process, case and record homes for supported work, sources, open questions and continuation. This use needs neither Git, Python nor a harness and does not claim machine-validated Core Vorgang conformance. Choosing a particular check selects only its actual contract: Application-only structural validation and hashing need Python without Git; Core Vorgang validation additionally requires its Git-bound Application and attempt surfaces. Git binding preserves a definition revision; it proves neither execution nor authenticated approval.
 
 Select each check for the condition required by the task, changed surface or intended claim. For ordinary file work with no history, repository-change or revision-binding claim, check the saved result, its required sources and continuation links directly. Use Git when history, a repository change or a declared revision binding is relevant, with the intended repository and comparison endpoints established. Invoke machine validation only when the task needs its specific condition and a capable checker is available for the known scope and inputs. Existing task authorization or configuration can select that check; routine authorized read-only checks need no fresh human approval. Tool availability creates no new gate or installation obligation. The [design-time check decision](zuschnitt.md#required-checks-and-review) fixes essential checks and their consequences before execution; the writer cannot demote a binding check to advisory.
 
-A missing tool or check execution error means **not performed**, visible where the result matters; preserve the technical diagnostic. A failed check retains its actual finding. A required dependent claim or action remains restricted until its applicable condition is established, while independent permitted preparation remains usable and resumable. Passing establishes only the checked condition on those inputs. Explain outcomes to the user in order: progress made, consequence for the intended use, next action. Retain actual calculation, truth and authority requirements under [ontology enforcement](../../ontology.md#enforcement-and-completion) and the [Capability authority boundary](../../capabilities.md#rückübertragung-in-geschäftsrecords). An equivalent existing note at the affected result suffices, for example: `Draft ready — <check> not performed; <consequence>; next: <action>`. Link to that note from overviews instead of duplicating it.
+Missing tools or check execution errors mean **not performed**, visible where the result matters; preserve the technical diagnostic. A failed check retains its actual finding. A required dependent claim or action remains restricted until its applicable condition is established, while independent permitted preparation remains usable and resumable. Passing establishes only the checked condition on those inputs. Explain outcomes to the user in order: progress made, consequence for the intended use, next action. Retain actual calculation, truth and authority requirements under [ontology enforcement](../../ontology.md#enforcement-and-completion) and the [Capability authority boundary](../../capabilities.md#rückübertragung-in-geschäftsrecords). An equivalent existing result note suffices, for example: `Draft ready — <check> not performed; <consequence>; next: <action>`. Link to that note from overviews instead of duplicating it.
 
 Initialization and knowledge navigation require no new script. Files, folders, stable item addresses and explicit links are sufficient when a person or agent can follow the needed path through them. Independently cited domain items need resolvable addresses under the ontology; this conditional rule does not create a mandatory ID for every paragraph or a universal edge schema. A graph representation remains optional: consider adding one only when observed real questions repeatedly still need a full scan after repairing native links and declared reverse routes. Apply [Minimize](../../impacts-method.md#minimize) to its total burden and keep the projection removable and reproducible from the source Markdown. No graph runner, context-pack generator, global registry, generated second fact index, API, vector store or graph database belongs in the starting architecture. Domain calculation and consistency checkers must never become prerequisites for knowledge navigation.
 

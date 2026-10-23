@@ -18,9 +18,9 @@ from tests.support import codes, git, read_context, replace_context, write_appli
 
 
 @pytest.mark.parametrize("as_json", [False, True])
-def test_run_yaml_diagnostic_keeps_location_and_first_use_repair_hint(tmp_path, as_json):
-    root, run = _prepare_workspace(tmp_path)
-    (run / "CONTEXT.md").write_text(
+def test_vorgang_yaml_diagnostic_keeps_location_and_first_use_repair_hint(tmp_path, as_json):
+    root, vorgang = _prepare_workspace(tmp_path)
+    (vorgang / "CONTEXT.md").write_text(
         "---\ntype: vorgang\nid: vorgang:bad: value\n---\n"
     )
     args = [sys.executable, "-B", "-m", "impacts_protocol.cli", "validate", str(root)]
@@ -38,14 +38,14 @@ def test_run_yaml_diagnostic_keeps_location_and_first_use_repair_hint(tmp_path, 
 
 @pytest.mark.parametrize("as_json", [False, True])
 def test_invalid_approval_diagnostic_keeps_found_value_and_independent_error(tmp_path, as_json):
-    root, run = _prepare_workspace(tmp_path)
-    metadata = read_context(run / "CONTEXT.md")
+    root, vorgang = _prepare_workspace(tmp_path)
+    metadata = read_context(vorgang / "CONTEXT.md")
     metadata["laufpfad"][-1]["freigabe"] = {
         "by": "agent:diagnostic-example",
         "at": "2040-04-07T09:17:32+00:00",
     }
-    replace_context(run / "CONTEXT.md", metadata)
-    (run / "start/001/input/auftrag.md").write_text("changed independent input")
+    replace_context(vorgang / "CONTEXT.md", metadata)
+    (vorgang / "start/001/input/auftrag.md").write_text("changed independent input")
     args = [sys.executable, "-B", "-m", "impacts_protocol.cli", "validate", str(root)]
     if as_json:
         args.append("--json")
@@ -82,8 +82,8 @@ def test_invalid_native_scalar_constructor_keeps_value_cause_and_source_mark_on_
 
 @pytest.mark.parametrize("as_json", [False, True])
 def test_native_scalar_diagnostic_keeps_offending_value_and_original_cause(tmp_path, as_json):
-    root, run = _prepare_workspace(tmp_path)
-    path = run / "CONTEXT.md"
+    root, vorgang = _prepare_workspace(tmp_path)
+    path = vorgang / "CONTEXT.md"
     path.write_text(path.read_text().replace("type: vorgang", "type: vorgang\nprobe: !!int eins", 1))
     args = [sys.executable, "-B", "-m", "impacts_protocol.cli", "validate", str(root)]
     if as_json:
@@ -123,12 +123,12 @@ def _prepare_workspace(base: Path) -> tuple[Path, Path]:
     git(root, "commit", "-m", "application v1")
     revision = git(root, "rev-parse", "HEAD:applications/video")
 
-    run = root / "vorgaenge" / "video-001"
+    vorgang = root / "vorgaenge" / "video-001"
     entries = []
     for index, (slug, route) in enumerate(
         (("start", "weiter"), ("pruefen", "freigegeben")), start=1
     ):
-        attempt = run / slug / "001"
+        attempt = vorgang / slug / "001"
         (attempt / "input").mkdir(parents=True)
         (attempt / "output").mkdir()
         (attempt / "input" / "auftrag.md").write_text(
@@ -152,7 +152,7 @@ def _prepare_workspace(base: Path) -> tuple[Path, Path]:
             }
         entries.append(entry)
     write_context(
-        run / "CONTEXT.md",
+        vorgang / "CONTEXT.md",
         {
             "type": "vorgang",
             "id": "vorgang:video-001",
@@ -161,10 +161,10 @@ def _prepare_workspace(base: Path) -> tuple[Path, Path]:
         },
         "# Video 001",
     )
-    return root, run
+    return root, vorgang
 
 
-def test_committed_revision_and_complete_run_are_valid():
+def test_committed_revision_and_complete_vorgang_are_valid():
     with TemporaryDirectory() as directory:
         root, _ = _prepare_workspace(Path(directory))
 
@@ -173,11 +173,11 @@ def test_committed_revision_and_complete_run_are_valid():
         assert report.valid, report.issues
 
 
-def test_missing_run_id_reports_schema_repair_without_folder_mismatch(tmp_path):
-    root, run = _prepare_workspace(tmp_path)
-    metadata = read_context(run / "CONTEXT.md")
+def test_missing_vorgang_id_reports_schema_repair_without_folder_mismatch(tmp_path):
+    root, vorgang = _prepare_workspace(tmp_path)
+    metadata = read_context(vorgang / "CONTEXT.md")
     metadata.pop("id")
-    replace_context(run / "CONTEXT.md", metadata)
+    replace_context(vorgang / "CONTEXT.md", metadata)
 
     issues = validate(root).issues
 
@@ -189,11 +189,11 @@ def test_missing_run_id_reports_schema_repair_without_folder_mismatch(tmp_path):
     )
 
 
-def test_present_wrong_run_id_still_reports_folder_mismatch(tmp_path):
-    root, run = _prepare_workspace(tmp_path)
-    metadata = read_context(run / "CONTEXT.md")
+def test_present_wrong_vorgang_id_still_reports_folder_mismatch(tmp_path):
+    root, vorgang = _prepare_workspace(tmp_path)
+    metadata = read_context(vorgang / "CONTEXT.md")
     metadata["id"] = "vorgang:other-run"
-    replace_context(run / "CONTEXT.md", metadata)
+    replace_context(vorgang / "CONTEXT.md", metadata)
 
     issues = validate(root).issues
 
@@ -212,18 +212,18 @@ def test_current_head_path_does_not_break_application_reachability(tmp_path):
 
 def test_unreachable_application_tree_is_rejected():
     with TemporaryDirectory() as directory:
-        root, run = _prepare_workspace(Path(directory))
-        metadata = read_context(run / "CONTEXT.md")
+        root, vorgang = _prepare_workspace(Path(directory))
+        metadata = read_context(vorgang / "CONTEXT.md")
         metadata["application_revision"] = "git-tree:" + "a" * 40
-        replace_context(run / "CONTEXT.md", metadata)
+        replace_context(vorgang / "CONTEXT.md", metadata)
 
         assert "revision.invalid" in codes(root)
 
 
 def test_invalid_historical_application_reports_bound_revision_and_field(tmp_path):
-    root, run = _prepare_workspace(tmp_path)
-    healthy = run.parent / "video-002"
-    shutil.copytree(run, healthy)
+    root, vorgang = _prepare_workspace(tmp_path)
+    healthy = vorgang.parent / "video-002"
+    shutil.copytree(vorgang, healthy)
     metadata = read_context(healthy / "CONTEXT.md")
     metadata["id"] = "vorgang:video-002"
     replace_context(healthy / "CONTEXT.md", metadata)
@@ -237,9 +237,9 @@ def test_invalid_historical_application_reports_bound_revision_and_field(tmp_pat
     git(root, "commit", "-m", "invalid application fixture")
     revision = "git-tree:" + git(root, "rev-parse", "HEAD:applications/video")
     path.write_bytes(original)
-    metadata = read_context(run / "CONTEXT.md")
+    metadata = read_context(vorgang / "CONTEXT.md")
     metadata["application_revision"] = revision
-    replace_context(run / "CONTEXT.md", metadata)
+    replace_context(vorgang / "CONTEXT.md", metadata)
 
     report = validate(root)
 
@@ -253,10 +253,10 @@ def test_invalid_historical_application_reports_bound_revision_and_field(tmp_pat
 
 
 def test_revision_history_is_reused_within_validation_but_rechecked_after_ref_changes(tmp_path, monkeypatch):
-    root, run = _prepare_workspace(tmp_path)
+    root, vorgang = _prepare_workspace(tmp_path)
     for index in (2, 3):
-        duplicate = run.parent / f"video-{index:03}"
-        shutil.copytree(run, duplicate)
+        duplicate = vorgang.parent / f"video-{index:03}"
+        shutil.copytree(vorgang, duplicate)
         metadata = read_context(duplicate / "CONTEXT.md")
         metadata["id"] = f"vorgang:{duplicate.name}"
         replace_context(duplicate / "CONTEXT.md", metadata)
@@ -342,7 +342,7 @@ def test_conflicting_git_paths_are_rejected_before_materialization(tmp_path, mon
 
 
 def test_reachable_application_with_duplicate_git_paths_is_rejected(tmp_path):
-    root, run = _prepare_workspace(tmp_path)
+    root, vorgang = _prepare_workspace(tmp_path)
     original = git(root, "rev-parse", "HEAD:applications/video")
     rows = git(root, "ls-tree", original).splitlines()
     context = next(row for row in rows if row.endswith("\tCONTEXT.md"))
@@ -360,9 +360,9 @@ def test_reachable_application_with_duplicate_git_paths_is_rejected(tmp_path):
     malformed_root = make_tree(root_rows + [f"040000 tree {applications}\tapplications"])
     commit = git(root, "commit-tree", malformed_root, "-p", "HEAD", "-m", "duplicate path fixture")
     git(root, "update-ref", "refs/heads/main", commit)
-    metadata = read_context(run / "CONTEXT.md")
+    metadata = read_context(vorgang / "CONTEXT.md")
     metadata["application_revision"] = f"git-tree:{duplicate}"
-    replace_context(run / "CONTEXT.md", metadata)
+    replace_context(vorgang / "CONTEXT.md", metadata)
 
     assert git(root, "rev-parse", "HEAD:applications/video") == duplicate
     report = validate(root)
@@ -395,7 +395,7 @@ def test_unreadable_git_tree_returns_failure_without_writing(tmp_path, monkeypat
 
 @pytest.mark.parametrize("commits", [1, 31, 61])
 def test_git_process_count_is_bounded_independently_of_commits(tmp_path, monkeypatch, commits):
-    root, run = _prepare_workspace(tmp_path)
+    root, vorgang = _prepare_workspace(tmp_path)
     marker = root / "applications/video/produktion/start/CONTEXT.md"
     for number in range(commits - 1):
         marker.write_text(marker.read_text() + f"\nSynthetic history {number}\n")
@@ -439,7 +439,7 @@ def test_materialization_batches_blobs_independent_of_blob_count(tmp_path, monke
 
 
 def test_distinct_historical_revisions_share_one_reachability_scan(tmp_path, monkeypatch):
-    root, run = _prepare_workspace(tmp_path)
+    root, vorgang = _prepare_workspace(tmp_path)
     marker = root / "applications/video/produktion/start/CONTEXT.md"
     revisions = [git(root, "rev-parse", "HEAD:applications/video")]
     for number in range(9):
@@ -448,8 +448,8 @@ def test_distinct_historical_revisions_share_one_reachability_scan(tmp_path, mon
         git(root, "commit", "-qm", f"revision {number}")
         revisions.append(git(root, "rev-parse", "HEAD:applications/video"))
     for number, oid in enumerate(revisions[1:], start=2):
-        dest = run.parent / f"video-{number:03}"
-        shutil.copytree(run, dest)
+        dest = vorgang.parent / f"video-{number:03}"
+        shutil.copytree(vorgang, dest)
         metadata = read_context(dest / "CONTEXT.md")
         metadata["id"] = f"vorgang:{dest.name}"
         metadata["application_revision"] = f"git-tree:{oid}"
@@ -510,10 +510,10 @@ def test_batch_reachability_skips_missing_object_but_rejects_broken_framing(tmp_
 
 
 def test_identical_tree_oid_requires_reachability_in_each_repository(tmp_path):
-    first, run = _prepare_workspace(tmp_path / "first")
+    first, vorgang = _prepare_workspace(tmp_path / "first")
     second = tmp_path / "second"
     git(tmp_path, "clone", "--quiet", str(first), str(second))
-    shutil.copytree(run, second / "vorgaenge" / run.name)
+    shutil.copytree(vorgang, second / "vorgaenge" / vorgang.name)
     assert validate(first).valid
     assert validate(second).valid
     git(second, "update-ref", "-d", "refs/heads/main")
@@ -522,7 +522,7 @@ def test_identical_tree_oid_requires_reachability_in_each_repository(tmp_path):
     assert validate(first).valid
 
 
-def test_tree_at_another_application_slug_does_not_authorize_a_run(tmp_path):
+def test_tree_at_another_application_slug_does_not_authorize_a_vorgang(tmp_path):
     root, _ = _prepare_workspace(tmp_path)
     git(root, "mv", "applications/video", "applications/other")
     git(root, "commit", "--amend", "-m", "wrong application location")
@@ -530,8 +530,8 @@ def test_tree_at_another_application_slug_does_not_authorize_a_run(tmp_path):
 
 
 def test_replacement_tree_cannot_change_bound_application_bytes(tmp_path):
-    root, run = _prepare_workspace(tmp_path)
-    oid = read_context(run / "CONTEXT.md")["application_revision"].removeprefix("git-tree:")
+    root, vorgang = _prepare_workspace(tmp_path)
+    oid = read_context(vorgang / "CONTEXT.md")["application_revision"].removeprefix("git-tree:")
     path = root / "applications/video/produktion/pruefen/CONTEXT.md"
     metadata = read_context(path)
     metadata["pruefung"] = 42
@@ -547,20 +547,20 @@ def test_replacement_tree_cannot_change_bound_application_bytes(tmp_path):
 
 def test_laufpfad_must_start_at_application_entry():
     with TemporaryDirectory() as directory:
-        root, run = _prepare_workspace(Path(directory))
-        metadata = read_context(run / "CONTEXT.md")
+        root, vorgang = _prepare_workspace(Path(directory))
+        metadata = read_context(vorgang / "CONTEXT.md")
         metadata["laufpfad"] = metadata["laufpfad"][1:]
-        replace_context(run / "CONTEXT.md", metadata)
+        replace_context(vorgang / "CONTEXT.md", metadata)
 
         assert "run.invalid" in codes(root)
 
 
 def test_malformed_laufpfad_entry_fails_closed_without_exception():
     with TemporaryDirectory() as directory:
-        root, run = _prepare_workspace(Path(directory))
-        metadata = read_context(run / "CONTEXT.md")
+        root, vorgang = _prepare_workspace(Path(directory))
+        metadata = read_context(vorgang / "CONTEXT.md")
         metadata["laufpfad"] = ["invalid"]
-        replace_context(run / "CONTEXT.md", metadata)
+        replace_context(vorgang / "CONTEXT.md", metadata)
 
         issue_codes = codes(root)
 
@@ -570,10 +570,10 @@ def test_malformed_laufpfad_entry_fails_closed_without_exception():
 
 def test_malformed_selected_route_fails_closed_without_exception():
     with TemporaryDirectory() as directory:
-        root, run = _prepare_workspace(Path(directory))
-        metadata = read_context(run / "CONTEXT.md")
+        root, vorgang = _prepare_workspace(Path(directory))
+        metadata = read_context(vorgang / "CONTEXT.md")
         metadata["laufpfad"][0]["gewaehlte_route"] = ["weiter"]
-        replace_context(run / "CONTEXT.md", metadata)
+        replace_context(vorgang / "CONTEXT.md", metadata)
 
         issue_codes = codes(root)
 
@@ -583,8 +583,8 @@ def test_malformed_selected_route_fails_closed_without_exception():
 
 def test_changed_input_bytes_break_hash_binding():
     with TemporaryDirectory() as directory:
-        root, run = _prepare_workspace(Path(directory))
-        (run / "start/001/input/auftrag.md").write_text(
+        root, vorgang = _prepare_workspace(Path(directory))
+        (vorgang / "start/001/input/auftrag.md").write_text(
             "verändert", encoding="utf-8"
         )
 
@@ -593,8 +593,8 @@ def test_changed_input_bytes_break_hash_binding():
 
 def test_changed_output_bytes_break_hash_binding():
     with TemporaryDirectory() as directory:
-        root, run = _prepare_workspace(Path(directory))
-        (run / "pruefen/001/output/ergebnis.md").write_text(
+        root, vorgang = _prepare_workspace(Path(directory))
+        (vorgang / "pruefen/001/output/ergebnis.md").write_text(
             "verändert", encoding="utf-8"
         )
 
@@ -603,8 +603,8 @@ def test_changed_output_bytes_break_hash_binding():
 
 @pytest.mark.skipif(sys.platform != "linux", reason="Linux permits non-UTF-8 filename bytes")
 def test_validate_rejects_actual_non_utf8_filename_on_linux(tmp_path):
-    root, run = _prepare_workspace(tmp_path)
-    attempt = run / "start/001"
+    root, vorgang = _prepare_workspace(tmp_path)
+    attempt = vorgang / "start/001"
     input_directory = attempt / "input/dokumente"
     input_directory.mkdir()
     (attempt / "input/auftrag.md").rename(input_directory / "auftrag.md")
@@ -615,14 +615,14 @@ def test_validate_rejects_actual_non_utf8_filename_on_linux(tmp_path):
     replace_context(application_step, step_metadata)
     git(root, "add", "applications/video")
     git(root, "commit", "-m", "bind input directory")
-    run_metadata = read_context(run / "CONTEXT.md")
-    run_metadata["application_revision"] = "git-tree:" + git(
+    vorgang_metadata = read_context(vorgang / "CONTEXT.md")
+    vorgang_metadata["application_revision"] = "git-tree:" + git(
         root, "rev-parse", "HEAD:applications/video"
     )
-    run_metadata["laufpfad"][0]["eingabe_hash"] = surface_hash(
+    vorgang_metadata["laufpfad"][0]["eingabe_hash"] = surface_hash(
         attempt, ["input/dokumente"]
     )
-    replace_context(run / "CONTEXT.md", run_metadata)
+    replace_context(vorgang / "CONTEXT.md", vorgang_metadata)
 
     raw_path = os.fsencode(input_directory) + b"/bad-\xff.md"
     descriptor = os.open(raw_path, os.O_WRONLY | os.O_CREAT, 0o600)
@@ -641,18 +641,18 @@ def test_validate_rejects_actual_non_utf8_filename_on_linux(tmp_path):
 
 def test_human_gate_rejects_agent_approval():
     with TemporaryDirectory() as directory:
-        root, run = _prepare_workspace(Path(directory))
-        metadata = read_context(run / "CONTEXT.md")
+        root, vorgang = _prepare_workspace(Path(directory))
+        metadata = read_context(vorgang / "CONTEXT.md")
         metadata["laufpfad"][1]["freigabe"]["by"] = "agent:codex"
-        replace_context(run / "CONTEXT.md", metadata)
+        replace_context(vorgang / "CONTEXT.md", metadata)
 
         assert "trust.invalid" in codes(root)
 
 
 def test_missing_attempt_directory_is_rejected():
     with TemporaryDirectory() as directory:
-        root, run = _prepare_workspace(Path(directory))
-        attempt = run / "start/001"
+        root, vorgang = _prepare_workspace(Path(directory))
+        attempt = vorgang / "start/001"
         for path in sorted(attempt.rglob("*"), reverse=True):
             path.unlink() if path.is_file() else path.rmdir()
         attempt.rmdir()
@@ -662,48 +662,48 @@ def test_missing_attempt_directory_is_rejected():
 
 def test_waiting_entry_needs_reentry_contract():
     with TemporaryDirectory() as directory:
-        root, run = _prepare_workspace(Path(directory))
-        metadata = read_context(run / "CONTEXT.md")
+        root, vorgang = _prepare_workspace(Path(directory))
+        metadata = read_context(vorgang / "CONTEXT.md")
         waiting = metadata["laufpfad"][0]
         waiting["status"] = "wartend"
         waiting.pop("gewaehlte_route")
         waiting.pop("ausgabe_hash")
         metadata["laufpfad"] = [waiting]
-        replace_context(run / "CONTEXT.md", metadata)
+        replace_context(vorgang / "CONTEXT.md", metadata)
 
         assert "run.invalid" in codes(root)
 
 
 def test_completed_entry_must_not_carry_reentry_contract():
     with TemporaryDirectory() as directory:
-        root, run = _prepare_workspace(Path(directory))
-        metadata = read_context(run / "CONTEXT.md")
+        root, vorgang = _prepare_workspace(Path(directory))
+        metadata = read_context(vorgang / "CONTEXT.md")
         metadata["laufpfad"][0]["wiedereinstieg"] = {
             "ausloeser": "Termin",
             "continuation_ref": "calendar:1",
         }
-        replace_context(run / "CONTEXT.md", metadata)
+        replace_context(vorgang / "CONTEXT.md", metadata)
 
         assert "run.invalid" in codes(root)
 
 
-def _wait_at_gate(root: Path, run: Path, **fields) -> None:
-    metadata = read_context(run / "CONTEXT.md")
+def _wait_at_gate(root: Path, vorgang: Path, **fields) -> None:
+    metadata = read_context(vorgang / "CONTEXT.md")
     gate = metadata["laufpfad"][1]
     for key in ("gewaehlte_route", "ausgabe_hash", "freigabe"):
         gate.pop(key)
     gate |= {"status": "wartend", "wiedereinstieg": {"ausloeser": "Entscheidung der Prüferin", "continuation_ref": "mail:entscheidung"}}
     gate |= fields
-    replace_context(run / "CONTEXT.md", metadata)
+    replace_context(vorgang / "CONTEXT.md", metadata)
 
 
 def test_status_start_and_next_check_are_optional_offset_timestamps(tmp_path):
-    root, run = _prepare_workspace(tmp_path)
-    metadata = read_context(run / "CONTEXT.md")
+    root, vorgang = _prepare_workspace(tmp_path)
+    metadata = read_context(vorgang / "CONTEXT.md")
     metadata["laufpfad"][0]["status_seit"] = "2026-10-19T16:30:00+02:00"
-    replace_context(run / "CONTEXT.md", metadata)
+    replace_context(vorgang / "CONTEXT.md", metadata)
     # A next check before the status start is no contradiction: the promised time may already have passed.
-    _wait_at_gate(root, run, status_seit="2026-10-20T09:00:00+02:00",
+    _wait_at_gate(root, vorgang, status_seit="2026-10-20T09:00:00+02:00",
                   wiedereinstieg={"ausloeser": "Entscheidung der Prüferin", "continuation_ref": "mail:entscheidung",
                                   "faellig": "2026-10-18T12:00:00Z"})
     report = validate(root)
@@ -713,31 +713,31 @@ def test_status_start_and_next_check_are_optional_offset_timestamps(tmp_path):
 @pytest.mark.parametrize("field, value", [("status_seit", "2026-10-20T09:00:00"), ("status_seit", "2026-10-20"),
                                           ("faellig", "2026-11-02"), ("faellig", "2026-11-02T17:00:00")])
 def test_time_fields_without_offset_are_schema_errors(tmp_path, field, value):
-    root, run = _prepare_workspace(tmp_path)
+    root, vorgang = _prepare_workspace(tmp_path)
     resume = {"ausloeser": "Entscheidung der Prüferin", "continuation_ref": "mail:entscheidung"}
     if field == "faellig":
-        _wait_at_gate(root, run, wiedereinstieg=resume | {"faellig": value})
+        _wait_at_gate(root, vorgang, wiedereinstieg=resume | {"faellig": value})
     else:
-        _wait_at_gate(root, run, status_seit=value)
+        _wait_at_gate(root, vorgang, status_seit=value)
     assert "schema.invalid" in codes(root)
 
 
 @pytest.mark.parametrize("field", ["status_seit", "faellig"])
 def test_time_fields_reject_impossible_calendar_dates(tmp_path, field):
-    root, run = _prepare_workspace(tmp_path)
+    root, vorgang = _prepare_workspace(tmp_path)
     impossible = "2026-02-31T09:00:00+01:00"
     resume = {"ausloeser": "Entscheidung der Prüferin", "continuation_ref": "mail:entscheidung"}
     if field == "faellig":
-        _wait_at_gate(root, run, wiedereinstieg=resume | {"faellig": impossible})
+        _wait_at_gate(root, vorgang, wiedereinstieg=resume | {"faellig": impossible})
     else:
-        _wait_at_gate(root, run, status_seit=impossible)
+        _wait_at_gate(root, vorgang, status_seit=impossible)
     report = validate(root)
     assert any(issue.code == "run.invalid" and "real calendar timestamp" in issue.message for issue in report.issues)
 
 
 def test_next_check_cannot_appear_on_an_active_entry(tmp_path):
-    root, run = _prepare_workspace(tmp_path)
-    _wait_at_gate(root, run, status="aktiv",
+    root, vorgang = _prepare_workspace(tmp_path)
+    _wait_at_gate(root, vorgang, status="aktiv",
                   wiedereinstieg={"ausloeser": "x", "continuation_ref": "y", "faellig": "2026-11-02T17:00:00+01:00"})
     assert "run.invalid" in codes(root)
 
@@ -745,7 +745,7 @@ def test_next_check_cannot_appear_on_an_active_entry(tmp_path):
 def test_hash_surface_rejects_a_directory_symlink():
     with TemporaryDirectory() as directory:
         base = Path(directory)
-        root, run = _prepare_workspace(base)
+        root, vorgang = _prepare_workspace(base)
         application = root / "applications/video"
         for slug in ("start", "pruefen"):
             path = application / f"produktion/{slug}/CONTEXT.md"
@@ -756,21 +756,21 @@ def test_hash_surface_rejects_a_directory_symlink():
         git(root, "add", "applications/video")
         git(root, "commit", "-m", "directory surfaces")
 
-        metadata = read_context(run / "CONTEXT.md")
+        metadata = read_context(vorgang / "CONTEXT.md")
         metadata["application_revision"] = "git-tree:" + git(
             root, "rev-parse", "HEAD:applications/video"
         )
         for entry in metadata["laufpfad"]:
             slug = entry["arbeitsschritt_ref"].removeprefix("arbeitsschritt:")
-            attempt = run / slug / "001"
+            attempt = vorgang / slug / "001"
             entry["eingabe_hash"] = surface_hash(attempt, ["input"])
             entry["ausgabe_hash"] = surface_hash(attempt, ["output"])
-        replace_context(run / "CONTEXT.md", metadata)
+        replace_context(vorgang / "CONTEXT.md", metadata)
 
         external = base / "external"
         external.mkdir()
         (external / "secret.txt").write_text("outside", encoding="utf-8")
-        input_root = run / "start/001/input"
+        input_root = vorgang / "start/001/input"
         (input_root / "auftrag.md").unlink()
         input_root.rmdir()
         input_root.symlink_to(external, target_is_directory=True)
@@ -844,10 +844,10 @@ def test_approval_timestamp_is_a_string_under_the_actual_loader(tmp_path):
     assert list(validator.SCHEMA_REGISTRY.errors("vorgang", loaded))
 
 
-def test_definition_memo_keeps_snapshots_alive_and_checks_each_run(tmp_path, monkeypatch):
-    root, run = _prepare_workspace(tmp_path)
-    second = run.parent / 'video-002'
-    shutil.copytree(run, second)
+def test_definition_memo_keeps_snapshots_alive_and_checks_each_vorgang(tmp_path, monkeypatch):
+    root, vorgang = _prepare_workspace(tmp_path)
+    second = vorgang.parent / 'video-002'
+    shutil.copytree(vorgang, second)
     metadata = read_context(second / 'CONTEXT.md')
     metadata['id'] = 'vorgang:video-002'
     replace_context(second / 'CONTEXT.md', metadata)
@@ -875,19 +875,19 @@ def test_definition_memo_keeps_snapshots_alive_and_checks_each_run(tmp_path, mon
     assert all('video-001' not in issue.path for issue in report.issues)
 
 
-def test_invalid_definition_memo_attributes_each_run(tmp_path, monkeypatch):
-    root, run = _prepare_workspace(tmp_path)
+def test_invalid_definition_memo_attributes_each_vorgang(tmp_path, monkeypatch):
+    root, vorgang = _prepare_workspace(tmp_path)
     path = root / 'applications/video/produktion/start/CONTEXT.md'
     metadata = read_context(path)
     metadata['pruefung'] = 42
     replace_context(path, metadata)
     git(root, 'add', 'applications')
     git(root, 'commit', '-m', 'synthetic invalid definition')
-    metadata = read_context(run / 'CONTEXT.md')
+    metadata = read_context(vorgang / 'CONTEXT.md')
     metadata['application_revision'] = 'git-tree:' + git(root, 'rev-parse', 'HEAD:applications/video')
-    replace_context(run / 'CONTEXT.md', metadata)
-    second = run.parent / 'video-002'
-    shutil.copytree(run, second)
+    replace_context(vorgang / 'CONTEXT.md', metadata)
+    second = vorgang.parent / 'video-002'
+    shutil.copytree(vorgang, second)
     metadata['id'] = 'vorgang:video-002'
     replace_context(second / 'CONTEXT.md', metadata)
     from unittest.mock import patch
@@ -898,7 +898,7 @@ def test_invalid_definition_memo_attributes_each_run(tmp_path, monkeypatch):
     assert [issue.path for issue in errors] == ['vorgaenge/video-001/CONTEXT.md', 'vorgaenge/video-002/CONTEXT.md']
     assert errors[0].message == errors[1].message
     assert 'preserve existing historical bindings' in errors[0].message
-    assert 'new Run' in errors[0].message
+    assert 'new Vorgang' in errors[0].message
     assert 're-bind' not in errors[0].message
 
 
@@ -917,8 +917,8 @@ def test_invalid_definition_memo_attributes_each_run(tmp_path, monkeypatch):
     ('V11', ['run.invalid'], ['/laufpfad/0', 'Attempt directory is missing or unsafe']),
 ])
 def test_entry_diagnostics_identify_the_actual_condition(tmp_path, case, expected_codes, fragments):
-    root, run = _prepare_workspace(tmp_path)
-    path = run / 'CONTEXT.md'
+    root, vorgang = _prepare_workspace(tmp_path)
+    path = vorgang / 'CONTEXT.md'
     metadata = read_context(path)
     entries = metadata['laufpfad']
     if case == 'V1':
@@ -929,11 +929,11 @@ def test_entry_diagnostics_identify_the_actual_condition(tmp_path, case, expecte
         entries[0].pop('ausgabe_hash')
     elif case == 'V4a':
         entries.pop()
-        shutil.rmtree(run / 'pruefen')
+        shutil.rmtree(vorgang / 'pruefen')
     elif case == 'V4b':
         entries[1] = dict(entries[0], versuch=2)
-        shutil.copytree(run / 'start/001', run / 'start/002')
-        shutil.rmtree(run / 'pruefen')
+        shutil.copytree(vorgang / 'start/001', vorgang / 'start/002')
+        shutil.rmtree(vorgang / 'pruefen')
     elif case == 'V5':
         entries[0]['freigabe'] = dict(entries[1]['freigabe'])
     elif case == 'V6':
@@ -948,7 +948,7 @@ def test_entry_diagnostics_identify_the_actual_condition(tmp_path, case, expecte
         entries[1]['status'] = 'aktiv'
         entries[1].pop('freigabe')
     elif case == 'V11':
-        shutil.rmtree(run / 'start')
+        shutil.rmtree(vorgang / 'start')
     replace_context(path, metadata)
     if case == 'V9':
         original = path.read_text()
@@ -972,15 +972,15 @@ def test_entry_diagnostics_identify_the_actual_condition(tmp_path, case, expecte
 
 @pytest.mark.parametrize('recorded', [None, 42])
 def test_missing_or_nonstring_output_hash_preserves_independent_missing_output(tmp_path, recorded):
-    root, run = _prepare_workspace(tmp_path)
-    path = run / 'CONTEXT.md'
+    root, vorgang = _prepare_workspace(tmp_path)
+    path = vorgang / 'CONTEXT.md'
     metadata = read_context(path)
     if recorded is None:
         metadata['laufpfad'][0].pop('ausgabe_hash')
     else:
         metadata['laufpfad'][0]['ausgabe_hash'] = recorded
     replace_context(path, metadata)
-    (run / 'start/001/output/ergebnis.md').unlink()
+    (vorgang / 'start/001/output/ergebnis.md').unlink()
 
     issues = validate(root).issues
 
@@ -994,9 +994,9 @@ def test_missing_or_nonstring_output_hash_preserves_independent_missing_output(t
 
 
 def test_missing_attempt_keeps_an_independent_orphan_directory(tmp_path):
-    root, run = _prepare_workspace(tmp_path)
-    shutil.rmtree(run / 'start')
-    (run / 'orphan/001').mkdir(parents=True)
+    root, vorgang = _prepare_workspace(tmp_path)
+    shutil.rmtree(vorgang / 'start')
+    (vorgang / 'orphan/001').mkdir(parents=True)
 
     issues = validate(root).issues
 
@@ -1007,8 +1007,8 @@ def test_missing_attempt_keeps_an_independent_orphan_directory(tmp_path):
 
 
 def test_yaml_timestamp_type_does_not_hide_independent_invalid_actor(tmp_path):
-    root, run = _prepare_workspace(tmp_path)
-    path = run / 'CONTEXT.md'
+    root, vorgang = _prepare_workspace(tmp_path)
+    path = vorgang / 'CONTEXT.md'
     metadata = read_context(path)
     metadata['laufpfad'][1]['freigabe']['by'] = 'agent:x'
     replace_context(path, metadata)
@@ -1025,8 +1025,8 @@ def test_yaml_timestamp_type_does_not_hide_independent_invalid_actor(tmp_path):
 
 
 def test_waiting_entry_reports_each_invalid_field_and_missing_reentry(tmp_path):
-    root, run = _prepare_workspace(tmp_path)
-    path = run / 'CONTEXT.md'
+    root, vorgang = _prepare_workspace(tmp_path)
+    path = vorgang / 'CONTEXT.md'
     metadata = read_context(path)
     metadata['laufpfad'][1]['status'] = 'wartend'
     metadata['laufpfad'][1].pop('freigabe')

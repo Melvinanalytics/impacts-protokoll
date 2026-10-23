@@ -4,7 +4,7 @@ id: teilprozess:vorpruefung
 ergebnis: Prüffähiger Prüfbericht
 ---
 
-<!-- Translation source: 02_protocol/templates/teilprozess.md; sha256: 08b2f7390007088a4e2dfd0f46fa9b63e09f4fe1ced877f0c9f9d49fcbce85cf -->
+<!-- Translation source: 02_protocol/templates/teilprozess.md; sha256: bb39f46de2df4b17e99f61894f4854bcef2b2a30fe207488e5789634b5a2e40c -->
 
 # Vorprüfung
 
@@ -12,7 +12,7 @@ Ein Teilprozess ist ein fachlich geschlossener Abschnitt des Hauptprozesses. Sei
 
 ## Beitrag zur Leistung
 
-Ein fachlich geschlossenes Ergebnis dieses Abschnitts, seinen Empfänger oder konsumierenden Folgeabschnitt und seine erlaubte Nutzung angeben. Den Bestandteil der Leistungsstückliste nennen, den der Abschnitt erzeugt oder vollendet, samt den Verbindungen, die er verantwortet, gemäß `02_protocol/impacts-architect/references/zuschnitt.md`, Abschnitt „Teilprozess“. Hauptprozess und untergeordnete Arbeitsschritte nicht wiederholen.
+Ein fachlich geschlossenes Ergebnis dieses Abschnitts, seinen Empfänger oder konsumierenden Folgeabschnitt und seine erlaubte Nutzung angeben. Den Bestandteil der Leistungsstückliste nennen, den der Abschnitt erzeugt oder vollendet, samt den Verbindungen, die er verantwortet, oder die Voraussetzung, die er herstellt, gemäß `02_protocol/impacts-architect/references/zuschnitt.md`, Abschnitt „Teilprozess“. Hauptprozess und untergeordnete Arbeitsschritte nicht wiederholen.
 
 ## Eingaben und Grenzen
 
@@ -28,4 +28,4 @@ Die Definitionseinrichtung ist abgeschlossen, wenn jeder Ergebnisbestandteil erz
 
 ## Frühindikator
 
-Nur wenn eine früh beobachtbare Größe eine konkrete Steuerungsentscheidung unterstützt: Indikator, vermuteten Zusammenhang zur Kennzahl der Leistung und mögliche Handlung nennen. Der Zusammenhang bleibt `hypothesis`, bis beobachtete Vorgänge ihn stützen. Sonst diesen Abschnitt weglassen; Beitrag und Ergebnis des Abschnitts bleiben erforderlich.
+Nur wenn eine früh beobachtbare Größe eine konkrete Steuerungsentscheidung unterstützt: Indikator, vermuteten Zusammenhang zur Kennzahl der Leistung und mögliche Handlung nennen. Der Zusammenhang bleibt `hypothesis`, bis beobachtete Ergebnisse ihn stützen. Sonst diesen Abschnitt weglassen; Beitrag und Ergebnis des Abschnitts bleiben erforderlich.

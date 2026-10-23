@@ -1,4 +1,4 @@
-"""Run-schema acceptance cases for attempt and approval timestamp constraints.
+"""Vorgang-schema acceptance cases for attempt and approval timestamp constraints.
 
 Sources:
 - 02_protocol/templates/application.md: attempts use three-digit directories.

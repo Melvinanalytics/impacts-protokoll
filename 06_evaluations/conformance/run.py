@@ -18,7 +18,7 @@ from typing import Any
 
 HERE = Path(__file__).resolve().parent
 MANIFEST_PATH = HERE / "cases.json"
-RUN_ASSETS = HERE / "fixtures" / "common-run-assets"
+VORGANG_ASSETS = HERE / "fixtures" / "common-run-assets"
 REVISION_TOKEN = "@APPLICATION_REVISION@"
 HASH_PREFIX = "sha256:"
 FILESYSTEM_PROBES = {"case-sensitive", "path-component", "unicode-distinct"}
@@ -419,16 +419,16 @@ def _bind_application(root: Path, application_path: str) -> None:
     _git(root, "add", "--", application.as_posix())
     _commit(root, "conformance Application fixture")
     revision = _git(root, "rev-parse", f"HEAD:{application.as_posix()}")
-    run_contexts = sorted((root / "vorgaenge").glob("*/CONTEXT.md"))
-    if not run_contexts:
-        raise ConformanceError("Git-bound fixture has no Run CONTEXT.md")
-    for path in run_contexts:
+    vorgang_contexts = sorted((root / "vorgaenge").glob("*/CONTEXT.md"))
+    if not vorgang_contexts:
+        raise ConformanceError("Git-bound fixture has no Vorgang CONTEXT.md")
+    for path in vorgang_contexts:
         text = path.read_text(encoding="utf-8")
         if text.count(REVISION_TOKEN) != 1:
-            raise ConformanceError(f"Run fixture needs one {REVISION_TOKEN} token: {path}")
+            raise ConformanceError(f"Vorgang fixture needs one {REVISION_TOKEN} token: {path}")
         path.write_text(text.replace(REVISION_TOKEN, revision), encoding="utf-8")
     _git(root, "add", "--all")
-    _commit(root, "conformance Run fixture")
+    _commit(root, "conformance Vorgang fixture")
 
 
 def _prepare_workspace(case: dict[str, Any], manifest: dict[str, Any], root: Path) -> None:
@@ -438,7 +438,7 @@ def _prepare_workspace(case: dict[str, Any], manifest: dict[str, Any], root: Pat
     base_fixture = HERE / _relative_path(manifest["base_fixture"], "base_fixture")
     _copy_tree(base_fixture, root)
     if case.get("git_binding"):
-        _copy_tree(RUN_ASSETS, root)
+        _copy_tree(VORGANG_ASSETS, root)
     fixture = case.get("fixture")
     if fixture is not None:
         _copy_tree(HERE / _relative_path(fixture, f"{case['id']}.fixture"), root)

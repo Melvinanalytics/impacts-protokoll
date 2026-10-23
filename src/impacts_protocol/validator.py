@@ -2,6 +2,7 @@
 
 from collections import deque
 from contextlib import ExitStack
+from copy import deepcopy
 from dataclasses import dataclass, replace
 from datetime import date, datetime
 from importlib import resources
@@ -29,6 +30,7 @@ SCHEMA_NAMES = (
     "vorgang",
 )
 SLUG = re.compile(r"[a-z0-9]+(?:-[a-z0-9]+)*\Z")
+STAGE_REF = re.compile(r"(?:arbeitsschritt|end):[a-z0-9]+(?:-[a-z0-9]+)*\Z")
 GATE_RULE = "; freigabe and a gate route come only from the responsible human's decision"
 GATE_FIX = (
     "; preserve decision evidence; correct serialization only against its evidenced source, "
@@ -70,6 +72,10 @@ class SchemaRegistry:
             validator.iter_errors(document),
             key=lambda error: tuple(str(part) for part in error.absolute_path),
         )
+
+    def schemas(self) -> dict[str, dict[str, Any]]:
+        """The packaged schemas by name, as copies for readers such as the view."""
+        return deepcopy(self._load_schemas())
 
     def _load_schemas(self) -> dict[str, dict[str, Any]]:
         if self._schemas is not None:
@@ -160,13 +166,13 @@ def _validate_workspace(root: Path, issues: list[Issue]) -> None:
                 ]
             else:
                 _add(issues, "structure.invalid", path, root, "Applications contains a non-directory")
-    runs = root / "vorgaenge"
-    # Definitions are immutable; run files and Git refs are rechecked on every call.
+    vorgaenge = root / "vorgaenge"
+    # Definitions are immutable; Vorgang files and Git refs are rechecked on every call.
     definitions: dict[str, Application | str] = {}
     reachable = _ReachableApplications(workspace=root)
     with ExitStack() as snapshots:
-        if runs.is_dir() and not runs.is_symlink():
-            for path in sorted(runs.iterdir(), key=lambda item: item.name):
+        if vorgaenge.is_dir() and not vorgaenge.is_symlink():
+            for path in sorted(vorgaenge.iterdir(), key=lambda item: item.name):
                 if path.is_symlink():
                     _add(issues, "structure.symlink", path, root, "Vorgang is a symlink")
                 elif path.is_dir():
@@ -283,6 +289,7 @@ def _validate_graph(application: Application, issues: list[Issue]) -> None:
 
     adjacency: dict[str, set[str]] = {step_id: set() for step_id in steps}
     direct_end: set[str] = set()
+    ends: set[str] = set()
     uncertain_routes: set[str] = set()
     for step_id, (path, step) in steps.items():
         routes = step.get("routen")
@@ -295,11 +302,19 @@ def _validate_graph(application: Application, issues: list[Issue]) -> None:
                 continue
             if target.startswith("end:"):
                 direct_end.add(step_id)
+                ends.add(target)
             elif target in steps:
                 adjacency[step_id].add(target)
             else:
                 _add(issues, "reference.unresolved", path / "CONTEXT.md", root, f"Route target does not resolve: {target}")
                 uncertain_routes.add(step_id)
+
+    stages = application.hauptprozess.get("stufen")
+    if isinstance(stages, dict):
+        # Record states (stand:) lie before the entry; the schema alone reports malformed keys.
+        for key in sorted(k for k in stages if isinstance(k, str) and STAGE_REF.match(k)):
+            if key not in steps and key not in ends:
+                _add(issues, "reference.unresolved", root / "CONTEXT.md", root, f"Stage key does not resolve: {key}")
 
     # Unknown edges could make any currently unreachable node reachable.
     if not uncertain_routes:
@@ -356,56 +371,56 @@ def _slug_message(label: str) -> str:
 
 
 def _validate_vorgang(
-    run_root: Path, workspace: Path, issues: list[Issue],
+    vorgang_root: Path, workspace: Path, issues: list[Issue],
     definitions: dict[str, Application | str], snapshots: ExitStack,
     reachable: "_ReachableApplications",
 ) -> None:
-    _reject_symlinks(run_root, workspace, issues)
+    _reject_symlinks(vorgang_root, workspace, issues)
     document = _load_context(
-        run_root / "CONTEXT.md",
+        vorgang_root / "CONTEXT.md",
         workspace,
         issues,
         kind="vorgang",
     )
     if document is None:
         return
-    run_id = document.get("id")
-    if isinstance(run_id, str) and run_id != f"vorgang:{run_root.name}":
-        _add(issues, "structure.invalid", run_root, workspace, f"Vorgang ID must match folder slug: found {run_id!r}, expected vorgang:{run_root.name}")
+    vorgang_id = document.get("id")
+    if isinstance(vorgang_id, str) and vorgang_id != f"vorgang:{vorgang_root.name}":
+        _add(issues, "structure.invalid", vorgang_root, workspace, f"Vorgang ID must match folder slug: found {vorgang_id!r}, expected vorgang:{vorgang_root.name}")
     application = _resolve_application(
-        workspace, document.get("application_revision"), run_root, issues, definitions, snapshots, reachable
+        workspace, document.get("application_revision"), vorgang_root, issues, definitions, snapshots, reachable
     )
     if application is None:
         return
     entries = document.get("laufpfad")
     if not isinstance(entries, list) or not entries:
-        _add(issues, "run.invalid", run_root / "CONTEXT.md", workspace, "Laufpfad must be non-empty")
+        _add(issues, "run.invalid", vorgang_root / "CONTEXT.md", workspace, "Laufpfad must be non-empty")
         return
     entry_ref = application.hauptprozess.get("einstieg_ref")
     if not isinstance(entries[0], dict) or entries[0].get("arbeitsschritt_ref") != entry_ref:
-        _add(issues, "run.invalid", run_root / "CONTEXT.md", workspace, "Laufpfad must start at Application entry")
+        _add(issues, "run.invalid", vorgang_root / "CONTEXT.md", workspace, "Laufpfad must start at Application entry")
 
     seen_attempts: set[tuple[str, int]] = set()
     expected_attempts: set[tuple[str, int]] = set()
     for index, entry in enumerate(entries):
         if not isinstance(entry, dict):
-            _add(issues, "run.invalid", run_root / "CONTEXT.md", workspace, f"/laufpfad/{index}: Laufpfad entry must be an object")
+            _add(issues, "run.invalid", vorgang_root / "CONTEXT.md", workspace, f"/laufpfad/{index}: Laufpfad entry must be an object")
             continue
         step_id = entry.get("arbeitsschritt_ref")
         attempt_number = entry.get("versuch")
         prefix = f"/laufpfad/{index} ({step_id}, versuch {attempt_number}): "
         if not isinstance(step_id, str) or step_id not in application.arbeitsschritte:
-            _add(issues, "reference.unresolved", run_root / "CONTEXT.md", workspace, prefix + f"Unknown Laufpfad step: {step_id}")
+            _add(issues, "reference.unresolved", vorgang_root / "CONTEXT.md", workspace, prefix + f"Unknown Laufpfad step: {step_id}")
             continue
         if not isinstance(attempt_number, int) or isinstance(attempt_number, bool) or attempt_number < 1:
-            _add(issues, "run.invalid", run_root / "CONTEXT.md", workspace, prefix + "Versuch must be a positive integer")
+            _add(issues, "run.invalid", vorgang_root / "CONTEXT.md", workspace, prefix + "Versuch must be a positive integer")
             continue
         key = (step_id, attempt_number)
         if key in seen_attempts:
-            _add(issues, "reference.duplicate", run_root / "CONTEXT.md", workspace, prefix + f"Duplicate attempt: {key}")
+            _add(issues, "reference.duplicate", vorgang_root / "CONTEXT.md", workspace, prefix + f"Duplicate attempt: {key}")
         seen_attempts.add(key)
         attempt_root = (
-            run_root
+            vorgang_root
             / step_id.removeprefix("arbeitsschritt:")
             / f"{attempt_number:03d}"
         )
@@ -419,33 +434,33 @@ def _validate_vorgang(
         is_last = index == len(entries) - 1
         if status in ("aktiv", "wartend"):
             if not is_last:
-                _add(issues, "run.invalid", run_root / "CONTEXT.md", workspace, prefix + f"{status} entry must be the last entry")
+                _add(issues, "run.invalid", vorgang_root / "CONTEXT.md", workspace, prefix + f"{status} entry must be the last entry")
             forbidden = ("gewaehlte_route", "ausgabe_hash", "wiedereinstieg") if status == "aktiv" else ("gewaehlte_route", "ausgabe_hash")
             for field in forbidden:
                 if field in entry:
-                    _add(issues, "run.invalid", run_root / "CONTEXT.md", workspace, prefix + f"{status} entry must not carry {field}")
+                    _add(issues, "run.invalid", vorgang_root / "CONTEXT.md", workspace, prefix + f"{status} entry must not carry {field}")
             if "freigabe" in entry:
                 reason = (
                     "; it is recorded when the gate entry completes with the human's route; "
                     "leave a human-written freigabe unchanged and preserve decision evidence"
                     if step.get("gate") == "human" else f"; {step_id} declares no gate"
                 )
-                _add(issues, "run.invalid", run_root / "CONTEXT.md", workspace, prefix + f"{status} entry must not carry freigabe" + reason)
+                _add(issues, "run.invalid", vorgang_root / "CONTEXT.md", workspace, prefix + f"{status} entry must not carry freigabe" + reason)
             if status == "wartend" and not isinstance(entry.get("wiedereinstieg"), dict):
-                _add(issues, "run.invalid", run_root / "CONTEXT.md", workspace, prefix + "wartend entry needs wiedereinstieg with ausloeser and continuation_ref")
+                _add(issues, "run.invalid", vorgang_root / "CONTEXT.md", workspace, prefix + "wartend entry needs wiedereinstieg with ausloeser and continuation_ref")
         elif status == "abgeschlossen":
             _validate_completed_entry(
                 entry,
                 step,
                 entries,
                 index,
-                run_root,
+                vorgang_root,
                 workspace,
                 issues,
                 prefix,
             )
         else:
-            _add(issues, "run.invalid", run_root / "CONTEXT.md", workspace, prefix + f"Unknown run status: {status}")
+            _add(issues, "run.invalid", vorgang_root / "CONTEXT.md", workspace, prefix + f"Unknown attempt status: {status}")
         # The schema pattern admits impossible dates such as February 31; parsing rejects them.
         resume = entry.get("wiedereinstieg")
         for label, value in (("status_seit", entry.get("status_seit")),
@@ -454,7 +469,7 @@ def _validate_vorgang(
                 try:
                     datetime.fromisoformat(value.replace("Z", "+00:00"))
                 except ValueError:
-                    _add(issues, "run.invalid", run_root / "CONTEXT.md", workspace,
+                    _add(issues, "run.invalid", vorgang_root / "CONTEXT.md", workspace,
                          prefix + f"{label} must be a real calendar timestamp with offset; found {value!r}")
 
         hash_start = len(issues)
@@ -468,12 +483,12 @@ def _validate_vorgang(
                 _add(issues, "hash.mismatch", attempt_root, workspace, "Output hash does not match attempt files")
         issues[hash_start:] = [replace(issue, message=prefix + issue.message) for issue in issues[hash_start:]]
 
-    actual_attempts = _attempt_directories(run_root, workspace, issues)
+    actual_attempts = _attempt_directories(vorgang_root, workspace, issues)
     for slug, number in sorted(actual_attempts ^ expected_attempts):
         _add(
             issues,
             "run.invalid",
-            run_root / slug / f"{number:03d}",
+            vorgang_root / slug / f"{number:03d}",
             workspace,
             "Attempt directory and Laufpfad differ",
         )
@@ -484,45 +499,45 @@ def _validate_completed_entry(
     step: dict[str, Any],
     entries: list[Any],
     index: int,
-    run_root: Path,
+    vorgang_root: Path,
     workspace: Path,
     issues: list[Issue],
     prefix: str,
 ) -> None:
     if "wiedereinstieg" in entry:
-        _add(issues, "run.invalid", run_root / "CONTEXT.md", workspace, prefix + "abgeschlossen entry must not carry wiedereinstieg")
+        _add(issues, "run.invalid", vorgang_root / "CONTEXT.md", workspace, prefix + "abgeschlossen entry must not carry wiedereinstieg")
     route = entry.get("gewaehlte_route")
     routes = step.get("routen")
     target = None
     if not isinstance(routes, dict):
-        _add(issues, "run.invalid", run_root / "CONTEXT.md", workspace, prefix + f"{step.get('id')} declares no routen")
+        _add(issues, "run.invalid", vorgang_root / "CONTEXT.md", workspace, prefix + f"{step.get('id')} declares no routen")
     elif not isinstance(route, str) or route not in routes:
         message = f"gewaehlte_route {route!r} is not a "
         if step.get("gate") == "human":
             message += "gate route" + GATE_RULE + GATE_FIX
         else:
             message += f"routen key of {step.get('id')}; record the key that the actual pruefung outcome selects, one of {sorted(routes)}"
-        _add(issues, "run.invalid", run_root / "CONTEXT.md", workspace, prefix + message)
+        _add(issues, "run.invalid", vorgang_root / "CONTEXT.md", workspace, prefix + message)
     else:
         target = routes[route]
     if not isinstance(entry.get("ausgabe_hash"), str):
         found = "missing" if "ausgabe_hash" not in entry else f"must be a string; found {entry['ausgabe_hash']!r}"
-        _add(issues, "run.invalid", run_root / "CONTEXT.md", workspace, prefix + f"ausgabe_hash {found}; record impacts hash over every ausgaben path")
+        _add(issues, "run.invalid", vorgang_root / "CONTEXT.md", workspace, prefix + f"ausgabe_hash {found}; record impacts hash over every ausgaben path")
     is_last = index == len(entries) - 1
     if isinstance(target, str) and target.startswith("arbeitsschritt:"):
         next_ref = entries[index + 1].get("arbeitsschritt_ref") if not is_last and isinstance(entries[index + 1], dict) else None
         if next_ref != target:
-            _add(issues, "run.invalid", run_root / "CONTEXT.md", workspace, prefix + f"route {route!r} leads to {target}, but the next entry is {next_ref or 'missing'}")
+            _add(issues, "run.invalid", vorgang_root / "CONTEXT.md", workspace, prefix + f"route {route!r} leads to {target}, but the next entry is {next_ref or 'missing'}")
     elif isinstance(target, str) and target.startswith("end:") and not is_last:
-        _add(issues, "run.invalid", run_root / "CONTEXT.md", workspace, prefix + f"route {route!r} ends the run at {target}, but the Laufpfad continues")
+        _add(issues, "run.invalid", vorgang_root / "CONTEXT.md", workspace, prefix + f"route {route!r} ends the Vorgang at {target}, but the Laufpfad continues")
 
     approval = entry.get("freigabe")
     if step.get("gate") == "human":
         problem = _approval_problem(approval)
         if problem is not None:
-            _add(issues, "trust.invalid", run_root / "CONTEXT.md", workspace, prefix + problem)
+            _add(issues, "trust.invalid", vorgang_root / "CONTEXT.md", workspace, prefix + problem)
     elif approval is not None:
-        _add(issues, "trust.invalid", run_root / "CONTEXT.md", workspace, prefix + f"freigabe is allowed only on a gate: human step; {step.get('id')} declares no gate")
+        _add(issues, "trust.invalid", vorgang_root / "CONTEXT.md", workspace, prefix + f"freigabe is allowed only on a gate: human step; {step.get('id')} declares no gate")
 
 
 def _approval_problem(value: Any) -> str | None:
@@ -548,19 +563,19 @@ def _approval_problem(value: Any) -> str | None:
 def _resolve_application(
     workspace: Path,
     revision: Any,
-    run_root: Path,
+    vorgang_root: Path,
     issues: list[Issue],
     definitions: dict[str, Application | str],
     snapshots: ExitStack,
     reachable: "_ReachableApplications",
 ) -> Application | None:
     if not isinstance(revision, str) or re.fullmatch(r"git-tree:(?:[0-9a-f]{40}|[0-9a-f]{64})", revision) is None:
-        _add(issues, "revision.invalid", run_root / "CONTEXT.md", workspace, "Application revision is invalid")
+        _add(issues, "revision.invalid", vorgang_root / "CONTEXT.md", workspace, "Application revision is invalid")
         return None
 
     def reject(message: str) -> None:
         definitions[revision] = message
-        _add(issues, "revision.invalid", run_root / "CONTEXT.md", workspace, message)
+        _add(issues, "revision.invalid", vorgang_root / "CONTEXT.md", workspace, message)
 
     cached = definitions.get(revision)
     if isinstance(cached, Application):
@@ -576,7 +591,7 @@ def _resolve_application(
     if _git(workspace, "cat-file", "-t", oid) != "tree":
         reject("Application tree is missing or unreachable")
         return None
-    # Keep the paths in Application alive until all dependent runs were checked.
+    # Keep the paths in Application alive until all dependent Vorgänge were checked.
     target = Path(snapshots.enter_context(TemporaryDirectory(prefix="impacts-application-")))
     if not _materialize_tree(workspace, oid, target):
         reject("Application tree is unreadable or contains an unsafe entry")
@@ -589,7 +604,7 @@ def _resolve_application(
         )
         message = (
             f"Application {revision} does not satisfy the Core contract; "
-            "preserve existing historical bindings and use a corrected Application tree for a new Run"
+            "preserve existing historical bindings and use a corrected Application tree for a new Vorgang"
         )
         reject(f"{message}: {details}" if details else message)
         return None
@@ -858,19 +873,19 @@ def _surface_hash(
 
 
 def _attempt_directories(
-    run_root: Path, workspace: Path, issues: list[Issue]
+    vorgang_root: Path, workspace: Path, issues: list[Issue]
 ) -> set[tuple[str, int]]:
     result: set[tuple[str, int]] = set()
-    for step_root in run_root.iterdir():
+    for step_root in vorgang_root.iterdir():
         if step_root.name == "CONTEXT.md":
             continue
         if not step_root.is_dir() or step_root.is_symlink() or SLUG.fullmatch(step_root.name) is None:
-            message = _slug_message("Arbeitsschritt run") if SLUG.fullmatch(step_root.name) is None else "Invalid Arbeitsschritt run directory"
+            message = _slug_message("Arbeitsschritt") if SLUG.fullmatch(step_root.name) is None else "Invalid Arbeitsschritt directory in the Vorgang"
             _add(issues, "run.invalid", step_root, workspace, message)
             continue
         attempts = list(step_root.iterdir())
         if not attempts:
-            _add(issues, "run.invalid", step_root, workspace, "Unreached Arbeitsschritt run directory")
+            _add(issues, "run.invalid", step_root, workspace, "Unreached Arbeitsschritt directory in the Vorgang")
         for attempt in attempts:
             if not attempt.is_dir() or attempt.is_symlink() or re.fullmatch(r"[0-9]{3}", attempt.name) is None or int(attempt.name) < 1:
                 _add(issues, "run.invalid", attempt, workspace, "Attempt directory must be a positive three-digit number")

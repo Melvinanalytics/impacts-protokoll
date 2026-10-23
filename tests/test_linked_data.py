@@ -175,7 +175,7 @@ def test_compact_document_view_matches_computed_excerpt(source):
 def offer():
     text = DOCUMENT.read_text(encoding="utf-8")
     template = re.search(r"```text\n(.*?)\n```", text.split("### Document blank\n", 1)[1], re.S)[1]
-    values = json.loads(re.search(r"```json\n(.*?)\n```", text.split("### Concrete run inputs\n", 1)[1], re.S)[1])
+    values = json.loads(re.search(r"```json\n(.*?)\n```", text.split("### Concrete Vorgang inputs\n", 1)[1], re.S)[1])
     expected = re.search(r"```text\n(.*?)\n```", text.split("### Filled output\n", 1)[1], re.S)[1]
     return template, values, expected
 
@@ -195,7 +195,7 @@ def test_offer_blank_becomes_the_documented_instance_without_changing_inputs(off
     assert offer == before
 
 
-def test_same_blank_fills_an_independent_second_run(offer):
+def test_same_blank_fills_an_independent_second_vorgang(offer):
     template, first, _ = offer
     first_result = fill_offer(template, first)
     second = copy.deepcopy(first)

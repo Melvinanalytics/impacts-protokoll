@@ -2,9 +2,10 @@
 
 <source> is an Application folder, a workspace folder or vorgaenge/<slug>/CONTEXT.md.
 The folder receives index.html; for a workspace also one page per Application, per
-Vorgang and per Ist-Prozess file (a-, v- and i- pages). The folder must not exist; it is
-complete only when the command exits with 0 or 1 (1: some selections were refused and are
-shown as such). The view shows; it decides, schedules and changes nothing. Generate it
+Vorgang and per Ist-Prozess file (a-, v- and i- pages). The folder must not exist.
+Completed generation returns 0, or 1 when some selections were refused and shown as such.
+Operational failure can also return 1, leaving no output or an incomplete folder.
+The view shows; it decides, schedules and changes nothing. Generate it
 again into a new folder after the files change.
 """
 from __future__ import annotations

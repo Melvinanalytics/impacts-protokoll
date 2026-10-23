@@ -8,9 +8,15 @@ leistung:
     - Prüfbericht liegt vor
     - Entscheidung ist menschlich freigegeben
 einstieg_ref: arbeitsschritt:pruefen
+stufen:  # optional, siehe Weg zur Leistung unten; sonst diesen Block entfernen
+  stand:beantragt: 0
+  arbeitsschritt:pruefen: 30
+  arbeitsschritt:entscheiden: 70
+  end:entschieden: 100
+  end:abgelehnt: 100
 ---
 
-<!-- Translation source: 02_protocol/templates/hauptprozess.md; sha256: 96f4e083c03151ff6d6ffdd5b00b7ef2a7938567a19eccde0682f3b597bf9dc2 -->
+<!-- Translation source: 02_protocol/templates/hauptprozess.md; sha256: 5faedd036acba0640805e04e2f1eb5c005f282f3a32b19d38ce8595be83a6872 -->
 
 # Prüffall entscheiden
 
@@ -42,7 +48,7 @@ Welche menschlichen Grenzen gelten, warum und wer darf sie ändern? Eingangsvari
 
 ## Weg zur Leistung
 
-Welche Teilprozesse zum Ergebnis beitragen, wie ihre Voraussetzungen beschafft werden und wie Erfolg, Ablehnung oder ein unvollständiger Fall endet beziehungsweise wartet. Jedes `end:<slug>` nennen, das die Leistung erreicht; jedes andere Ende ist ein negatives Ende. `einstieg_ref` und Arbeitsschrittrouten bestimmen die Reihenfolge; diese Erklärung führt keine zweite Routentabelle. Unabhängige Applications übergeben belegte Ergebnisse zwischen getrennten Vorgängen, nicht durch Application-übergreifende Schrittrouten.
+Welche Teilprozesse zum Ergebnis beitragen, wie ihre Voraussetzungen beschafft werden und wie Erfolg, Ablehnung oder ein unvollständiger Fall endet beziehungsweise wartet. Jedes `end:<slug>` nennen, das die Leistung erreicht; jedes andere Ende ist ein negatives Ende. `einstieg_ref` und Arbeitsschrittrouten bestimmen die Reihenfolge; diese Erklärung führt keine zweite Routentabelle. Unabhängige Applications übergeben belegte Ergebnisse zwischen getrennten Vorgängen, nicht durch Application-übergreifende Schrittrouten. Optional Stufen in `stufen` vergeben: eine ganze Zahl von 0 bis 100 für jeden Arbeitsschritt und jedes Ende sowie für die Record-Stände, die ein Fall vor `einstieg_ref` durchläuft, mit den Schlüsseln `arbeitsschritt:<slug>`, `end:<slug>` oder `stand:<slug>`, etwa `arbeitsschritt:pruefen: 40`. Eine Stufe ordnet die Position, nicht Aufwand, Wert oder Erfolgsaussicht; Nacharbeit kann sie senken.
 
 ## Durchsatz und Durchlaufzeit
 

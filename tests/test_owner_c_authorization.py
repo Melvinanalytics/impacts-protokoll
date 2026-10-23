@@ -24,7 +24,7 @@ from tests.c_owner_support import (
     entry_active,
     entry_completed,
     make_attempt,
-    write_run,
+    write_vorgang,
 )
 from tests.support import read_context, replace_context
 
@@ -32,16 +32,16 @@ CAPABILITIES = ROOT / "02_protocol" / "capabilities.md"
 CHECK_PATH = ROOT / "06_evaluations" / "cold-walk" / "check.py"
 
 
-def _gate_run(root: Path, revision: str, freigabe: dict | None, name="video-001") -> Path:
-    run = root / "vorgaenge" / name
-    a1 = make_attempt(run, "start", 1, input_bytes="eins", output_bytes="a1")
-    p1 = make_attempt(run, "pruefen", 1, input_bytes="zwei", output_bytes="p1")
+def _gate_vorgang(root: Path, revision: str, freigabe: dict | None, name="video-001") -> Path:
+    vorgang = root / "vorgaenge" / name
+    a1 = make_attempt(vorgang, "start", 1, input_bytes="eins", output_bytes="a1")
+    p1 = make_attempt(vorgang, "pruefen", 1, input_bytes="zwei", output_bytes="p1")
     entries = [
         entry_completed("start", 1, a1, "weiter"),
         entry_completed("pruefen", 1, p1, "freigegeben", freigabe=freigabe),
     ]
-    write_run(root, name, revision, entries)
-    return run
+    write_vorgang(root, name, revision, entries)
+    return vorgang
 
 
 def _cold_walk_module():
@@ -63,7 +63,7 @@ def test_forged_human_attribution_passes_only_the_syntactic_check(tmp_path):
     """
     root, revision = committed_workspace(tmp_path)
     forged = {"by": "human:nicht-vorhanden", "at": "2026-08-30T10:00:00+02:00"}
-    _gate_run(root, revision, forged)
+    _gate_vorgang(root, revision, forged)
 
     report = validate(root)
     assert report.valid, report.issues  # forgery is structurally indistinguishable
@@ -132,7 +132,7 @@ def test_reference_harness_consumes_a_fabricated_fixture_syntactically(tmp_path)
 )
 def test_structural_approval_forgeries_are_rejected(tmp_path, freigabe):
     root, revision = committed_workspace(tmp_path)
-    _gate_run(root, revision, freigabe)
+    _gate_vorgang(root, revision, freigabe)
 
     report = validate(root)
     assert not report.valid
@@ -143,19 +143,19 @@ def test_structural_approval_forgeries_are_rejected(tmp_path, freigabe):
 
 def test_missing_approval_on_human_gate_is_rejected(tmp_path):
     root, revision = committed_workspace(tmp_path)
-    _gate_run(root, revision, None)
+    _gate_vorgang(root, revision, None)
 
     assert "trust.invalid" in codes(root)
 
 
 def test_approval_on_non_human_gate_is_rejected(tmp_path):
     root, revision = committed_workspace(tmp_path)
-    run = root / "vorgaenge" / "video-001"
-    a1 = make_attempt(run, "start", 1, input_bytes="eins", output_bytes="a1")
+    vorgang = root / "vorgaenge" / "video-001"
+    a1 = make_attempt(vorgang, "start", 1, input_bytes="eins", output_bytes="a1")
     # "start" has no gate; an approval here is out of scope for the step.
     entry = entry_completed("start", 1, a1, "weiter", freigabe=HUMAN)
-    p1 = make_attempt(run, "pruefen", 1, input_bytes="zwei")
-    write_run(root, "video-001", revision, [entry, entry_active("pruefen", 1, p1)])
+    p1 = make_attempt(vorgang, "pruefen", 1, input_bytes="zwei")
+    write_vorgang(root, "video-001", revision, [entry, entry_active("pruefen", 1, p1)])
 
     assert "trust.invalid" in codes(root)
 

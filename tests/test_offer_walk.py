@@ -1,4 +1,4 @@
-"""Exercise the actual fixed-language output boundary and bound run handoff."""
+"""Exercise the actual fixed-language output boundary and bound Vorgang handoff."""
 import copy
 import importlib.util
 import json
@@ -17,7 +17,7 @@ def files(root):
 
 
 @pytest.mark.parametrize("language,heading,unit", [("de", "# Angebot", "12 Stunden"), ("en", "# Offer", "12 hours")])
-def test_actual_run_checks_and_binds_both_outputs_before_pending_human_gate(tmp_path, language, heading, unit):
+def test_actual_vorgang_checks_and_binds_both_outputs_before_pending_human_gate(tmp_path, language, heading, unit):
     values = walk.fixture()
     before = copy.deepcopy(values)
     root = walk.open_offer(tmp_path / language, values, language)
@@ -43,17 +43,17 @@ def test_actual_run_checks_and_binds_both_outputs_before_pending_human_gate(tmp_
     assert result.startswith(heading) and unit in result and "1160.00 EUR" in result
     walk.handoff(root, result)
     assert walk.validate(root).valid
-    metadata, body = walk.load_frontmatter_and_body(root / walk.RUN / "CONTEXT.md")
+    metadata, body = walk.load_frontmatter_and_body(root / walk.VORGANG / "CONTEXT.md")
     assert metadata["laufpfad"][0]["gewaehlte_route"] == "bestanden"
     gate = metadata["laufpfad"][-1]
     assert gate["status"] == "wartend" and gate["wiedereinstieg"]["continuation_ref"] == "freigeben/001/output/entscheidung.md"
     assert "freigabe" not in gate and "gewaehlte_route" not in gate
-    assert "ausgabe_hash" not in gate and not (root / walk.RUN / "freigeben/001" / decision_output).exists()
+    assert "ausgabe_hash" not in gate and not (root / walk.VORGANG / "freigeben/001" / decision_output).exists()
     assert ("menschliche entscheidung" if language == "de" else "human decision") in body.lower()
     for name in ("angebot.md", "pruefbericht.json"):
         assert f"input/{name}" in gate_definition["eingaben"] and f"input/{name}" in draft_condition
-        producer = root / walk.RUN / "entwerfen/001/output" / name
-        consumer = root / walk.RUN / "freigeben/001/input" / name
+        producer = root / walk.VORGANG / "entwerfen/001/output" / name
+        consumer = root / walk.VORGANG / "freigeben/001/input" / name
         assert producer.read_bytes() == consumer.read_bytes()
         provenance = json.loads((consumer.parent / "herkunft.json").read_text())[name]
         assert provenance["sha256"] == walk.digest(consumer.read_bytes())
@@ -83,7 +83,7 @@ def test_missing_price_preserves_localized_gap_note_but_blocks_priced_offer(tmp_
     values = walk.fixture()
     del values["items"][0]["unit_price"]
     root = walk.open_offer(tmp_path / language, values, language)
-    draft = root / walk.RUN / "entwerfen/001/output/angebot.md"
+    draft = root / walk.VORGANG / "entwerfen/001/output/angebot.md"
     gap = walk.prepare_gap(root)
     assert missing in gap and question in gap
     assert draft.read_text() == gap
@@ -120,7 +120,7 @@ def test_gap_note_does_not_claim_other_input_conditions_were_checked(tmp_path, m
 def test_provenance_duplicate_keys_block_handoff_and_unique_neighbor_passes(tmp_path, duplicate_key):
     root = walk.open_offer(tmp_path / "en", walk.fixture(), "en")
     expected, _ = walk.checked_offer(root)
-    attempt = root / walk.RUN / "entwerfen/001"
+    attempt = root / walk.VORGANG / "entwerfen/001"
     path = attempt / "input/herkunft.json"
     contents = path.read_text()
     if duplicate_key == "data.json":
@@ -132,10 +132,10 @@ def test_provenance_duplicate_keys_block_handoff_and_unique_neighbor_passes(tmp_
     path.write_text(contents)
     # Bind these bytes so the harness must inspect provenance instead of relying
     # on an unrelated Core hash mismatch to reject the duplicate object.
-    metadata, body = walk.load_frontmatter_and_body(root / walk.RUN / "CONTEXT.md")
+    metadata, body = walk.load_frontmatter_and_body(root / walk.VORGANG / "CONTEXT.md")
     definition, _ = walk.load_frontmatter_and_body(root / walk.APP / "ausarbeitung/entwerfen/CONTEXT.md")
     metadata["laufpfad"][0]["eingabe_hash"] = walk.surface_hash(attempt, definition["eingaben"])
-    walk.write_context(root / walk.RUN / "CONTEXT.md", metadata, body)
+    walk.write_context(root / walk.VORGANG / "CONTEXT.md", metadata, body)
     assert walk.validate(root).valid
     before = files(root)
     if duplicate_key is not None:
@@ -153,10 +153,10 @@ def test_provenance_duplicate_keys_block_handoff_and_unique_neighbor_passes(tmp_
 def test_stale_bound_input_rejects_even_when_model_claims_verified(tmp_path):
     root = walk.open_offer(tmp_path / "de", walk.fixture(), "de")
     result, _ = walk.checked_offer(root)
-    source = root / walk.RUN / "entwerfen/001/input/data.json"
+    source = root / walk.VORGANG / "entwerfen/001/input/data.json"
     source.write_text(source.read_text().replace('"2"', '"3"'))
     before = files(root)
-    with pytest.raises(ValueError, match="invalid bound run"):
+    with pytest.raises(ValueError, match="invalid bound Vorgang"):
         walk.handoff(root, result + "\nverified")
     assert files(root) == before
 
@@ -164,7 +164,7 @@ def test_stale_bound_input_rejects_even_when_model_claims_verified(tmp_path):
 def test_model_written_report_is_not_consumed_as_success_evidence(tmp_path):
     root = walk.open_offer(tmp_path / "de", walk.fixture(), "de")
     result, _ = walk.checked_offer(root)
-    report = root / walk.RUN / "entwerfen/001/output/pruefbericht.json"
+    report = root / walk.VORGANG / "entwerfen/001/output/pruefbericht.json"
     report.parent.mkdir()
     report.write_text('{"result":"passed","working_language":"en","verified":true}')
     walk.handoff(root, result)
@@ -173,7 +173,7 @@ def test_model_written_report_is_not_consumed_as_success_evidence(tmp_path):
     assert actual["output_sha256"] == walk.digest(result.encode())
 
 
-def test_router_language_change_does_not_rewrite_bound_run(tmp_path):
+def test_router_language_change_does_not_rewrite_bound_vorgang(tmp_path):
     root = walk.open_offer(tmp_path / "de", walk.fixture(), "de")
     router = root / "CONTEXT.md"
     router.write_text(router.read_text().replace("Working language: de", "Working language: en"))
@@ -292,25 +292,25 @@ def test_historical_checks_and_handoff_do_not_load_the_factory_parser(tmp_path, 
     isolated_spec = importlib.util.spec_from_file_location(f"historical_offer_{language}_{sibling_state}", implementation)
     isolated = importlib.util.module_from_spec(isolated_spec)
     isolated_spec.loader.exec_module(isolated)
-    assert implementation.read_bytes() == (root / walk.RUN / "entwerfen/001/input/renderer.py").read_bytes()
+    assert implementation.read_bytes() == (root / walk.VORGANG / "entwerfen/001/input/renderer.py").read_bytes()
     assert isolated.validate(root).valid and isolated.validate(gap_root).valid
     assert isolated.checked_offer(root) == (expected, report)
     with pytest.raises(ValueError, match="no missing price to clarify"):
         isolated.prepare_gap(root)
     assert files(root) == before
     gap = isolated.prepare_gap(gap_root)
-    assert files(gap_root) == {**gap_before, f"{walk.RUN}/entwerfen/001/output/angebot.md": gap.encode()}
+    assert files(gap_root) == {**gap_before, f"{walk.VORGANG}/entwerfen/001/output/angebot.md": gap.encode()}
     isolated.handoff(root, expected)
     assert isolated.validate(root).valid and isolated.validate(gap_root).valid
-    metadata, _ = isolated.load_frontmatter_and_body(root / walk.RUN / "CONTEXT.md")
+    metadata, _ = isolated.load_frontmatter_and_body(root / walk.VORGANG / "CONTEXT.md")
     assert metadata["laufpfad"][-1]["status"] == "wartend" and "gewaehlte_route" not in metadata["laufpfad"][-1]
     for name in ("angebot.md", "pruefbericht.json"):
-        assert (root / walk.RUN / "freigeben/001/input" / name).read_bytes() == (root / walk.RUN / "entwerfen/001/output" / name).read_bytes()
+        assert (root / walk.VORGANG / "freigeben/001/input" / name).read_bytes() == (root / walk.VORGANG / "entwerfen/001/output" / name).read_bytes()
     assert not marker.exists() and f"{isolated_spec.name}_source_answer" not in sys.modules
 
 
 @pytest.mark.parametrize("language", ["de", "en"])
-def test_historical_run_remains_core_valid_but_cannot_execute_with_a_new_renderer(tmp_path, language):
+def test_historical_vorgang_remains_core_valid_but_cannot_execute_with_a_new_renderer(tmp_path, language):
     root = walk.open_offer(tmp_path / language, walk.fixture(), language)
     candidate, _ = walk.checked_offer(root)
     before = files(root)
@@ -323,7 +323,7 @@ def test_historical_run_remains_core_valid_but_cannot_execute_with_a_new_rendere
     updated_spec = importlib.util.spec_from_file_location("updated_offer_renderer", implementation)
     updated = importlib.util.module_from_spec(updated_spec)
     updated_spec.loader.exec_module(updated)
-    assert implementation.read_bytes() != (root / walk.RUN / "entwerfen/001/input/renderer.py").read_bytes()
+    assert implementation.read_bytes() != (root / walk.VORGANG / "entwerfen/001/input/renderer.py").read_bytes()
     assert updated.validate(root).valid
     for operation in (updated.checked_offer, updated.prepare_gap, lambda path: updated.handoff(path, candidate)):
         with pytest.raises(ValueError, match="bound renderer differs from executing implementation"):
@@ -337,19 +337,19 @@ def test_malicious_bound_renderer_is_detected_without_execution(tmp_path, langua
     root = walk.open_offer(tmp_path / language, walk.fixture(), language)
     candidate, _ = walk.checked_offer(root)
     marker = tmp_path / "bound-code-executed"
-    attempt = root / walk.RUN / "entwerfen/001"
+    attempt = root / walk.VORGANG / "entwerfen/001"
     (attempt / "input/renderer.py").write_text(f"from pathlib import Path\nPath({str(marker)!r}).write_text('executed')\n")
     if reseal_input_hash:
         # Even a structurally valid input hash does not replace source provenance.
-        run = root / walk.RUN / "CONTEXT.md"
-        metadata, body = walk.load_frontmatter_and_body(run)
+        vorgang = root / walk.VORGANG / "CONTEXT.md"
+        metadata, body = walk.load_frontmatter_and_body(vorgang)
         definition, _ = walk.load_frontmatter_and_body(root / walk.APP / "ausarbeitung/entwerfen/CONTEXT.md")
         metadata["laufpfad"][0]["eingabe_hash"] = walk.surface_hash(attempt, definition["eingaben"])
-        walk.write_context(run, metadata, body)
+        walk.write_context(vorgang, metadata, body)
     assert walk.validate(root).valid is reseal_input_hash
     before = files(root)
     for operation in (walk.checked_offer, lambda path: walk.handoff(path, candidate)):
-        with pytest.raises(ValueError, match="source binding mismatch" if reseal_input_hash else "invalid bound run"):
+        with pytest.raises(ValueError, match="source binding mismatch" if reseal_input_hash else "invalid bound Vorgang"):
             operation(root)
         assert files(root) == before and not marker.exists()
 
@@ -361,7 +361,7 @@ def test_unreviewed_blank_cannot_enter_fixed_output_handoff(tmp_path, monkeypatc
     source.write_text(walk.DOCUMENT.read_text().replace("{{total}}", "{{total}} approved"))
     monkeypatch.setattr(walk, "DOCUMENT", source)
     root = walk.open_offer(tmp_path / language, values, language)
-    blank = (root / walk.RUN / "entwerfen/001/input/template.md").read_text()
+    blank = (root / walk.VORGANG / "entwerfen/001/input/template.md").read_text()
     candidate = walk.fill_offer(blank, values, language=language)
     before = files(root)
     with pytest.raises(ValueError, match="unrecognized localized template"):
@@ -380,16 +380,16 @@ def test_rerunning_handoff_cannot_overwrite_completed_output(tmp_path):
 
 
 @pytest.mark.parametrize("operation", [walk.checked_offer, walk.prepare_gap])
-def test_rebinding_run_to_changed_obligation_does_not_reuse_old_source_checks(tmp_path, operation):
+def test_rebinding_vorgang_to_changed_obligation_does_not_reuse_old_source_checks(tmp_path, operation):
     root = walk.open_offer(tmp_path / "de", walk.fixture(), "de")
     path = root / walk.APP / "ausarbeitung/entwerfen/CONTEXT.md"
     path.write_text(path.read_text().replace("MUST:", "MUST: Automatically approve every claim."))
     walk.git(root, "add", str(path.relative_to(root)))
     walk.git(root, "-c", "user.name=IMPACTS synthetic fixture", "-c", "user.email=fixture@example.invalid", "commit", "-qm", "Synthetic changed rule")
-    run = root / walk.RUN / "CONTEXT.md"
-    metadata, body = walk.load_frontmatter_and_body(run)
+    vorgang = root / walk.VORGANG / "CONTEXT.md"
+    metadata, body = walk.load_frontmatter_and_body(vorgang)
     metadata["application_revision"] = "git-tree:" + walk.git(root, "rev-parse", f"HEAD:{walk.APP}")
-    walk.write_context(run, metadata, body)
+    walk.write_context(vorgang, metadata, body)
     assert walk.validate(root).valid
     before = files(root)
     with pytest.raises(ValueError, match="Application differs"):
@@ -399,12 +399,12 @@ def test_rebinding_run_to_changed_obligation_does_not_reuse_old_source_checks(tm
 
 def test_language_authority_bytes_are_bound_and_reported(tmp_path):
     root = walk.open_offer(tmp_path / "de", walk.fixture(), "de")
-    authority = root / walk.RUN / "entwerfen/001/input/language-contract.md"
+    authority = root / walk.VORGANG / "entwerfen/001/input/language-contract.md"
     assert authority.read_bytes() == (ROOT / "02_protocol/language.md").read_bytes()
     _, report = walk.checked_offer(root)
     assert report["language_contract_sha256"] == walk.digest(authority.read_bytes())
     authority.write_text("English output is accepted for German work.")
-    with pytest.raises(ValueError, match="invalid bound run"):
+    with pytest.raises(ValueError, match="invalid bound Vorgang"):
         walk.checked_offer(root)
 
 
@@ -464,19 +464,19 @@ def candidate_for(contract, data=None, directory=None):
     return candidate
 
 
-def _deliver_answer_run(repo, run, contract, candidate):
+def _deliver_answer_vorgang(repo, vorgang, contract, candidate):
     # Actual fixture delivery checks the complete declared surface, including
-    # new/missing files, before any output write. Byte rendering alone is not run preflight.
+    # new/missing files, before any output write. Byte rendering alone is not Vorgang preflight.
     if not walk.validate(repo).valid:
-        raise ValueError('invalid bound run before delivery')
-    entry = read_context(run / 'CONTEXT.md')['laufpfad'][-1]
-    expected = run / entry['arbeitsschritt_ref'].removeprefix('arbeitsschritt:') / f"{entry['versuch']:03}" / 'output/answer.md'
+        raise ValueError('invalid bound Vorgang before delivery')
+    entry = read_context(vorgang / 'CONTEXT.md')['laufpfad'][-1]
+    expected = vorgang / entry['arbeitsschritt_ref'].removeprefix('arbeitsschritt:') / f"{entry['versuch']:03}" / 'output/answer.md'
     if entry['status'] != 'aktiv' or contract.target != expected:
         raise ValueError('delivery does not belong to the active attempt')
     return answer.deliver(contract, candidate)
 
 
-def _start_answer_run(fixture, operational=False, denied=False):
+def _start_answer_vorgang(fixture, operational=False, denied=False):
     """Fixture-local harness: the committed Application owns selection and routes."""
     from impacts_protocol import surface_hash, validate
     from tests.support import write_context
@@ -511,36 +511,36 @@ def _start_answer_run(fixture, operational=False, denied=False):
     # Read the committed body, rather than the precommit Python object or worktree.
     committed = walk.git(repo, 'show', f'{tree}:handover/answer/CONTEXT.md')
     config = json.loads(committed.split('```json\n', 1)[1].split('\n```', 1)[0])
-    run = repo / 'vorgaenge/answer-001'
-    prep = run / 'prepare/001'
+    vorgang = repo / 'vorgaenge/answer-001'
+    prep = vorgang / 'prepare/001'
     (prep / 'input').mkdir(parents=True)
     request = {'revision': revision, 'access': {name: not denied for name in case_names}}
     (prep / 'input/request.json').write_text(json.dumps(request) + '\n')
     metadata = {'type': 'vorgang', 'id': 'vorgang:answer-001', 'application_revision': 'git-tree:' + tree,
                 'laufpfad': [{'arbeitsschritt_ref': 'arbeitsschritt:prepare', 'versuch': 1, 'status': 'aktiv',
                              'eingabe_hash': surface_hash(prep, ['input/request.json'])}]}
-    write_context(run / 'CONTEXT.md', metadata, 'Synthetic preparation active; no business action permitted.')
+    write_context(vorgang / 'CONTEXT.md', metadata, 'Synthetic preparation active; no business action permitted.')
     assert validate(repo).valid
     request = json.loads((prep / 'input/request.json').read_text())
     contract = _bind_answer_request(repo, config, request, args['staging'], prep / config['target'])
     candidate = candidate_for(contract, directory=repo.parent)
-    result = _deliver_answer_run(repo, run, contract, candidate)
+    result = _deliver_answer_vorgang(repo, vorgang, contract, candidate)
     import shutil
     shutil.copytree(args['staging'], prep / 'output/binding')
     (prep / 'output/binding/request.json').write_bytes((prep / 'input/request.json').read_bytes())
     if denied:
         assert result['local_inputs_pass'] is False
         assert validate(repo).valid
-        return repo, run, contract, metadata, config
-    target = run / 'answer/001'
+        return repo, vorgang, contract, metadata, config
+    target = vorgang / 'answer/001'
     moved = _install_answer_inputs(contract, prep / 'output/binding', target, 'prepare/001/output/binding')
     metadata['laufpfad'][0].update(status='abgeschlossen', gewaehlte_route='ready',
         ausgabe_hash=surface_hash(prep, ['output/answer.md', 'output/binding/']))
     metadata['laufpfad'].append({'arbeitsschritt_ref': 'arbeitsschritt:answer', 'versuch': 1, 'status': 'aktiv',
                                'eingabe_hash': surface_hash(target, ['input/binding/', 'input/handoff-herkunft.md'])})
-    write_context(run / 'CONTEXT.md', metadata, 'Synthetic answer active; source bindings and prior output retained.')
+    write_context(vorgang / 'CONTEXT.md', metadata, 'Synthetic answer active; source bindings and prior output retained.')
     assert validate(repo).valid
-    return repo, run, moved, metadata, config
+    return repo, vorgang, moved, metadata, config
 
 
 def _bind_answer_request(repo, config, request, staging, target):
@@ -570,8 +570,8 @@ def _install_answer_inputs(contract, binding, attempt, origin):
 
 
 def test_answer_P1_exact_pure_explanation(bound_answer):
-    repo, run, contract, metadata, _ = _start_answer_run(bound_answer)
-    result = _deliver_answer_run(repo, run, contract, candidate_for(contract, directory=repo.parent))
+    repo, vorgang, contract, metadata, _ = _start_answer_vorgang(bound_answer)
+    result = _deliver_answer_vorgang(repo, vorgang, contract, candidate_for(contract, directory=repo.parent))
     assert contract.target.read_bytes() == answer.render(contract)
     assert result['sha256'] == walk.digest(contract.target.read_bytes())
     assert metadata['laufpfad'][-1]['arbeitsschritt_ref'] == 'arbeitsschritt:answer'
@@ -579,29 +579,29 @@ def test_answer_P1_exact_pure_explanation(bound_answer):
 
 
 def test_answer_P2_checked_operational_findings(bound_answer):
-    repo, run, contract, metadata, _ = _start_answer_run(bound_answer, operational=True)
-    result = _deliver_answer_run(repo, run, contract, candidate_for(contract, directory=repo.parent))
+    repo, vorgang, contract, metadata, _ = _start_answer_vorgang(bound_answer, operational=True)
+    result = _deliver_answer_vorgang(repo, vorgang, contract, candidate_for(contract, directory=repo.parent))
     assert result['local_inputs_pass'] is True
     assert all(i.path.encode() in contract.target.read_bytes() for i, _, _ in contract.inputs)
     assert len(metadata['laufpfad']) == 2 and walk.validate(repo).valid
-    assert (run / 'answer/001/input/binding/provenance.json').is_file()
+    assert (vorgang / 'answer/001/input/binding/provenance.json').is_file()
 
 
 def test_answer_P3_missing_access_is_diagnostic_only(bound_answer):
-    repo, run, contract, metadata, _ = _start_answer_run(bound_answer, operational=True, denied=True)
+    repo, vorgang, contract, metadata, _ = _start_answer_vorgang(bound_answer, operational=True, denied=True)
     assert contract.target.is_file()
-    assert metadata['laufpfad'] == read_context(run / 'CONTEXT.md')['laufpfad']
+    assert metadata['laufpfad'] == read_context(vorgang / 'CONTEXT.md')['laufpfad']
     assert len(metadata['laufpfad']) == 1 and metadata['laufpfad'][0]['status'] == 'aktiv'
-    assert not (run / 'answer').exists()
+    assert not (vorgang / 'answer').exists()
     assert walk.validate(repo).valid
 
 
 def test_answer_P4_edited_draft_requires_recheck_and_preserves_prior_attempt(bound_answer):
     from impacts_protocol import surface_hash
     from tests.support import write_context
-    repo, run, first, metadata, config = _start_answer_run(bound_answer, operational=True)
-    _deliver_answer_run(repo, run, first, candidate_for(first, directory=repo.parent))
-    old = files(run / 'answer/001')
+    repo, vorgang, first, metadata, config = _start_answer_vorgang(bound_answer, operational=True)
+    _deliver_answer_vorgang(repo, vorgang, first, candidate_for(first, directory=repo.parent))
+    old = files(vorgang / 'answer/001')
     source = repo / '02_protocol/impacts-method.md'
     source.write_bytes(source.read_bytes().replace(b'## Compose an Arbeitsschritt\n', b'## Compose an Arbeitsschritt\n\nSynthetic reviewed source clarification for the next attempt.\n'))
     walk.git(repo, 'add', '02_protocol/impacts-method.md')
@@ -609,22 +609,22 @@ def test_answer_P4_edited_draft_requires_recheck_and_preserves_prior_attempt(bou
     revision = walk.git(repo, 'rev-parse', 'HEAD').strip()
     request = {'revision': revision, 'access': {i['path']: True for i in config['case_inputs']}}
     staging = repo.parent / 'bound-002'
-    attempt = run / 'answer/002'
+    attempt = vorgang / 'answer/002'
     next_contract = _bind_answer_request(repo, config, request, staging, attempt / config['target'])
     (staging / 'request.json').write_text(json.dumps(request) + '\n')
     next_contract = _install_answer_inputs(next_contract, staging, attempt, f'git:{revision}')
     metadata['laufpfad'][-1].update(status='abgeschlossen', gewaehlte_route='retry',
-                                   ausgabe_hash=surface_hash(run / 'answer/001', ['output/answer.md']))
+                                   ausgabe_hash=surface_hash(vorgang / 'answer/001', ['output/answer.md']))
     metadata['laufpfad'].append({'arbeitsschritt_ref': 'arbeitsschritt:answer', 'versuch': 2, 'status': 'aktiv',
                                'eingabe_hash': surface_hash(attempt, ['input/binding/', 'input/handoff-herkunft.md'])})
-    write_context(run / 'CONTEXT.md', metadata, 'Synthetic edited draft under a declared retry; prior attempt retained.')
+    write_context(vorgang / 'CONTEXT.md', metadata, 'Synthetic edited draft under a declared retry; prior attempt retained.')
     assert walk.validate(repo).valid
     edited = candidate_for(next_contract, answer.render(next_contract) + b'Unchecked draft edit.\n', directory=repo.parent)
     with pytest.raises(ValueError):
-        _deliver_answer_run(repo, run, next_contract, edited)
-    _deliver_answer_run(repo, run, next_contract, candidate_for(next_contract, directory=repo.parent))
+        _deliver_answer_vorgang(repo, vorgang, next_contract, edited)
+    _deliver_answer_vorgang(repo, vorgang, next_contract, candidate_for(next_contract, directory=repo.parent))
     assert next_contract.target.read_bytes() != first.target.read_bytes()
-    assert files(run / 'answer/001') == old and walk.validate(repo).valid
+    assert files(vorgang / 'answer/001') == old and walk.validate(repo).valid
 
 
 @pytest.mark.parametrize('case', ['N1', 'N2', 'N3'])
@@ -794,27 +794,27 @@ def test_reviewed_positioning_repoint_changes_future_binding_only(tmp_path):
     walk.git(repo, 'add', '.')
     walk.git(repo, 'commit', '-m', 'historical campaign fixture')
 
-    def open_run(slug, origin):
-        run = repo / 'vorgaenge' / slug
-        attempt = run / 'start/001'
+    def open_vorgang(slug, origin):
+        vorgang = repo / 'vorgaenge' / slug
+        attempt = vorgang / 'start/001'
         (attempt / 'input').mkdir(parents=True)
         (attempt / 'input/positioning.md').write_bytes((domain / origin).read_bytes())
         (attempt / 'input/positioning-herkunft.md').write_text(json.dumps({'origin': 'grundlagen/' + origin, 'revision': walk.git(repo, 'rev-parse', 'HEAD').strip()}) + '\n')
-        write_context(run / 'CONTEXT.md', {'type': 'vorgang', 'id': 'vorgang:' + slug,
+        write_context(vorgang / 'CONTEXT.md', {'type': 'vorgang', 'id': 'vorgang:' + slug,
             'application_revision': 'git-tree:' + walk.git(repo, 'rev-parse', 'HEAD:applications/video').strip(),
             'laufpfad': [{'arbeitsschritt_ref': 'arbeitsschritt:start', 'versuch': 1,
                          'status': 'aktiv', 'eingabe_hash': surface_hash(attempt, definition['eingaben'])}]},
             'Synthetic positioning interpretation; no external action or real approval.')
-        return run
+        return vorgang
 
-    old = open_run('campaign-001', 'campaign.md')
+    old = open_vorgang('campaign-001', 'campaign.md')
     old_bytes = files(old)
     old_definition = read_context(old / 'CONTEXT.md')['application_revision']
     # The reviewed correction is a source binding, not an instruction pasted into future prompts.
     write_context(step, definition, 'Read grundlagen/positioning.md for current positioning. Historical campaign material remains limited to campaign interpretation.')
     walk.git(repo, 'add', 'applications')
     walk.git(repo, 'commit', '-m', 'synthetic reviewed source-binding correction')
-    new = open_run('positioning-001', 'positioning.md')
+    new = open_vorgang('positioning-001', 'positioning.md')
     assert read_context(new / 'CONTEXT.md')['application_revision'] != old_definition
     assert (new / 'start/001/input/positioning.md').read_bytes() == (domain / 'positioning.md').read_bytes()
     assert files(old) == old_bytes and validate(repo).valid
@@ -851,19 +851,19 @@ def test_invalid_successor_mapping_blocks_handoff_and_preserves_prior_state(tmp_
 
 @pytest.mark.parametrize('mutation', ['request', 'handoff', 'extra', 'missing'])
 def test_answer_delivery_preflight_covers_the_entire_bound_surface(bound_answer, mutation):
-    repo, run, contract, _, _ = _start_answer_run(bound_answer, operational=True)
+    repo, vorgang, contract, _, _ = _start_answer_vorgang(bound_answer, operational=True)
     candidate = candidate_for(contract, directory=repo.parent)
-    paths = {'request': run / 'answer/001/input/binding/request.json',
-             'handoff': run / 'answer/001/input/handoff-herkunft.md',
-             'extra': run / 'answer/001/input/binding/extra.md',
-             'missing': run / 'answer/001/input/binding/request.json'}
+    paths = {'request': vorgang / 'answer/001/input/binding/request.json',
+             'handoff': vorgang / 'answer/001/input/handoff-herkunft.md',
+             'extra': vorgang / 'answer/001/input/binding/extra.md',
+             'missing': vorgang / 'answer/001/input/binding/request.json'}
     path = paths[mutation]
     if mutation == 'missing':
         path.unlink()
     else:
         path.write_bytes(b'Changed after binding.\n')
-    with pytest.raises(ValueError, match='invalid bound run before delivery'):
-        _deliver_answer_run(repo, run, contract, candidate)
+    with pytest.raises(ValueError, match='invalid bound Vorgang before delivery'):
+        _deliver_answer_vorgang(repo, vorgang, contract, candidate)
     assert not contract.target.exists()
 
 
@@ -905,12 +905,12 @@ def test_retained_offer_discovery_is_inspectable_and_existing_target_is_preserve
     assert walk.validate(target).valid
     import re
     from urllib.parse import unquote, urlsplit
-    for router in (target / 'CONTEXT.md', target / walk.RUN / 'CONTEXT.md'):
+    for router in (target / 'CONTEXT.md', target / walk.VORGANG / 'CONTEXT.md'):
         links = re.findall(r'\]\(([^)]+)\)', router.read_text())
         local_links = [ref for ref in links if not urlsplit(ref).scheme]
         assert local_links
         assert all((router.parent / unquote(ref)).resolve().is_file() for ref in local_links)
-    metadata = read_context(target / walk.RUN / 'CONTEXT.md')
+    metadata = read_context(target / walk.VORGANG / 'CONTEXT.md')
     assert metadata['laufpfad'][-1]['status'] == 'wartend'
     assert 'freigabe' not in metadata['laufpfad'][-1]
     before = files(target)

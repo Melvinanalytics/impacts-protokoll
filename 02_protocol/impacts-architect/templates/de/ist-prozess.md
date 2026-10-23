@@ -16,7 +16,7 @@ touchpoint: standard
 evidence_status: reported
 ---
 
-<!-- Translation source: 02_protocol/impacts-architect/templates/ist-prozess.md; sha256: 2ac929228f6da15468dd857dea22517c94c7ba6b1a403855cb24f2aaa9502b8c -->
+<!-- Translation source: 02_protocol/impacts-architect/templates/ist-prozess.md; sha256: f3911be3b59d0ce5995f3cc7869f3d20926ba4751aa11bbd31d74876d0d109f2 -->
 
 # Antrag prüfen und entscheiden
 
@@ -83,9 +83,9 @@ Für die genannte Dauer: Von welchem Start bis zu welchem akzeptierten Ende? Wel
 
 Welche Information oder Entscheidung fehlt beim Warten tatsächlich? Welche Beiträge wären mit bereits verfügbaren Informationen, Regeln und Befugnissen möglich? Beobachtete Möglichkeiten von noch zu bestätigenden Verbesserungsvorschlägen trennen.
 
-## Was bleibt gleich, was ist je Lauf neu
+## Was bleibt gleich, was ist je Vorgang neu
 
-Gleich: Prüfkatalog, Bescheidvorlage, Zuständigkeiten. Antrag, Anlagen und Rückfragen gehören zum konkreten Fall; dessen Geschäftsbestand kann mehrere Prozessläufe überdauern. Der Lauf bindet den benötigten Ausschnitt.
+Gleich: Prüfkatalog, Bescheidvorlage, Zuständigkeiten. Antrag, Anlagen und Rückfragen gehören zum konkreten Fall; dessen Geschäftsbestand kann mehrere Vorgänge überdauern. Jeder Vorgang bindet den benötigten Ausschnitt.
 
 Welche angebotene Leistung oder welcher fachliche Gegenstand ist betroffen, welche konkreten Instanzen/Fassungen gehören zusammen und wodurch sind sie belegt? Vorhandene fachliche Definitionen und Records aus diesem Kundenworkspace verlinken, nicht erneut pflegen.
 
