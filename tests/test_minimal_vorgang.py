@@ -607,28 +607,9 @@ def test_changed_output_bytes_break_hash_binding():
 
 @pytest.mark.skipif(sys.platform != "linux", reason="Linux permits non-UTF-8 filename bytes")
 def test_validate_rejects_actual_non_utf8_filename_on_linux(tmp_path):
+    # Sources bind by Git commit, so only a working-tree output inventory can meet such a name.
     root, vorgang = _prepare_workspace(tmp_path)
-    attempt = vorgang / "start/001"
-    input_directory = fixture_path(attempt, "input/dokumente")
-    input_directory.mkdir()
-    (fixture_path(attempt, "input/auftrag.md")).rename(input_directory / "auftrag.md")
-
-    hauptprozess_step = root / "hauptprozesse/video/produktion/start/CONTEXT.md"
-    step_metadata = read_context(hauptprozess_step)
-    step_metadata["eingaben"] = ["input/dokumente"]
-    replace_context(hauptprozess_step, step_metadata)
-    git(root, "add", "hauptprozesse/video")
-    git(root, "commit", "-m", "bind input directory")
-    vorgang_metadata = read_context(vorgang / "CONTEXT.md")
-    vorgang_metadata["hauptprozess_revision"] = "git-tree:" + git(
-        root, "rev-parse", "HEAD:hauptprozesse/video"
-    )
-    vorgang_metadata["laufpfad"][0]["gelesen"] = fixture_references(
-        attempt, ["input/dokumente"]
-    )
-    replace_context(vorgang / "CONTEXT.md", vorgang_metadata)
-
-    raw_path = os.fsencode(input_directory) + b"/bad-\xff.md"
+    raw_path = os.fsencode(vorgang / "start/001/output") + b"/bad-\xff.md"
     descriptor = os.open(raw_path, os.O_WRONLY | os.O_CREAT, 0o600)
     try:
         os.write(descriptor, b"synthetic")
@@ -638,7 +619,7 @@ def test_validate_rejects_actual_non_utf8_filename_on_linux(tmp_path):
     report = validate(root)
 
     assert any(
-        issue.code == "binding.reference_digest" and "not valid UTF-8" in issue.message
+        issue.code == "binding.reference_missing" and "not valid UTF-8" in issue.message
         for issue in report.issues
     )
 

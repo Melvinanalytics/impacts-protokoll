@@ -383,7 +383,7 @@ def _add_bad_folders(root: Path, manifest: dict[str, Any], case: dict[str, Any])
     context = (
         "---\n"
         "type: teilprozess\n"
-        "id: teilprozess:filesystem-probe\n"
+        "id: teilprozess:filesystem-probe-{index}\n"
         "ergebnis: Folder spelling is preserved for structural validation\n"
         "---\n\n"
         "# Synthetic folder probe\n"
@@ -406,7 +406,7 @@ def _add_bad_folders(root: Path, manifest: dict[str, Any], case: dict[str, Any])
         folder = hauptprozess / name
         try:
             folder.mkdir()
-            (folder / "CONTEXT.md").write_text(context, encoding="utf-8")
+            (folder / "CONTEXT.md").write_text(context.format(index=index), encoding="utf-8")
             step = folder / f"filesystem-probe-{index}"
             step.mkdir()
             (step / "CONTEXT.md").write_text(
