@@ -1,0 +1,7 @@
+{
+  "offer_id": "O-1", "version": 1, "customer_id": "C-1", "request_ref": "AN-1",
+  "items": [
+    {"item_id": "OI-1", "product_id": "P-10", "quantity": "2", "unit": "Stück", "unit_price": "100.00", "currency": "EUR", "price_source": "PREIS-1"},
+    {"item_id": "OI-2", "service_id": "S-20", "quantity": "12", "unit": "Stunde", "unit_price": "80.00", "currency": "EUR", "price_source": "PREIS-1"}
+  ]
+}

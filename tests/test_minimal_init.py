@@ -26,11 +26,11 @@ def test_init_creates_only_minimal_workspace():
         assert sorted(path.name for path in root.iterdir()) == [
             ".gitattributes",
             "CONTEXT.md",
-            "applications",
+            "hauptprozesse",
             "vorgaenge",
         ]
         assert (root / ".gitattributes").read_bytes() == b"* -text\n"
-        assert load_frontmatter(root / "CONTEXT.md") == {"type": "workspace"}
+        assert load_frontmatter(root / "CONTEXT.md") == {"type": "workspace", "protocol": "v0.4.0"}
 
 
 def test_cli_init_needs_no_customer_argument():
@@ -63,11 +63,20 @@ def test_init_router_body_states_the_operating_contract():
 
         for phrase in (
             "impacts template",
-            "impacts hash",
             "impacts validate",
-            "git rev-parse HEAD:applications/",
             "Git root",
-            "02_protocol/capabilities.md#signale-und-human-gate",
+            "02_protocol/binding.md#execution",
             "02_protocol/ontology.md",
         ):
             assert phrase in body, f"router body lacks {phrase!r}"
+
+
+def test_execution_procedure_names_the_hash_command_where_outputs_are_recorded():
+    binding = (ROOT / "02_protocol" / "binding.md").read_text(encoding="utf-8")
+    procedure = binding.split("## Execution", 1)[1].split("\n\n", 2)[1]
+    assert "impacts hash" in procedure
+
+
+def test_vorgang_template_names_the_revision_command_where_it_is_filled():
+    template = ROOT / "02_protocol" / "templates" / "vorgang.md"
+    assert "git rev-parse HEAD:hauptprozesse/" in template.read_text(encoding="utf-8")

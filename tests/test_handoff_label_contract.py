@@ -1,6 +1,6 @@
 """Owner A audit tests: handoff mapping sentence is one parser-consumed label.
 
-Oracle: the handoff mapping sentence declared in 02_protocol/capabilities.md,
+Oracle: the handoff mapping sentence declared in 02_protocol/binding.md,
 "Visible output and handoff", is a parser-consumed label under
 02_protocol/language.md, "Preserve meaning" — stable across working
 languages. A fresh consumer following the language contract must be able to learn
@@ -8,25 +8,22 @@ that at the label's owning home, and the protocol router must reach that home.
 These tests derive expectations from those authoritative sources, not from current
 implementation output.
 """
-import os
 import re
 from pathlib import Path
 
-# In the repo this file lives at tests/test_handoff_label_contract.py (parents[1]).
-# For red/green audit runs against an unmodified tree, point IMPACTS_ROOT at it.
-ROOT = Path(os.environ.get("IMPACTS_ROOT") or Path(__file__).resolve().parents[1])
+ROOT = Path(__file__).resolve().parents[1]
 
-CAPABILITIES = ROOT / "02_protocol/capabilities.md"
+BINDING = ROOT / "02_protocol/binding.md"
 ROUTER = ROOT / "02_protocol/CONTEXT.md"
 OFFER_RUN = ROOT / "06_evaluations/offer-walk/run.py"
 COLD_CHECK = ROOT / "06_evaluations/cold-walk/check.py"
 
 
 def handoff_section() -> str:
-    text = CAPABILITIES.read_text(encoding="utf-8")
-    marker = '<a id="sichtbare-ausgabe-und-übergabe"></a>'
+    text = BINDING.read_text(encoding="utf-8")
+    marker = '## Visible output and handoff'
     start = text.index(marker)
-    nxt = text.find('<a id="', start + len(marker))
+    nxt = text.find("\n## ", start + len(marker))
     return text[start: nxt if nxt != -1 else len(text)]
 
 
@@ -58,9 +55,9 @@ def test_router_reaches_the_handoff_contract_from_the_workstep_route():
     the section that owns the handoff mapping syntax."""
     text = ROUTER.read_text(encoding="utf-8")
     row = next(line for line in text.splitlines()
-               if line.startswith("| Workstep prompt"))
-    assert "capabilities.md#sichtbare-ausgabe-und-übergabe" in row, (
-        "no documented route from workstep composition to the handoff contract")
+               if line.startswith("| Arbeitsschritt prompt"))
+    assert "binding.md#visible-output-and-handoff" in row, (
+        "no documented route from Arbeitsschritt composition to the handoff contract")
 
 
 def test_declared_syntax_is_what_the_reference_harnesses_read():
@@ -87,6 +84,6 @@ def test_generated_offer_uses_the_declared_stable_sentence_form():
     for line in emitted:
         line = line.removesuffix("\\n")  # trailing newline escape inside the source literal
         assert re.fullmatch(
-            r"Bei Route `bestanden`: `output/[^` ]+ -> arbeitsschritt:freigeben/input/[^` ]+`\.",
+            r"Bei Route `bestanden`: `output/[^` ]+ -> arbeitsschritt:freigeben:[^` ]+`\.",
             line), f"generator emits a non-declared mapping sentence: {line}"
     assert "On route" not in source and "Bei Route" in source

@@ -1,0 +1,28 @@
+{
+  "known_findings": {
+    "duplicate_blobs": [],
+    "unreferenced_files": [],
+    "history_markers": [],
+    "retired_names": []
+  },
+  "duplicate_allowlist": {
+    "06_evaluations/conformance/fixtures/cases/application-missing-routes-independent-defect/hauptprozesse/approval/produktion/start/CONTEXT.md": "06_evaluations/conformance/run.py copies this self-contained case directory selected by cases.json into its test workspace",
+    "06_evaluations/conformance/fixtures/cases/application-missing-routes/hauptprozesse/approval/produktion/start/CONTEXT.md": "06_evaluations/conformance/run.py copies this self-contained case directory selected by cases.json into its test workspace",
+    "06_evaluations/conformance/fixtures/cases/run-active-gate/records/approval-001/pruefen/001/auftrag.md": "06_evaluations/conformance/run.py copies this self-contained case directory selected by cases.json into its test workspace",
+    "06_evaluations/conformance/fixtures/cases/run-closed-gate-missing-approval/records/approval-001/pruefen/001/auftrag.md": "06_evaluations/conformance/run.py copies this self-contained case directory selected by cases.json into its test workspace",
+    "06_evaluations/conformance/fixtures/cases/run-closed-gate-missing-approval/vorgaenge/approval-001/pruefen/001/output/ergebnis.md": "06_evaluations/conformance/run.py copies this self-contained case directory selected by cases.json into its test workspace",
+    "06_evaluations/conformance/fixtures/cases/run-coordinated-rewrite-boundary/records/approval-001/pruefen/001/auftrag.md": "06_evaluations/conformance/run.py copies this self-contained case directory selected by cases.json into its test workspace",
+    "06_evaluations/conformance/fixtures/cases/run-coordinated-rewrite-boundary/vorgaenge/approval-001/pruefen/001/output/ergebnis.md": "06_evaluations/conformance/run.py copies this self-contained case directory selected by cases.json into its test workspace",
+    "06_evaluations/conformance/fixtures/cases/run-historical-application/records/approval-001/pruefen/001/auftrag.md": "06_evaluations/conformance/run.py copies this self-contained case directory selected by cases.json into its test workspace",
+    "06_evaluations/conformance/fixtures/cases/run-historical-application/vorgaenge/approval-001/pruefen/001/output/ergebnis.md": "06_evaluations/conformance/run.py copies this self-contained case directory selected by cases.json into its test workspace",
+    "06_evaluations/conformance/fixtures/cases/run-invalid-utf8-filename/records/approval-001/pruefen/001/daten/auftrag.md": "06_evaluations/conformance/run.py copies this self-contained case directory selected by cases.json into its test workspace",
+    "06_evaluations/conformance/fixtures/cases/run-output-tampered/records/approval-001/pruefen/001/auftrag.md": "06_evaluations/conformance/run.py copies this self-contained case directory selected by cases.json into its test workspace",
+    "06_evaluations/conformance/fixtures/cases/run-resumed-gate/records/approval-001/pruefen/001/auftrag.md": "06_evaluations/conformance/run.py copies this self-contained case directory selected by cases.json into its test workspace",
+    "06_evaluations/conformance/fixtures/cases/run-resumed-gate/vorgaenge/approval-001/pruefen/001/output/ergebnis.md": "06_evaluations/conformance/run.py copies this self-contained case directory selected by cases.json into its test workspace",
+    "06_evaluations/conformance/fixtures/cases/run-waiting/records/approval-001/pruefen/001/auftrag.md": "06_evaluations/conformance/run.py copies this self-contained case directory selected by cases.json into its test workspace"
+  },
+  "tree_readers": {
+    "02_protocol/templates/": "src/impacts_protocol/generator.py loads a template by kind and language",
+    "06_evaluations/conformance/fixtures/cases/": "06_evaluations/conformance/run.py loads each case directory named in cases.json"
+  }
+}

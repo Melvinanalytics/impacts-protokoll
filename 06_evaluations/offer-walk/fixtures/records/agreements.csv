@@ -1,0 +1,4 @@
+agreement_id,version,customer_id,valid_from,valid_to
+A-1,1,C-1,2026-01-01,2026-07-01
+A-1,2,C-1,2026-07-01,
+A-2,1,C-2,2026-01-01,

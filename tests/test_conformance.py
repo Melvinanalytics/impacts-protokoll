@@ -55,14 +55,15 @@ def _emit_report(
     mutation: str = "",
 ) -> str:
     issues = [
-        {"code": code, "path": "CONTEXT.md", "message": "synthetic candidate diagnostic"}
+        {"code": code, "path": "CONTEXT.md", "message": "synthetic candidate diagnostic", "rule": "binding.md#validation-issue-codes"}
         for code in issue_codes
     ]
+    references = next(c for c in json.loads((RUNNER.parent / "cases.json").read_text())["cases"] if c["id"] == "hash-fixed-vector")["expected"]["references"]
     return f"""import json
 import sys
 command = sys.argv[1]
 report = {{
-    "report_version": 1,
+    "report_version": 3,
     "command": command,
     "tool": {{"name": "fake-candidate", "version": None, "version_source": "test stub"}},
     "issues": {issues!r},
@@ -70,10 +71,14 @@ report = {{
 if command == "validate":
     report["root"] = sys.argv[2]
     report["valid"] = {valid!r}
+    report["not_judged"] = []
+    report["not_judged_counts"] = {{"vorgang": 0, "definition_tree": 0}}
+    report["external_references_not_verified"] = 0
+    report.update(release="v0.4.0", pin="v0.4.0", judged={{"hauptprozess": 1, "teilprozess": 1, "arbeitsschritt": 2, "vorgang": 0, "versuch": 0}}, superseded=[], external_references=[])
 else:
     report["attempt"] = sys.argv[2]
     report["surfaces"] = sys.argv[3:-1]
-    report["digest"] = "sha256:e8fdf8b5a31291deb1c3fa4d982f85da0605a4e3dd5a2f340e2ad2ebf182b965"
+    report["references"] = {references!r}
 payload = json.dumps(report, separators=(",", ":"))
 {mutation}
 sys.stdout.write(payload)
@@ -111,11 +116,13 @@ counter = Path(__file__).with_suffix(".count")
 count = int(counter.read_text()) if counter.exists() else 0
 counter.write_text(str(count + 1))
 report = {
-    "report_version": 1,
+    "report_version": 3,
     "command": sys.argv[1],
     "tool": {"name": "fake-candidate", "version": "test", "version_source": "test stub"},
     "root": sys.argv[2],
     "valid": True,
+    "not_judged": [], "not_judged_counts": {"vorgang": 0, "definition_tree": 0}, "external_references_not_verified": 0, "release": "v0.4.0", "pin": "v0.4.0",
+        "judged": {"hauptprozess": 1, "teilprozess": 1, "arbeitsschritt": 2, "vorgang": 0, "versuch": 0}, "superseded": [], "external_references": [],
     "issues": [],
 }
 print(json.dumps(report, separators=(",", ":")))
@@ -174,13 +181,13 @@ def test_runner_rejects_duplicate_diagnostic_for_original_single_issue_case(tmp_
 def test_runner_requires_exact_frozen_issue_paths(tmp_path):
     result = _run(
         tmp_path,
-        _emit_report(valid=False, exit_code=1, issue_codes=("structure.invalid",)),
+        _emit_report(valid=False, exit_code=1, issue_codes=("structure.level",)),
         case="application-bad-folder",
     )
 
     assert result.returncode == 1
     assert "issue paths differ" in result.stderr
-    assert "applications/approval/Bad Folder" in result.stderr
+    assert "hauptprozesse/approval/Bad Folder" in result.stderr
 
 
 def test_unicode_equivalent_folder_spellings_keep_distinct_issue_occurrences(tmp_path):
@@ -193,7 +200,7 @@ def test_unicode_equivalent_folder_spellings_keep_distinct_issue_occurrences(tmp
     root = tmp_path / "workspace"
     root.mkdir()
     report = {
-        "report_version": 1,
+        "report_version": 3,
         "command": "validate",
         "tool": {
             "name": "candidate",
@@ -202,11 +209,13 @@ def test_unicode_equivalent_folder_spellings_keep_distinct_issue_occurrences(tmp
         },
         "root": str(root),
         "valid": False,
+        "not_judged": [], "not_judged_counts": {"vorgang": 0, "definition_tree": 0}, "external_references_not_verified": 0, "release": "v0.4.0", "pin": "v0.4.0",
+        "judged": {"hauptprozess": 1, "teilprozess": 1, "arbeitsschritt": 2, "vorgang": 0, "versuch": 0}, "superseded": [], "external_references": [],
         "issues": [
             {
-                "code": "structure.invalid",
+                "code": "structure.level",
                 "path": path,
-                "message": "folder name is invalid",
+                "message": "folder name is invalid", "rule": "binding.md#hauptprozess-tree-rules",
             }
             for path in case["expected_issue_paths"]
         ],
@@ -222,9 +231,9 @@ def test_unicode_equivalent_folder_spellings_keep_distinct_issue_occurrences(tmp
 @pytest.mark.parametrize(
     ("mutation", "valid", "issue_codes", "diagnostic"),
     [
-        ("payload = payload.replace('\"report_version\":1', '\"report_version\":1,\"report_version\":1', 1)", True, (), "duplicate JSON key"),
-        ("payload = payload.replace('\"report_version\":1', '\"report_version\":NaN', 1)", True, (), "non-standard JSON value"),
-        ('report["report_version"] = True\npayload = json.dumps(report, separators=(",", ":"))', True, (), "report_version must be integer 1"),
+        ("payload = payload.replace('\"report_version\":3', '\"report_version\":3,\"report_version\":3', 1)", True, (), "duplicate JSON key"),
+        ("payload = payload.replace('\"report_version\":3', '\"report_version\":NaN', 1)", True, (), "non-standard JSON value"),
+        ('report["report_version"] = True\npayload = json.dumps(report, separators=(",", ":"))', True, (), "report_version must be integer 3"),
         ('report["issues"] = {}\npayload = json.dumps(report, separators=(",", ":"))', True, (), "issues must be an array"),
         ('report["issues"][0]["code"] = 1\npayload = json.dumps(report, separators=(",", ":"))', False, ("reference.unresolved",), "issue code, path, and message must be non-empty strings"),
         ('report["issues"][0]["path"] = 1\npayload = json.dumps(report, separators=(",", ":"))', False, ("reference.unresolved",), "issue code, path, and message must be non-empty strings"),
@@ -400,7 +409,8 @@ def test_all_unsupported_selection_is_not_reported_as_pass(monkeypatch, capsys):
         raise runner.UnsupportedCase("synthetic filesystem capability limit")
 
     monkeypatch.setattr(runner, "_prepare_workspace", unsupported)
-    exit_code = runner.run_cases(["unused"], cases[:1], manifest, timeout=1.0)
+    case = next(case for case in cases if case["id"] == "application-valid")
+    exit_code = runner.run_cases(["unused"], [case], manifest, timeout=1.0)
 
     assert exit_code == 3
     output = capsys.readouterr().out
@@ -468,3 +478,96 @@ def test_reference_cli_passes_full_frozen_corpus():
     assert applicable + unsupported == total == expected_total
     assert applicable >= 1
     assert unsupported <= expected_total
+
+
+def test_runner_checks_frozen_issue_explanations():
+    runner = _runner_module()
+    case = {"command": "validate", "expected": {
+        "exit_code": 1, "valid": False, "issue_codes": ["structure.level"],
+        "not_judged": []}, "expected_issue_messages": [
+            "a two-digit first segment is a display prefix; the ID must omit it"]}
+    report = {"report_version": 3, "command": "validate", "tool": {
+        "name": "synthetic", "version": None, "version_source": "test"},
+        "root": "/synthetic", "valid": False, "not_judged": [], "not_judged_counts": {"vorgang": 0, "definition_tree": 0}, "external_references_not_verified": 0, "release": "v0.4.0", "pin": "v0.4.0",
+        "judged": {"hauptprozess": 1, "teilprozess": 1, "arbeitsschritt": 2, "vorgang": 0, "versuch": 0}, "superseded": [], "external_references": [], "issues": [{
+            "code": "structure.level", "path": "24-x",
+            "message": "misleading numeric prefix diagnostic", "rule": "binding.md#hauptprozess-tree-rules"}]}
+    with pytest.raises(runner.ConformanceError, match="frozen explanations"):
+        runner._check_report(report, case, Path("/synthetic"), 1)
+    report["issues"][0]["message"] = "ID mismatch; " + case["expected_issue_messages"][0]
+    runner._check_report(report, case, Path("/synthetic"), 1)
+
+
+def emitted_issue_codes(source):
+    """Read literal emission sites, including hash errors forwarded by the validator."""
+    import ast
+    codes = set()
+    for path in source.rglob("*.py"):
+        for node in ast.walk(ast.parse(path.read_text())):
+            if not isinstance(node, ast.Call):
+                continue
+            name = getattr(node.func, "id", None)
+            index = 1 if name == "_add" else 0 if name in {"Issue", "HashSurfaceError"} else None
+            if index is not None and len(node.args) > index:
+                value = node.args[index]
+                if isinstance(value, ast.Constant) and isinstance(value.value, str):
+                    codes.add(value.value)
+    return codes
+
+
+def require_frozen_codes(codes, cases):
+    frozen = {code for case in cases for code in case["expected"]["issue_codes"]}
+    assert not codes - frozen, f"Issue codes without frozen cases: {sorted(codes - frozen)}"
+
+
+def test_every_emitted_issue_code_has_a_frozen_case():
+    require_frozen_codes(emitted_issue_codes(ROOT / "src/impacts_protocol"),
+                         _runner_module()._load_manifest()[1])
+
+
+def test_new_emission_without_frozen_case_fails(tmp_path):
+    (tmp_path / "validator.py").write_text('Issue("new.code", "path", "message")')
+    with pytest.raises(AssertionError, match="new.code"):
+        require_frozen_codes(emitted_issue_codes(tmp_path), _runner_module()._load_manifest()[1])
+
+
+@pytest.mark.parametrize("link", [{"path": "../outside", "target": "records"},
+                                   {"path": "analyse", "target": "/outside"}, {}])
+def test_symlink_descriptor_rejects_unsafe_or_incomplete_paths(tmp_path, link):
+    runner = _runner_module()
+    manifest = json.loads((ROOT / "06_evaluations/conformance/cases.json").read_text())
+    manifest["cases"] = [{**manifest["cases"][0], "symlink": link}]
+    path = tmp_path / "manifest.json"
+    path.write_text(json.dumps(manifest))
+    with pytest.raises(runner.ConformanceError):
+        runner._load_manifest(path)
+
+
+@pytest.mark.parametrize(("mutation", "diagnostic"), [
+    ('report["release"] = ""', "release must be a non-empty string"),
+    ('report["pin"] = 42', "pin must be a string or null"),
+    ('report["judged"].pop("versuch")', "judged must contain nonnegative counts"),
+    ('report["judged"]["versuch"] = True', "judged must contain nonnegative counts"),
+    ('report["not_judged_counts"]["vorgang"] = 1', "not_judged_counts must match"),
+    ('report["not_judged_counts"]["vorgang"] = False', "not_judged_counts must match"),
+    ('report["superseded"] = [None]', "superseded must list Vorgang paths"),
+    ('report["external_references"] = [{}]', "external_references must list Vorgang paths"),
+    ('report["external_references"] = [{"vorgang": "vorgaenge/test/CONTEXT.md", "pointer": {"ablage": "synthetic-store"}}]', "external_references must list Vorgang paths"),
+    ('report["external_references"] = [{"vorgang": "vorgaenge/test/CONTEXT.md", "pointer": "/laufpfad/1/gelesen/-1"}]', "external_references must list Vorgang paths"),
+    ('report["external_references_not_verified"] = 1', "external-store list and count disagree"),
+])
+def test_runner_rejects_malformed_status_fields(tmp_path, mutation, diagnostic):
+    source = _emit_report(valid=True, mutation=mutation + '\npayload = json.dumps(report)')
+    result = _run(tmp_path, source, case="application-valid")
+    assert result.returncode == 1
+    assert diagnostic in result.stderr
+
+
+def test_runner_rejects_empty_issue_rule(tmp_path):
+    source = _emit_report(
+        valid=False, exit_code=1, issue_codes=("reference.unresolved",),
+        mutation='report["issues"][0]["rule"] = ""\npayload = json.dumps(report)',
+    )
+    result = _run(tmp_path, source, case="application-unresolved-route")
+    assert result.returncode == 1
+    assert "issue rule must be a non-empty Markdown anchor" in result.stderr

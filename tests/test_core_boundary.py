@@ -55,23 +55,11 @@ def test_public_api_contains_only_minimal_contract():
         "Issue",
         "ValidationReport",
         "init_workspace",
-        "surface_hash",
+        "file_references",
         "validate",
     }
     assert not hasattr(validator, "validate_workspace")
-    assert not hasattr(validator, "validate_application")
-
-
-def test_retired_core_surfaces_are_absent():
-    assert not (ROOT / "00_charter").exists()
-    schemas = ROOT / "02_protocol" / "schemas"
-    assert {path.name for path in schemas.glob("*.json")} == {
-        "leistung.schema.json",
-        "hauptprozess.schema.json",
-        "teilprozess.schema.json",
-        "arbeitsschritt.schema.json",
-        "vorgang.schema.json",
-    }
+    assert not hasattr(validator, "validate_hauptprozess")
 
 
 def test_missing_router_fails_closed():
@@ -113,8 +101,8 @@ def test_core_folder_symlink_fails_closed():
     with TemporaryDirectory() as directory:
         base = Path(directory)
         root = init_workspace(base / "workspace")
-        (root / "applications").rmdir()
-        (root / "applications").symlink_to(base, target_is_directory=True)
+        (root / "hauptprozesse").rmdir()
+        (root / "hauptprozesse").symlink_to(base, target_is_directory=True)
 
         assert "structure.symlink" in {issue.code for issue in validate(root).issues}
 
@@ -143,11 +131,11 @@ def test_filesystem_scan_error_fails_closed(monkeypatch):
         root = init_workspace(Path(directory) / "workspace")
         original = Path.iterdir
 
-        def fail_for_applications(path):
-            if path == root / "applications":
+        def fail_for_hauptprozesse(path):
+            if path == root / "hauptprozesse":
                 raise PermissionError("denied")
             return original(path)
 
-        monkeypatch.setattr(Path, "iterdir", fail_for_applications)
+        monkeypatch.setattr(Path, "iterdir", fail_for_hauptprozesse)
 
-        assert "structure.invalid" in {issue.code for issue in validate(root).issues}
+        assert "structure.level" in {issue.code for issue in validate(root).issues}

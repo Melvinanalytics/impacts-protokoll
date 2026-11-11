@@ -1,0 +1,18 @@
+{
+  "scenario": "Synthetic WP18 stage A baseline; no customer evidence or approval",
+  "status": "abgeschlossen",
+  "selected_route": "end:calculated",
+  "output_contract": "Canonical results only; CLI runtime and diagnostic envelope are not step output.",
+  "input": {
+    "path": "scenario.json",
+    "sha256": "sha256:4ec1d7a73495e31fcbd86ba16e174d1805dcdeacef2ea959f1d0dfc88d588c14"
+  },
+  "rule": {
+    "path": "run.py",
+    "sha256": "sha256:08cdc837676813b93c35c1964368374563440ff63b0371a7db4bdea289bb2f6c"
+  },
+  "output": {
+    "path": "recorded-results.json",
+    "sha256": "sha256:105569c17dfbbe2f66100def1510ec099815ba0d73109c5d3333c18204ac967c"
+  }
+}

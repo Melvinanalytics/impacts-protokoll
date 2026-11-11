@@ -365,10 +365,9 @@ const WORDS = {
     "deutung_oder_vorschlag_noch_nicht_bestatigt": "Deutung oder Vorschlag, noch nicht bestätigt.",
     "offen": "offen",
     "unbeantwortete_frage_oder_fehlende_eingabe": "Unbeantwortete Frage oder fehlende Eingabe.",
-    "prufsumme_der_eingaben": "Prüfsumme der Eingaben",
-    "prufsumme_der_ausgaben": "Prüfsumme der Ausgaben",
+    "prufsumme_der_eingaben": "Eingabereferenzen",
+    "prufsumme_der_ausgaben": "Ausgabereferenzen",
     "gewahlte_route": "gewählte Route",
-    "schritt": "Schritt",
     "versuch": "Versuch",
     "fortsetzung": "Fortsetzung",
     "weiter_wenn": "Weiter, wenn",
@@ -381,7 +380,7 @@ const WORDS = {
     "vorgang": "Vorgang",
     "workspace": "Workspace",
     "ist_prozess": "Ist-Prozess",
-    "nur_ansicht_mageblich_sind_die_dateien": "Nur Ansicht. Maßgeblich sind die Dateien. Nach Änderungen neu erzeugen. Die Dateien verknüpfen Leistungen nicht miteinander; die Übersicht zeichnet daher keine Verbindungen.",
+    "nur_ansicht_mageblich_sind_die_dateien": "Nur Ansicht. Maßgeblich sind die Dateien. Nach Änderungen neu erzeugen. Diese Übersicht bildet keine Verbindungen zwischen Prozessergebnissen ab.",
     "im_text": "im Text: `",
     "steht_nicht_in_den_dateien": "Steht nicht in den Dateien.",
     "mensch_entscheidet": "Mensch entscheidet",
@@ -407,11 +406,11 @@ const WORDS = {
     "andere_fassung": "andere Fassung",
     "ende": "Ende ",
     "stufe": "Stufe ",
+    "owner_stopped": "Durch Eigentümer abgebrochen",
+    "superseded": "Abgelöst",
     "leistung_erreicht": "Leistung erreicht",
     "leistung_nicht_erreicht": "Leistung nicht erreicht",
     "leistung_offen": "Leistung: offen",
-    "stufen_vergeben": "Stufen vergeben für ",
-    "schritten_und_enden": " Schritten und Enden",
     "datenmodell": "Datenmodell",
     "datenmodell_sub": "Die Dateiarten dieser Protokollfassung, aus ihren Schemas gelesen. Die Zahl zählt angezeigte Dateien in diesem Arbeitsbereich.",
     "art": "Art",
@@ -420,10 +419,9 @@ const WORDS = {
     "verweist_auf": "Verweist auf",
     "hier": "Hier",
     "keine": "keine",
-    "laufpfadeintrag": "Laufpfad-Eintrag (Versuch)",
     "ende_ziel": "Ende",
-    "record_stand": "Record-Stand",
-    "application_fassung": "Application-Fassung (Git-Baum)",
+    "record_stand": "Record-Zustand",
+    "hauptprozess_fassung": "Hauptprozess-Fassung (Git-Baum)",
     "uber": "über ",
     "aus": " aus",
     "mensch_entscheidet_2": "Mensch entscheidet: ",
@@ -433,6 +431,7 @@ const WORDS = {
     "eintrag": "Eintrag",
     "eintrage": "Einträge",
     "stand": "Stand",
+    "fortschritt": "Fortschritt",
     "nicht_angezeigt_2": "nicht angezeigt",
     "verlauf": "Verlauf",
     "lauft_nach_fassung": "Läuft nach Fassung",
@@ -467,7 +466,7 @@ const WORDS = {
     "beleglabel_der_datei": "Beleglabel der Datei",
     "nicht_angegeben": "nicht angegeben",
     "ist_prozesse_aufnahmen_nicht_von_core": "Ist-Prozesse (Aufnahmen, nicht von Core geprüft)",
-    "aufnahmen_des_heutigen_ablaufs_aus_grundlagen": "Aufnahmen des heutigen Ablaufs aus grundlagen/ist-prozesse/. Quellmaterial, keine Leistung und kein Vorgang.",
+    "aufnahmen_des_heutigen_ablaufs_aus_grundlagen": "Aufnahmen des heutigen Ablaufs aus analyse/. Quellmaterial, keine Leistung und kein Vorgang.",
     "keine_datei_mit_type_ist_prozess": "Keine Datei mit type: ist-prozess.",
     "nicht_gelesen": "Nicht gelesen: ",
     "leistungen": "Leistungen",
@@ -486,10 +485,9 @@ const WORDS = {
     "uberschuss": "Überschuss?",
     "erzeugt_verandert_oder_pruft_die_tatigkeit": "Erzeugt, verändert oder prüft die Tätigkeit, was eine geforderte Bedingung verlangt, oder liefert sie einen solchen Nachweis oder eine solche Entscheidung?",
     "organisiert_sie_eine_abhangigkeit_zwischen_beitragen": "Organisiert sie eine Abhängigkeit zwischen Beiträgen, Beteiligten oder Ressourcen, etwa durch Beschaffung oder Übertragung vorhandener Information, Terminierung, Zuständigkeitsklärung, Entscheidungsanfrage oder Abstimmung getrennter Entscheidungsberechtigter?",
-    "gibt_es_die_tatigkeit_weil_ein": "Gibt es die Tätigkeit, weil ein früherer Beitrag, in diesem Prozess oder vor ihm, sein Ergebnis unvollständig oder falsch hinterlassen hat, obwohl er das Nötige damals wissen oder erfragen konnte?",
+    "gibt_es_die_tatigkeit_weil_ein": "Gibt es die Tätigkeit, weil ein vorausgehender Beitrag, in diesem Prozess oder vor ihm, sein Ergebnis unvollständig oder falsch hinterlassen hat, obwohl er das Nötige damals wissen oder erfragen konnte?",
     "erzeugt_oder_pruft_eine_andere_tatigkeit": "Erzeugt oder prüft eine andere Tätigkeit dieselbe Bedingung nach demselben Kriterium am selben Material, ohne dass eine Pflicht die Wiederholung verlangt?",
     "geht_ein_teil_der_ausgabe_oder": "Geht ein Teil der Ausgabe oder der Verarbeitung über das hinaus, was geforderte Bedingungen und Abhängigkeiten verlangen?",
-    "ein_ja_ist_ein_begrenzter_befund": "Ein „Ja“ ist ein begrenzter Befund mit Evidenzlabel; es weist keine Ausführungsform zu und erteilt keine Befugnis.",
     "ausloser": "Auslöser",
     "eingaben": "Eingaben",
     "ausgaben": "Ausgaben",
@@ -529,12 +527,12 @@ const WORDS = {
     "ist_prozess_2": "Ist-Prozess: ",
     "schleife": "Schleife",
     "gewahlt_in_versuch": "gewählt in Versuch ",
-    "definition_ohne_vorgang_aufgeklappt_zeigt_die": "Definition ohne Vorgang: Aufgeklappt zeigt die Karte jeden Schritt und jede Route, keinen Stand.",
+    "definition_ohne_vorgang_aufgeklappt_zeigt_die": "Definition ohne Vorgang: Aufgeklappt zeigt die Karte jeden Schritt und jede Route, keinen Ausführungszustand.",
     "steht_bei": " steht bei ",
     "versuch_2": "), Versuch ",
     "laut_verlauf_ist_dieser_versuch_begonnen": ". Laut Verlauf ist dieser Versuch begonnen und nicht abgeschlossen. ",
     "weiter_nur_uber_die_entscheidung_eines": " Weiter nur über die Entscheidung eines Menschen:",
-    "ausgange_laut_definition": "Ausgänge laut Definition:",
+    "ausgange_laut_definition": "Routen laut Definition:",
     "abgeleitet_eintrag": " (abgeleitet). Eintrag ",
     "schloss": " schloss ",
     "mit_der_route": " mit der Route ",
@@ -554,7 +552,7 @@ const WORDS = {
     "fassung": "Fassung ",
     "leistung_laut_gebundener_fassung": "Leistung laut gebundener Fassung ",
     "leistung_2": "Leistung: ",
-    "schritt_der_definition_ohne_vorgang_kein": "Schritt der Definition; ohne Vorgang kein Stand.",
+    "schritt_der_definition_ohne_vorgang_kein": "Schritt der Definition; ohne Vorgang kein Ausführungszustand.",
     "noch_kein_eintrag_die_route": "Noch kein Eintrag; die Route ",
     "fuhrt_hierher": " führt hierher.",
     "laut_verlauf_ist_ein_versuch_begonnen": "Laut Verlauf ist ein Versuch begonnen und nicht abgeschlossen. Ob gerade jemand daran arbeitet, steht nicht in den Dateien.",
@@ -584,8 +582,8 @@ const WORDS = {
     "laufpfad_eintrage": " laufpfad-Einträge",
     "ein_vorgang_lauft_nach_der_fassung": "Ein Vorgang läuft nach der Fassung, die er beim Start gebunden hat.",
     "in": " in ",
-    "prufsummen": "Prüfsummen",
-    "fingerabdruck_der_gebundenen_eingaben_beim_offnen": "Fingerabdruck der gebundenen Eingaben beim Öffnen des Versuchs. Die Ansicht rechnet ihn nicht nach.",
+    "prufsummen": "Dateireferenzen",
+    "fingerabdruck_der_gebundenen_eingaben_beim_offnen": "Dateireferenzen mit ihren SHA-256-Werten. Die Ansicht berechnet sie nicht erneut.",
     "versuch_4": "Versuch ",
     "route": ", Route ",
     "wartet_auf_2": ", wartet auf: ",
@@ -613,8 +611,6 @@ const WORDS = {
     "legende": "Legende",
     "alles_aufklappen": "alles aufklappen",
     "zuklappen": "zuklappen",
-    "json": "JSON",
-    "svg": "SVG",
     "vorgangsblatt_mit_verlauf": "Vorgangsblatt mit Verlauf",
     "blatt_des_hauptprozesses": "Blatt des Hauptprozesses",
     "vorgangsblatt_mit_verlauf_offnen": "Vorgangsblatt mit Verlauf öffnen: ",
@@ -646,7 +642,12 @@ const WORDS = {
     "gehort_zu": "Gehört zu",
     "verantwortlich": "Verantwortlich",
     "schicht": "Schicht",
-    "definition_chip": "Definition, kein Ausführungsstand",
+    "due_list": "Fälligkeitsliste",
+    "subject_funnel": "Stufen der Gegenstände",
+    "step_queues": "Warteschlangen je Arbeitsschritt",
+    "funnel_scope": "Stage-Records unter records/ und verknüpfte Records; jede Adresse einmal. Keine allgemeine Stufenreihenfolge.",
+    "due_scope": "Nächste Prüfzeiten wartender Vorgänge; Record-Fristen ohne deklarierte Lesekonvention bleiben offen. Eine entworfene, nicht versendete Anfrage bleibt aktiv und steht nur in der Warteschlange ihres Arbeitsschritts; eine leere Liste heißt nicht, dass nichts wartet.",
+    "definition_chip": "Definition, kein Ausführungszustand",
     "vorgang_chip": "Vorgang, gebundene Definition",
     "ist_chip": "Ist-Aufnahme",
     "aus_der_datei": "ohne Markierung: aus der Datei",
@@ -656,19 +657,19 @@ const WORDS = {
     "processing_sub": "Wer oder was arbeitet, womit.",
     "handgriffe": "Handgriffe",
     "handgrips_sub": "Teil der Verarbeitung: Klick für Klick im heutigen Werkzeug.",
-    "ausgaben_und_wirkungen": "Ausgaben und Wirkungen",
+    "ausgaben_und_wirkungen": "Ausgaben und Eingriffe",
     "outputs_sub": "Was danach anders ist und wo.",
     "check_sub": "Woran ein brauchbares Ergebnis erkennbar ist.",
     "authority_sub": "Wer was entscheiden oder auslösen darf, und worauf das beruht.",
-    "flow_sub": "Was startet, wohin jedes Ergebnis führt, was beim Warten passiert.",
+    "flow_sub": "Was startet, wohin jede Route führt, was beim Warten passiert.",
     "open_sub": "Gesammelt aus allen Abschnitten.",
+    "minimize_row": "Minimize-Zeile ", "minimize_mismatch": "Vorschlag weicht ab", "minimize_unknown": "Nicht berechenbar: ",
     "necessity_legend": "E Ergebnisarbeit · K Koordination · F Fehlerfolge · D Doppelung · Ü Überschuss",
     "first_or_next": "Erste Zeile oder nächster Schritt",
     "show_more": "mehr anzeigen",
     "source_not_loaded": "Verlinkte Quelle in dieser Ansicht nicht erfasst; der Verweis ist keine geladene Quelle.",
     "source_metadata": "Dateikopf (geparste Angaben)",
     "show_less": "weniger",
-    "no_gate": "keines in diesem Schritt",
     "one_job": "Ein Job",
     "human_check": "Menschliche Prüfung",
     "tools_title": "Werkzeuge",
@@ -703,7 +704,7 @@ const WORDS = {
     "nachste_prufung_nicht_angegeben": "No next check stated in history",
     "faellig_label": "Next check",
     "laut_routen_moglich": "possible under routes",
-    "jetzt_moglicher_ausgang": "outcome possible now",
+    "jetzt_moglicher_ausgang": "result possible now",
     "nicht_gewahlt": "not chosen",
     "noch_nicht_erreicht": "not reached yet",
     "ende_erreicht": "end reached",
@@ -720,23 +721,22 @@ const WORDS = {
     "deutung_oder_vorschlag_noch_nicht_bestatigt": "An interpretation or proposal, not yet confirmed.",
     "offen": "open",
     "unbeantwortete_frage_oder_fehlende_eingabe": "An unanswered question or missing input.",
-    "prufsumme_der_eingaben": "Input checksum",
-    "prufsumme_der_ausgaben": "Output checksum",
+    "prufsumme_der_eingaben": "Input references",
+    "prufsumme_der_ausgaben": "Output references",
     "gewahlte_route": "chosen route",
-    "schritt": "Step",
     "versuch": "Attempt",
     "fortsetzung": "Continuation",
     "weiter_wenn": "Continue when",
     "fortsetzung_in": "Continue in",
     "freigabe": "Approval",
     "kundenkontakt": "Customer contact",
-    "hauptprozess": "Main process",
-    "teilprozess": "Subprocess",
-    "arbeitsschritt": "Workstep",
+    "hauptprozess": "Hauptprozess",
+    "teilprozess": "Teilprozess",
+    "arbeitsschritt": "Arbeitsschritt",
     "vorgang": "Vorgang",
     "workspace": "Workspace",
     "ist_prozess": "As-is process",
-    "nur_ansicht_mageblich_sind_die_dateien": "Read-only view. The files are authoritative. Generate again after changes. The files do not link process results to each other, so the overview draws no connections.",
+    "nur_ansicht_mageblich_sind_die_dateien": "Read-only view. The files are authoritative. Generate again after changes. This overview does not display connections between process results.",
     "im_text": "in the text: `",
     "steht_nicht_in_den_dateien": "Not stated in the files.",
     "mensch_entscheidet": "Human decides",
@@ -762,11 +762,11 @@ const WORDS = {
     "andere_fassung": "different version",
     "ende": "End ",
     "stufe": "Stage ",
+    "owner_stopped": "Stopped by owner",
+    "superseded": "Superseded",
     "leistung_erreicht": "Process result achieved",
     "leistung_nicht_erreicht": "Process result not achieved",
     "leistung_offen": "Process result: open",
-    "stufen_vergeben": "Stages assigned to ",
-    "schritten_und_enden": " steps and ends",
     "datenmodell": "Data model",
     "datenmodell_sub": "The file kinds of this protocol version, read from its schemas. The count covers files shown in this workspace.",
     "art": "Kind",
@@ -775,10 +775,9 @@ const WORDS = {
     "verweist_auf": "Refers to",
     "hier": "Here",
     "keine": "none",
-    "laufpfadeintrag": "Laufpfad entry (attempt)",
     "ende_ziel": "End",
     "record_stand": "Record state",
-    "application_fassung": "Application revision (Git tree)",
+    "hauptprozess_fassung": "Hauptprozess revision (Git tree)",
     "uber": "via ",
     "aus": " from",
     "mensch_entscheidet_2": "Human decides: ",
@@ -788,6 +787,7 @@ const WORDS = {
     "eintrag": "Entry",
     "eintrage": "Entries",
     "stand": "State",
+    "fortschritt": "Progress",
     "nicht_angezeigt_2": "not shown",
     "verlauf": "History",
     "lauft_nach_fassung": "Uses version",
@@ -821,8 +821,8 @@ const WORDS = {
     "tabelle_in_anderer_form_wortlich_gezeigt": "Table has a different layout, shown as written",
     "beleglabel_der_datei": "File evidence label",
     "nicht_angegeben": "not stated",
-    "ist_prozesse_aufnahmen_nicht_von_core": "Ist-Prozesse (records, not checked by Core)",
-    "aufnahmen_des_heutigen_ablaufs_aus_grundlagen": "Records of today's process from grundlagen/ist-prozesse/. Source material, not a process result or Vorgang.",
+    "ist_prozesse_aufnahmen_nicht_von_core": "Ist-Prozesse (captures, not checked by Core)",
+    "aufnahmen_des_heutigen_ablaufs_aus_grundlagen": "Captures of today's process from analyse/. Source material, not a process result or Vorgang.",
     "keine_datei_mit_type_ist_prozess": "No file with type: ist-prozess.",
     "nicht_gelesen": "Not read: ",
     "leistungen": "Process results",
@@ -844,7 +844,6 @@ const WORDS = {
     "gibt_es_die_tatigkeit_weil_ein": "Is this activity needed because earlier work, here or upstream, left an incomplete or wrong result even though the needed information was available or could have been requested then?",
     "erzeugt_oder_pruft_eine_andere_tatigkeit": "Does another activity create or check the same condition by the same rule on the same material, without a duty requiring the repeat?",
     "geht_ein_teil_der_ausgabe_oder": "Does any output or processing go beyond what the required conditions and dependencies need?",
-    "ein_ja_ist_ein_begrenzter_befund": "A yes is a scoped finding with an evidence label; it does not assign an execution form or grant authority.",
     "ausloser": "Trigger",
     "eingaben": "Inputs",
     "ausgaben": "Outputs",
@@ -889,7 +888,7 @@ const WORDS = {
     "versuch_2": "), attempt ",
     "laut_verlauf_ist_dieser_versuch_begonnen": ". According to history, this attempt has started and is not complete. ",
     "weiter_nur_uber_die_entscheidung_eines": " Continue only through a human decision:",
-    "ausgange_laut_definition": "Outcomes in the definition:",
+    "ausgange_laut_definition": "Routes in the definition:",
     "abgeleitet_eintrag": " (derived). Entry ",
     "schloss": " completed ",
     "mit_der_route": " with route ",
@@ -939,8 +938,8 @@ const WORDS = {
     "laufpfad_eintrage": " laufpfad entries",
     "ein_vorgang_lauft_nach_der_fassung": "A Vorgang uses the version bound at its start.",
     "in": " in ",
-    "prufsummen": "Checksums",
-    "fingerabdruck_der_gebundenen_eingaben_beim_offnen": "Fingerprint of the bound inputs when the attempt opened. The view does not recalculate it.",
+    "prufsummen": "File references",
+    "fingerabdruck_der_gebundenen_eingaben_beim_offnen": "File references with their SHA-256 digests. The view does not recalculate them.",
     "versuch_4": "Attempt ",
     "route": ", route ",
     "wartet_auf_2": ", waiting for: ",
@@ -968,8 +967,6 @@ const WORDS = {
     "legende": "Legend",
     "alles_aufklappen": "expand all",
     "zuklappen": "collapse",
-    "json": "JSON",
-    "svg": "SVG",
     "vorgangsblatt_mit_verlauf": "Vorgang sheet with history",
     "blatt_des_hauptprozesses": "Hauptprozess sheet",
     "vorgangsblatt_mit_verlauf_offnen": "Open Vorgang sheet with history: ",
@@ -978,7 +975,7 @@ const WORDS = {
     "teilprozesse": "Teilprozesse",
     "in_routenreihenfolge": "In route order.",
     "versuch_6": "· Attempt ",
-    "ergebnis_der_prufung": "Outcome",
+    "ergebnis_der_prufung": "Check result",
     "art": "Kind",
     "weiter": "forward",
     "laufpfad_eintrag_2": " · laufpfad entry ",
@@ -1001,7 +998,12 @@ const WORDS = {
     "gehort_zu": "Belongs to",
     "verantwortlich": "Responsible",
     "schicht": "Layer",
-    "definition_chip": "Definition, no execution position",
+    "due_list": "Due list",
+    "subject_funnel": "Subject stages",
+    "step_queues": "Queues per Arbeitsschritt",
+    "funnel_scope": "Stage records under records/ and linked records; each address counted once. No universal stage order.",
+    "due_scope": "Next check times of waiting Vorgänge; record deadlines without a declared reading convention remain open. A drafted, unsent request stays aktiv and appears only in its Arbeitsschritt queue; an empty list does not mean nothing is waiting.",
+    "definition_chip": "Definition, no execution state",
     "vorgang_chip": "Vorgang, bound definition",
     "ist_chip": "As-is capture",
     "aus_der_datei": "unmarked: stated in the file",
@@ -1015,15 +1017,15 @@ const WORDS = {
     "outputs_sub": "What changes afterwards, and where.",
     "check_sub": "How a usable result is recognized.",
     "authority_sub": "Who may decide or trigger what, and on what basis.",
-    "flow_sub": "What starts the step, where each outcome leads, and what happens while waiting.",
+    "flow_sub": "What starts the step, where each route leads, and what happens while waiting.",
     "open_sub": "Collected from all sections.",
+    "minimize_row": "Minimize row ", "minimize_mismatch": "Proposal differs", "minimize_unknown": "Not computable: ",
     "necessity_legend": "E Result work · K Coordination · F Failure demand · D Duplicate · Ü Excess",
     "first_or_next": "First line or next step",
     "show_more": "show more",
     "source_not_loaded": "Linked source not captured in this view; the reference is not a loaded source.",
     "source_metadata": "Frontmatter (parsed values)",
     "show_less": "show less",
-    "no_gate": "none in this step",
     "one_job": "One job",
     "human_check": "Human check",
     "tools_title": "Tools",
@@ -1125,6 +1127,8 @@ const PHASE = {
   current: [W.aktiv_laut_verlauf, "pos", "now"],
   next: [W.als_nachstes_abgeleitet, "pos", "next"],
   waiting: [W.wartend, "pause", "wait"],
+  stopped: [W.owner_stopped, "stop", "reached"],
+  superseded: [W.superseded, "stop", "past"],
   done: [W.erledigt, "check", "done"],
   looped: [W.lauf_ging_danach_zuruck, "back", "looped"],
   possible: [W.laut_routen_moglich, "maybe", "possible"],
@@ -1133,7 +1137,7 @@ const PHASE = {
   future: [W.noch_nicht_erreicht, null, "future"],
   reached: [W.ende_erreicht, "stop", "reached"],
 };
-/* The four contribution kinds of the Automation boundary, read from labelled lines of a step's processing; not exclusive. */
+/* The four executors of the Automation boundary, read from labelled lines of a step's processing; not exclusive. */
 const EXEC = {deterministic: ["code", W.deterministisches_system], classifier: ["classify", W.klassifikator], agent: ["spark", W.agent], human: ["user", W.mensch]};
 /* The chip names the kind, so the text continues after the label's colon. */
 const afterLabel = spans => {
@@ -1145,7 +1149,6 @@ const afterLabel = spans => {
   });
 };
 const execChip = kind => h("span", {class: "xk", title: EXEC[kind][1] + W.laut_verarbeitung}, icon(EXEC[kind][0], 12), EXEC[kind][1]);
-const STATUS = {abgeschlossen: "done", aktiv: "current", wartend: "waiting"};
 /* Status start and next check of an open entry, verbatim from the laufpfad; the page has no clock, so it never judges lateness. */
 const timeLines = st => st.kind === "current" || st.kind === "waiting"
   ? [st.status_seit ? W.status_seit + st.status_seit : W.status_seit_unbekannt,
@@ -1158,8 +1161,8 @@ const LABEL = {
   hypothesis: [W.hypothese, null, W.deutung_oder_vorschlag_noch_nicht_bestatigt],
   open: [W.offen, "q", W.unbeantwortete_frage_oder_fehlende_eingabe],
 };
-const KEY_LABEL = {eingabe_hash: W.prufsumme_der_eingaben, ausgabe_hash: W.prufsumme_der_ausgaben, gewaehlte_route: W.gewahlte_route,
-  arbeitsschritt_ref: W.schritt, versuch: W.versuch, wiedereinstieg: W.fortsetzung, ausloeser: W.weiter_wenn,
+const KEY_LABEL = {gelesen: W.prufsumme_der_eingaben, geschrieben: W.prufsumme_der_ausgaben, gewaehlte_route: W.gewahlte_route,
+  arbeitsschritt_ref: W.arbeitsschritt, nummer: W.versuch, wiedereinstieg: W.fortsetzung, ausloeser: W.weiter_wenn,
   continuation_ref: W.fortsetzung_in, status_seit: W.status_seit_label, faellig: W.faellig_label, gate: W.freigabe, customer_touchpoint: W.kundenkontakt};
 const KIND = {hauptprozess: ["HP", W.hauptprozess], teilprozess: ["TP", W.teilprozess], arbeitsschritt: ["AS", W.arbeitsschritt], vorgang: ["V", W.vorgang]};
 const MARK_WORD = {WS: W.workspace, HP: W.hauptprozess, TP: W.teilprozess, AS: W.arbeitsschritt, V: W.vorgang, IST: W.ist_prozess};
@@ -1170,7 +1173,7 @@ const badge = key => { const [word, name, cls] = PHASE[key]; return h("span", {c
 // The Hauptprozess's stage of the current step or reached end; absent when it assigns no stages.
 const stagePill = st => st.stufe == null ? null : h("span", {class: "badge" + (st.stufe === "open" ? " b-open" : ""), text: W.stufe + (st.stufe === "open" ? W.offen : st.stufe)});
 // At a reached end: whether it achieves the Leistung, as the Hauptprozess lists it in leistung.erreicht.
-const outcomePill = st => st.erreicht == null ? null : st.erreicht === "open" ? h("span", {class: "badge b-open"}, icon("q", 14), W.leistung_offen)
+const leistungPill = st => st.erreicht == null ? null : st.erreicht === "open" ? h("span", {class: "badge b-open"}, icon("q", 14), W.leistung_offen)
   : h("span", {class: "badge"}, icon(st.erreicht ? "check" : "dash", 14), st.erreicht ? W.leistung_erreicht : W.leistung_nicht_erreicht);
 const phaseIcon = (key, size = 16) => PHASE[key] && PHASE[key][1] ? icon(PHASE[key][1], size, {class: "ic " + (own(PHASE_COLOR, key) || "")}) : null;
 function showSource(title, content) {
@@ -1365,9 +1368,18 @@ const crumb = (mark, label, act) => {
 };
 
 /* ---------- refused selection ---------- */
+const notJudgedText = item => MODEL.language === "de"
+  ? `Nicht beurteilt unter ${item.validator_protocol}: ${item.path} (verzeichnet ${item.protocol ?? "keine Version"})`
+  : item.message;
+function notJudgedPage() {
+  show("sheet-view");
+  put(crumbs([]), h("h1", {text: MODEL.language === "de" ? "Vorgang nicht beurteilt" : "Vorgang not judged"}),
+    h("p", {text: notJudgedText(MODEL.not_judged)}), footer());
+  document.title = MODEL.language === "de" ? "Vorgang nicht beurteilt" : "Vorgang not judged";
+}
 function refusedPage() {
   show("sheet-view");
-  const what = {application: W.leistung, vorgang: W.vorgang, "ist-prozess": W.ist_prozess}[MODEL.kind] || W.auswahl;
+  const what = {hauptprozess: W.leistung, vorgang: W.vorgang, "ist-prozess": W.ist_prozess}[MODEL.kind] || W.auswahl;
   const lead = MODEL.kind === "ist-prozess" ? W.der_leser_meldet_fehler : W.der_validator_oder_der_leser_meldet;
   put(crumbs([]), h("h1", {text: what + W.nicht_angezeigt}),
     h("p", {text: lead + W.die_ansicht_zeigt_nur_eine_gultige}),
@@ -1402,9 +1414,9 @@ function overviewPage() {
   const fassung = r => r.matches_head === null ? W.kein_vergleich_moglich : r.matches_head ? W.aktuelle_definition : W.andere_fassung;
   const standCell = r => {
     const st = r.stand;
-    if (st.kind === "ended") return [h("div", {class: "pills"}, h("span", {class: "badge b-reached"}, icon("stop", 14), W.ende + quote(st.end)), stagePill(st), outcomePill(st)),
+    if (st.kind === "ended") return [h("div", {class: "pills"}, h("span", {class: "badge b-reached"}, icon("stop", 14), W.ende + quote(st.end)), stagePill(st), leistungPill(st)),
       line(W.uber + quote(st.route) + W.aus, deep(r.page, st.from_step, quote(st.from_title)))];
-    const parts = [h("div", {class: "line"}, badge(st.kind), stagePill(st), deep(r.page, st.step, st.step_title))];
+    const parts = [h("div", {class: "line"}, badge(st.kind), stagePill(st), st.step ? deep(r.page, st.step, st.step_title) : null)];
     if ((st.kind === "current" || st.kind === "waiting") && st.gate === "human")
       parts.push(line(icon("user", 14), W.mensch_entscheidet_2 + st.routes.map(x => x[0]).join(" · ")));
     if (st.kind === "waiting")
@@ -1414,24 +1426,27 @@ function overviewPage() {
     return parts;
   };
   const trail = r => {
-    const words = r.statuses.map(x => PHASE[STATUS[x]][0]);
+    const words = r.attempt_phases.map(x => PHASE[x][0]);
     return [h("span", {class: "trail", role: "img", "aria-label": count(r.statuses.length, W.eintrag, W.eintrage) + ": " + words.join(", ")},
-      r.statuses.map(x => icon(PHASE[STATUS[x]][1], 12, {class: "ic " + PHASE_COLOR[STATUS[x]]}))), h("small", {text: count(r.statuses.length, W.eintrag, W.eintrage)})];
+      r.attempt_phases.map(x => icon(PHASE[x][1], 12, {class: "ic " + PHASE_COLOR[x]}))), h("small", {text: count(r.statuses.length, W.eintrag, W.eintrage)})];
   };
   const vorgangRow = (r, a) => {
+    if (r.not_judged) return h("tr", null,
+      h("td", {"data-label": W.vorgang}, link(r.page, short(r.id))),
+      h("td", {colspan: "3", "data-label": W.fortschritt, text: notJudgedText(r.not_judged)}));
     if (r.issues.length) return h("tr", null, h("td", {"data-label": W.vorgang}, link(r.page, short(r.id))),
-      h("td", {colspan: "3", "data-label": W.stand}, h("span", {class: "badge b-open"}, icon("q", 14), W.nicht_angezeigt_2), issuesBlock(r.issues)));
+      h("td", {colspan: "3", "data-label": W.fortschritt}, h("span", {class: "badge b-open"}, icon("q", 14), W.nicht_angezeigt_2), issuesBlock(r.issues)));
     return h("tr", null, h("td", {"data-label": W.vorgang}, link(r.page, r.title || short(r.id))),
-      h("td", {"data-label": W.stand}, standCell(r)), h("td", {"data-label": W.verlauf}, trail(r)),
+      h("td", {"data-label": W.fortschritt}, standCell(r)), h("td", {"data-label": W.verlauf}, trail(r)),
       h("td", {"data-label": W.lauft_nach_fassung}, deep(r.page, a ? a.id : null, h("code", {text: rev8(r.revision), title: r.revision})), " " + fassung(r)));
   };
   const vorgaengeTable = (vorgaenge, a) => vorgaenge.length ? h("div", {class: "tablewrap"}, h("table", {class: "t rt"},
-      h("thead", null, h("tr", null, [W.vorgang, W.stand, W.verlauf, W.lauft_nach_fassung].map(t => h("th", {text: t})))),
+      h("thead", null, h("tr", null, [W.vorgang, W.fortschritt, W.verlauf, W.lauft_nach_fassung].map(t => h("th", {text: t})))),
       h("tbody", null, vorgaenge.map(r => vorgangRow(r, a))))) : h("p", {text: W.keine_vorgange});
   let no = 0;
-  const application = a => {
+  const hauptprozess = a => {
     no++;
-    if (a.issues.length) return card(pad(no), a.folder, W.leistung_nicht_angezeigt, "applications/" + a.folder, [issuesBlock(a.issues), vorgaengeTable(a.vorgaenge, null)], true);
+    if (a.issues.length) return card(pad(no), a.folder, W.leistung_nicht_angezeigt, "hauptprozesse/" + a.folder, [issuesBlock(a.issues), vorgaengeTable(a.vorgaenge, null)], true);
     const l = a.leistung || {};
     const other = a.vorgaenge.some(r => !r.issues.length && r.matches_head === false);
     const definition = a.current
@@ -1440,12 +1455,11 @@ function overviewPage() {
           : a.same_as_head === false ? W.weicht_von_der_committeten_fassung + a.head.slice(0, 8) + W.ab : ""))
       : h("p", {text: W.nur_aus_vorgangen_bekannt_leistung_aus});
     return card(pad(no), a.title || short(a.id), a.current ? W.leistung_und_ihre_vorgange : W.leistung_nur_aus_vorgangen_bekannt,
-      a.current ? "applications/" + a.folder + W.context_md_wortlaut_der_definition : W.gebundene_fassung + rev8(a.revision),
+      a.current ? "hauptprozesse/" + a.folder + W.context_md_wortlaut_der_definition : W.gebundene_fassung + rev8(a.revision),
       [kv(W.ergebnis, l.ergebnis == null ? missing() : String(l.ergebnis)), h("h4", {text: W.vorgange}), vorgaengeTable(a.vorgaenge, a),
        other && a.head ? h("p", {class: "note", text: W.andere_fassung_der_vorgang_lauft_nach
          + a.head.slice(0, 8) + W.ein_klick_auf_die_fassung_zeigt}) : null,
        definition,
-       a.stufen ? h("p", {class: "muted", text: W.stufen_vergeben + a.stufen.assigned + W.von + a.stufen.of + W.schritten_und_enden}) : null,
        h("details", null, h("summary", {text: W.kennzahl_und_abnahme}),
          kv(W.kennzahl, l.kennzahl == null ? missing() : String(l.kennzahl)),
          kv(W.abnahme, Array.isArray(l.abnahme) ? h("ul", null, l.abnahme.map(x => h("li", {text: String(x)}))) : value(l.abnahme)))], true);
@@ -1462,7 +1476,7 @@ function overviewPage() {
         h("td", {"data-label": W.beleglabel_der_datei}, x.evidence_status == null ? W.nicht_angegeben : evidence(x.evidence_status)));
     });
     return card(pad(no), W.ist_prozesse_aufnahmen_nicht_von_core,
-      W.aufnahmen_des_heutigen_ablaufs_aus_grundlagen, "grundlagen/ist-prozesse/",
+      W.aufnahmen_des_heutigen_ablaufs_aus_grundlagen, "analyse/",
       [rows.length ? h("div", {class: "tablewrap"}, h("table", {class: "t rt"},
         h("thead", null, h("tr", null, [W.ist_prozess, W.analyse, W.beleglabel_der_datei].map(t => h("th", {text: t})))), h("tbody", null, rows)))
         : h("p", {text: W.keine_datei_mit_type_ist_prozess}),
@@ -1470,7 +1484,7 @@ function overviewPage() {
   };
   // The packaged schemas as rows: what each file kind must and may hold, and what it points to.
   const KIND_WORD = {hauptprozess: W.hauptprozess, leistung: W.leistung, teilprozess: W.teilprozess, arbeitsschritt: W.arbeitsschritt,
-    vorgang: W.vorgang, laufpfadeintrag: W.laufpfadeintrag, end: W.ende_ziel, stand: W.record_stand, "git-tree": W.application_fassung};
+    vorgang: W.vorgang, versuch: W.versuch, end: W.ende_ziel, stand: W.record_stand, "git-tree": W.hauptprozess_fassung};
   const fieldList = names => names.length ? names.flatMap((f, i) => i ? [", ", h("code", {text: f})] : [h("code", {text: f})]) : h("small", {text: W.keine});
   const refersList = refers => {
     const by = new Map();
@@ -1487,14 +1501,27 @@ function overviewPage() {
       h("thead", null, h("tr", null, [W.art, W.pflichtfelder, W.optionale_felder, W.verweist_auf, W.hier].map(t => h("th", {text: t})))),
       h("tbody", null, rows))), true);
   };
-  const refused = p.applications_refused + p.vorgaenge_refused;
+  const refused = p.hauptprozesse_refused + p.vorgaenge_refused;
   put(h("header", {class: "head"}, markHead("WS", W.workspace),
       h("div", {class: "headmain"}, h("h1", {text: MODEL.selection.workspace}),
-        h("p", {text: count(p.applications, W.leistung, W.leistungen) + " · " + count(p.vorgaenge, W.vorgang, W.vorgange) + (p.ist ? " · " + count(p.ist, W.ist_prozess, W.ist_prozesse) : "")}),
-        refused ? h("p", {class: "warnline", text: W.nicht_angezeigt_3 + count(p.applications_refused, W.leistung, W.leistungen) + " · " + count(p.vorgaenge_refused, W.vorgang, W.vorgange)}) : null,
+        h("p", {text: count(p.hauptprozesse, W.leistung, W.leistungen) + " · " + count(p.vorgaenge, W.vorgang, W.vorgange) + (p.ist ? " · " + count(p.ist, W.ist_prozess, W.ist_prozesse) : "")}),
+        refused ? h("p", {class: "warnline", text: W.nicht_angezeigt_3 + count(p.hauptprozesse_refused, W.leistung, W.leistungen) + " · " + count(p.vorgaenge_refused, W.vorgang, W.vorgange)}) : null,
         p.historic ? h("p", {class: "muted", text: count(p.historic, W.leistung, W.leistungen) + W.nur_aus_vorgangen_bekannt}) : null)),
     MODEL.issues.length ? card("!!", W.workspace_meldungen, W.meldungen_des_validators_die_keiner_angezeigten, null, issuesBlock(MODEL.issues), true) : null,
-    h("div", {class: "stack"}, MODEL.applications.map(application), ist ? istCard() : null,
+    h("div", {class: "stack"},
+      card(null, W.due_list, W.due_scope, null,
+        h("ul", {class: "plain"}, MODEL.due_list.map(r => h("li", {class: r.missing_due ? "warnline" : "line"},
+          link(r.page, short(r.id)), " · ", r.faellig || W.nicht_angegeben, " · ", r.ausloeser || W.offen))), true),
+      card(null, W.subject_funnel, W.funnel_scope, null,
+        h("ul", {class: "plain"}, MODEL.funnel.map(r => h("li", null,
+          h("b", {text: (r.stage === "open" ? W.offen : r.stage) + ": " + r.count}),
+          h("ul", null, r.records.map(record => h("li", {text: record}))))))),
+      card(null, W.step_queues, null, null,
+        MODEL.step_queues.map(q => h("div", null,
+          h("h4", {text: short(q.hauptprozess) + " · " + q.title + " · " + rev8(q.revision)}),
+          h("ul", {class: "plain"}, q.vorgaenge.map(r => h("li", null,
+            deep(r.page, q.step, short(r.id)), " · ", r.status))))), true),
+      MODEL.hauptprozesse.map(hauptprozess), ist ? istCard() : null,
       MODEL.unassigned.length ? (no++, card(pad(no), W.nicht_zugeordnet, W.vorgange_ohne_lesbare_gebundene_leistung, "vorgaenge/", vorgaengeTable(MODEL.unassigned, null), true)) : null,
       dataModelCard()),
     footer());
@@ -1510,7 +1537,6 @@ const QUESTIONS = [
   W.erzeugt_oder_pruft_eine_andere_tatigkeit,
   W.geht_ein_teil_der_ausgabe_oder,
 ];
-const YES_NOTE = W.ein_ja_ist_ein_begrenzter_befund;
 const markIcon = a => a.mark === "yes" ? (a.solid ? "check" : "checkWeak") : {no: "dash", open: "q", other: "other"}[a.mark];
 const markWord = a => (({yes: W.ja, no: W.nein, open: W.offen})[a.mark] || a.word || W.leer) + (a.more ? " …" : "");
 const columnWord = i => COLUMNS[i][1].replace(/\?$/, "");
@@ -1527,14 +1553,9 @@ const sheetLegend = () => h("span", {class: "evidence-legend"},
     h("span", null, h("i", {class: "dot " + cls, "aria-hidden": "true"}), text)));
 const sheetNav = nav => { nav.append(sheetLegend()); return nav; };
 const sheetMode = on => document.getElementById("sheet-view").classList.toggle("mock-sheet", on);
+const VOCABULARY = __VOCABULARY__;
 const headingText = heading => String(heading).split(" › ").map(part => {
-  const names = {"one job": W.one_job, "ein job": W.one_job, inputs: W.eingaben, eingaben: W.eingaben,
-    outputs: W.ausgaben, ausgaben: W.ausgaben, "outputs and effects": W.ausgaben_und_wirkungen,
-    processing: W.verarbeitung, verarbeitung: W.verarbeitung, "human check": W.human_check,
-    "menschliche prüfung": W.human_check, authority: W.befugnis, befugnis: W.befugnis,
-    check: W.prufung, prüfung: W.prufung, flow: W.flow_title, ablauf: W.flow_title,
-    "excluded context": W.nicht_laden, "handgrips": W.handgriffe,
-    tools: W.tools_title, werkzeuge: W.tools_title, "capability call": W.capability_call};
+  const names = Object.fromEntries(Object.entries(VOCABULARY.headings).map(([key, word]) => [key, W[word]]));
   return own(names, part.toLowerCase()) || part;
 }).join(" › ");
 const originOf = (n, heading, number, level) => {
@@ -1598,6 +1619,8 @@ function necessityTable(rows, options = {}) {
             icon(a.mark === "yes" ? (a.labels.includes("open") ? "q" : a.labels.includes("hypothesis") ? "checkWeak" : "check") : markIcon(a), 20)),
           h("div", {class: "answer-text"}, rawInline(a.spans))))),
         h("td", {title: plain(r.move.spans)}, h("div", {class: "move-prose"}, inline(moveProse(r.move))),
+          r.minimize ? h("div", {class: r.minimize.mismatch || !r.minimize.row ? "warnline" : "note",
+            text: r.minimize.row ? W.minimize_row + r.minimize.row + (r.minimize.mismatch ? " · " + W.minimize_mismatch : "") : W.minimize_unknown + r.minimize.reason}) : null,
           options.target ? options.target(r) : r.move.removed ? h("div", {class: "tag", text: W.entfallt_vorschlag_2}) : null));
     })))));
 }
@@ -1694,7 +1717,7 @@ function istPage() {
 }
 
 
-/* ---------- map and sheets of one Application or Vorgang ---------- */
+/* ---------- map and sheets of one Hauptprozess or Vorgang ---------- */
 function selectionPage() {
   const nodes = new Map(MODEL.nodes.map(n => [n.id, n]));
   const vorgang = MODEL.vorgang;
@@ -1716,7 +1739,7 @@ function selectionPage() {
   const phaseOf = id => vorgang ? view.phase[id] || "future" : "";
 
   function routeChip(stepId, [route, target, targetTitle, dir]) {
-    const chosen = entriesOf(stepId).filter(([e]) => e.gewaehlte_route === route).map(([e]) => e.versuch);
+    const chosen = entriesOf(stepId).filter(([e]) => e.gewaehlte_route === route).map(([e]) => e.nummer);
     const to = dir === "end" ? h("span", {text: W.ende + targetTitle}) : nodes.has(target) ? stepButton(target, targetTitle) : h("span", {text: targetTitle});
     return h("span", {class: "rchip" + (chosen.length ? " chosen" : "")}, h("b", {text: route}), icon(DIR_ICON[dir], 14),
       dir === "back" ? W.schleife : null, to, chosen.length ? h("small", {text: W.gewahlt_in_versuch + chosen.join(", ")}) : null);
@@ -1726,8 +1749,9 @@ function selectionPage() {
   function standSentence(st) {
     const vorgangName = quote(vorgangTitle);
     const step = () => ["„", stepButton(st.step, st.step_title), "“"];
+    if (st.kind === "stopped" || st.kind === "superseded") return [h("p", null, vorgangName + ": " + PHASE[st.kind][0])];
     if (st.kind === "definition") return [h("p", {text: W.definition_ohne_vorgang_aufgeklappt_zeigt_die})];
-    if (st.kind === "current") return [h("p", null, vorgangName + W.steht_bei, step(), " (" + st.part_title + W.versuch_2 + st.versuch
+    if (st.kind === "current") return [h("p", null, vorgangName + W.steht_bei, step(), " (" + st.part_title + W.versuch_2 + st.nummer
         + W.laut_verlauf_ist_dieser_versuch_begonnen),
       ...timeLines(st).map(text => h("p", {class: "muted", text})),
       h("div", {class: "line"}, h("span", null, st.gate === "human" ? [icon("user", 14), W.weiter_nur_uber_die_entscheidung_eines] : W.ausgange_laut_definition),
@@ -1735,7 +1759,7 @@ function selectionPage() {
     if (st.kind === "next") return [h("p", null, vorgangName + W.steht_bei, step(), W.abgeleitet_eintrag + st.entry + W.schloss,
       quote(st.from_title) + W.mit_der_route + quote(st.route) + W.ab_und_diese_route_fuhrt_hierher)];
     if (st.kind === "waiting") return [
-      h("p", null, vorgangName + W.wartet_bei, step(), W.versuch_3 + st.versuch + ". "
+      h("p", null, vorgangName + W.wartet_bei, step(), W.versuch_3 + st.nummer + ". "
         + (st.ausloeser ? W.weiter_wenn_2 + st.ausloeser + "." : W.der_verlauf_nennt_keinen_ausloser_fur)),
       st.continuation_ref ? h("p", {class: "muted", text: W.fortsetzung_in_2 + st.continuation_ref}) : null,
       ...timeLines(st).map(text => h("p", {class: "muted", text}))];
@@ -1745,7 +1769,7 @@ function selectionPage() {
   const standBadge = st => st.kind === "ended" ? h("span", {class: "badge b-reached"}, icon("stop", 14), W.ende + quote(st.end)) : Object.hasOwn(PHASE, st.kind) ? badge(st.kind) : null;
 
   /* ----- triad per element: only what the files state; a missing part says so ----- */
-  const filePath = n => vorgang ? n.path_in_revision + W.in_fassung + rev8(revision) : site ? "applications/" + n.path_in_revision : n.path_in_revision;
+  const filePath = n => vorgang ? n.path_in_revision + W.in_fassung + rev8(revision) : site ? "hauptprozesse/" + n.path_in_revision : n.path_in_revision;
   const where = n => [src(filePath(n), n.path), vorgang ? null : src(W.fassung + rev8(revision), revision), src(W.prufsumme + n.sha256.slice(0, 8), n.sha256),
     n.meta_lines ? src(W.dateikopf_zeilen + n.meta_lines[0] + "–" + n.meta_lines[1]) : null];
   const leistung = () => hp.meta.leistung || {};
@@ -1770,7 +1794,7 @@ function selectionPage() {
     if (phase === "possible") return W.die_routen_von + quote(titleOf(view.current)) + W.erlauben_diesen_schritt_es_gibt_keinen;
     if (phase === "waiting") {
       const [e] = entriesOf(id).pop(), resume = e.wiedereinstieg || {};
-      return [h("p", {text: W.wartet_versuch + e.versuch + ". " + (resume.ausloeser ? W.weiter_wenn_2 + resume.ausloeser + "." : W.der_verlauf_nennt_keinen_ausloser_fur)}),
+      return [h("p", {text: W.wartet_versuch + e.nummer + ". " + (resume.ausloeser ? W.weiter_wenn_2 + resume.ausloeser + "." : W.der_verlauf_nennt_keinen_ausloser_fur)}),
         resume.continuation_ref ? h("p", {class: "muted", text: W.fortsetzung_in_2 + resume.continuation_ref}) : null];
     }
     return W.fur_diesen_schritt_gibt_es_keinen;
@@ -1802,25 +1826,25 @@ function selectionPage() {
       leistung().ergebnis == null ? null : h("p", {text: W.wortlaut_der_definition + quote(leistung().ergebnis)}),
       [leistung().kennzahl == null ? null : h("p", {text: W.kennzahl_2 + leistung().kennzahl}),
        Array.isArray(leistung().abnahme) && leistung().abnahme.length ? [h("p", {text: W.abnahme_2}), h("ul", {class: "plain"}, leistung().abnahme.map(x => h("li", {text: String(x)})))] : null]);
-    return triad(line(src(vorgang.path), src(W.prufsumme + vorgang.sha256.slice(0, 8), vorgang.sha256), src(W.gebunden_an_fassung + rev8(vorgang.meta.application_revision), String(vorgang.meta.application_revision)),
+    return triad(line(src(vorgang.path), src(W.prufsumme + vorgang.sha256.slice(0, 8), vorgang.sha256), src(W.gebunden_an_fassung + rev8(vorgang.meta.hauptprozess_revision), String(vorgang.meta.hauptprozess_revision)),
         src(entries.length + W.laufpfad_eintrage)),
       h("p", {text: W.ein_vorgang_lauft_nach_der_fassung}),
       leistung().ergebnis == null ? null : h("p", null, leistungRef()));
   }
   function attemptTriad(index, closed) {
-    const e = entries[index - 1], id = e.arbeitsschritt_ref, key = STATUS[e.status];
+    const e = entries[index - 1], id = e.arbeitsschritt_ref, key = MODEL.attempt_phases[index - 1];
     const resume = e.wiedereinstieg || {};
-    const sums = [["eingabe_hash", W.prufsumme_der_eingaben], ["ausgabe_hash", W.prufsumme_der_ausgaben]].filter(([k]) => e[k] != null);
+    const sums = [["gelesen", W.prufsumme_der_eingaben], ["geschrieben", W.prufsumme_der_ausgaben]].filter(([k]) => e[k] != null);
     return triad([h("p", {text: W.laufpfad_eintrag + index + W.von + entries.length + W.in + vorgang.path}),
-        sums.length ? h("details", null, h("summary", {text: W.prufsummen}), sums.map(([k, label]) => h("p", null, label + ": ", src(hash12(e[k]), String(e[k])))),
+        sums.length ? h("details", null, h("summary", {text: W.prufsummen}), sums.map(([k, label]) => h("p", null, label + ": ", e[k].map(ref => h("code", {text: JSON.stringify(ref)})))),
           h("p", {class: "note", text: W.fingerabdruck_der_gebundenen_eingaben_beim_offnen})) : null],
-      h("p", {text: W.versuch_4 + e.versuch + ": " + PHASE[key][0] + (e.gewaehlte_route ? W.route + quote(e.gewaehlte_route) : "")
+      h("p", {text: W.versuch_4 + e.nummer + ": " + PHASE[key][0] + (e.gewaehlte_route ? W.route + quote(e.gewaehlte_route) : "")
         + (resume.ausloeser ? W.wartet_auf_2 + resume.ausloeser : "") + "."}),
       stepWhy(id), closed);
   }
   function routeTriad(stepId, [route, target, targetTitle, dir]) {
     const n = nodes.get(stepId);
-    const chosen = entriesOf(stepId).filter(([e]) => e.gewaehlte_route === route).map(([e]) => e.versuch);
+    const chosen = entriesOf(stepId).filter(([e]) => e.gewaehlte_route === route).map(([e]) => e.nummer);
     return triad(line(src(W.routen_in + filePath(n), n.path)),
       [h("p", {text: dir === "end" ? W.ergibt_die_prufung + quote(route) + W.endet_der_vorgang_mit + quote(targetTitle) + "."
         : W.ergibt_die_prufung + quote(route) + W.geht_es_weiter_mit + quote(targetTitle) + "."}),
@@ -1844,7 +1868,7 @@ function selectionPage() {
   })(tree, 0, null);
   const initial = n => !vorgang ? n.depth < 2 : n.kind === "hp" || (n.kind === "tp" ? n.children.some(c => c.phase !== "future") : n.kind === "as" && n.phase !== "future");
   boxes.forEach(n => { n.open = initial(n); });
-  const position = boxes.find(n => n.kind === "as" && ["current", "next", "waiting"].includes(n.phase)) || boxes.find(n => n.kind === "route" && n.phase === "reached") || null;
+  const position = boxes.find(n => n.kind === "as" && n.ref === view.current) || boxes.find(n => n.kind === "route" && n.target === view.ended && n.phase === "reached") || null;
   let selected = null, expanded = false;
 
   function look(n) {
@@ -1989,7 +2013,7 @@ function selectionPage() {
     const flags = n.flags || [];
     const row = n.kind === "route" ? nodes.get(stepId).routes.find(r => r[0] === n.route) : null;
     const entry = n.kind === "attempt" ? entries[n.entry - 1] : null;
-    const raw = n.kind === "attempt" ? rawDetails(W.rohdaten, entry, ref, entry.eingabe_hash || entry.ausgabe_hash ? W.die_ansicht_rechnet_sie_nicht_nach : null)
+    const raw = n.kind === "attempt" ? rawDetails(W.rohdaten, entry, ref, entry.gelesen || entry.geschrieben ? W.die_ansicht_rechnet_sie_nicht_nach : null)
       : n.kind === "route" ? rawDetails(W.rohdaten, {[n.route]: n.target}) : rawDetails(W.rohdaten, nodes.get(n.ref).meta, ref);
     fill(panel, h("div", {class: "phead"}, heading, close),
       h("div", {class: "pills"}, n.phase && n.kind !== "hp" && n.kind !== "tp" ? badge(n.phase) : null, flags.includes("gate") ? gatePill() : null, flags.includes("sacred") ? sacredPill() : null),
@@ -2007,26 +2031,6 @@ function selectionPage() {
     if (refocus && selected) { const box = boxElement(selected.key); if (box) box.focus(); }
   }
   document.addEventListener("keydown", e => { if (e.key === "Escape" && panel.classList.contains("open")) { e.preventDefault(); hidePanel(true); } });
-
-  function save(name, text, type) {
-    const a = document.createElement("a");
-    a.download = name;
-    a.href = URL.createObjectURL(new Blob([text], {type}));
-    a.click();
-  }
-  function exportSvg() {
-    const copy = document.getElementById("map").cloneNode(true), css = getComputedStyle(document.documentElement);
-    const color = v => css.getPropertyValue(v).trim();
-    copy.setAttribute("xmlns", NS);
-    let text = new XMLSerializer().serializeToString(copy);
-    for (const v of ["--bg", "--panel", "--soft", "--ink", "--muted", "--line", "--strong", "--action", "--action-ink", "--done", "--done-tint", "--now", "--now-ink", "--gate", "--open", "--derived"])
-      text = text.split(`var(${v})`).join(color(v));
-    text = text.replace(/class="edge on"/g, `fill="none" stroke="${color("--now")}" stroke-width="3"`)
-      .replace(/class="edge ok"/g, `fill="none" stroke="${color("--done")}" stroke-width="1.5"`)
-      .replace(/class="edge wait"/g, `fill="none" stroke="${color("--strong")}" stroke-width="1.5" stroke-dasharray="5 4"`)
-      .replace(/class="edge"/g, `fill="none" stroke="${color("--line")}"`);
-    save("karte.svg", text, "image/svg+xml");
-  }
 
   function legend() {
     const keys = new Set(), flags = new Set(), dirs = new Set();
@@ -2054,10 +2058,6 @@ function selectionPage() {
       toggle.textContent = expanded ? W.zuklappen : W.alles_aufklappen;
       draw();
     });
-    const json = h("button", {type: "button", text: W.json});
-    json.addEventListener("click", () => save("modell.json", document.getElementById("model").textContent, "application/json"));
-    const svg = h("button", {type: "button", text: W.svg});
-    svg.addEventListener("click", exportSvg);
     /* The h1 names the selection; this crumb says where it leads, and keeps its words on narrow screens. */
     const up = vorgang ? crumb("V", W.vorgangsblatt_mit_verlauf, () => open(vorgang.id)) : crumb("HP", W.blatt_des_hauptprozesses, () => open(hp.id));
     up.append(icon("arrow", 14));
@@ -2066,8 +2066,8 @@ function selectionPage() {
     fill(document.getElementById("map-head"), crumbs([up]),
       h("h1", {text: vorgang ? vorgangTitle : title(hp)}),
       vorgang ? h("p", {class: "lede muted", text: W.ablauf + title(hp)}) : null,
-      h("div", {class: "lede"}, vorgang ? h("div", {class: "pills"}, standBadge(stand), stagePill(stand), outcomePill(stand)) : null, standSentence(stand)),
-      h("div", {class: "bar"}, toggle, json, svg),
+      h("div", {class: "lede"}, vorgang ? h("div", {class: "pills"}, standBadge(stand), stagePill(stand), leistungPill(stand)) : null, standSentence(stand)),
+      h("div", {class: "bar"}, toggle),
       legend());
   }
 
@@ -2087,12 +2087,12 @@ function selectionPage() {
 
   function timeline(list) {
     return h("ol", {class: "timeline"}, list.map(([e, i]) => {
-      const key = STATUS[e.status], resume = e.wiedereinstieg || {};
+      const key = MODEL.attempt_phases[i - 1], resume = e.wiedereinstieg || {};
       const row = e.gewaehlte_route != null ? nodes.get(e.arbeitsschritt_ref).routes.find(r => r[0] === e.gewaehlte_route) : null;
       return h("li", null, icon(PHASE[key][1], 16, {class: "ic " + PHASE_COLOR[key]}),
-        h("div", {class: "line"}, h("b", {text: String(i)}), "·", stepButton(e.arbeitsschritt_ref), W.versuch_6 + e.versuch + " ·", h("span", {text: PHASE[key][0]})),
-        e.status === "abgeschlossen" && row ? h("div", null, routeChip(e.arbeitsschritt_ref, row)) : null,
-        e.status === "wartend" ? [line(icon("hourglass", 14), resume.ausloeser ? W.weiter_wenn_2 + resume.ausloeser : W.der_verlauf_nennt_keinen_ausloser_fur),
+        h("div", {class: "line"}, h("b", {text: String(i)}), "·", stepButton(e.arbeitsschritt_ref), W.versuch_6 + e.nummer + " ·", h("span", {text: PHASE[key][0]})),
+        key === "done" && row ? h("div", null, routeChip(e.arbeitsschritt_ref, row)) : null,
+        key === "waiting" ? [line(icon("hourglass", 14), resume.ausloeser ? W.weiter_wenn_2 + resume.ausloeser : W.der_verlauf_nennt_keinen_ausloser_fur),
           resume.continuation_ref ? h("small", {text: W.fortsetzung_in_2 + resume.continuation_ref}) : null] : null,
         attemptTriad(i, true));
     }));
@@ -2115,10 +2115,10 @@ function selectionPage() {
     };
     const processingBlock = b => {
       if (b.type !== "list") return block(b);
-      const names = {"deterministisches system": "deterministic", "deterministic system": "deterministic", klassifikator: "classifier", classifier: "classifier", agent: "agent", mensch: "human", human: "human"};
+      const names = VOCABULARY.execution;
       // A short execution list stays whole; long numbered procedures fold like any other long list.
       return collapseLong(h("ul", {class: "execution-list"}, b.items.map(item => {
-        const kind = item.depth === 0 ? own(names, plain(item.spans).split(":")[0].trim().toLowerCase()) : null;
+        const kind = item.depth === 0 && plain(item.spans).includes(":") ? own(names, plain(item.spans).split(":")[0].trim().toLowerCase()) : null;
         return h("li", {class: "d" + item.depth}, kind && plain(item.spans).includes(":") ? icon(kind === "human" ? "person" : kind === "deterministic" ? "grid" : EXEC[kind][0], 20)
           : h("span", {class: "marker", text: /^[-*+]$/.test(item.marker) ? "•" : item.marker}), h("span", null, kind ? [h("strong", {text: EXEC[kind][1] + ":"}), " ", inline(afterLabel(item.spans))] : inline(item.spans)));
       })));
@@ -2152,7 +2152,7 @@ function selectionPage() {
     if (n.meta.gate != null) {
       if (!groups.has("authority")) groups.set("authority", []);
       groups.get("authority").unshift({origin: fieldOrigin("gate"), content: sourced(n, fieldLine("gate"),
-        h("p", null, h("strong", {text: "Gate:"}), " ", n.meta.gate === "human" ? gatePill() : n.meta.gate === "none" ? W.no_gate : value(n.meta.gate)))});
+        h("p", null, h("strong", {text: "Gate:"}), " ", n.meta.gate === "human" ? gatePill() : value(n.meta.gate)))});
     }
     const routes = h("div", {class: "tablewrap"}, h("table", {class: "t"},
       h("thead", null, h("tr", null, [W.ergebnis_der_prufung, W.folge, W.art].map(text => h("th", {text})))),
@@ -2160,7 +2160,7 @@ function selectionPage() {
         h("td", null, h("b", {text: route})),
         h("td", null, dir === "end" ? W.ende + targetTitle : nodes.has(target) ? stepButton(target, targetTitle) : targetTitle),
         h("td", null, h("span", {class: "tag"}, icon(DIR_ICON[dir], 14), {forward: W.weiter, back: W.schleife, end: W.ende_2}[dir]),
-          entriesOf(id).filter(([e]) => e.gewaehlte_route === route).map(([e, i]) => h("small", {text: W.gewahlt_in_versuch + e.versuch + W.laufpfad_eintrag_2 + i}))))))));
+          entriesOf(id).filter(([e]) => e.gewaehlte_route === route).map(([e, i]) => h("small", {text: W.gewahlt_in_versuch + e.nummer + W.laufpfad_eintrag_2 + i}))))))));
     add("flow", routes, fieldOrigin("routen"));
     const section = (area, cls = "") => {
       const items = areaContent(area);
@@ -2192,7 +2192,7 @@ function selectionPage() {
       opens.map(x => h("span", {class: "source-ref", text: x.heading + W.zeile_3 + x.line})),
       h("ul", {class: "execution-list"}, opens.map(x => h("li", null, icon("q", 20), h("div", null,
         jumpButton(x.anchor, x.content, "plain"), h("small", {text: x.heading + W.zeile_3 + x.line}))))), "", "s-open") : null;
-    const ownerKeys = ["owner", "role", "verantwortlich", "rolle", "responsible"].filter(k => n.meta[k] != null && n.meta[k] !== "");
+    const ownerKeys = VOCABULARY.owners.filter(k => n.meta[k] != null && n.meta[k] !== "");
     const owners = [...ownerKeys.map(k => sourced(n, fieldLine(k), value(n.meta[k]))),
       ...(n.owners || []).map(x => sourced(n, x.line, inline(x.spans)))];
     const owner = owners.length ? kv(W.verantwortlich, owners) : null;
@@ -2204,8 +2204,8 @@ function selectionPage() {
         [n.title ? kv(W.name, h("h1", {text: n.title, title: n.path + W.zeile_3 + n.title_line})) : null,
           n.job_summary ? kv(W.auftrag, sourced(n, jobPart ? (jobPart.blocks.find(b => b.type === "para") || jobPart).line : metaLine, inline(n.job_summary))) : null,
           part ? kv(W.gehort_zu, [stepButton(part.id), " · ", stepButton(hp.id)]) : null],
-        [owner, kv(W.stand, [vorgang ? sourced(vorgang, vorgang.meta_lines ? vorgang.meta_lines[0] : 1, [standBadge(stand), stagePill(stand), outcomePill(stand),
-          stand.step ? stepButton(stand.step, stand.step_title) : null, stand.versuch ? h("small", {text: W.versuch_2 + stand.versuch}) : null]) : h("small", {text: rev8(revision), title: String(revision)}), fileStand(n)]),
+        [owner, kv(vorgang ? W.fortschritt : W.stand, [vorgang ? sourced(vorgang, vorgang.meta_lines ? vorgang.meta_lines[0] : 1, [standBadge(stand), stagePill(stand), leistungPill(stand),
+          stand.step ? stepButton(stand.step, stand.step_title) : null, stand.nummer ? h("small", {text: W.versuch_2 + stand.nummer}) : null]) : h("small", {text: rev8(revision), title: String(revision)}), fileStand(n)]),
           kv(W.schicht, [vorgang ? W.vorgang : W.definition, h("span", {class: "tag", text: vorgang ? W.vorgang_chip : W.definition_chip})])]),
         row(section("job"), section("inputs"), section("processing")),
       areaContent("handgrips").length ? row(section("handgrips", "wide"), h("div", {class: "stack"}, section("outputs"), section("check")))
@@ -2215,7 +2215,7 @@ function selectionPage() {
       row(nec, openSection),
       vorgang && entriesOf(id).length ? row(sheetSection(null, W.versuche, W.jeder_eintrag_dieses_schritts_im_verlauf,
         originOf(vorgang, "laufpfad", vorgang.meta_lines ? vorgang.meta_lines[0] : 1), timeline(entriesOf(id)), "full")) : null,
-      h("div", {id: "sheet-meta"}, rawDetails(W.alle_angaben_aus_dem_dateikopf, withoutKeys(n.meta, ["type", "id", "laufpfad", "application_revision"]), ref)), footer());
+      h("div", {id: "sheet-meta"}, rawDetails(W.alle_angaben_aus_dem_dateikopf, withoutKeys(n.meta, ["type", "id", "laufpfad", "hauptprozess_revision"]), ref)), footer());
     document.title = W.arbeitsschritt + ": " + title(n);
   }
 
@@ -2234,7 +2234,7 @@ function selectionPage() {
           vorgang ? h("div", null, standSentence(stand)) : null)),
       nodeTriad(id),
       h("div", {class: "grid"}, cards, sectionCards(n), children(n)),
-      rawDetails(W.alle_angaben_aus_dem_dateikopf, withoutKeys(n.meta, ["type", "id", "laufpfad", "application_revision"]), ref),
+      rawDetails(W.alle_angaben_aus_dem_dateikopf, withoutKeys(n.meta, ["type", "id", "laufpfad", "hauptprozess_revision"]), ref),
       footer());
     document.title = level + ": " + title(n);
   }
@@ -2245,7 +2245,7 @@ function selectionPage() {
     const possible = st.kind === "waiting" ? st.routes.filter(r => r[3] !== "end" && view.phase[r[1]] === "possible") : [];
     put(crumbs([crumb("V", vorgangTitle)], toMap),
       h("header", {class: "head"}, markHead("V", W.vorgang),
-        h("div", {class: "headmain"}, h("h1", {text: vorgangTitle}), h("div", {class: "pills"}, standBadge(st), stagePill(st), outcomePill(st)), h("div", null, standSentence(st)),
+        h("div", {class: "headmain"}, h("h1", {text: vorgangTitle}), h("div", {class: "pills"}, standBadge(st), stagePill(st), leistungPill(st)), h("div", null, standSentence(st)),
           possible.length ? kv(W.laut_routen_moglich_3, [possible.map(r => h("span", {class: "tag", text: r[2]})), W.aus_2 + quote(st.step_title)]) : null)),
       nodeTriad(vorgang.id),
       h("div", {class: "grid"}, card(null, W.verlauf, W.jeder_eintrag_in_reihenfolge_der_datei, vorgang.path + " · laufpfad", timeline(entries.map((e, i) => [e, i + 1])), true),
@@ -2284,6 +2284,7 @@ function selectionPage() {
 }
 
 if (MODEL.kind === "overview") overviewPage();
+else if (MODEL.not_judged) notJudgedPage();
 else if (MODEL.issues.length) refusedPage();
 else if (MODEL.kind === "ist-prozess") istPage();
 else selectionPage();

@@ -1,7 +1,7 @@
 """A read-only view of IMPACTS files: `impacts view <source> --out <folder> [--json]`.
 
-<source> is an Application folder, a workspace folder or vorgaenge/<slug>/CONTEXT.md.
-The folder receives index.html; for a workspace also one page per Application, per
+<source> is a Hauptprozess folder, a workspace folder or vorgaenge/<slug>/CONTEXT.md.
+The folder receives index.html; for a workspace also one page per Hauptprozess, per
 Vorgang and per Ist-Prozess file (a-, v- and i- pages). The folder must not exist.
 Completed generation returns 0, or 1 when some selections were refused and shown as such.
 Operational failure can also return 1, leaving no output or an incomplete folder.
@@ -83,8 +83,8 @@ def run(source: Path, out: Path, *, write_json: bool = False, language: str | No
     kind = selection.kind_of(source)
     if kind == "workspace":
         pages, protected = selection.workspace_site(source), source
-    elif kind == "application":
-        pages = {"index.html": selection.application_page(source)}
+    elif kind == "hauptprozess":
+        pages = {"index.html": selection.hauptprozess_page(source)}
         protected = source
         for parent in source.parents:
             context = parent / "CONTEXT.md"

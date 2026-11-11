@@ -1,18 +1,29 @@
 ---
 type: vorgang
+protocol: v0.4.0
 id: vorgang:approval-001
-application_revision: git-tree:@APPLICATION_REVISION@
+hauptprozess_revision: git-tree:@HAUPTPROZESS_REVISION@
 laufpfad:
-  - arbeitsschritt_ref: arbeitsschritt:start
-    versuch: 1
-    status: abgeschlossen
-    eingabe_hash: sha256:986ffc4749acc3e8105df9a9f03282cacd035ad7740e2b96d4c3b5120d5067a0
-    gewaehlte_route: weiter
-    ausgabe_hash: sha256:2a18b135c295b71c3eb69bef077867478e489dc3bc1af7058b47d467ff96a5c5
-  - arbeitsschritt_ref: arbeitsschritt:pruefen
-    versuch: 1
-    status: aktiv
-    eingabe_hash: sha256:35ea69cce8b2b5027f0d124dc08e5081f097a42b73e2b040f9899722c07a85a2
+- arbeitsschritt_ref: arbeitsschritt:start
+  status: abgeschlossen
+  gewaehlte_route: weiter
+  nummer: 1
+  gelesen:
+  - eingabe: input/auftrag.md
+    pfad: records/approval-001/start/001/auftrag.md
+    revision: git-commit:@SOURCE_COMMIT@
+    sha256: sha256:ac62571dcadb11f2406d2d4277de2ee1b567a998bc1bf2bc9f7130db57a75438
+  geschrieben:
+  - pfad: vorgaenge/approval-001/start/001/output/ergebnis.md
+    sha256: sha256:7e32f8d5d966b6fc20727d012729337bb4b815d4b3932d187f4d29e4a1f26172
+- arbeitsschritt_ref: arbeitsschritt:pruefen
+  status: aktiv
+  nummer: 1
+  gelesen:
+  - eingabe: input/auftrag.md
+    pfad: records/approval-001/pruefen/001/auftrag.md
+    revision: git-commit:@SOURCE_COMMIT@
+    sha256: sha256:0000000000000000000000000000000000000000000000000000000000000000
 ---
 
 # Input changed after binding

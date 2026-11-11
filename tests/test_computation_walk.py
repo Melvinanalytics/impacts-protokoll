@@ -160,3 +160,56 @@ def test_negative_contribution_is_reported_not_suppressed(tmp_path):
     result = evaluate(tmp_path, data)
     assert result["unit_contribution"]["value"] == "-50"
     assert result["operating_result"]["value"] == "-24000"
+
+
+def replay_module():
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("computation_replay", EXAMPLE / "replay.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_closed_attempt_replay_matches_and_preserves_evidence(tmp_path):
+    module = replay_module()
+    before = {path.name: path.read_bytes() for path in EXAMPLE.iterdir() if path.is_file()}
+    result = module.replay()
+    assert result["match"] is True
+    record = json.loads((EXAMPLE / "closed-attempt.json").read_text())
+    assert result["output_digest"] == record["output"]["sha256"]
+    assert result["candidate_rule_digest"] == record["rule"]["sha256"]
+    # A different revision with identical behavior still passes.
+    candidate = tmp_path / "candidate.py"
+    candidate.write_text((EXAMPLE / "run.py").read_text() + "\n# Synthetic candidate revision.\n")
+    assert module.replay(candidate=candidate)["match"]
+    candidate.write_text(candidate.read_text().replace('lambda h, t: h / t', 'lambda h, t: h / t + 1'))
+    with pytest.raises(ValueError, match="output digest differs"):
+        module.replay(candidate=candidate)
+    assert before == {path.name: path.read_bytes() for path in EXAMPLE.iterdir() if path.is_file()}
+
+
+@pytest.mark.parametrize("target", ["scenario.json", "run.py", "recorded-results.json"])
+@pytest.mark.parametrize("mutation", ["change", "remove"])
+def test_replay_rejects_corrupt_or_missing_retained_evidence(tmp_path, target, mutation):
+    import shutil
+    home = tmp_path / "computation"
+    shutil.copytree(EXAMPLE, home)
+    path = home / target
+    if mutation == "change":
+        path.write_bytes(path.read_bytes() + b" ")
+    else:
+        path.unlink()
+    with pytest.raises((ValueError, FileNotFoundError)):
+        replay_module().replay(home)
+
+
+def test_open_attempt_cannot_supply_closed_replay(tmp_path):
+    import shutil
+    home = tmp_path / "computation"
+    shutil.copytree(EXAMPLE, home)
+    path = home / "closed-attempt.json"
+    record = json.loads(path.read_text())
+    record["status"] = "aktiv"
+    path.write_text(json.dumps(record))
+    with pytest.raises(ValueError, match="not the closed"):
+        replay_module().replay(home)

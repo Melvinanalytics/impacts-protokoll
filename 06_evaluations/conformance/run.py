@@ -8,6 +8,7 @@ import errno
 import json
 import math
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -19,7 +20,7 @@ from typing import Any
 HERE = Path(__file__).resolve().parent
 MANIFEST_PATH = HERE / "cases.json"
 VORGANG_ASSETS = HERE / "fixtures" / "common-run-assets"
-REVISION_TOKEN = "@APPLICATION_REVISION@"
+REVISION_TOKEN = "@HAUPTPROZESS_REVISION@"
 HASH_PREFIX = "sha256:"
 FILESYSTEM_PROBES = {"case-sensitive", "path-component", "unicode-distinct"}
 
@@ -75,7 +76,7 @@ def _load_manifest(path: Path | None = None) -> tuple[dict[str, Any], list[dict[
         raise ConformanceError("cases.json needs integer corpus_version")
     if manifest["corpus_version"] != 1:
         raise ConformanceError("unsupported corpus_version")
-    _relative_path(manifest.get("application_path"), "application_path")
+    _relative_path(manifest.get("hauptprozess_path"), "hauptprozess_path")
     base_fixture = _relative_path(manifest.get("base_fixture"), "base_fixture")
     if not (HERE / base_fixture).is_dir():
         raise ConformanceError(f"base fixture not found: {base_fixture.as_posix()}")
@@ -94,6 +95,12 @@ def _load_manifest(path: Path | None = None) -> tuple[dict[str, Any], list[dict[
         command = case.get("command")
         if command not in ("validate", "hash"):
             raise ConformanceError(f"{case_id}: command must be validate or hash")
+        if "symlink" in case:
+            link = case["symlink"]
+            if not isinstance(link, dict) or set(link) != {"path", "target"}:
+                raise ConformanceError(f"{case_id}: symlink needs path and target")
+            _relative_path(link["path"], "symlink.path")
+            _relative_path(link["target"], "symlink.target")
         fixture = case.get("fixture")
         if fixture is not None:
             fixture_path = _relative_path(fixture, f"{case_id}.fixture")
@@ -108,6 +115,9 @@ def _load_manifest(path: Path | None = None) -> tuple[dict[str, Any], list[dict[
                 _relative_path(surface, f"{case_id}.surface")
         if case.get("git_binding", False) is not False and case.get("git_binding") is not True:
             raise ConformanceError(f"{case_id}: git_binding must be boolean")
+        if "orphan_source_commit" in case:
+            if type(case["orphan_source_commit"]) is not bool or not case.get("git_binding"):
+                raise ConformanceError(f"{case_id}: orphan_source_commit needs a boolean and Git binding")
         if case.get("history_fixture") is not None:
             history_fixture = _relative_path(case["history_fixture"], f"{case_id}.history_fixture")
             if not (HERE / history_fixture).is_dir():
@@ -177,6 +187,13 @@ def _load_manifest(path: Path | None = None) -> tuple[dict[str, Any], list[dict[
             or any(not isinstance(path, str) or not path for path in expected_issue_paths)
         ):
             raise ConformanceError(f"{case_id}: expected_issue_paths must be non-empty strings")
+        expected_messages = case.get("expected_issue_messages")
+        if expected_messages is not None and (
+            command != "validate"
+            or not isinstance(expected_messages, list)
+            or any(not isinstance(message, str) or not message for message in expected_messages)
+        ):
+            raise ConformanceError(f"{case_id}: expected_issue_messages must be non-empty strings")
         repeat = case.get("repeat", 1)
         if type(repeat) is not int or repeat < 1:
             raise ConformanceError(f"{case_id}: repeat must be positive integer")
@@ -188,7 +205,7 @@ def _validate_expected(case: dict[str, Any]) -> None:
     case_id = case["id"]
     expected = case.get("expected")
     if not isinstance(expected, dict):
-        raise ConformanceError(f"{case_id}: expected outcome must be an object")
+        raise ConformanceError(f"{case_id}: expected result must be an object")
     exit_code = expected.get("exit_code")
     if type(exit_code) is not int or exit_code not in (0, 1):
         raise ConformanceError(f"{case_id}: expected exit_code must be 0 or 1")
@@ -198,26 +215,46 @@ def _validate_expected(case: dict[str, Any]) -> None:
     if codes != sorted(codes):
         raise ConformanceError(f"{case_id}: issue_codes must be sorted")
     if case["command"] == "validate":
-        if set(expected) != {"exit_code", "valid", "issue_codes"}:
+        if set(expected) - {"external_references_not_verified"} != {"exit_code", "valid", "issue_codes", "not_judged"}:
             raise ConformanceError(f"{case_id}: malformed validate expectation")
+        count = expected.get("external_references_not_verified", 0)
+        if type(count) is not int or count < 0:
+            raise ConformanceError(f"{case_id}: external-store count must be a nonnegative integer")
+        skipped = expected["not_judged"]
+        if not isinstance(skipped, list) or any(
+            not isinstance(item, dict) or set(item) not in ({"path", "protocol"}, {"path", "protocol", "reason"})
+            or ("reason" in item and (not isinstance(item["reason"], str) or not item["reason"]))
+            or not isinstance(item["path"], str) or not item["path"]
+            or (item["protocol"] is not None and not isinstance(item["protocol"], str))
+            for item in skipped
+        ):
+            raise ConformanceError(f"{case_id}: malformed not_judged expectation")
         valid = expected["valid"]
         if type(valid) is not bool or exit_code != (0 if valid else 1):
             raise ConformanceError(f"{case_id}: expected validity and exit code disagree")
         if valid != (not codes):
             raise ConformanceError(f"{case_id}: expected validity and issue codes disagree")
     else:
-        if set(expected) != {"exit_code", "digest", "issue_codes"}:
+        if set(expected) != {"exit_code", "references", "issue_codes"}:
             raise ConformanceError(f"{case_id}: malformed hash expectation")
-        digest = expected["digest"]
-        if digest is not None and (
-            not isinstance(digest, str)
-            or len(digest) != len(HASH_PREFIX) + 64
-            or not digest.startswith(HASH_PREFIX)
-            or any(char not in "0123456789abcdef" for char in digest[len(HASH_PREFIX):])
-        ):
-            raise ConformanceError(f"{case_id}: expected digest must be null or lowercase SHA-256")
-        if (digest is not None) != (exit_code == 0) or (digest is not None) != (not codes):
-            raise ConformanceError(f"{case_id}: expected digest, issues, and exit code disagree")
+        references = expected["references"]
+        _validate_references(references)
+        if (references is not None) != (exit_code == 0) or (references is not None) != (not codes):
+            raise ConformanceError(f"{case_id}: references, issues, and exit code disagree")
+
+
+def _validate_references(references):
+    if references is None:
+        return
+    if not isinstance(references, list):
+        raise ConformanceError("references must be null or an array")
+    for reference in references:
+        if not isinstance(reference, dict) or set(reference) != {"pfad", "sha256"}:
+            raise ConformanceError("reference needs pfad and sha256")
+        _relative_path(reference["pfad"], "reference.pfad")
+        digest = reference["sha256"]
+        if not isinstance(digest, str) or len(digest) != 71 or not digest.startswith(HASH_PREFIX) or any(c not in "0123456789abcdef" for c in digest[7:]):
+            raise ConformanceError("reference digest must be lowercase SHA-256")
 
 
 def _copy_tree(source: Path, destination: Path) -> None:
@@ -342,7 +379,7 @@ def _add_bad_folders(root: Path, manifest: dict[str, Any], case: dict[str, Any])
         names.append("Bad_" + "x" * (length - len("Bad_")))
     if not names:
         return
-    application = root / _relative_path(manifest["application_path"], "application_path")
+    hauptprozess = root / _relative_path(manifest["hauptprozess_path"], "hauptprozess_path")
     context = (
         "---\n"
         "type: teilprozess\n"
@@ -366,7 +403,7 @@ def _add_bad_folders(root: Path, manifest: dict[str, Any], case: dict[str, Any])
         "# Synthetic folder workstep\n"
     )
     for index, name in enumerate(names, start=1):
-        folder = application / name
+        folder = hauptprozess / name
         try:
             folder.mkdir()
             (folder / "CONTEXT.md").write_text(context, encoding="utf-8")
@@ -375,7 +412,7 @@ def _add_bad_folders(root: Path, manifest: dict[str, Any], case: dict[str, Any])
             (step / "CONTEXT.md").write_text(
                 workstep_context.format(index=index), encoding="utf-8"
             )
-            actual_names = os.listdir(application)
+            actual_names = os.listdir(hauptprozess)
         except OSError as error:
             raise ConformanceError(f"cannot create bad-folder fixture {name!r}: {error}") from error
         if name not in actual_names:
@@ -413,12 +450,24 @@ def _commit(root: Path, message: str) -> None:
     )
 
 
-def _bind_application(root: Path, application_path: str) -> None:
-    application = _relative_path(application_path, "application_path")
+def _bind_hauptprozess(root: Path, hauptprozess_path: str, *, orphan_source_commit: bool = False) -> None:
+    hauptprozess = _relative_path(hauptprozess_path, "hauptprozess_path")
     _git(root, "init", "--quiet")
-    _git(root, "add", "--", application.as_posix())
-    _commit(root, "conformance Application fixture")
-    revision = _git(root, "rev-parse", f"HEAD:{application.as_posix()}")
+    _git(root, "add", "--", hauptprozess.as_posix())
+    for capture in sorted((root / "vorgaenge").glob("*/_quellen")):
+        _git(root, "add", "--", capture.relative_to(root).as_posix())
+    for home in ("records", "grundlagen"):
+        if (root / home).is_dir():
+            _git(root, "add", "--", home)
+    _commit(root, "conformance Hauptprozess fixture")
+    source_commit = _git(root, "rev-parse", "HEAD")
+    orphan_commit = ""
+    if orphan_source_commit:
+        tree = _git(root, "rev-parse", "HEAD^{tree}")
+        orphan_commit = _git(root, "-c", "user.name=Conformance Fixture",
+                             "-c", "user.email=fixture@example.invalid",
+                             "commit-tree", tree, "-m", "synthetic unreachable source")
+    revision = _git(root, "rev-parse", f"HEAD:{hauptprozess.as_posix()}")
     vorgang_contexts = sorted((root / "vorgaenge").glob("*/CONTEXT.md"))
     if not vorgang_contexts:
         raise ConformanceError("Git-bound fixture has no Vorgang CONTEXT.md")
@@ -426,7 +475,7 @@ def _bind_application(root: Path, application_path: str) -> None:
         text = path.read_text(encoding="utf-8")
         if text.count(REVISION_TOKEN) != 1:
             raise ConformanceError(f"Vorgang fixture needs one {REVISION_TOKEN} token: {path}")
-        path.write_text(text.replace(REVISION_TOKEN, revision), encoding="utf-8")
+        path.write_text(text.replace(REVISION_TOKEN, revision).replace("@SOURCE_COMMIT@", source_commit).replace("@ORPHAN_COMMIT@", orphan_commit), encoding="utf-8")
     _git(root, "add", "--all")
     _commit(root, "conformance Vorgang fixture")
 
@@ -442,18 +491,31 @@ def _prepare_workspace(case: dict[str, Any], manifest: dict[str, Any], root: Pat
     fixture = case.get("fixture")
     if fixture is not None:
         _copy_tree(HERE / _relative_path(fixture, f"{case['id']}.fixture"), root)
+    if "symlink" in case:
+        link = case["symlink"]
+        path = root / _relative_path(link["path"], "symlink.path")
+        target = root / _relative_path(link["target"], "symlink.target")
+        if not target.is_dir() or path.exists() or path.is_symlink():
+            raise ConformanceError("symlink fixture needs a new path and existing target directory")
+        path.parent.mkdir(parents=True, exist_ok=True)
+        try:
+            path.symlink_to(os.path.relpath(target, path.parent), target_is_directory=True)
+        except OSError as error:
+            if error.errno in {errno.ENOSYS, errno.EOPNOTSUPP} or getattr(error, "winerror", None) == 1314:
+                raise UnsupportedCase("host cannot create fixture symlinks") from error
+            raise ConformanceError(f"cannot create fixture symlink: {error}") from error
     _add_bad_folders(root, manifest, case)
     invalid_utf8_file = case.get("invalid_utf8_file")
     if invalid_utf8_file is not None:
         _create_invalid_utf8_file(root, invalid_utf8_file)
     if case.get("git_binding"):
-        _bind_application(root, manifest["application_path"])
+        _bind_hauptprozess(root, manifest["hauptprozess_path"], orphan_source_commit=case.get("orphan_source_commit", False))
         history_fixture = case.get("history_fixture")
         if history_fixture is not None:
             _copy_tree(HERE / _relative_path(history_fixture, f"{case['id']}.history_fixture"), root)
-            application = _relative_path(manifest["application_path"], "application_path")
-            _git(root, "add", "--", application.as_posix())
-            _commit(root, "conformance current Application update")
+            hauptprozess = _relative_path(manifest["hauptprozess_path"], "hauptprozess_path")
+            _git(root, "add", "--", hauptprozess.as_posix())
+            _commit(root, "conformance current Hauptprozess update")
         if _git(root, "status", "--porcelain"):
             raise ConformanceError(f"{case['id']}: fixture Git worktree is not clean")
 
@@ -490,13 +552,13 @@ def _check_report(report: dict[str, Any], case: dict[str, Any], root: Path, retu
     expected = case["expected"]
     command = case["command"]
     if command == "validate":
-        required = {"report_version", "command", "tool", "root", "valid", "issues"}
+        required = {"report_version", "command", "tool", "root", "valid", "issues", "not_judged", "external_references_not_verified", "release", "pin", "judged", "not_judged_counts", "superseded", "external_references"}
     else:
-        required = {"report_version", "command", "tool", "attempt", "surfaces", "digest", "issues"}
+        required = {"report_version", "command", "tool", "attempt", "surfaces", "references", "issues"}
     if set(report) != required:
         raise ConformanceError(f"report fields must be exactly {sorted(required)}")
-    if type(report["report_version"]) is not int or report["report_version"] != 1:
-        raise ConformanceError("report_version must be integer 1")
+    if type(report["report_version"]) is not int or report["report_version"] != 3:
+        raise ConformanceError("report_version must be integer 3")
     if report["command"] != command:
         raise ConformanceError("report command does not match invoked command")
     if command == "validate":
@@ -524,10 +586,12 @@ def _check_report(report: dict[str, Any], case: dict[str, Any], root: Path, retu
         raise ConformanceError("issues must be an array")
     issue_codes: list[str] = []
     for issue in issues:
-        if not isinstance(issue, dict) or set(issue) != {"code", "path", "message"}:
-            raise ConformanceError("each issue needs exactly code, path, and message")
+        if not isinstance(issue, dict) or set(issue) != {"code", "path", "message", "rule"}:
+            raise ConformanceError("each issue needs exactly code, path, message, and rule")
         if any(not isinstance(issue[field], str) or not issue[field] for field in ("code", "path", "message")):
             raise ConformanceError("issue code, path, and message must be non-empty strings")
+        if not isinstance(issue["rule"], str) or not issue["rule"].split("#")[0].endswith(".md") or "#" not in issue["rule"] or not issue["rule"].split("#", 1)[1]:
+            raise ConformanceError("issue rule must be a non-empty Markdown anchor")
         issue_codes.append(issue["code"])
     expected_paths = case.get("expected_issue_paths")
     if expected_paths is not None:
@@ -536,6 +600,14 @@ def _check_report(report: dict[str, Any], case: dict[str, Any], root: Path, retu
             raise ConformanceError(
                 f"issue paths differ: expected {sorted(expected_paths)}, got {actual_paths}"
             )
+    expected_messages = case.get("expected_issue_messages")
+    if expected_messages is not None:
+        actual_messages = sorted(issue["message"] for issue in issues)
+        if len(actual_messages) != len(expected_messages) or any(
+            expected not in actual
+            for expected, actual in zip(sorted(expected_messages), actual_messages)
+        ):
+            raise ConformanceError("issue messages do not contain the frozen explanations")
     if sorted(issue_codes) != expected["issue_codes"]:
         raise ConformanceError(
             f"issue codes differ: expected {expected['issue_codes']}, got {sorted(issue_codes)}"
@@ -543,6 +615,40 @@ def _check_report(report: dict[str, Any], case: dict[str, Any], root: Path, retu
     if returncode != expected["exit_code"]:
         raise ConformanceError(f"process exit {returncode}; expected {expected['exit_code']}")
     if command == "validate":
+        if not isinstance(report["release"], str) or not report["release"]:
+            raise ConformanceError("release must be a non-empty string")
+        if report["pin"] is not None and not isinstance(report["pin"], str):
+            raise ConformanceError("pin must be a string or null")
+        judged = report["judged"]
+        if (not isinstance(judged, dict) or set(judged) != {"hauptprozess", "teilprozess", "arbeitsschritt", "vorgang", "versuch"}
+                or any(type(value) is not int or value < 0 for value in judged.values())):
+            raise ConformanceError("judged must contain nonnegative counts for all five kinds")
+        if not isinstance(report["superseded"], list) or any(not isinstance(path, str) or not path for path in report["superseded"]):
+            raise ConformanceError("superseded must list Vorgang paths")
+        external = report["external_references"]
+        if not isinstance(external, list) or any(
+            not isinstance(item, dict) or set(item) != {"vorgang", "pointer"}
+            or not isinstance(item["vorgang"], str) or not item["vorgang"]
+            or not isinstance(item["pointer"], str)
+            or not re.fullmatch(r"/laufpfad/(0|[1-9][0-9]*)/(gelesen|geschrieben)/(0|[1-9][0-9]*)", item["pointer"])
+            for item in external
+        ):
+            raise ConformanceError("external_references must list Vorgang paths and external pointers")
+        count = report["external_references_not_verified"]
+        if len(external) != count:
+            raise ConformanceError("external-store list and count disagree")
+        if type(count) is not int or count < 0 or count != expected.get("external_references_not_verified", 0):
+            raise ConformanceError("external-store count does not match expected count")
+        if report["not_judged"] != expected["not_judged"]:
+            raise ConformanceError("not_judged does not match expected records")
+        counts = report["not_judged_counts"]
+        expected_counts = {
+            "vorgang": sum(item["path"].startswith("vorgaenge/") and not item.get("reason") for item in report["not_judged"]),
+            "definition_tree": sum(item.get("reason") == "definition tree outside hauptprozesse/, not bindable" for item in report["not_judged"]),
+        }
+        if (not isinstance(counts, dict) or counts != expected_counts
+                or any(type(value) is not int for value in counts.values())):
+            raise ConformanceError("not_judged_counts must match the skipped Vorgänge and definition trees")
         valid = report["valid"]
         if type(valid) is not bool:
             raise ConformanceError("validate valid field must be boolean")
@@ -551,18 +657,12 @@ def _check_report(report: dict[str, Any], case: dict[str, Any], root: Path, retu
         if valid != (not issues) or returncode != (0 if valid else 1):
             raise ConformanceError("valid, issues, and process exit are inconsistent")
     else:
-        digest = report["digest"]
-        if digest is not None and (
-            not isinstance(digest, str)
-            or len(digest) != len(HASH_PREFIX) + 64
-            or not digest.startswith(HASH_PREFIX)
-            or any(char not in "0123456789abcdef" for char in digest[len(HASH_PREFIX):])
-        ):
-            raise ConformanceError("hash digest must be null or lowercase SHA-256")
-        if digest != expected["digest"]:
-            raise ConformanceError(f"digest {digest!r}; expected {expected['digest']!r}")
-        if (digest is not None) != (not issues) or returncode != (0 if digest is not None else 1):
-            raise ConformanceError("digest, issues, and process exit are inconsistent")
+        references = report["references"]
+        _validate_references(references)
+        if references != expected["references"]:
+            raise ConformanceError(f"references {references!r}; expected {expected['references']!r}")
+        if (references is not None) != (not issues) or returncode != (0 if references is not None else 1):
+            raise ConformanceError("references, issues, and process exit are inconsistent")
 
 
 def _invoke(candidate: list[str], case: dict[str, Any], root: Path, timeout: float) -> dict[str, Any]:

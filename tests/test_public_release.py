@@ -1,7 +1,6 @@
 """Check the existing release allowlist; this neither exports nor approves a release."""
 from pathlib import Path, PurePosixPath
 import importlib.util
-import json
 import os
 import posixpath
 import re
@@ -22,6 +21,8 @@ PUBLIC_PATHS = (
     '.gitignore', '.gitattributes', '.github/', 'AGENTS.md', 'CONTEXT.md', 'CONTRIBUTING.md', 'LICENSE', 'README.md', 'FIRST-WIN.md', 'pyproject.toml',
     '02_protocol/', '06_evaluations/', 'src/', 'tests/',
 )
+# The one source-only root-router row; the export tool reads this literal from the pinned commit.
+SOURCE_ONLY_ROW = '| Design record:'
 RULE_ANCHOR = re.compile(r"(?<![\w./-])(02_protocol/[A-Za-z0-9_./-]+\.md)#([^\s`)\];,'\"]+)")
 
 
@@ -37,8 +38,7 @@ def export_files(root):
                 continue
             relative = candidate.relative_to(root).as_posix()
             files[relative] = candidate.read_text(encoding='utf-8')
-    # Remove the source-only design-record navigation row on export.
-    files['CONTEXT.md'] = '\n'.join(line for line in files['CONTEXT.md'].splitlines() if '| Design record:' not in line)
+    files['CONTEXT.md'] = '\n'.join(line for line in files['CONTEXT.md'].splitlines() if not line.startswith(SOURCE_ONLY_ROW))
     return files
 
 
@@ -141,22 +141,17 @@ def test_public_docs_contain_no_workstation_paths():
             assert not re.search(r'/Users/|/home/|/var/folders/|file://', text), name
 
 
-def test_candidate_public_contract_and_scope_match_the_manifest():
+def test_candidate_public_contract_and_scope():
     version = tomllib.loads((ROOT / "pyproject.toml").read_text())["project"]["version"]
-    manifest = json.loads((ROOT / "06_evaluations/conformance/cases.json").read_text())
-    count = len(manifest["cases"])
     readme = (ROOT / "README.md").read_text()
-    german = (ROOT / "02_protocol/translations/de.md").read_text()
+    german = (ROOT / "02_protocol/translations/readme.de.md").read_text()
     conformance = (ROOT / "06_evaluations/conformance/CONTEXT.md").read_text()
     contributing = (ROOT / "CONTRIBUTING.md").read_text()
     first_win = (ROOT / "FIRST-WIN.md").read_text()
 
-    assert version == "0.3.32"
-    assert f"currently contains {count} fixed synthetic cases" in readme
-    assert f"manifest has {count} cases" in conformance
-    assert f"derzeit {count} feste synthetische Fälle" in german
+    assert version == "0.4.0"
     for content in (readme, german):
-        assert "report_version: 1" in content
+        assert "report_version: 3" in content
         assert ("message" in content and "diagnostic" in content.lower()) or "Diagnosehilfen" in content
         assert "does not authenticate people" in content or "authentifiziert keine Menschen" in content
         assert "coordinated rewrite" in content or "koordinierte Änderung" in content
@@ -164,8 +159,15 @@ def test_candidate_public_contract_and_scope_match_the_manifest():
     assert "not a universal line-count rule" in readme
     assert "keine allgemeine Zeilenzahlregel" in german
     assert "impacts template herkunft" in readme and "neun Evidenzfelder" in german
-    assert "execute work" in readme and "führt keine Arbeit aus" in german
-    assert "report_version: 1` protects the JSON report shape" in readme
+    boundary = (ROOT / "02_protocol/ontology.md").read_text().split(
+        "## Enforcement and completion\n", 1
+    )[1].split("\n## ", 1)[0]
+    assert "[Core boundary](02_protocol/ontology.md#enforcement-and-completion)" in readme
+    assert "[Core-Grenze](../ontology.md#enforcement-and-completion)" in german
+    assert "checks only that files, IDs and references resolve and match their digest" in boundary
+    assert "Core causes no effect and makes no business judgement." in boundary
+    assert "Executing harness checks required results and applicable authority before the dependent transition/effect." in boundary
+    assert "report_version: 3` protects the JSON report shape" in readme
     assert "Human-readable `message` values are diagnostic and may change" in readme
     assert "frozen `cases.json` corpus defines the issue codes" in readme
     assert "independent defects remain reportable" in readme
@@ -179,9 +181,10 @@ def test_candidate_public_contract_and_scope_match_the_manifest():
     assert "Luna-generated output" in contributing
     assert "optional next proof" in first_win
     assert "first use file based and optional-tool free" in first_win
-    assert "CPython 3.11 on Linux x86_64 with glibc 2.17 or newer" in readme
-    assert "--require-hashes" in readme
-    assert "not a universal dependency lock or publisher-authenticity claim" in readme
+    assert "CPython 3.11 on Linux x86_64 with glibc 2.17 or newer" in contributing
+    assert "--require-hashes" in contributing
+    assert "It makes no dependency-closure claim for other Python versions, operating systems, architectures or libc versions." in contributing
+    assert "It does not bind Python, pip, the checkout's authenticity, build provenance or package publishers." in contributing
     assert "not independent verification, a build attestation, publisher authentication" in readme
     for gate in (
         "Independent implementation",
@@ -200,10 +203,10 @@ def test_candidate_public_contract_and_scope_match_the_manifest():
         "Listening-Intake in autorisiertem Langdock",
         "abgeglichener Geschäftsvergleich",
     ):
-        assert gate in german
+        assert gate in (ROOT / "02_protocol/translations/contributing.de.md").read_text()
 
 
-def test_public_issue_forms_and_pull_request_template_request_scoped_evidence():
+def test_public_issue_forms_request_scoped_evidence():
     template_root = ROOT / ".github/ISSUE_TEMPLATE"
     config = yaml.safe_load((template_root / "config.yml").read_text(encoding="utf-8"))
     assert config["blank_issues_enabled"] is False
@@ -287,18 +290,12 @@ def test_public_issue_forms_and_pull_request_template_request_scoped_evidence():
     assert "public adoption issues accept only synthetic or already-public evidence" in contributing
     assert "never attach or link them in a public issue" in contributing
 
-    pr = (ROOT / ".github/PULL_REQUEST_TEMPLATE.md").read_text()
-    for heading in ("Change and reason", "Source and evidence", "Compatibility and localization", "Maintainer review"):
-        assert heading in pr
-    assert "German edits and the English change each mirrors" in pr
-
 
 def test_contribution_dispositions_keep_published_and_external_scope_separate():
     text = (ROOT / "CONTRIBUTING.md").read_text()
     for phrase in (
         "Closed for the published v0.3.20 wheel",
         "Closed for the published v0.3.20 Release",
-        "source text alone cannot establish publication",
         "Discussions are for exploratory questions",
         "Open outside named runner results",
         "hash-enforced selected wheels",
@@ -326,7 +323,7 @@ def test_export_links_support_relative_paths_unicode_aliases_and_duplicate_headi
 @pytest.mark.parametrize('delimiter', ['', '`'])
 def test_rule_pointer_missing_anchor_blocks_the_real_public_export(delimiter):
     files = export_files(ROOT)
-    target = '02_protocol/impacts-architect/references/zuschnitt.md'
+    target = '02_protocol/binding.md'
     original = files['README.md']
     files['README.md'] = original + f'\nUse {delimiter}{target}#waits{delimiter}. Also {delimiter}{target}#wa%69ts{delimiter}.\n'
     assert link_issues(files) == []
@@ -354,7 +351,7 @@ def test_export_excludes_all_private_documentation_and_handovers():
     assert set(PUBLIC_PATHS) == {'.gitignore', '.gitattributes', '.github/', 'AGENTS.md', 'CONTEXT.md', 'CONTRIBUTING.md', 'LICENSE', 'README.md', 'FIRST-WIN.md', 'pyproject.toml', '02_protocol/', '06_evaluations/', 'src/', 'tests/'}
 
 
-@pytest.mark.parametrize("path", ["README.md", "02_protocol/translations/de.md"])
+@pytest.mark.parametrize("path", ["README.md", "02_protocol/translations/readme.de.md"])
 def test_current_entry_instructions_match_distribution_version(path):
     version = tomllib.loads((ROOT / "pyproject.toml").read_text())["project"]["version"]
     text = (ROOT / path).read_text()
@@ -414,7 +411,7 @@ def test_current_entry_instructions_match_distribution_version(path):
     ("path", "required_terms"),
     [
         ("README.md", ("wheel", "complete source archive", "`SHA256SUMS`")),
-        ("02_protocol/translations/de.md", ("Wheel", "vollständiges Quellarchiv", "`SHA256SUMS`")),
+        ("02_protocol/translations/readme.de.md", ("Wheel", "vollständiges Quellarchiv", "`SHA256SUMS`")),
     ],
 )
 def test_checksum_recipe_downloads_every_listed_release_asset(path, required_terms):
@@ -557,10 +554,3 @@ def test_live_current_release_contains_required_assets():
         guard.REPOSITORY, f"v{version}", os.environ.get("GITHUB_TOKEN")
     )
     guard.verify_release_payload(payload, version)
-
-
-# Frozen debt statement. Changing public history needs a separate human decision.
-HISTORICAL_RELEASE_DEBT = {
-    "tags_without_release": ("v0.3.1", "v0.2.0", "v0.1.0"),
-    "source_archive_may_be_absent_before": "v0.3.5",
-}

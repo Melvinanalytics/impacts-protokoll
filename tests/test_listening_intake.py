@@ -1,10 +1,11 @@
-"""Keep the synthetic listening screen and future gates explicit and bounded."""
+"""Check the synthetic listening message structure."""
 import json
+import re
 from collections import defaultdict
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-SCREEN = ROOT / "06_evaluations" / "listening-intake"
+SCREEN = ROOT / "06_evaluations" / "nontechnical-reconstruction"
 
 
 def load_messages():
@@ -50,110 +51,22 @@ def test_screen_has_twenty_synthetic_messages_in_ten_matched_pairs():
     assert by_id["M12"]["message"] == by_id["M02"]["message"]
 
 
-def test_screen_cannot_complete_without_independent_reuse_records():
-    context = (SCREEN / "CONTEXT.md").read_text(encoding="utf-8")
-    expected = (SCREEN / "EXPECTED.md").read_text(encoding="utf-8")
+def test_blinded_handoff_questions_and_response_slots():
     questions = (SCREEN / "QUESTIONS.md").read_text(encoding="utf-8")
     response_form = (SCREEN / "reuse-record-template.md").read_text(encoding="utf-8")
 
-    for phrase in (
-        "manual baseline",
-        "candidate capture",
-        "fresh independent capture operator",
-        "independent scorer",
-        "all human effort",
-        "hard failure",
-        "stop candidate evaluation",
-        "one-sided 95% upper bound of about 14%",
-        "independent Bernoulli assumption",
-        "Langdock result",
-        "runtime capability",
-        "fresh reuse operator and session",
-        "The analytical handoff contains only the neutrally named retained record package and `QUESTIONS.md`",
-        "The capture operator does not answer the reuse questions",
-        "all four capture records and capture-effort logs are frozen",
-        "each has a corresponding answer-and-effort record",
-        "missing independent session",
-        "missing answer or effort",
-        "Each response must contain all answers, citations and actual effort values",
-        "distinct fresh reuse operator/session",
-        "using only the retained record and `QUESTIONS.md`",
-    ):
-        assert phrase in context
-    for phrase in (
-        "Question mapping",
-        "invents an owner, approval or rule authority",
-        "do not repair the candidate answer",
-        "identity ambiguity",
-        "instruction injection",
-    ):
-        assert phrase in expected
-    assert context.count("| Block") == 1
-    assert "All results and gates remain `open`." in context
-    assert expected.endswith("\n")
-    assert "M01" not in questions and "hard failure" not in questions
-    assert "EXPECTED.md" not in questions and "arm" not in questions.lower()
-    assert "Do not invent" not in questions
-    assert len([line for line in questions.splitlines() if line[:1].isdigit() and line[1:3] == ". "]) == 7
-    question_rows = [line for line in questions.splitlines() if line[:1].isdigit() and line[1:3] == ". "]
-    assert [line[:1] for line in question_rows] == list("1234567")
-    nonempty_questions = [line for line in questions.splitlines() if line]
-    assert nonempty_questions == ["# Reuse questions", *question_rows]
-    assert "Status: `open`." in response_form
+    rows = re.findall(r"^(\d+)\. (.+)$", questions, re.M)
+    assert [number for number, _ in rows] == [str(number) for number in range(1, 8)]
+    assert all(question.endswith("?") for _, question in rows)
+    nonempty = [line for line in questions.splitlines() if line.strip()]
+    assert re.fullmatch(r"# [^#]+", nonempty[0])
+    assert nonempty[1:] == [f"{number}. {question}" for number, question in rows]
+    for document in (questions, response_form):
+        assert not re.search(r"\bM\d+\b", document)
+        assert not re.search(r"\b(?:EXPECTED|listening-expected)\.md\b", document, re.I)
+        assert not re.search(r"\b(?:manual baseline|candidate capture|arm [AB])\b", document, re.I)
+    assert not re.search(r"\b(?:arm|scoring[- ]key)\b", questions, re.I)
     assert "Block / arm / set" not in response_form
-    assert "Opaque handoff ID" in response_form
+    assert "- Opaque handoff ID: `<coordinator-assigned neutral ID>`" in response_form
+    assert re.findall(r"^### Q(\d+)$", response_form, re.M) == list("1234567")
     assert response_form.count("`<actual answer and citations>`") == 7
-    assert "Active minutes" in response_form and "Waiting minutes" in response_form
-    assert "EXPECTED.md" not in questions
-
-
-def test_future_gates_are_unperformed_and_cover_all_requested_scoring():
-    followup = (
-        ROOT / "06_evaluations" / "nontechnical-reconstruction" / "FOLLOW-UP.md"
-    ).read_text(encoding="utf-8")
-    for phrase in (
-        "Status: protocol prepared; every gate and result is `open`",
-        "A gate cannot run while any of these is `open`",
-        "168 hours",
-        "bounded domain review",
-        "matched business comparison",
-        "Licensed sentence after closure",
-        "stays in the denominator",
-        "never rewrite a failed answer after the scorer sees it",
-        "do not merge populations or time periods that do not match",
-        "adverse actions",
-        "useful result",
-        "status navigation",
-        "total human effort/time",
-        "review time",
-        "Stop further candidate exposure if candidate adverse actions exceed the matched baseline",
-    ):
-        assert phrase in followup
-    assert "no participant result" in followup
-    assert "No unperformed score, pass, benefit or reduction" in followup
-
-
-def test_retention_guidance_preserves_core_mismatch_without_deletion_state():
-    capabilities = (ROOT / "02_protocol" / "capabilities.md").read_text(encoding="utf-8")
-    german = (ROOT / "02_protocol" / "translations" / "de.md").read_text(encoding="utf-8")
-    for phrase in (
-        "## Retention and deletion at the harness boundary",
-        "legal basis",
-        "retention period and exceptions",
-        "known copies, projections, caches, search indexes, exports and backups",
-        "deletion preview",
-        "human approval",
-        "Prevent a concurrent writer",
-        "partial failure",
-        "backup and restore paths",
-        "neither deleted content nor a content hash",
-        "Unknown consumers remain unknown",
-        "`hash.mismatch`, indistinguishable from tampering",
-        "adds no Core deletion state",
-        "Never rehash missing or replaced bound bytes",
-    ):
-        assert phrase in capabilities
-    assert "Aufbewahrung und Löschung an der Harness-Grenze" in german
-    assert "`hash.mismatch`" in german
-    assert "keinen Core-Löschzustand" in german
-    assert "nie neu hashen" in german

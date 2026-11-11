@@ -1,12 +1,17 @@
 ---
 type: vorgang
+protocol: v0.4.0
 id: vorgang:approval-001
-application_revision: git-tree:@APPLICATION_REVISION@
+hauptprozess_revision: git-tree:@HAUPTPROZESS_REVISION@
 laufpfad:
-  - arbeitsschritt_ref: arbeitsschritt:start
-    versuch: 1
-    status: aktiv
-    eingabe_hash: sha256:986ffc4749acc3e8105df9a9f03282cacd035ad7740e2b96d4c3b5120d5067a0
+- arbeitsschritt_ref: arbeitsschritt:start
+  status: aktiv
+  nummer: 1
+  gelesen:
+  - eingabe: input/auftrag.md
+    pfad: records/approval-001/start/001/auftrag.md
+    revision: git-commit:@SOURCE_COMMIT@
+    sha256: sha256:ac62571dcadb11f2406d2d4277de2ee1b567a998bc1bf2bc9f7130db57a75438
 ---
 
 # Active start with extra orphan attempt

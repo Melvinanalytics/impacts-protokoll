@@ -1,0 +1,82 @@
+{
+  "capacity:production": {
+    "blockers": [],
+    "inputs": [
+      "resources.production.effort",
+      "resources.production.hours"
+    ],
+    "unit": "case/window",
+    "value": "80"
+  },
+  "capacity:review": {
+    "blockers": [],
+    "inputs": [
+      "resources.review.effort",
+      "resources.review.hours"
+    ],
+    "unit": "case/window",
+    "value": "120"
+  },
+  "demand": {
+    "blockers": [],
+    "inputs": [
+      "demand.buyers",
+      "demand.conversion",
+      "demand.frequency",
+      "demand.reach"
+    ],
+    "unit": "case/window",
+    "value": "120"
+  },
+  "modeled_volume": {
+    "blockers": [],
+    "inputs": [
+      "assumptions.comparable_cases",
+      "assumptions.constraints_included",
+      "assumptions.non_overlapping_pools",
+      "assumptions.same_window",
+      "demand.buyers",
+      "demand.conversion",
+      "demand.frequency",
+      "demand.reach",
+      "resources.production.effort",
+      "resources.production.hours",
+      "resources.review.effort",
+      "resources.review.hours"
+    ],
+    "unit": "case/window",
+    "value": "80"
+  },
+  "operating_result": {
+    "blockers": [],
+    "inputs": [
+      "assumptions.comparable_cases",
+      "assumptions.constraints_included",
+      "assumptions.non_overlapping_pools",
+      "assumptions.same_window",
+      "demand.buyers",
+      "demand.conversion",
+      "demand.frequency",
+      "demand.reach",
+      "economics.incremental_cost",
+      "economics.price",
+      "economics.retained_fixed_cost",
+      "economics.variable_cost",
+      "resources.production.effort",
+      "resources.production.hours",
+      "resources.review.effort",
+      "resources.review.hours"
+    ],
+    "unit": "EUR/window",
+    "value": "12000"
+  },
+  "unit_contribution": {
+    "blockers": [],
+    "inputs": [
+      "economics.price",
+      "economics.variable_cost"
+    ],
+    "unit": "EUR/case",
+    "value": "400"
+  }
+}

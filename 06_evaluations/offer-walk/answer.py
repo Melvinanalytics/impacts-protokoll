@@ -143,7 +143,7 @@ def bind(repository: Path, revision: str, sections: tuple[Section, ...], *, task
          inputs: tuple[Input, ...] = (), operational: bool = False) -> Contract:
     """Harness fixes scope before candidate generation. Staging is outside reached attempts.
 
-    declared_inputs comes from the bound workstep's eingaben, including provenance;
+    declared_inputs comes from the bound Arbeitsschritt's eingaben, including provenance;
     inputs supplies its approved source mappings. Neither argument is writer-selected.
     """
     if language not in {'en', 'de'} or not task.strip() or not sections:

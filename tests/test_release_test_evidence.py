@@ -223,21 +223,21 @@ def test_notes_reject_a_draft_attached_to_a_different_tag():
 
 
 def test_current_release_scope_is_included_in_actual_workflow_body_and_retry():
-    tag = "v0.3.32"
+    tag = "v0.4.0"
     values = reports()
     for report in values:
         if "tag" in report:
             report["tag"] = tag
     patch = evidence.release_patch({"tag_name": tag, "draft": True, "body": "Generated changes."},
                                    values, SOURCE, RUN, 2, tag, ROOT)
-    for phrase in ["only the selected Vorgang folders are captured", "validates the workspace once and builds only those Vorgang pages", "equals the page of the same name", "raises `ValueError`", "14 templates"]:
-        assert phrase in patch["body"]
+    assert "](README.md#breaking-changes-from-v03)" in patch["body"]
+    assert "not judged" in patch["body"]
     assert "Astra" not in patch["body"] and "All 24" not in patch["body"]
     assert evidence.release_patch({"draft": True, **patch}, values, SOURCE, RUN, 2, tag, ROOT) == patch
 
 
 def test_ambiguous_release_scope_markers_block_workflow_body():
-    tag = "v0.3.32"
+    tag = "v0.4.0"
     values = reports()
     for report in values:
         if "tag" in report:

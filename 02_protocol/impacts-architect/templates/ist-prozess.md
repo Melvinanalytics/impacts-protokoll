@@ -18,13 +18,13 @@ evidence_status: reported
 
 # Review and decide a request
 
-Synthetic capture example. Reuse an existing source home; otherwise capture under `grundlagen/ist-prozesse/`. This is source material for Identify, never an Application itself. When starting from a product/service description or finished result, distinguish source claims from a reconstructed workflow (`hypothesis`); an unknown current workflow stays `open`. Replace example values in the customer's working language; the German counterpart is `de/ist-prozess.md`. Keep evidence labels and sources beside individual claims.
+Synthetic capture example. Use `analyse/` as selected by `02_protocol/impacts-architect/references/formwahl.md#data-kinds` at the recorded protocol revision; reuse an existing capture there. This is source material for Identify, never a Hauptprozess itself. When starting from a product/service description or finished result, distinguish source claims from a reconstructed workflow (`hypothesis`); an unknown current workflow stays `open`. Replace example values in the customer's working language; the German counterpart is `de/ist-prozess.md`.
 
 The illustrative `owner` attributes this capture to the named role. It establishes neither ownership of a rule nor decision authority; record those roles separately with their evidence.
 
 ## Current workflow
 
-Capture the result's required conditions backwards and today's activities forwards, then match them under “Step areas” and “Result work and coordination” in `02_protocol/impacts-method.md` at the recorded protocol revision; “Minimize” proposes each move. Replace the synthetic rows with observed wording, sources and open questions. Ask a person only for a cell whose answer could change a proposed move. A `yes` states a scoped finding with its evidence label; it assigns no executor and grants no permission. The frontmatter `touchpoint` summarizes the capture; classify each customer interaction in its activity's “Decides or permits” cell.
+Capture the result's required conditions backwards and today's activities forwards, then match them under “Step areas” and “Result work and coordination” in `02_protocol/impacts-method.md` at the recorded protocol revision; “Minimize” proposes each move. Replace the synthetic rows with observed wording, sources and open questions. Ask a person only for a cell whose answer could change a proposed move. The frontmatter `touchpoint` summarizes the capture; classify each customer interaction in its activity's “Decides or permits” cell.
 
 ### Required conditions
 
@@ -64,24 +64,36 @@ One row per activity; a repeated pass gets its own row. The columns follow the s
 | 4 | Missing input for C2 | No | Yes | Yes; follows 3 (`hypothesis`) | No | No | The same correction as 3 |
 | 5 | C2 | Yes (`reported`) | No | Yes; follows 3 (`hypothesis`) | No; the material changed | No | The same correction as 3 |
 | 6 | Recorded decision findings required by C1 | Yes (`reported`) | No for producing the findings; classify their handoff separately if it manages a dependency | No | No | Yes: the copies serve no condition or dependency after checking relevant recipients and duties (`reported`) | Trim the report to findings with links |
-| 7 | C2 | Yes (`reported`) | No | No | Yes: the applicable check, 2 or the latest 5, checks C2 by the same catalog on the same file revision; no rule requiring a second check found (`hypothesis`) | No | Keep the applicable case-worker check and its evidence; the manager inspects cited items; `entfaellt` |
+| 7 | C2 | Yes (`reported`) | No | No | Yes: the applicable check, 2 or the latest 5, checks C2 by the same catalog on the same file revision; no rule requiring a second check found (`hypothesis`) | No | Keep the applicable case-worker check and its evidence; the manager inspects cited items; `entfaellt` (`hypothesis`) |
 | 8 | C1 | Yes (`reported`) | No | No | No | No | Keep; cannot be reduced further as far as C1 holds (`reported`); arbeitsschritt:entscheiden |
 | 9 | C1 | Yes (`reported`) | No | No | No | No | Keep; cannot be reduced further as far as C1 holds (`reported`) |
 | 10 | C3 | Yes, own rule only (`reported`) | No | No | No | No | Ask the head of department to keep or change the rule |
 | 11 | C1 | Yes (`reported`) | No | No | No | No | Keep; cannot be reduced further as far as C1 holds (`reported`) |
 | 12 | C4 | Yes, third-party obligation (`reported`) | No | No | No | No | Keep (`reported`); confirm the legal basis before claiming more |
 
-In `Proposed move`, name each target step as `arbeitsschritt:<slug>` or mark a proposed removal with the code span `entfaellt`; the reason stays prose, and neither is a decision. Each activity must name a condition or dependency, and each condition an activity. Keep unresolved answers open. `Neither` is a Minimize question, not deletion authority. Correcting 3 prevents the wait before 4 in later cases; judge the queue before 2 under the timing rule. For comparisons under one result boundary, population, period and unit, count non-overlapping observed effort once, under its activity's combination and proposed move; keep waiting separate and do not force a 100 percent pie.
+Begin coordination answers with `Yes, required` or `Yes, today only` when yes; begin own-rule bases with `Own rule, confirmed` or `Own rule, open` to state the owner's confirmation for this scope. In `Proposed move`, name each target Arbeitsschritt as `arbeitsschritt:<slug>` or mark a proposed removal with the code span `entfaellt`; the reason stays prose, and neither is a decision. Each activity must name a condition or dependency, and each condition an activity. Keep unresolved answers open. Correcting 3 prevents the wait before 4 in later cases; judge the queue before 2 under the timing rule. For comparisons under one result boundary, population, period and unit, count non-overlapping observed effort once, under its activity's combination and proposed move; keep waiting separate and do not force a 100 percent pie.
 
 ## Stops and checks
 
 In this example, the manager reads the report before deciding. Clarify why the human boundary is required, its decision scope and who may change it. Distinguish required authority, human interaction and habitual division of work. Name already permitted assistance and unresolved decisions.
 
-For duration, define start and accepted end. Distinguish active work, missing inputs, handoffs, decisions and rework. Name sources/reported ranges; leave missing measurement open. While waiting, identify the missing information or decision and the contributions already possible within known rules and authority. Keep observations separate from proposed improvements.
+While waiting, identify the missing information or decision and the contributions already possible within known rules and authority.
+
+## Intervention and reassessment
+
+Record this case's evidence and decision links under the placement division in `02_protocol/impacts-method.md#identify` at the recorded protocol source and revision. Link the definition's decided objectives, guardrails and acceptance limits.
+
+## Throughput and lead time
+
+Expected throughput, work in progress and elapsed time. Define start and end; distinguish active work, waiting, handoffs and rework. Name the source or reported range; leave unknowns open.
+
+## Bottleneck
+
+Which evidenced constraint currently limits the result or lead time, and what observation would refute that assumption? Capacity, missing input or a pending decision may constrain it.
 
 ## Reused definition and new Vorgang values
 
-The check catalog, notice blank and responsibilities recur. Requests, attachments and questions belong to the case; its business record may outlive several Vorgänge. Each Vorgang binds the necessary excerpt. Identify relevant offerings or domain subjects, instances/versions and their evidence. Link existing definitions and records rather than duplicating them.
+The check catalog, notice blank and responsibilities recur. Requests, attachments and questions belong to the case; its business record may outlive several Vorgänge. Identify relevant offerings or domain subjects, instances/versions and their evidence. Link existing definitions and records rather than duplicating them.
 
 ## Result and acceptance
 
@@ -97,21 +109,21 @@ A wrong decision may cause an appeal and become visible only then; the manager m
 
 ## Observations and evidence
 
-An observation is a bounded claim about a subject or case, recorded from a direct observation, source read, report or measurement. It is not the source/evidence artifact or a future workstep; recording it as an observation verifies neither the claim nor the artifact. Retain each relevant clock under its own meaning: event or validity time; source issue/as-of time or revision; actual observation, acquisition or read time; and recording time. Distinguish them whenever they differ, keep an unknown required time `open`, and never substitute one clock for another. Record the claim, evidence origin and label, relevant domain links and remaining gaps. A source-derived observation may restate or paraphrase what the source says, but it must not silently turn that statement into actual behaviour, cause, rule validity or authority. When another file independently cites the observation, give it a stable address under [domain addresses and relationships](../../ontology.md#domain-addresses-and-relationships). The reporter, input provider, calculator, maintainer, rule owner and decision authority remain distinct roles even when evidence shows that one actor performs several; support each assignment separately. An observation remains captured with its evidence status while its process assignment stays `open`.
+An observation is a bounded claim about a subject or case, recorded from a direct observation, source read, report or measurement. It is not the source/evidence artifact or a future Arbeitsschritt; recording it as an observation verifies neither the claim nor the artifact. Record the claim, evidence origin and label, relevant domain links and remaining gaps. An observation remains captured with its evidence status while its process assignment stays `open`.
 
 ## Calculations and decisions
 
-For each relevant observed calculation or derivation, copy this case note once; list all figures it yields together. Give each independently cited observation about this calculation a stable address. For the concrete calculation occurrence, also retain its case-local key or source reference; this identifies the occurrence, not a second `rechenweg:` identity. Link the relevant metric definitions, rules and sources by their existing addresses, using optional local tokens only where needed, instead of making this note another rule master. Keep prescribed rule, observed practice and proposed change as separately evidenced scoped claims. If an observed formula materially differs from the prescribed one, give it another `rechenweg:` address only when it is independently cited, reused or changed; otherwise retain it in this case note. The workbook or code remains its implementation/evidence artifact. Mark an unknown answer `open` with its next evidence action.
+For each relevant observed calculation or derivation, copy this case note once; list all figures it yields together. Give each independently cited observation about this calculation a stable address. For the concrete calculation occurrence, also retain its case-local key or source reference; this identifies the occurrence, not a second `rechenweg:` identity. Link the relevant metric definitions, rules and sources by their existing addresses, using optional local tokens only where needed, instead of making this note another rule master. If an observed formula materially differs from the prescribed one, give it another `rechenweg:` address only when it is independently cited, reused or changed; otherwise retain it in this case note. The workbook or code remains its implementation/evidence artifact. Mark an unknown answer `open` with its next evidence action.
 
 - Result and meaning: Which figures were produced for which case, with what unit, population and period? Link the KPI definition where applicable.
 - Prescribed rule: Where is the applicable rule held, which revision applies, who may change it and which controls are required?
 - Actual calculation: Who calculated, where (including mental arithmetic or a personal spreadsheet), with which actual formula or artifact/revision, and who maintains it? What triggers recalculation or review?
 - Inputs: For each used value, which source or provider, key/selection, validity time or revision, actual acquisition/read time and transfer path fed this calculation? Which source check was required?
-- Check and acceptance: What condition made each figure usable by its dependent recipient, what check was actually performed, by whom or what, with which result and evidence? Was the figure accepted for its intended use, by whom or what, with which result and evidence? Keep unknown acceptance `open`; distinguish it from acceptance that the governing rule does not require. A required check alone does not prove performance.
-- Destination and use: Where did each figure go, who used it, and for which next work, decision or customer output? A calculated figure alone authorizes none of these. Leave unknown use `open`; claim non-use only after checking relevant recipients, period and obligations, not from silence.
+- Check and acceptance: What condition made each figure usable by its dependent recipient, what check was actually performed, by whom or what, with which result and evidence? Was the figure accepted for its intended use, by whom or what, with which result and evidence? Keep unknown acceptance `open`; distinguish it from acceptance that the governing rule does not require.
+- Destination and use: Where did each figure go, who used it, and for which next work, decision or customer output? Leave unknown use `open`; claim non-use only after checking relevant recipients, period and obligations, not from silence.
 
-Record existing human, agent and deterministic contributions. Design their future mix only within clarified boundaries.
+Record existing contributions. Design their future mix only within clarified boundaries.
 
 ## Sources and freshness
 
-Where do needed values, rules and blanks live, which system leads and where are copies? Use the data objects and facets in `02_protocol/impacts-architect/references/datenumgang.md`. Name their key/selection, revision or as-of date, actual read operation or provider, receiving input and required source check; use the calculation note above for a computed result's input-to-use path. Where freshness matters, name the update or review trigger and responsible maintainer; an unknown revision or as-of date stays `open`. Record missing access separately from missing data or unknown existence. Identify which processing is an existing instruction, implemented tool or proposed change. Illustrative evidence is a dated case-worker conversation record from 2026-09-02; it supports only a reported case claim and creates no `quelle:` address. The illustrative check catalog version 3 can be a reusable rule source when independently cited. Replace both with reachable evidence; neither asserts a real interview or catalog.
+Where do needed values, rules and blanks live, which system leads and where are copies? Use the data objects and facets in `02_protocol/impacts-architect/references/datenumgang.md`. Name their key/selection, revision or as-of date, actual read operation or provider, receiving input and required source check; use the calculation note above for a computed result's input-to-use path. Where freshness matters, name the update or review trigger and responsible maintainer; an unknown revision or as-of date stays `open`. Record missing access separately from missing data or unknown existence. Identify which processing is an existing instruction, implemented tool or proposed change. Illustrative evidence is a dated case-worker conversation note from 2026-09-02; it supports only a reported case claim and creates no `quelle:` address. The illustrative check catalog version 3 can be a reusable rule source when independently cited. Replace both with reachable evidence; neither asserts a real interview or catalog.

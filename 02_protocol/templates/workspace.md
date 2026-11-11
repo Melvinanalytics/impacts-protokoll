@@ -1,8 +1,11 @@
 ---
 type: workspace
+protocol: v0.4.0
 ---
 
 Working language: en
+
+Customer work uses this working language under `02_protocol/language.md`.
 
 # IMPACTS Workspace
 
@@ -10,35 +13,61 @@ Before business capture, follow the complete protocol source's root `README.md`,
 
 Every `02_protocol/` path in this workspace resolves against that recorded source/revision, not the generated customer tree. Its form selection identifies the smallest suitable domain home. Link those homes with their purpose under Domain homes; keep facts at their source. Given products/services, use `02_protocol/impacts-method.md#reverse-engineer-a-product-or-service` before assuming a Pipeline.
 
-To capture or change domain meaning, use `02_protocol/ontology.md#author-or-change`; to apply it, use `02_protocol/ontology.md#use`. Link the existing domain home.
+To capture or change domain meaning, use `02_protocol/ontology.md#author-or-change`; to apply it, use `02_protocol/ontology.md#use`.
 
 ## Source, harness and homes
 
 Record configured facts here and preserve the operating contract. Changes to instructions or working language follow the applicable reviewed revision path under `02_protocol/impacts-method.md#maintain-agent-instructions`.
 
-- Protocol source: `<complete source used>`
-- Revision and local changes: `<tag or commit, and each local change>`
+- Complete source location (provenance; release pin is in frontmatter): `<path or URL>`
+- Source commit and local changes: `<commit and each local change>`
 - Architect entry: `<resolvable path of 02_protocol/impacts-architect/SKILL.md>`
 - Harness and setup reference, when Core execution is selected: `<configured harness and its setup reference, or not selected>`
 - Domain homes: `<link and purpose of each home>`
+
+`Ablage: <name> <location or system>, <access rule home>`: declare each external store on its own unindented body line; agents never invent a store.
 
 When using Capabilities from a Fachrepo or another domain home, link their early responsible router under Domain homes and apply `02_protocol/impacts-architect/references/formwahl.md#capability-orientation` from the recorded protocol source.
 
 ## Setup
 
-`init` creates this router, `applications/`, `vorgaenge/` and `.gitattributes` (`* -text`, so a checkout keeps bound bytes and their hashes unchanged). Before a Core Vorgang binds a revision, initialize Git at this root. Git omits empty directories; validation treats absent `applications/` or `vorgaenge/` collections as empty. Present collections must contain valid children; add no placeholder files. Add domain files only for actual content under the Architect's form selection. Before a Core Vorgang, name the configured harness (`02_protocol/capabilities.md#responsibilities`) and its setup/dependency reference under Source, harness and homes; confirm support for the selected Application's operations, source access, checks, handoffs and human boundaries, including required history retention/checking under that responsibilities contract. Keep credentials in that execution environment. An empty valid workspace is not an executable process. The following rules apply to selected Core Application/Vorgang contracts under `02_protocol/impacts-architect/references/formwahl.md#tooling-stopp`.
+`init` creates this router, `hauptprozesse/`, `vorgaenge/` and `.gitattributes` (`* -text`, so a checkout keeps bound bytes and their hashes unchanged). Git omits empty directories; validation treats absent `hauptprozesse/` or `vorgaenge/` collections as empty. Use `02_protocol/impacts-architect/references/formwahl.md#data-kinds` for stage authority and candidate placement. An empty valid workspace is not an executable process. The following rules apply to selected Core Hauptprozess/Vorgang contracts under `02_protocol/impacts-architect/references/formwahl.md#tooling-stop`.
+
+Hauptprozess and Vorgang layouts live in `02_protocol/binding.md#hauptprozess-tree-rules`. `analyse/`, `capabilities/`, `grundlagen/` and `records/` appear only with content.
+
+```text
+<workspace>/
+├── CONTEXT.md                         # init: router and protocol pin
+├── hauptprozesse/                      # init
+├── vorgaenge/                          # init
+├── analyse/                           # first capture
+├── capabilities/                      # earned reusable operation
+├── grundlagen/                        # foundations no single step owns
+└── records/                           # first record
+```
+
+`analyse/` appears with the first capture; `init` does not create it. Records start as one file or table per kind and earn a folder per instance under `02_protocol/impacts-architect/references/formwahl.md#data-kinds`. Use `grundlagen/` only for foundations no single step owns.
+
+## Tree clearance and imports
+
+Clearance line shape:
+
+`hauptprozess:<slug> cleared for real work: human:<id>, <YYYY-MM-DD>, git-tree:<oid>, tested by vorgang:<id>[, ...]`
+
+Keep a superseded line struck through. Agents never write a clearance line. The responsible person writes it in their own commit or dictates and confirms it. The line authenticates nobody; Core does not check it.
+
+Keep one import line per imported tree here, beside its clearance lines:
+
+`Imported <hauptprozess|capability>:<slug>: source repository <repository>, commit <commit>, tree git-tree:<oid>, source protocol <Fachrepo protocol pin>`
+
+Apply `02_protocol/impacts-method.md#scale` for first import or reviewed takeover. This record stays outside the imported tree; Core does not check it.
 
 ## Operating contract
 
-1. For Core Vorgänge, the workspace root is the Git root. Vorgänge bind committed Application trees reachable from branch, tag or remote-tracking history or the current worktree’s resolvable commit at `HEAD`, including detached HEAD. Stash-only and auxiliary-ref-only trees are excluded; shallow history covers only reachable commits within its boundary. This reachability establishes no approval or authenticity.
-2. Design an Application: `impacts template application` shows the layout; `impacts template <kind>` supplies each `CONTEXT.md`. Folders carry domain names: `applications/<hauptprozess>/<teilprozess>/<arbeitsschritt>/CONTEXT.md`; the role is `type`, the ID is `<type>:<folder-name>`. The tree contains only `CONTEXT.md` files. After commit, `git rev-parse HEAD:applications/<slug>` supplies the revision. Import another repository's Application only by the procedure in `02_protocol/impacts-method.md#scale`; localization is a new revision.
-3. Open a Vorgang: materialize and check the entry's declared inputs and provenance from their declared sources first, including needed rules/templates outside the Application. Then create `vorgaenge/<vorgang>/CONTEXT.md` from `impacts template vorgang` with `application_revision: git-tree:<oid>`. The first `laufpfad` entry is the Application entry, attempt `001`, status `aktiv`, or `wartend` under items 5 and 6 when it can complete only after a declared outside trigger. Inputs belong under `<arbeitsschritt>/001/input/`; `impacts hash <attempt-folder> <each eingaben path>...` supplies `eingabe_hash`. Failed preparation opens no attempt.
-4. Complete an attempt with actual check evidence and the matching outcome: write declared outputs under `output/`, use `impacts hash <attempt-folder> <each ausgaben path>...` for `ausgabe_hash`, record the `routen` key of the actual `pruefung` outcome as `gewaehlte_route`, set `abgeschlossen`. A declared failure route carries the failed result; it grants no successful use. A step route requires the next entry with its bound inputs in the same logical transition; an `end:<slug>` route ends the Vorgang.
-5. Human gate: the open decision is `wartend` with its declared continuation under item 6, carrying neither route nor approval, until the named human's decision closes it under item 4, with `freigabe` (`by: human:<id>` and `at: "<YYYY-MM-DD>T<hh:mm:ss>+<hh:mm>"`, quoted, with offset) beside `gewaehlte_route` and `ausgabe_hash`. Record evidenced human decisions only under `02_protocol/capabilities.md#signale-und-human-gate`.
-6. Wait: `wartend` with `wiedereinstieg` (`ausloeser`, `continuation_ref`, and the next check as `faellig` under `02_protocol/impacts-architect/references/zuschnitt.md#waits`). Permitted drafts in the current job may appear under `output/`; bound inputs, route and approval remain unchanged. Explain usable results, blocker and next permitted work in the Vorgang body, derived from `laufpfad` and files. Continuation completes this attempt through a route; bind new inputs in the next designated attempt. Core does not start parallel worksteps.
-7. For required Core conformance, run `impacts validate` on the selected scope. It checks Core structure only (`02_protocol/ontology.md#enforcement-and-completion`), so exit 0 proves nothing more, not even that `gewaehlte_route` matches the actual `pruefung` outcome; the checker named under each step's Check and the configured harness own the rest. A failed or unperformed required check restricts its dependent claim or action.
-8. Core executes no workstep. The bound workstep body supplies the prompt and names tool operations, versions, parameters, permitted effects and checks. The configured harness loads declared inputs, executes permitted work and retains actual output evidence under `02_protocol/impacts-method.md#compose-an-arbeitsschritt` and `02_protocol/capabilities.md`.
+1. For Core Vorgänge, the workspace root is the Git root.
+2. Design a Hauptprozess at the home selected by `02_protocol/impacts-architect/references/formwahl.md#data-kinds`: `02_protocol/binding.md#hauptprozess-tree-rules` supplies the layout and its rules; `impacts template <kind>` supplies each `CONTEXT.md`. Import another repository's Hauptprozess only by the procedure in `02_protocol/impacts-method.md#scale`; localization is a new revision.
+3. Before opening a real Vorgang, find a clearance line below naming the current Hauptprozess tree. Without one, ask the responsible customer and open nothing. Mark a synthetic test subject "synthetic test case".
+4. Run Vorgänge under `02_protocol/binding.md#execution` of the pinned release.
 
-## Working language
-
-Customer work uses English: interviews, domain definitions, instructions, drafts, questions and decisions; a workstep binds another language only as `02_protocol/language.md` allows. Machine identifiers and source quotations retain their original form; explain their meaning and use consequences in English. Use `impacts template <kind> --language en`. Before customer use, the workstep checks the actual output, including inserted values, under `02_protocol/language.md#enforce-at-use-boundaries`. A missing or failed language/meaning check blocks its dependent use. Bind the language instruction and actual check evidence in the existing contract and declared Vorgang files.
+5. For required Core conformance, run `impacts validate` on the selected scope. Apply the Core boundary (`02_protocol/ontology.md#enforcement-and-completion`).
+6. Under the Core boundary in item 5, the bound Arbeitsschritt body supplies the prompt and names tool operations, versions, parameters, permitted effects and checks. The configured harness loads declared inputs, executes permitted work and retains actual output evidence under `02_protocol/impacts-method.md#compose-an-arbeitsschritt` and `02_protocol/binding.md`.

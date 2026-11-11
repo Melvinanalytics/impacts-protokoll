@@ -4,7 +4,6 @@
 from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass, replace
-from hashlib import sha256
 import json
 from pathlib import Path
 import re
@@ -18,7 +17,10 @@ import yaml
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 
-from impacts_protocol import init_workspace, surface_hash, validate
+from impacts_protocol import init_workspace, validate
+from impacts_protocol.model import derive_progress
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from reference_files import input_file, source_home, references as file_references, content_digest as _content_digest, git as _git
 from impacts_protocol.io import (
     DuplicateKeyError,
     load_frontmatter,
@@ -27,12 +29,12 @@ from impacts_protocol.io import (
 from impacts_protocol.validator import SchemaRegistry, _approval_problem
 
 BEISPIEL_ROOT = Path(__file__).resolve().parent / "beispiel"
-BEISPIEL = BEISPIEL_ROOT / "applications" / "prueffall"
+BEISPIEL = BEISPIEL_ROOT / "hauptprozesse" / "prueffall"
 CAPABILITY = BEISPIEL_ROOT / "capabilities" / "vollstaendigkeitsgrad"
 GRUNDLAGEN = BEISPIEL_ROOT / "grundlagen"
 HUMAN_DECISION = BEISPIEL_ROOT / "fixtures" / "human-decision-final.yaml"
 GATE_REVISION = BEISPIEL_ROOT / "fixtures" / "gate-final-rejection.md"
-APPLICATION = "prueffall"
+HAUPTPROZESS = "prueffall"
 VORGANG = "prueffall-001"
 CALL_STEP = "vorpruefung/pruefen/CONTEXT.md"
 DECISION_STEP = "entscheidung/entscheiden/CONTEXT.md"
@@ -41,9 +43,9 @@ SOURCE_REVISION_MARKER = "{{SOURCE_REVISION}}"
 
 EXPECTED_PROOFS = frozenset(
     {
-        "application.handoff_mapping_drives_origin",
-        "application.source_requirement_drives_resolution",
-        "capability.application_tuple_executed",
+        "hauptprozess.handoff_mapping_drives_origin",
+        "hauptprozess.source_requirement_drives_resolution",
+        "capability.hauptprozess_tuple_executed",
         "capability.old_revision_replayed",
         "capability.path_resolved_at_workspace_revision",
         "source.bound_snapshot",
@@ -59,6 +61,9 @@ EXPECTED_PROOFS = frozenset(
 )
 EXPECTED_REJECTIONS = frozenset(
     {
+        "loop.missing_bound",
+        "handoff.old_label",
+        "handoff.undeclared_slot",
         "capability.unbound_valid_tree",
         "capability.wrong_path",
         "capability.wrong_operation",
@@ -152,7 +157,7 @@ class WalkResult:
     def valid(self) -> bool:
         return (
             all(state.valid for state in self.states)
-            and "hash.mismatch" in self.mutation_codes
+            and "binding.reference_digest" in self.mutation_codes
             and self.import_state.valid
             and self.import_oid_equal
             and EXPECTED_PROOFS <= self.proofs
@@ -168,7 +173,8 @@ class Harness:
         self.revision = revision
         self.vorgang_root = root / "vorgaenge" / VORGANG
         self.laufpfad: list[dict] = []
-        self.steps = _application_steps(root, revision)
+        self.steps = _hauptprozess_steps(root, revision)
+        _check_loop_bounds(root, revision, self.steps)
         self._schemas = SchemaRegistry()
 
     def attempt(self, slug: str, versuch: int) -> Path:
@@ -185,7 +191,7 @@ class Harness:
         # and complete input set before creating any attempt files.
         metadata, _ = _frontmatter_and_body(_git_show(self.root, self.revision, "CONTEXT.md").decode())
         if metadata["einstieg_ref"] != f"arbeitsschritt:{slug}" or versuch != 1:
-            raise ProofError("Initial attempt differs from the Application entry")
+            raise ProofError("Initial attempt differs from the Hauptprozess entry")
         self._require_inputs(slug, inputs)
         report = validate(self.root)
         if not report.valid:
@@ -227,7 +233,7 @@ class Harness:
 
     def _close_terminal(self, entry, outputs, route, freigabe=None) -> None:
         slug = entry["arbeitsschritt_ref"].removeprefix("arbeitsschritt:")
-        attempt = self.attempt(slug, entry["versuch"])
+        attempt = self.attempt(slug, entry["nummer"])
         _preflight_files(attempt, outputs)
         _write_outputs(attempt, outputs)
         self._complete_entry(entry, slug, attempt, route, freigabe)
@@ -255,11 +261,11 @@ class Harness:
         ):
             raise ProofError("Gate output does not satisfy pruefung")
         source = yaml.safe_dump(decision, allow_unicode=True, sort_keys=False)
-        report = self.attempt(slug, entry["versuch"]) / "input/pruefbericht.md"
+        report = input_file(self.attempt(slug, entry["nummer"]), "material/pruefbericht.md")
         evidence = (
             output + "\n## Empfangene synthetische Entscheidung\n\n```yaml\n"
             + source + "```\n\n"
-            + f"Gebundene Application: git-tree:{self.revision}\n"
+            + f"Gebundener Hauptprozess: git-tree:{self.revision}\n"
             + f"Gebundener Prüfbericht: sha256:{_content_digest(report.read_bytes())}\n"
             + "Diese Quelle testet die Aufzeichnung; sie authentifiziert keine Person.\n"
         )
@@ -281,7 +287,7 @@ class Harness:
         self._preflight_current(entry)
         proposed_next = self._opened_entry(self._proposed_active_entry(next_slug, next_versuch), resume)
         self._preflight_completion(entry, route, successor=proposed_next)
-        if self.attempt(next_slug, next_versuch).exists():
+        if self.attempt(next_slug, next_versuch).exists() or source_home(self.attempt(next_slug, next_versuch)).exists():
             raise ProofError("Successor attempt already exists")
         slug = entry["arbeitsschritt_ref"].removeprefix("arbeitsschritt:")
         if self.steps[slug].get("gate") == "human":
@@ -290,31 +296,46 @@ class Harness:
             raise ProofError("Successor differs from the declared route")
         self._require_outputs(slug, outputs)
         self._require_inputs(next_slug, next_inputs)
-        attempt = self.attempt(slug, entry["versuch"])
+        attempt = self.attempt(slug, entry["nummer"])
         next_attempt = self.attempt(next_slug, next_versuch)
         # Both surfaces must be writable under known caller-controlled
         # preconditions before either group creates files. This is not I/O rollback.
         _preflight_files(attempt, outputs)
-        _preflight_files(next_attempt, next_inputs)
+        request_files = {}
+        if "wiedereinstieg" in proposed_next:
+            request = self.root / proposed_next["wiedereinstieg"]["continuation_ref"]
+            try:
+                relative = request.relative_to(next_attempt / "output")
+            except ValueError as error:
+                raise ProofError("Continuation request must be in the waiting attempt's output") from error
+            request_files["output/" + relative.as_posix()] = (
+                "Synthetic request recorded as sent; awaiting "
+                + proposed_next["wiedereinstieg"]["ausloeser"] + "\n"
+            )
+        _preflight_files(next_attempt, {**next_inputs, **request_files})
         self._preflight_handoff(entry, outputs, route, next_slug, next_inputs)
 
         _write_outputs(attempt, outputs)
-        _write_files(next_attempt, next_inputs)
         self._complete_entry(entry, slug, attempt, route)
+        handoff = _hauptprozess_handoff(self.root, self.revision, slug, route)
+        captures = {key: value for key, value in next_inputs.items() if key != handoff.consumer_input}
+        _write_files(next_attempt, captures)
         next_entry = self._opened_entry(self._active_entry(next_slug, next_versuch, next_attempt), resume)
+        _write_files(next_attempt, request_files)
         self.laufpfad.append(next_entry)
         self._write()
         return next_entry
 
     def _opened_entry(self, entry: dict, resume: dict[str, str] | None = None) -> dict:
-        """An attempt that can complete only after a declared outside trigger opens wartend.
+        """An attempt that can complete only after a declared Auslöser opens wartend.
 
-        An open gate decision is one: the named human supplies it and the harness only records it.
+        This harness prepares the packet before opening and requests the decision at opening.
+        A harness preparing it inside the gate keeps that attempt aktiv until the request.
         """
         slug = entry["arbeitsschritt_ref"].removeprefix("arbeitsschritt:")
         if resume is None and self.steps[slug].get("gate") == "human":
             resume = {"ausloeser": "Entscheidung der benannten prüfenden Person",
-                      "continuation_ref": f"entscheidung:{slug}-{entry['versuch']:03d}"}
+                      "continuation_ref": (self.attempt(slug, entry["nummer"]) / "output/warten.md").relative_to(self.root).as_posix()}
         return entry if resume is None else dict(entry, status="wartend", wiedereinstieg=dict(resume))
 
     def state(self, label: str) -> State:
@@ -322,12 +343,21 @@ class Harness:
         return State(label, report.valid, tuple(sorted({issue.code for issue in report.issues})))
 
     def _active_entry(self, slug: str, versuch: int, attempt: Path) -> dict:
-        return {
-            "arbeitsschritt_ref": f"arbeitsschritt:{slug}",
-            "versuch": versuch,
-            "status": "aktiv",
-            "eingabe_hash": surface_hash(attempt, self.steps[slug]["eingaben"]),
-        }
+        declared = self.steps[slug]["eingaben"]
+        producer = self.laufpfad[-1] if self.laufpfad else None
+        records = []
+        mapping = None
+        if producer is not None and producer.get("status") == "abgeschlossen":
+            producer_slug = producer["arbeitsschritt_ref"].removeprefix("arbeitsschritt:")
+            mapping = _hauptprozess_handoff(self.root, self.revision, producer_slug, producer["gewaehlte_route"])
+        for name in declared:
+            if mapping is not None and name == mapping.consumer_input:
+                records.extend(dict(ref, eingabe=name) for ref in file_references(self.attempt(producer_slug, producer["nummer"]), [mapping.producer_output]))
+            else:
+                records.extend(file_references(attempt, [name]))
+        (attempt / "output").mkdir(parents=True, exist_ok=True)
+        return {"arbeitsschritt_ref": f"arbeitsschritt:{slug}", "nummer": versuch,
+                "status": "aktiv", "gelesen": records}
 
     def _proposed_active_entry(self, slug: str, versuch: int) -> dict:
         if not isinstance(slug, str) or slug not in self.steps:
@@ -338,9 +368,9 @@ class Harness:
         # _active_entry computes the stored hash from actual files after preflight.
         return {
             "arbeitsschritt_ref": f"arbeitsschritt:{slug}",
-            "versuch": versuch,
+            "nummer": versuch,
             "status": "aktiv",
-            "eingabe_hash": "sha256:" + "0" * 64,
+            "gelesen": [],
         }
 
     def _check_schema(self, name: str, metadata: dict) -> None:
@@ -354,9 +384,9 @@ class Harness:
 
     def _preflight_vorgang(self, entries: list[dict]) -> None:
         metadata = {
-            "type": "vorgang",
+            "type": "vorgang", "protocol": "v0.4.0",
             "id": f"vorgang:{VORGANG}",
-            "application_revision": f"git-tree:{self.revision}",
+            "hauptprozess_revision": f"git-tree:{self.revision}",
             "laufpfad": entries,
         }
         self._check_schema("vorgang", metadata)
@@ -373,7 +403,7 @@ class Harness:
         proposed.pop("wiedereinstieg", None)
         # Never store this placeholder or treat it as execution evidence.
         # _complete_entry binds the actual output surface after files are written.
-        proposed.update(status="abgeschlossen", gewaehlte_route=route, ausgabe_hash="sha256:" + "0" * 64)
+        proposed.update(status="abgeschlossen", gewaehlte_route=route, geschrieben=[])
         if freigabe is not None:
             proposed["freigabe"] = freigabe
         entries = [*self.laufpfad[:-1], proposed]
@@ -396,7 +426,7 @@ class Harness:
         entry.pop("wiedereinstieg", None)
         entry["status"] = "abgeschlossen"
         entry["gewaehlte_route"] = route
-        entry["ausgabe_hash"] = surface_hash(attempt, self.steps[slug]["ausgaben"])
+        entry["geschrieben"] = file_references(attempt, ["output"])
         if freigabe is not None:
             entry["freigabe"] = freigabe
 
@@ -412,26 +442,26 @@ class Harness:
         if self.steps[producer_slug]["routen"].get(route) != f"arbeitsschritt:{next_slug}":
             raise ProofError("Successor differs from the declared route")
         self._require_inputs(next_slug, inputs)
-        handoff = _application_handoff(
+        handoff = _hauptprozess_handoff(
             self.root, self.revision, producer_slug, route
         )
         if handoff.consumer_slug != next_slug:
-            raise ProofError("Handoff target differs from Application handoff")
+            raise ProofError("Handoff target differs from Hauptprozess handoff")
         if handoff.producer_output not in outputs:
-            raise ProofError("Producer output differs from Application handoff")
+            raise ProofError("Producer output differs from Hauptprozess handoff")
         if handoff.consumer_input not in inputs:
-            raise ProofError("Consumer input differs from Application handoff")
+            raise ProofError("Consumer input differs from Hauptprozess handoff")
         if handoff.provenance_input not in inputs:
             raise ProofError("Handoff provenance input missing")
         _verify_handoff(
             outputs[handoff.producer_output].encode("utf-8"),
             inputs[handoff.consumer_input].encode("utf-8"),
             inputs[handoff.provenance_input],
-            handoff.origin(producer_slug, entry["versuch"]),
+            handoff.origin(producer_slug, entry["nummer"]),
         )
         if producer_slug == "nachfordern":
-            # This example's receipt check; continuation_ref has no such Core semantics.
-            receipt_ref = entry.get("wiedereinstieg", {}).get("continuation_ref")
+            # This example checks the received source separately from the pending request.
+            receipt_ref = _fields(inputs[handoff.provenance_input]).get("Eingangsquelle")
             if not isinstance(receipt_ref, str) or not receipt_ref:
                 raise ProofError("Nachreichung has no received source file")
             relative = Path(receipt_ref)
@@ -446,18 +476,21 @@ class Harness:
                 raise ProofError("Nachreichung has no received source file")
             if receipt.read_bytes() != outputs[handoff.producer_output].encode("utf-8"):
                 raise ProofError("Nachreichung differs from received source")
-            if _fields(inputs[handoff.provenance_input]).get("Eingangsquelle") != receipt_ref:
-                raise ProofError("Nachreichung provenance omits received source")
 
     def _preflight_current(self, entry: dict) -> None:
         if not self.laufpfad or self.laufpfad[-1] is not entry or entry.get("status") not in {"aktiv", "wartend"}:
             raise ProofError("Transition requires the current unresolved entry")
         persisted = load_frontmatter(self.vorgang_root / "CONTEXT.md")
-        binding = {"type": "vorgang", "id": f"vorgang:{VORGANG}", "application_revision": f"git-tree:{self.revision}"}
+        binding = {"type": "vorgang", "protocol": "v0.4.0", "id": f"vorgang:{VORGANG}", "hauptprozess_revision": f"git-tree:{self.revision}"}
         if any(persisted.get(key) != value for key, value in binding.items()):
             raise ProofError("Vorgang binding differs from the current harness binding")
         if persisted.get("laufpfad") != self.laufpfad:
             raise ProofError("Vorgang state differs from the current harness state")
+        for reference in entry.get("gelesen", []):
+            if "pfad" in reference:
+                source = self.root / reference["pfad"]
+                if not source.is_file() or "sha256:" + _content_digest(source.read_bytes()) != reference["sha256"]:
+                    raise ProofError("Harness read differs from recorded reference")
         report = validate(self.root)
         if not report.valid:
             raise ProofError("Current Vorgang fails validation: " + ", ".join(sorted({issue.code for issue in report.issues})))
@@ -466,6 +499,8 @@ class Harness:
         if not isinstance(inputs, dict):
             raise ProofError("Handoff inputs must be a file mapping")
         self._check_schema("arbeitsschritt", dict(self.steps[slug], eingaben=list(inputs)))
+        if any(not name.startswith("material/") for name in inputs):
+            raise ProofError("Synthetic input mapping uses material/ logical names")
         missing = set(self.steps[slug]["eingaben"]) - set(inputs)
         if missing:
             raise ProofError(f"Handoff inputs missing: {sorted(missing)}")
@@ -486,29 +521,24 @@ class Harness:
 
     def _write(self) -> None:
         metadata = {
-            "type": "vorgang",
+            "type": "vorgang", "protocol": "v0.4.0",
             "id": f"vorgang:{VORGANG}",
-            "application_revision": f"git-tree:{self.revision}",
+            "hauptprozess_revision": f"git-tree:{self.revision}",
             "laufpfad": self.laufpfad,
         }
         frontmatter = yaml.safe_dump(metadata, allow_unicode=True, sort_keys=False).rstrip()
         current = self.laufpfad[-1]
         slug = current["arbeitsschritt_ref"].removeprefix("arbeitsschritt:")
-        attempt = self.attempt(slug, current["versuch"])
-        stand = [f"Aktuell: {slug} {current['versuch']:03d}, {current['status']}."]
+        attempt = self.attempt(slug, current["nummer"])
+        stand = []
         for output in self.steps[slug]["ausgaben"]:
-            path = attempt / output
+            path = input_file(attempt, output)
             if path.is_file():
-                label = "Abgeschlossene Ausgabe" if current["status"] == "abgeschlossen" else "Entwurf; noch nicht abgeschlossen"
-                stand.append(f"{label}: [{output}]({path.relative_to(self.vorgang_root).as_posix()}).")
-        if current["status"] == "wartend":
-            resume = current["wiedereinstieg"]
-            stand.append(f"Offen: belegter Eingang zu {resume['ausloeser']} ({resume['continuation_ref']}).")
-            stand.append("Der Antragsteller liefert die Angaben; ein Mensch führt den Kontakt. Erlaubt bleibt die Vorbereitung der Rückfrage; kein automatischer Versand.")
+                stand.append(f"Ausgabe: [{output}]({path.relative_to(self.vorgang_root).as_posix()}).")
         body = "\n\n".join(stand)
         self.vorgang_root.mkdir(parents=True, exist_ok=True)
         (self.vorgang_root / "CONTEXT.md").write_text(
-            f"---\n{frontmatter}\n---\n\n# Prüffall 001\n\nSynthetischer Vorgang des Cold Walk.\n\n## Stand\n\n{body}\n",
+            f"---\n{frontmatter}\n---\n\n# Prüffall 001\n\nSynthetischer Vorgang des Cold Walk.\n\n## Nachweise\n\nPosition und Status aus `laufpfad` nach der Protokollregel ableiten.\n\n{body}\n",
             encoding="utf-8",
         )
 
@@ -521,42 +551,66 @@ def walk(base: Path, *, decision_path: Path | None = None) -> WalkResult:
     proofs: set[str] = set()
     rejections: set[str] = set()
 
-    call = _application_call(root, revision)
-    source_ref = _application_source(root, revision)
-    handoff = _application_handoff(root, revision, "pruefen", "bestanden")
+    return_path = root / "hauptprozesse" / HAUPTPROZESS / "vorpruefung/nachfordern/CONTEXT.md"
+    producer_path = root / "hauptprozesse" / HAUPTPROZESS / CALL_STEP
+    probes = [
+        ("loop.missing_bound", return_path, lambda text: re.sub(r"(?m)^Loop bound:.*\n?", "", text),
+         lambda tree: Harness(root, tree)),
+        ("handoff.old_label", producer_path,
+         lambda text: text.replace("arbeitsschritt:entscheiden:material/", "arbeitsschritt:entscheiden/input/"),
+         lambda tree: _hauptprozess_handoff(root, tree, "pruefen", "bestanden")),
+        ("handoff.undeclared_slot", producer_path,
+         lambda text: text.replace("arbeitsschritt:entscheiden:material/pruefbericht.md", "arbeitsschritt:entscheiden:material/unknown.md"),
+         lambda tree: _hauptprozess_handoff(root, tree, "pruefen", "bestanden")),
+    ]
+    for code, path, mutate, check in probes:
+        original = path.read_text(encoding="utf-8")
+        path.write_text(mutate(original), encoding="utf-8")
+        _git(root, "add", f"hauptprozesse/{HAUPTPROZESS}")
+        _git(root, "commit", "-q", "-m", f"synthetic rejection {code}")
+        tree = _git(root, "rev-parse", f"HEAD:hauptprozesse/{HAUPTPROZESS}")
+        if _is_rejected(lambda: check(tree)):
+            rejections.add(code)
+        path.write_text(original, encoding="utf-8")
+        _git(root, "add", f"hauptprozesse/{HAUPTPROZESS}")
+        _git(root, "commit", "-q", "-m", f"restore synthetic source after {code}")
+
+    call = _hauptprozess_call(root, revision)
+    source_ref = _hauptprozess_source(root, revision)
+    handoff = _hauptprozess_handoff(root, revision, "pruefen", "bestanden")
     rules, rules_provenance = _materialize_source(root, source_ref)
     _verify_source(root, source_ref, rules, rules_provenance)
     proofs.add("source.bound_snapshot")
 
-    changed_step = root / "applications" / APPLICATION / CALL_STEP
+    changed_step = root / "hauptprozesse" / HAUPTPROZESS / CALL_STEP
     changed_body = changed_step.read_text(encoding="utf-8")
     changed_body = changed_body.replace(
         "- Ursprung: `grundlagen/pruefregeln.md`",
         "- Ursprung: `grundlagen/andere-regeln.md`",
     ).replace(
-        "`output/pruefbericht.md -> arbeitsschritt:entscheiden/input/pruefbericht.md`",
-        "`output/pruefbericht.md -> arbeitsschritt:entscheiden/input/pruefbericht-alternativ.md`",
+        "`output/pruefbericht.md -> arbeitsschritt:entscheiden:material/pruefbericht.md`",
+        "`output/pruefbericht.md -> arbeitsschritt:entscheiden:material/pruefbericht-alternativ.md`",
     )
     changed_step.write_text(changed_body, encoding="utf-8")
-    changed_decision = root / "applications" / APPLICATION / DECISION_STEP
+    changed_decision = root / "hauptprozesse" / HAUPTPROZESS / DECISION_STEP
     changed_decision_body = changed_decision.read_text(encoding="utf-8").replace(
-        "input/pruefbericht-herkunft.md",
-        "input/pruefbericht-alternativ-herkunft.md",
+        "material/pruefbericht-herkunft.md",
+        "material/pruefbericht-alternativ-herkunft.md",
     ).replace(
-        "input/pruefbericht.md",
-        "input/pruefbericht-alternativ.md",
+        "material/pruefbericht.md",
+        "material/pruefbericht-alternativ.md",
     )
     changed_decision.write_text(changed_decision_body, encoding="utf-8")
-    _git(root, "add", f"applications/{APPLICATION}")
-    _git(root, "commit", "-q", "-m", "mutate application source and handoff authority")
-    changed_revision = _git(root, "rev-parse", f"HEAD:applications/{APPLICATION}")
-    changed_source = _application_source(root, changed_revision)
-    changed_handoff = _application_handoff(root, changed_revision, "pruefen", "bestanden")
+    _git(root, "add", f"hauptprozesse/{HAUPTPROZESS}")
+    _git(root, "commit", "-q", "-m", "mutate hauptprozess source and handoff authority")
+    changed_revision = _git(root, "rev-parse", f"HEAD:hauptprozesse/{HAUPTPROZESS}")
+    changed_source = _hauptprozess_source(root, changed_revision)
+    changed_handoff = _hauptprozess_handoff(root, changed_revision, "pruefen", "bestanden")
     changed_rules, _ = _materialize_source(root, changed_source)
     if changed_source.path != source_ref.path and changed_rules != rules:
-        proofs.add("application.source_requirement_drives_resolution")
+        proofs.add("hauptprozess.source_requirement_drives_resolution")
     changed_harness = Harness(root, changed_revision)
-    probe_entry = {"arbeitsschritt_ref": "arbeitsschritt:pruefen", "versuch": 2}
+    probe_entry = {"arbeitsschritt_ref": "arbeitsschritt:pruefen", "nummer": 2}
     probe_payload = "authority probe\n"
     changed_provenance = _handoff_provenance(
         changed_handoff.origin("pruefen", 2), probe_payload.encode("utf-8")
@@ -585,18 +639,18 @@ def walk(base: Path, *, decision_path: Path | None = None) -> WalkResult:
         )
     )
     if changed_handoff.consumer_input != handoff.consumer_input and old_inputs_rejected:
-        proofs.add("application.handoff_mapping_drives_origin")
+        proofs.add("hauptprozess.handoff_mapping_drives_origin")
 
     wrong_path_body = changed_step.read_text(encoding="utf-8").replace(
         "capabilities/vollstaendigkeitsgrad/CONTEXT.md",
         "capabilities/falsch/CONTEXT.md",
     )
     changed_step.write_text(wrong_path_body, encoding="utf-8")
-    _git(root, "add", f"applications/{APPLICATION}")
-    _git(root, "commit", "-q", "-m", "mutate application capability path")
-    wrong_path_revision = _git(root, "rev-parse", f"HEAD:applications/{APPLICATION}")
+    _git(root, "add", f"hauptprozesse/{HAUPTPROZESS}")
+    _git(root, "commit", "-q", "-m", "mutate hauptprozess capability path")
+    wrong_path_revision = _git(root, "rev-parse", f"HEAD:hauptprozesse/{HAUPTPROZESS}")
     wrong_path_workspace_revision = _git(root, "rev-parse", "HEAD")
-    wrong_path_call = _application_call(root, wrong_path_revision)
+    wrong_path_call = _hauptprozess_call(root, wrong_path_revision)
 
     (root / source_ref.path).write_text("dirty working tree\n", encoding="utf-8")
     dirty_rules, dirty_provenance = _materialize_source(root, source_ref)
@@ -622,12 +676,12 @@ def walk(base: Path, *, decision_path: Path | None = None) -> WalkResult:
         if _is_rejected(lambda claim=claim: _verify_source(root, source_ref, rules, claim)):
             rejections.add(code)
 
-    first_record = b"Name: Erika Beispiel\nGeburtsdatum:\n"
+    first_record = (BEISPIEL_ROOT / "fixtures/initial-record.md").read_bytes()
     first_result = _execute_capability(
         root, revision, call, workspace_revision, rules, first_record
     )
     if first_result["sentinel"] == "vollstaendigkeitsgrad-v1" and call.tree_oid == capability_tree:
-        proofs.add("capability.application_tuple_executed")
+        proofs.add("capability.hauptprozess_tuple_executed")
         proofs.add("capability.path_resolved_at_workspace_revision")
 
     if _is_rejected(
@@ -650,7 +704,7 @@ def walk(base: Path, *, decision_path: Path | None = None) -> WalkResult:
         encoding="utf-8",
     )
     _git(root, "add", "capabilities/vollstaendigkeitsgrad/run.py")
-    _git(root, "commit", "-q", "-m", "mutate capability after application binding")
+    _git(root, "commit", "-q", "-m", "mutate capability after hauptprozess binding")
     second_tree = _git(root, "rev-parse", "HEAD:capabilities/vollstaendigkeitsgrad")
 
     if _is_rejected(
@@ -695,7 +749,7 @@ def walk(base: Path, *, decision_path: Path | None = None) -> WalkResult:
     )
     states.append(harness.state("pruefen 001 aktiv"))
     first_report = _render_report(call, workspace_revision, first_result)
-    clarification = _application_handoff(root, revision, "pruefen", "klaerung")
+    clarification = _hauptprozess_handoff(root, revision, "pruefen", "klaerung")
 
     # nachfordern can complete only after the applicant delivers, so its attempt opens wartend.
     response_ref = "records/antrag-001/nachreichung.md"
@@ -711,13 +765,13 @@ def walk(base: Path, *, decision_path: Path | None = None) -> WalkResult:
                 clarification.origin("pruefen", 1), first_report.encode("utf-8")
             ),
         },
-        resume={"ausloeser": "unterlagen-nachgereicht", "continuation_ref": response_ref},
+        resume={"ausloeser": "unterlagen-nachgereicht", "continuation_ref": f"vorgaenge/{VORGANG}/nachfordern/001/output/warten.md"},
     )
     states.append(harness.state("nachfordern 001 wartend nach klaerung"))
 
-    # Exercise file/state compatibility and the derived Stand, not autonomous permission checks.
+    # Exercise file/state compatibility through Core, not autonomous permission checks.
     waiting_attempt = harness.attempt("nachfordern", 1)
-    waiting_input = waiting_attempt / "input/pruefbericht.md"
+    waiting_input = input_file(waiting_attempt, "material/pruefbericht.md")
     bound_report = waiting_input.read_bytes()
     vorgang_file = harness.vorgang_root / "CONTEXT.md"
     waiting_state = load_frontmatter(vorgang_file)
@@ -738,35 +792,35 @@ def walk(base: Path, *, decision_path: Path | None = None) -> WalkResult:
         draft_path.read_text(encoding="utf-8") == draft
         and load_frontmatter(vorgang_file) == waiting_state
         and waiting_input.read_bytes() == bound_report
-        and not {"gewaehlte_route", "freigabe", "ausgabe_hash"} & entry.keys()
+        and not {"gewaehlte_route", "freigabe", "geschrieben"} & entry.keys()
         and "nachfordern/001/output/nachforderung.md" in visible_state
-        and response_ref in visible_state
-        and "kein automatischer Versand" in visible_state
+        and "nachfordern/001/output/warten.md" in visible_state
+        and derive_progress(harness.laufpfad, {step["id"]: step for step in harness.steps.values()}, {})["status"] == "wartend"
         and harness.state("draft while waiting").valid
     ):
         proofs.add("wait.permitted_draft_preserves_current_state")
 
     waiting_input.write_text("Neue, ungebundene Aussage\n", encoding="utf-8")
-    if "hash.mismatch" in harness.state("mutated waiting input").codes:
+    if "binding.reference_digest" in harness.state("mutated waiting input").codes:
         rejections.add("wait.changed_bound_input")
     waiting_input.write_bytes(bound_report)
 
     # Both input surfaces exist; the violation is a waiting entry before the last entry.
     premature = harness.attempt("nachfordern", 2)
     _write_files(premature, {
-        "input/pruefbericht.md": bound_report.decode("utf-8"),
-        "input/pruefbericht-herkunft.md": (waiting_attempt / "input/pruefbericht-herkunft.md").read_text(encoding="utf-8"),
+        "material/pruefbericht.md": bound_report.decode("utf-8"),
+        "material/pruefbericht-herkunft.md": (input_file(waiting_attempt, "material/pruefbericht-herkunft.md")).read_text(encoding="utf-8"),
     })
     harness.laufpfad.append(harness._active_entry("nachfordern", 2, premature))
     harness._write()
-    if "run.invalid" in harness.state("active entry after waiting entry").codes:
+    if "execution.attempt" in harness.state("active entry after waiting entry").codes:
         rejections.add("wait.concurrent_laufpfad_entry")
     harness.laufpfad.pop()
     shutil.rmtree(premature)
     harness._write()
 
-    second_record = "Name: Erika Beispiel\nGeburtsdatum: 01.01.1990\n"
-    response_handoff = _application_handoff(root, revision, "nachfordern", "nachgereicht")
+    second_record = (CAPABILITY / "fixtures/vollstaendig.md").read_text(encoding="utf-8")
+    response_handoff = _hauptprozess_handoff(root, revision, "nachfordern", "nachgereicht")
     response_origin = response_handoff.origin("nachfordern", 1)
     response_provenance = (
         _handoff_provenance(response_origin, second_record.encode("utf-8"))
@@ -803,8 +857,7 @@ def walk(base: Path, *, decision_path: Path | None = None) -> WalkResult:
     refused = []
     try:
         for unsafe in unsafe_paths:
-            entry["wiedereinstieg"]["continuation_ref"] = unsafe
-            harness._write()
+            # Exercise the receipt path independently of the continuation record.
             candidate_inputs = {
                 **response_inputs,
                 response_handoff.provenance_input: response_provenance.replace(response_ref, unsafe),
@@ -814,7 +867,6 @@ def walk(base: Path, *, decision_path: Path | None = None) -> WalkResult:
                 "Unsafe response source path",
             ))
     finally:
-        entry["wiedereinstieg"]["continuation_ref"] = response_ref
         harness._write()
         escape_link.unlink()
         external.unlink()
@@ -847,18 +899,18 @@ def walk(base: Path, *, decision_path: Path | None = None) -> WalkResult:
     second_attempt = harness.attempt("pruefen", 2)
     _verify_handoff(
         (waiting_attempt / response_handoff.producer_output).read_bytes(),
-        (second_attempt / response_handoff.consumer_input).read_bytes(),
-        (second_attempt / response_handoff.provenance_input).read_text(encoding="utf-8"),
+        input_file(second_attempt, response_handoff.consumer_input).read_bytes(),
+        input_file(second_attempt, response_handoff.provenance_input).read_text(encoding="utf-8"),
         response_origin,
     )
     if (
-        (harness.attempt("pruefen", 1) / "input/antrag.md").read_bytes() == first_record
+        (input_file(harness.attempt("pruefen", 1), "material/antrag.md")).read_bytes() == first_record
         and waiting_input.read_bytes() == bound_report
-        and (second_attempt / "input/antrag.md").read_text(encoding="utf-8") == second_record
+        and (input_file(second_attempt, "material/antrag.md")).read_text(encoding="utf-8") == second_record
         and harness.laufpfad[-2]["status"] == "abgeschlossen"
         and entry["status"] == "aktiv"
         and draft_path.read_text(encoding="utf-8") == edited_draft
-        and harness.laufpfad[-2]["ausgabe_hash"] == surface_hash(waiting_attempt, harness.steps["nachfordern"]["ausgaben"])
+        and harness.laufpfad[-2]["geschrieben"] == file_references(waiting_attempt, ["output/"])
         and (waiting_attempt / response_handoff.producer_output).read_bytes() == (root / response_ref).read_bytes()
     ):
         proofs.add("wait.resume_binds_new_attempt_inputs")
@@ -867,11 +919,11 @@ def walk(base: Path, *, decision_path: Path | None = None) -> WalkResult:
         revision,
         call,
         workspace_revision,
-        (second_attempt / source_ref.input_path).read_bytes(),
-        (second_attempt / "input/antrag.md").read_bytes(),
+        input_file(second_attempt, source_ref.input_path).read_bytes(),
+        (input_file(second_attempt, "material/antrag.md")).read_bytes(),
     )
     second_report = _render_report(call, workspace_revision, second_result)
-    origin = handoff.origin("pruefen", entry["versuch"])
+    origin = handoff.origin("pruefen", entry["nummer"])
     handoff_provenance = _handoff_provenance(origin, second_report.encode("utf-8"))
 
     valid_gate_inputs = {
@@ -948,10 +1000,10 @@ def walk(base: Path, *, decision_path: Path | None = None) -> WalkResult:
     states.append(harness.state("entscheiden 001 wartend nach bestanden human-gate"))
 
     producer = harness.attempt("pruefen", 2) / "output/pruefbericht.md"
-    consumer = harness.attempt("entscheiden", 1) / "input/pruefbericht.md"
-    provenance = harness.attempt("entscheiden", 1) / "input/pruefbericht-herkunft.md"
+    consumer = input_file(harness.attempt("entscheiden", 1), "material/pruefbericht.md")
+    provenance = input_file(harness.attempt("entscheiden", 1), "material/pruefbericht-herkunft.md")
     _verify_handoff(producer.read_bytes(), consumer.read_bytes(), provenance.read_text(), origin)
-    if "ausgabe_hash" in harness.laufpfad[-2] and "eingabe_hash" in harness.laufpfad[-1]:
+    if "geschrieben" in harness.laufpfad[-2] and "gelesen" in harness.laufpfad[-1]:
         proofs.add("handoff.content_and_origin_bound")
     if "gewaehlte_route" not in entry and "freigabe" not in entry:
         proofs.add("gate.open_has_no_decision")
@@ -966,8 +1018,8 @@ def walk(base: Path, *, decision_path: Path | None = None) -> WalkResult:
     ending = harness.steps["entscheiden"]["routen"][decision["route"]]
     states.append(harness.state(f"entscheiden 001 abgeschlossen {decision['route']} {ending}"))
 
-    (harness.attempt("pruefen", 1) / "input/antrag.md").write_text(
-        "Antrag manipuliert\n", encoding="utf-8"
+    (harness.attempt("pruefen", 1) / "output/pruefbericht.md").write_text(
+        "Bericht manipuliert\n", encoding="utf-8"
     )
     mutation = frozenset(issue.code for issue in validate(root).issues)
 
@@ -997,50 +1049,50 @@ def walk(base: Path, *, decision_path: Path | None = None) -> WalkResult:
 
 def _prepare_workspace(base: Path) -> tuple[Path, str, str, str, str]:
     root = init_workspace(base / "workspace", language="de")
-    shutil.copytree(BEISPIEL, root / "applications" / APPLICATION)
+    shutil.copytree(BEISPIEL, root / "hauptprozesse" / HAUPTPROZESS)
     shutil.copytree(CAPABILITY, root / "capabilities" / "vollstaendigkeitsgrad")
     shutil.copytree(GRUNDLAGEN, root / "grundlagen")
     _git(root, "init", "-q", "-b", "main")
     _git(root, "config", "user.email", "cold-walk@example.invalid")
     _git(root, "config", "user.name", "Cold Walk")
     _git(root, "add", ".")
-    _git(root, "commit", "-q", "-m", "synthetic application sources")
+    _git(root, "commit", "-q", "-m", "synthetic hauptprozess sources")
     source_commit = _git(root, "rev-parse", "HEAD")
     capability_tree = _git(root, "rev-parse", "HEAD:capabilities/vollstaendigkeitsgrad")
 
-    step = root / "applications" / APPLICATION / CALL_STEP
+    step = root / "hauptprozesse" / HAUPTPROZESS / CALL_STEP
     body = step.read_text(encoding="utf-8")
     if CAPABILITY_MARKER not in body or SOURCE_REVISION_MARKER not in body:
-        raise ProofError("Application has no Capability or source revision marker")
+        raise ProofError("Hauptprozess has no Capability or source revision marker")
     step.write_text(
         body.replace(CAPABILITY_MARKER, capability_tree).replace(
             SOURCE_REVISION_MARKER, source_commit
         ),
         encoding="utf-8",
     )
-    _git(root, "add", f"applications/{APPLICATION}")
-    _git(root, "commit", "-q", "-m", "bind application capability tuple")
+    _git(root, "add", f"hauptprozesse/{HAUPTPROZESS}")
+    _git(root, "commit", "-q", "-m", "bind hauptprozess capability tuple")
     # Retain the legacy bound definition in this workspace's history. The
-    # corrected gate is a new Application revision, and all new Vorgaenge bind it.
-    gate = root / "applications" / APPLICATION / DECISION_STEP
+    # corrected gate is a new Hauptprozess revision, and all new Vorgaenge bind it.
+    gate = root / "hauptprozesse" / HAUPTPROZESS / DECISION_STEP
     gate.write_bytes(GATE_REVISION.read_bytes())
-    _git(root, "add", f"applications/{APPLICATION}")
+    _git(root, "add", f"hauptprozesse/{HAUPTPROZESS}")
     _git(root, "commit", "-q", "-m", "revise gate to record decision and final rejection")
     workspace_revision = _git(root, "rev-parse", "HEAD")
-    revision = _git(root, "rev-parse", f"HEAD:applications/{APPLICATION}")
+    revision = _git(root, "rev-parse", f"HEAD:hauptprozesse/{HAUPTPROZESS}")
     return root, source_commit, capability_tree, revision, workspace_revision
 
 
-def _application_call(root: Path, application_revision: str) -> CapabilityCall:
-    text = _application_body(root, application_revision, CALL_STEP)
+def _hauptprozess_call(root: Path, hauptprozess_revision: str) -> CapabilityCall:
+    text = _hauptprozess_body(root, hauptprozess_revision, CALL_STEP)
     values = {}
     for name in ("Aufruf-ID", "Capability-Pfad", "Capability-Revision", "Operation"):
         match = re.search(rf"(?m)^- {re.escape(name)}:\s*`?([^`\n]+)`?$", text)
         if not match:
-            raise ProofError(f"Application call lacks {name}")
+            raise ProofError(f"Hauptprozess call lacks {name}")
         values[name] = match.group(1).strip()
     revision = values["Capability-Revision"]
-    if not revision.startswith("git-tree:"):
+    if not re.fullmatch(r"git-tree:[0-9a-f]{40}", revision):
         raise ProofError("Capability revision is not a Git tree")
     return CapabilityCall(
         call_id=values["Aufruf-ID"],
@@ -1050,8 +1102,8 @@ def _application_call(root: Path, application_revision: str) -> CapabilityCall:
     )
 
 
-def _application_source(root: Path, application_revision: str) -> SourceRef:
-    text = _application_body(root, application_revision, CALL_STEP)
+def _hauptprozess_source(root: Path, hauptprozess_revision: str) -> SourceRef:
+    text = _hauptprozess_body(root, hauptprozess_revision, CALL_STEP)
     values = {}
     for name in (
         "Quell-Eingabe",
@@ -1062,11 +1114,11 @@ def _application_source(root: Path, application_revision: str) -> SourceRef:
     ):
         match = re.search(rf"(?m)^- {re.escape(name)}:\s*`?([^`\n]+)`?$", text)
         if not match:
-            raise ProofError(f"Application source requirement lacks {name}")
+            raise ProofError(f"Hauptprozess source requirement lacks {name}")
         values[name] = match.group(1).strip()
     stand = values["Stand"]
     if not stand.startswith("git:"):
-        raise ProofError("Application source revision is not Git-bound")
+        raise ProofError("Hauptprozess source revision is not Git-bound")
     return SourceRef(
         input_path=values["Quell-Eingabe"],
         source=values["Herkunft"],
@@ -1076,33 +1128,62 @@ def _application_source(root: Path, application_revision: str) -> SourceRef:
     )
 
 
-def _application_handoff(
+def _check_loop_bounds(root: Path, revision: str, steps: dict) -> None:
+    """Check readable bounds on DFS return edges; the harness judges limit meaning."""
+    active, visited = set(), set()
+
+    def visit(slug):
+        active.add(slug)
+        for target in steps[slug]["routen"].values():
+            other = target.removeprefix("arbeitsschritt:")
+            if other not in steps:
+                continue
+            if other in active:
+                paths = [p for p in _hauptprozess_context_paths(root, revision)
+                         if p.endswith(f"/{slug}/CONTEXT.md")]
+                body = _hauptprozess_body(root, revision, paths[0]) if len(paths) == 1 else ""
+                if not re.search(r"(?m)^Loop bound: \S.*$", body):
+                    raise ProofError(f"Loop bound missing for {slug} -> {other}")
+            elif other not in visited:
+                visit(other)
+        active.remove(slug)
+        visited.add(slug)
+
+    metadata, _ = _frontmatter_and_body(_git_show(root, revision, "CONTEXT.md").decode("utf-8"))
+    visit(metadata["einstieg_ref"].removeprefix("arbeitsschritt:"))
+
+
+def _hauptprozess_handoff(
     root: Path,
-    application_revision: str,
+    hauptprozess_revision: str,
     producer_slug: str,
     route: str,
 ) -> Handoff:
     step_path = next(
         (
             path
-            for path in _application_context_paths(root, application_revision)
+            for path in _hauptprozess_context_paths(root, hauptprozess_revision)
             if path.count("/") == 2 and path.endswith(f"/{producer_slug}/CONTEXT.md")
         ),
         None,
     )
     if step_path is None:
-        raise ProofError(f"Application has no producer step {producer_slug}")
-    text = _application_body(root, application_revision, step_path)
+        raise ProofError(f"Hauptprozess has no producer step {producer_slug}")
+    text = _hauptprozess_body(root, hauptprozess_revision, step_path)
     pattern = re.compile(
         r"(?m)^Bei Route `([^`]+)`: `([^`]+) -> "
-        r"arbeitsschritt:([^/`]+)/([^`]+)`\.$"
+        r"arbeitsschritt:([^:/`]+):([^`]+)`\.$"
     )
     matches = [match for match in pattern.finditer(text) if match.group(1) == route]
     if len(matches) != 1:
         raise ProofError(
-            f"Application handoff for {producer_slug}/{route} is not unique"
+            f"Hauptprozess handoff for {producer_slug}/{route} is not unique"
         )
     match = matches[0]
+    steps = _hauptprozess_steps(root, hauptprozess_revision)
+    consumer = steps.get(match.group(3))
+    if consumer is None or match.group(4) not in consumer["eingaben"]:
+        raise ProofError("Handoff target does not name a declared consumer input slot")
     return Handoff(
         route=match.group(1),
         producer_output=match.group(2),
@@ -1111,32 +1192,47 @@ def _application_handoff(
     )
 
 
-def _application_context_paths(root: Path, application_revision: str) -> tuple[str, ...]:
+def _hauptprozess_context_paths(root: Path, hauptprozess_revision: str) -> tuple[str, ...]:
     return tuple(
         path
-        for path in _git(root, "ls-tree", "-r", "--name-only", application_revision).splitlines()
+        for path in _git(root, "ls-tree", "-r", "--name-only", hauptprozess_revision).splitlines()
         if path.endswith("CONTEXT.md")
     )
 
 
-def _application_body(root: Path, application_revision: str, path: str) -> str:
-    text = _git_show(root, application_revision, path).decode("utf-8")
+def _hauptprozess_body(root: Path, hauptprozess_revision: str, path: str) -> str:
+    text = _git_show(root, hauptprozess_revision, path).decode("utf-8")
     _, body = _frontmatter_and_body(text)
     return body
 
 
-def _application_steps(
-    root: Path, application_revision: str
+def _check_capability_revisions(body: str) -> None:
+    """Require each named Capability to have a local revision-bound call."""
+    named = set(re.findall(r"\bcapabilities/([a-zA-Z0-9_-]+)", body))
+    bound = set(re.findall(
+        r"(?m)^- Capability-Pfad:[ \t]*`?capabilities/([a-zA-Z0-9_-]+)/CONTEXT\.md`?[ \t]*\n"
+        r"- Capability-Revision:[ \t]*`?git-tree:[0-9a-f]{40}`?[ \t]*$",
+        body,
+    ))
+    if missing := named - bound:
+        raise ProofError(
+            "Capability lacks bound git-tree revision: " + ", ".join(sorted(missing))
+        )
+
+
+def _hauptprozess_steps(
+    root: Path, hauptprozess_revision: str
 ) -> dict[str, dict]:
     metadata = {}
-    for path in _application_context_paths(root, application_revision):
+    for path in _hauptprozess_context_paths(root, hauptprozess_revision):
         match = re.fullmatch(r"[^/]+/([^/]+)/CONTEXT\.md", path)
         if not match:
             continue
         slug = match.group(1)
-        step_metadata, _ = _frontmatter_and_body(
-            _git_show(root, application_revision, path).decode("utf-8")
+        step_metadata, body = _frontmatter_and_body(
+            _git_show(root, hauptprozess_revision, path).decode("utf-8")
         )
+        _check_capability_revisions(body)
         metadata[slug] = step_metadata
     return metadata
 
@@ -1150,24 +1246,24 @@ def _frontmatter_and_body(text: str) -> tuple[dict, str]:
             index for index, line in enumerate(lines[1:], start=1) if line.strip() == "---"
         )
     except StopIteration as error:
-        raise ProofError("Application frontmatter has no closing delimiter") from error
+        raise ProofError("Definition frontmatter has no closing delimiter") from error
     metadata = load_yaml_strict("\n".join(lines[1:closing])) or {}
     if not isinstance(metadata, dict):
-        raise ProofError("Application frontmatter is not an object")
+        raise ProofError("Definition frontmatter is not an object")
     return metadata, "\n".join(lines[closing + 1 :])
 
 
 def _execute_capability(
     root: Path,
-    application_revision: str,
+    hauptprozess_revision: str,
     requested: CapabilityCall,
     workspace_revision: str,
     rules: bytes,
     record: bytes,
 ) -> dict:
-    authoritative = _application_call(root, application_revision)
+    authoritative = _hauptprozess_call(root, hauptprozess_revision)
     if requested != authoritative:
-        raise ProofError("requested Capability tuple differs from bound Application")
+        raise ProofError("requested Capability tuple differs from bound Hauptprozess")
     capability_path = Path(authoritative.path)
     if (
         capability_path.is_absolute()
@@ -1188,7 +1284,7 @@ def _execute_capability(
         contract = (target / "CONTEXT.md").read_text(encoding="utf-8")
         match = re.search(r"(?m)^Operation:\s*`([^`]+)`$", contract)
         if not match or match.group(1) != authoritative.operation:
-            raise ProofError("Capability operation differs from bound Application")
+            raise ProofError("Capability operation differs from bound Hauptprozess")
         rules_path = target / "_input-rules.md"
         record_path = target / "_input-record.md"
         rules_path.write_bytes(rules)
@@ -1315,10 +1411,6 @@ def _fields(text: str) -> dict[str, str]:
     return fields
 
 
-def _content_digest(payload: bytes) -> str:
-    return sha256(payload).hexdigest()
-
-
 def _directory_digest(root: Path) -> str:
     if not root.exists():
         return _content_digest(b"")
@@ -1345,15 +1437,15 @@ def _import_into_second_repository(
     rules: bytes,
     rules_provenance: str,
 ) -> tuple[State, bool, frozenset[str], frozenset[str]]:
-    """Import the Application, reject its missing Capability, then materialize and run it."""
+    """Import the Hauptprozess, reject its missing Capability, then materialize and execute that Capability."""
     source_commit = _reachable_commit(source, source_workspace_revision)
     source_reference = f"{Path(source).resolve().as_posix()}@{source_commit}"
     kunde = init_workspace(Path(base) / "kunde", language="de")
-    target = kunde / "applications" / APPLICATION
+    target = kunde / "hauptprozesse" / HAUPTPROZESS
     target.mkdir()
-    application_root = f"applications/{APPLICATION}"
-    with _source_bytes_readable(source_commit, application_root):
-        archive = _git_archive(source, f"{source_commit}:{application_root}")
+    hauptprozess_root = f"hauptprozesse/{HAUPTPROZESS}"
+    with _source_bytes_readable(source_commit, hauptprozess_root):
+        archive = _git_archive(source, f"{source_commit}:{hauptprozess_root}")
     subprocess.run(["tar", "-x", "-C", str(target)], input=archive, check=True)
     _git(kunde, "init", "-q", "-b", "main")
     _git(kunde, "config", "user.email", "cold-walk@example.invalid")
@@ -1364,15 +1456,15 @@ def _import_into_second_repository(
         "commit",
         "-q",
         "-m",
-        f"import applications/{APPLICATION} from {source_reference} (tree {revision})",
+        f"import hauptprozesse/{HAUPTPROZESS} from {source_reference} (tree {revision})",
     )
-    imported = _git(kunde, "rev-parse", f"HEAD:applications/{APPLICATION}")
-    application_only_revision = _git(kunde, "rev-parse", "HEAD")
+    imported = _git(kunde, "rev-parse", f"HEAD:hauptprozesse/{HAUPTPROZESS}")
+    hauptprozess_only_revision = _git(kunde, "rev-parse", "HEAD")
     proofs = set()
     rejections = set()
     record = b"Name: Kundenrepo\nGeburtsdatum: 01.01.1990\n"
-    imported_call = _application_call(kunde, imported)
-    imported_source = _application_source(kunde, imported)
+    imported_call = _hauptprozess_call(kunde, imported)
+    imported_source = _hauptprozess_source(kunde, imported)
     _verify_source(source, imported_source, rules, rules_provenance)
 
     if _is_rejected(
@@ -1380,7 +1472,7 @@ def _import_into_second_repository(
             kunde,
             imported,
             imported_call,
-            application_only_revision,
+            hauptprozess_only_revision,
             rules,
             record,
         )
@@ -1459,8 +1551,8 @@ def main() -> int:
         print(f"STATE {state.label}: {verdict}")
         if state.label.endswith("human-gate"):
             print("STOP Human Gate: offener Schritt hat weder Route noch Freigabe.")
-    fired = "hash.mismatch" in result.mutation_codes
-    print(f"MUTATION input geändert: {'hash.mismatch' if fired else 'nicht erkannt'}")
+    fired = "binding.reference_digest" in result.mutation_codes
+    print(f"MUTATION input geändert: {'binding.reference_digest' if fired else 'nicht erkannt'}")
     import_verdict = "PASS" if result.import_state.valid else "FAIL " + ", ".join(
         result.import_state.codes
     )
@@ -1505,14 +1597,14 @@ def _load_human_decision(path: Path) -> dict:
 
 
 def _router_chain(root: Path) -> list[str]:
-    application = root / "applications" / APPLICATION
-    entry = load_frontmatter(application / "CONTEXT.md")["einstieg_ref"].removeprefix(
+    hauptprozess = root / "hauptprozesse" / HAUPTPROZESS
+    entry = load_frontmatter(hauptprozess / "CONTEXT.md")["einstieg_ref"].removeprefix(
         "arbeitsschritt:"
     )
-    step = next(application.glob(f"*/{entry}/CONTEXT.md"))
+    step = next(hauptprozess.glob(f"*/{entry}/CONTEXT.md"))
     chain = [
         root / "CONTEXT.md",
-        application / "CONTEXT.md",
+        hauptprozess / "CONTEXT.md",
         step.parent.parent / "CONTEXT.md",
         step,
     ]
@@ -1522,7 +1614,7 @@ def _router_chain(root: Path) -> list[str]:
 def _write_outputs(attempt: Path, outputs: dict[str, str]) -> None:
     """Bind existing editable files only if the caller used their actual current bytes."""
     for relative, value in outputs.items():
-        path = attempt / relative
+        path = input_file(attempt, relative)
         if path.exists() and path.read_bytes() != value.encode("utf-8"):
             raise ProofError(f"Existing output differs; read and review current file: {relative}")
     _write_files(attempt, outputs)
@@ -1564,7 +1656,7 @@ def _preflight_files(attempt: Path, files: dict[str, str]) -> None:
         if any(portable_key[:length] in portable_paths for length in range(1, len(portable_key))):
             raise ProofError(f"File mapping has a parent-file collision: {relative!r}")
     for relative in paths:
-        path = attempt / relative
+        path = input_file(attempt, relative)
         if path.is_symlink() or (path.exists() and not path.is_file()):
             raise ProofError(f"File mapping target is not a regular file: {relative.as_posix()!r}")
         for parent in path.parents:
@@ -1580,8 +1672,8 @@ def _record_inputs(root: Path, path: str, payload: str) -> dict[str, str]:
     _write_files(root, {path: payload})
     received = (root / path).read_bytes()
     return {
-        "input/antrag.md": received.decode("utf-8"),
-        "input/antrag-herkunft.md": (
+        "material/antrag.md": received.decode("utf-8"),
+        "material/antrag-herkunft.md": (
             f"Herkunft: synthetischer Eingang\nUrsprung: {path}\n"
             f"Content-Digest: sha256:{_content_digest(received)}\n"
             "Kontrollnachweis: bytegleich mit gespeicherter Eingangsdatei\n"
@@ -1591,13 +1683,9 @@ def _record_inputs(root: Path, path: str, payload: str) -> dict[str, str]:
 
 def _write_files(attempt: Path, files: dict[str, str]) -> None:
     for relative, content in files.items():
-        path = attempt / relative
+        path = input_file(attempt, relative)
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(content, encoding="utf-8")
-
-
-def _git(root: Path, *args: str) -> str:
-    return subprocess.check_output(["git", "-C", str(root), *args], text=True).strip()
 
 
 def _reachable_commit(root: Path, revision: str) -> str:

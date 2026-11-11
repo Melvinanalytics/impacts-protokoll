@@ -11,20 +11,13 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 
-from impacts_protocol import HashSurfaceError, surface_hash
+from impacts_protocol import HashSurfaceError, file_references
 from impacts_protocol.cli import main
 
 
-def _canonical(attempt: Path, files: dict[str, str]) -> str:
-    entries = [
-        {"path": relative, "sha256": hashlib.sha256((attempt / relative).read_bytes()).hexdigest()}
-        for relative in files
-    ]
-    entries.sort(key=lambda entry: entry["path"].encode("utf-8"))
-    payload = (
-        json.dumps(entries, ensure_ascii=False, sort_keys=True, separators=(",", ":")) + "\n"
-    ).encode("utf-8")
-    return "sha256:" + hashlib.sha256(payload).hexdigest()
+def _canonical(attempt: Path, files: dict[str, str]) -> list[dict]:
+    return [{"pfad": path, "sha256": "sha256:" + hashlib.sha256((attempt / path).read_bytes()).hexdigest()}
+            for path in sorted(files, key=lambda name: name.encode("utf-8"))]
 
 
 def _attempt(base: Path, files: dict[str, str]) -> Path:
@@ -41,7 +34,7 @@ def test_single_file_surface_matches_canonical_serialization():
         files = {"input/auftrag.md": "Auftrag"}
         attempt = _attempt(Path(directory), files)
 
-        assert surface_hash(attempt, ["input/auftrag.md"]) == _canonical(attempt, files)
+        assert file_references(attempt, ["input/auftrag.md"]) == _canonical(attempt, files)
 
 
 def test_directory_surface_collects_files_recursively_in_path_byte_order():
@@ -53,7 +46,44 @@ def test_directory_surface_collects_files_recursively_in_path_byte_order():
         }
         attempt = _attempt(Path(directory), files)
 
-        assert surface_hash(attempt, ["input/"]) == _canonical(attempt, files)
+        assert file_references(attempt, ["input/"]) == _canonical(attempt, files)
+
+
+def test_file_references_match_frozen_raw_byte_vector(tmp_path):
+    attempt = _attempt(tmp_path, {"input/a.md": "abc", "input/empty": ""})
+    assert file_references(attempt, ["input"]) == [
+        {"pfad": "input/a.md", "sha256": "sha256:ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"},
+        {"pfad": "input/empty", "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"},
+    ]
+
+
+def test_content_and_identity_are_bound_separately(tmp_path):
+    attempt = _attempt(tmp_path, {"input/a.md": "gleich", "input/b.md": "andere"})
+    original = file_references(attempt, ["input"])
+
+    # Identity mutation only: same bytes under a new name.
+    (attempt / "input" / "a.md").rename(attempt / "input" / "umbenannt.md")
+    renamed = file_references(attempt, ["input"])
+    assert renamed != original
+
+    # Content mutation only: original name, changed bytes.
+    (attempt / "input" / "umbenannt.md").rename(attempt / "input" / "a.md")
+    (attempt / "input" / "a.md").write_text("verändert", encoding="utf-8")
+    mutated = file_references(attempt, ["input"])
+    assert mutated != original
+    assert mutated != renamed
+
+
+def test_declaration_and_creation_order_do_not_change_hash(tmp_path):
+    first = _attempt(tmp_path / "a", {"input/a.md": "a", "input/zwei.md": "b"})
+    forward = file_references(first, ["input/a.md", "input/zwei.md"])
+    assert file_references(first, ["input/zwei.md", "input/a.md"]) == forward
+
+    second = _attempt(tmp_path / "b", {"input/zwei.md": "b", "input/a.md": "a"})
+    assert file_references(second, ["input"]) == forward
+
+    # Overlapping declarations include each path exactly once.
+    assert file_references(first, ["input", "input/a.md"]) == forward
 
 
 def test_missing_surface_raises_hash_mismatch():
@@ -61,9 +91,9 @@ def test_missing_surface_raises_hash_mismatch():
         attempt = _attempt(Path(directory), {"input/auftrag.md": "x"})
 
         with pytest.raises(HashSurfaceError) as error:
-            surface_hash(attempt, ["input/fehlt.md"])
+            file_references(attempt, ["input/fehlt.md"])
 
-        assert error.value.code == "hash.mismatch"
+        assert error.value.code == "binding.reference_missing"
 
 
 def test_empty_directory_surface_raises_hash_mismatch():
@@ -72,9 +102,10 @@ def test_empty_directory_surface_raises_hash_mismatch():
         (attempt / "output").mkdir(parents=True)
 
         with pytest.raises(HashSurfaceError) as error:
-            surface_hash(attempt, ["output/"])
+            file_references(attempt, ["output/"])
 
-        assert error.value.code == "hash.mismatch"
+        assert error.value.code == "binding.reference_missing"
+        assert error.value.message == "Declared reference has no regular file"
 
 
 @pytest.mark.parametrize("target_kind", ["inside", "outside"])
@@ -89,7 +120,7 @@ def test_symlink_inside_surface_raises_actionable_structure_symlink(target_kind)
         link.symlink_to(target)
 
         with pytest.raises(HashSurfaceError) as error:
-            surface_hash(attempt, ["input/"])
+            file_references(attempt, ["input/"])
 
         assert error.value.code == "structure.symlink"
         assert error.value.path == link
@@ -107,9 +138,9 @@ def test_surface_escaping_attempt_raises_hash_mismatch():
         (base / "outside.md").write_text("fremd", encoding="utf-8")
 
         with pytest.raises(HashSurfaceError) as error:
-            surface_hash(attempt, ["../outside.md"])
+            file_references(attempt, ["../outside.md"])
 
-        assert error.value.code == "hash.mismatch"
+        assert error.value.code == "binding.reference_missing"
 
 
 def test_cli_hash_prints_digest_and_exits_zero():
@@ -122,7 +153,7 @@ def test_cli_hash_prints_digest_and_exits_zero():
             exit_code = main(["hash", str(attempt), "input/auftrag.md", "output/ergebnis.md"])
 
         assert exit_code == 0
-        assert output.getvalue().strip() == _canonical(attempt, files)
+        assert json.loads(output.getvalue()) == _canonical(attempt, files)
 
 
 def test_cli_hash_reports_invalid_surface_and_exits_one():
@@ -134,7 +165,7 @@ def test_cli_hash_reports_invalid_surface_and_exits_one():
             exit_code = main(["hash", str(attempt), "input/fehlt.md"])
 
         assert exit_code == 1
-        assert "hash.mismatch" in errors.getvalue()
+        assert "binding.reference_missing" in errors.getvalue()
 
 
 def test_cli_hash_reports_non_utf8_path_and_exits_one(tmp_path, monkeypatch):
@@ -154,7 +185,7 @@ def test_cli_hash_reports_non_utf8_path_and_exits_one(tmp_path, monkeypatch):
         exit_code = main(["hash", str(attempt), "input/auftrag.md"])
 
     assert exit_code == 1
-    assert "hash.mismatch" in errors.getvalue()
+    assert "binding.reference_missing" in errors.getvalue()
     assert "not valid UTF-8" in errors.getvalue()
 
 
@@ -173,15 +204,16 @@ def test_cli_hash_rejects_actual_non_utf8_filename_on_linux(tmp_path):
         exit_code = main(["hash", str(attempt), "input/"])
 
     assert exit_code == 1
-    assert "hash.mismatch" in errors.getvalue()
+    assert "binding.reference_missing" in errors.getvalue()
     assert "not valid UTF-8" in errors.getvalue()
 
 
 @pytest.mark.parametrize("declared", [[], iter(()), 42, True, {"input/"}, "input/", b"input/", [""], [None], ["/input/"]])
 def test_invalid_declaration_uses_hash_error_boundary(tmp_path, declared):
     with pytest.raises(HashSurfaceError) as error:
-        surface_hash(tmp_path, declared)
-    assert error.value.code == "hash.mismatch"
+        file_references(tmp_path, declared)
+    assert error.value.code == "binding.reference_missing"
+    assert "hash surface" not in error.value.message
 
 
 def test_unreadable_surface_uses_hash_error_boundary(tmp_path, monkeypatch):
@@ -192,4 +224,4 @@ def test_unreadable_surface_uses_hash_error_boundary(tmp_path, monkeypatch):
 
     monkeypatch.setattr(Path, "open", denied)
     with pytest.raises(HashSurfaceError, match="Hash surface cannot be read"):
-        surface_hash(attempt, ["input/auftrag.md"])
+        file_references(attempt, ["input/auftrag.md"])

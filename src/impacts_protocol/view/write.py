@@ -19,6 +19,8 @@ import os
 import re
 from pathlib import Path
 
+from .project import PAGE_HEADINGS, EXECUTION, OWNER_LABELS
+
 TEMPLATE = Path(__file__).with_name("page.html")
 NAME = re.compile(r"(index|[aiv]-[a-z0-9-]+)\.html|model\.json")
 
@@ -41,6 +43,9 @@ def exactly_one(template: str, pattern: str, what: str) -> re.Match:
 
 def page_html(model: dict) -> str:
     template = TEMPLATE.read_text(encoding="utf-8")
+    exactly_one(template, "__VOCABULARY__", "__VOCABULARY__ marker")
+    template = template.replace("__VOCABULARY__", embed({
+        "headings": PAGE_HEADINGS, "execution": EXECUTION, "owners": OWNER_LABELS}))
     script = exactly_one(template, r"<script>(.*?)</script>", "plain <script> element").group(1)
     style = exactly_one(template, r"<style>(.*?)</style>", "<style> element").group(1)
     exactly_one(template, r'http-equiv="Content-Security-Policy" content="__POLICY__"', "CSP marker")

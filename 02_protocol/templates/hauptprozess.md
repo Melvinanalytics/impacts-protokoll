@@ -7,24 +7,18 @@ leistung:
   abnahme:
     - Check report is available
     - Decision is approved by the responsible human
-  erreicht:  # optional: each end that achieves the result; every other end is negative
+  erreicht:  # optional: each end that achieves the Leistung
     - end:entschieden
 einstieg_ref: arbeitsschritt:pruefen
-stufen:  # optional, see Path to the result below; otherwise remove this block
-  stand:beantragt: 0
-  arbeitsschritt:pruefen: 30
-  arbeitsschritt:entscheiden: 70
-  end:entschieden: 100
-  end:abgelehnt: 0
 ---
 
 # Decide a review case
 
-The main process is the Application root at `applications/<slug>/CONTEXT.md`. Its subfolders are subprocesses, whose subfolders are worksteps. It defines the complete path to the embedded result. `einstieg_ref` names the first workstep; each workstep owns its routes. This body carries Identify context for people and harnesses, not another schema. Replace example values in the customer's working language.
+The Hauptprozess is the root at `hauptprozesse/<slug>/CONTEXT.md`. This body carries Identify context for people and harnesses, not another schema. Replace every prompt and example value with this definition's content; delete optional blocks you do not use.
 
 ## Result and scope
 
-State the accepted result, recipient, intended use and process boundary in one compact passage. Make `leistung.ergebnis`, `kennzahl` and every `abnahme` condition observable. Keep requested, offered, agreed and delivered results distinct; cite their existing definitions and evidence. For a result with more than one component, make the required components, assemblies and joints within this Hauptprozess's accepted result scope traceable under `02_protocol/impacts-method.md`, "Leistungsstückliste", including the subprocesses that produce or complete them. An existing complete representation or a reference to it suffices. Having several components alone requires no separate list or additional assembly.
+State the Leistung, recipient, intended use and process boundary in one compact passage. Make `leistung.ergebnis`, `kennzahl` and every `abnahme` condition observable. For a result with more than one component, make the required components, assemblies and joints within the scope of this Hauptprozess's Leistung traceable under `02_protocol/impacts-method.md`, "Leistungsstückliste", including the Teilprozesse whose Arbeitsschritte produce or complete them. Having several components alone requires no separate list or additional assembly.
 
 ## Relevant environment
 
@@ -32,32 +26,24 @@ Recipient, participants, dependencies and result boundaries. Include market, dem
 
 ## Value flow
 
-Valued result and recipient; customer, payer and external parties only where relevant. Link each required condition, with who imposes it and its basis, to its producing job, prerequisites and acceptance evidence. For retained coordination, link the dependency it manages and the evidence that its separation remains required after Minimize. Given a product/service, distinguish its promised or agreed scope from this process's result and actual fulfillment. Reference existing definitions/records and observed cases; mark reconstructed work as `hypothesis` and unresolved dependencies as `open` with their next action and use restriction.
+Valued result and recipient; customer, payer and external parties only where relevant. Link each required condition, with who imposes it and its basis, to its producing job, prerequisites and acceptance evidence. For retained coordination, link the dependency it manages. Link the analysis file for its evidence. Given a product/service, distinguish its promised or agreed scope from this process's result and actual fulfillment. Reference existing definitions and records; mark unresolved dependencies as `open` with their next action and use restriction.
 
 ## Objective and guardrails
 
-One primary objective and observable acceptance. Address Identify's questions for this bounded intervention: evidence and gaps, next intervention or observation, responsibility, expected effect and recheck/stop condition. Protect quality, time and cost with relevant guardrails.
+One primary objective and observable acceptance. Protect quality, time and cost with decided guardrails, thresholds and acceptance limits.
 
 ## Touchpoints
 
-Name each customer touchpoint of this process with its reason and its value, `standard` or `sacred` as `02_protocol/impacts-method.md#identify` defines them. Internal human gates belong to worksteps.
+Name each customer touchpoint of this process with its reason; its value, `standard` or `sacred`, is declared once in `customer_touchpoint` of the Arbeitsschritt that holds it (`02_protocol/impacts-method.md#identify` defines the values).
 
 ## Automation boundary
 
-Which human boundaries apply, why, and who may change them? Input variance, result tolerance, harm, reversibility and detectability determine permitted assistance. Distinguish habitual division of work from required authority and actual availability; each workstep names its concrete contributions.
+Which human boundaries apply, why, and who may change them? Input variance, result tolerance, harm, reversibility and detectability determine permitted assistance. Distinguish habitual division of work from required authority and actual availability; each Arbeitsschritt names its concrete contributions.
 
 ## Path to the result
 
-Which subprocesses contribute to the result, how their prerequisites are obtained, and how success, rejection or an incomplete case ends or waits. List each `end:<slug>` that achieves the accepted result in `leistung.erreicht`; every other end is a negative end. `einstieg_ref` and workstep routes own the sequence; this explanation does not maintain a second route table. Independent Applications exchange evidenced results through separate Vorgänge, not cross-Application step routes. Optionally assign stages in `stufen`: an integer from 0 to 100 for every workstep and end and for the record states a case passes before `einstieg_ref`, keyed `arbeitsschritt:<slug>`, `end:<slug>` or `stand:<slug>`, such as `arbeitsschritt:pruefen: 40`. A stage ranks position, not effort, value or chance of success; rework may lower it. Give every negative end stage 0, so that evaluations count it as no progress; the end names the reason, and the last step shows how far the case came.
-
-## Throughput and lead time
-
-Expected throughput, work in progress and elapsed time. Define start and accepted end; distinguish active work, waiting, handoffs and rework. Name the source or reported range; leave unknowns open. Do not sum overlapping activities as lead time. The result metric is this process's lagging indicator.
-
-## Bottleneck
-
-Which evidenced constraint currently limits the result or lead time, and what observation would refute that assumption? Capacity, missing input or a pending decision may constrain it. Faster isolated work does not establish improvement of the whole process. Preserve required human boundaries during redesign.
+Which Teilprozesse contribute to the result, how their prerequisites are obtained, and how success, rejection or an incomplete Vorgang ends or waits. List each `end:<slug>` that achieves the Leistung in `leistung.erreicht`. `einstieg_ref` and Arbeitsschritt routes own the sequence; this explanation does not maintain a second route table. Subject stages belong to the subject record under `02_protocol/binding.md#record-writeback`; progress weights belong in analysis.
 
 ## Setup completion
 
-Definition setup is complete when every applicable required condition within this Hauptprozess's declared scope, including `abnahme`, required components, assemblies, joints, obligations and material prerequisites, traces to responsible work/check or an evidenced prerequisite and its use boundary. Conditions retain their role; they need not each become an output or new step. For a continuing duty, trace the action/control required within this process and its continuing owner; a seven-year retention duty does not require a seven-year active Vorgang. Design coverage remains distinct from actual satisfaction. Completion also requires that `einstieg_ref` and every workstep route can reach an `end:<slug>` route, each material claim has its source and evidence state, and every unresolved dependency names its next action and use restriction. Before the candidate commit, write and review here a supported path, a missing or conflicting prerequisite and a plausible forbidden inference. For each, record its premise, expected outcome, review outcome and open gaps. Label synthetic cases; expected outcomes are not observed execution results. After commit, the Test phase supplies observed harness evidence against that revision. Structural validity and design review do not establish execution readiness or the process result.
+Definition setup is complete when every applicable required condition within this Hauptprozess's declared scope, including `abnahme`, required components, assemblies, joints, obligations and material prerequisites, traces to responsible work/check or an evidenced prerequisite and its use boundary. Conditions retain their role; they need not each become an output or new Arbeitsschritt. For a continuing duty, trace the action/control required within this process and its continuing owner; a seven-year retention duty does not require a seven-year active Vorgang. Completion also requires that `einstieg_ref` and every Arbeitsschritt route can reach an `end:<slug>` route, each material claim has its source and evidence state, and every unresolved dependency names its next action and use restriction. Before the candidate commit, write and review here a supported path, a missing or conflicting prerequisite and a plausible forbidden inference. For each, record its premise and expected result. Link the review evidence under `02_protocol/impacts-method.md#maintain-agent-instructions`.

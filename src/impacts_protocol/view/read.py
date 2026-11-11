@@ -10,7 +10,7 @@ from pathlib import Path
 from impacts_protocol.io import load_yaml_strict
 
 # Private on purpose: a bound revision must be read exactly as the validator reads it.
-from impacts_protocol.validator import _validate_application
+from impacts_protocol.validator import _validate_hauptprozess
 
 from .blocks import document
 
@@ -81,12 +81,12 @@ def route_order(process: dict, steps: dict) -> list[str]:
     return order
 
 
-def read_application(root: Path, shown: str, *, check_slug: bool) -> tuple[list[dict], list[dict]]:
-    """Validate an immutable Application once; return its issues, or its HP, TP and AS nodes."""
+def read_hauptprozess(root: Path, shown: str, *, check_slug: bool) -> tuple[list[dict], list[dict]]:
+    """Validate an immutable Hauptprozess tree once; return its issues, or its HP, TP and AS nodes."""
     found = []
-    application = _validate_application(root, found, check_slug=check_slug)
-    if application is None or found:
-        return issue_list(found) or [{"code": "structure.invalid", "path": ".", "message": "Application cannot be read"}], []
+    hauptprozess = _validate_hauptprozess(root, found, check_slug=check_slug)
+    if hauptprozess is None or found:
+        return issue_list(found) or [{"code": "structure.level", "path": ".", "message": "Hauptprozess cannot be read"}], []
 
     def node(folder: Path, kind: str, parent: str | None) -> dict:
         relative = folder.relative_to(root).as_posix()
@@ -95,8 +95,8 @@ def read_application(root: Path, shown: str, *, check_slug: bool) -> tuple[list[
 
     hp = node(root, "hauptprozess", None)
     nodes, parts = {hp["id"]: hp}, {}
-    for step_id in route_order(application.hauptprozess, application.arbeitsschritte):
-        folder = application.arbeitsschritte[step_id][0]
+    for step_id in route_order(hauptprozess.hauptprozess, hauptprozess.arbeitsschritte):
+        folder = hauptprozess.arbeitsschritte[step_id][0]
         if folder.parent not in parts:
             parts[folder.parent] = node(folder.parent, "teilprozess", hp["id"])
             nodes[parts[folder.parent]["id"]] = parts[folder.parent]

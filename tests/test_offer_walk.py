@@ -1,3 +1,6 @@
+import sys
+sys.path.insert(0, str(__import__("pathlib").Path(__file__).resolve().parents[1] / "06_evaluations"))
+from reference_files import input_file, references as file_references
 """Exercise the actual fixed-language output boundary and bound Vorgang handoff."""
 import copy
 import importlib.util
@@ -21,12 +24,12 @@ def test_actual_vorgang_checks_and_binds_both_outputs_before_pending_human_gate(
     values = walk.fixture()
     before = copy.deepcopy(values)
     root = walk.open_offer(tmp_path / language, values, language)
-    application, _ = walk.load_frontmatter_and_body(root / walk.APP / "CONTEXT.md")
+    hauptprozess, _ = walk.load_frontmatter_and_body(root / walk.APP / "CONTEXT.md")
     subprocess_definition, _ = walk.load_frontmatter_and_body(root / walk.APP / "ausarbeitung/CONTEXT.md")
     gate_definition, _ = walk.load_frontmatter_and_body(root / walk.APP / "ausarbeitung/freigeben/CONTEXT.md")
-    assert application["leistung"]["ergebnis"] == subprocess_definition["ergebnis"] == (
+    assert hauptprozess["leistung"]["ergebnis"] == subprocess_definition["ergebnis"] == (
         "Menschlich freigegebener interner Angebotsentwurf" if language == "de" else "Human-approved internal offer draft")
-    draft_condition, decision_condition = application["leistung"]["abnahme"]
+    draft_condition, decision_condition = hauptprozess["leistung"]["abnahme"]
     assert all(gate_definition["id"] in condition for condition in (draft_condition, decision_condition))
     decision_output, = gate_definition["ausgaben"]
     assert decision_output == "output/entscheidung.md" and decision_output in decision_condition
@@ -35,7 +38,7 @@ def test_actual_vorgang_checks_and_binds_both_outputs_before_pending_human_gate(
     assert gate_definition["routen"]["freigegeben"] in decision_condition
     _, instruction = walk.load_frontmatter_and_body(root / walk.APP / "ausarbeitung/entwerfen/CONTEXT.md")
     assert [line for line in instruction.splitlines() if 'Route `bestanden`' in line] == [
-        f'Bei Route `bestanden`: `output/{name} -> arbeitsschritt:freigeben/input/{name}`.'
+        f'Bei Route `bestanden`: `output/{name} -> arbeitsschritt:freigeben:material/{name}`.'
         for name in ('angebot.md', 'pruefbericht.json')]
     for label in (("Basis:", "Prüfung:", "Fehlerfolge:") if language == "de" else ("Basis:", "Check:", "Failure:")):
         assert label in instruction
@@ -46,16 +49,16 @@ def test_actual_vorgang_checks_and_binds_both_outputs_before_pending_human_gate(
     metadata, body = walk.load_frontmatter_and_body(root / walk.VORGANG / "CONTEXT.md")
     assert metadata["laufpfad"][0]["gewaehlte_route"] == "bestanden"
     gate = metadata["laufpfad"][-1]
-    assert gate["status"] == "wartend" and gate["wiedereinstieg"]["continuation_ref"] == "freigeben/001/output/entscheidung.md"
+    assert gate["status"] == "wartend" and gate["wiedereinstieg"]["continuation_ref"] == "vorgaenge/angebot-001/entwerfen/001/output/angebot.md"
     assert "freigabe" not in gate and "gewaehlte_route" not in gate
-    assert "ausgabe_hash" not in gate and not (root / walk.VORGANG / "freigeben/001" / decision_output).exists()
+    assert "geschrieben" not in gate and not (root / walk.VORGANG / "freigeben/001" / decision_output).exists()
     assert ("menschliche entscheidung" if language == "de" else "human decision") in body.lower()
     for name in ("angebot.md", "pruefbericht.json"):
-        assert f"input/{name}" in gate_definition["eingaben"] and f"input/{name}" in draft_condition
+        assert f"material/{name}" in gate_definition["eingaben"] and f"material/{name}" in draft_condition
         producer = root / walk.VORGANG / "entwerfen/001/output" / name
-        consumer = root / walk.VORGANG / "freigeben/001/input" / name
+        consumer = input_file(root / walk.VORGANG, f"freigeben/001/material/{name}")
         assert producer.read_bytes() == consumer.read_bytes()
-        provenance = json.loads((consumer.parent / "herkunft.json").read_text())[name]
+        provenance = json.loads(input_file(root / walk.VORGANG, "freigeben/001/material/herkunft.json").read_text())[name]
         assert provenance["sha256"] == walk.digest(consumer.read_bytes())
         assert provenance["origin"] == f"entwerfen/001/output/{name}"
     assert report["output_sha256"] == walk.digest(result.encode()) and values == before
@@ -121,7 +124,7 @@ def test_provenance_duplicate_keys_block_handoff_and_unique_neighbor_passes(tmp_
     root = walk.open_offer(tmp_path / "en", walk.fixture(), "en")
     expected, _ = walk.checked_offer(root)
     attempt = root / walk.VORGANG / "entwerfen/001"
-    path = attempt / "input/herkunft.json"
+    path = input_file(attempt, "material/herkunft.json")
     contents = path.read_text()
     if duplicate_key == "data.json":
         contents = '{"data.json":{"path":"conflicting-first-value"},' + contents.lstrip()[1:]
@@ -134,7 +137,7 @@ def test_provenance_duplicate_keys_block_handoff_and_unique_neighbor_passes(tmp_
     # on an unrelated Core hash mismatch to reject the duplicate object.
     metadata, body = walk.load_frontmatter_and_body(root / walk.VORGANG / "CONTEXT.md")
     definition, _ = walk.load_frontmatter_and_body(root / walk.APP / "ausarbeitung/entwerfen/CONTEXT.md")
-    metadata["laufpfad"][0]["eingabe_hash"] = walk.surface_hash(attempt, definition["eingaben"])
+    metadata["laufpfad"][0]["gelesen"] = walk.file_references(attempt, definition["eingaben"])
     walk.write_context(root / walk.VORGANG / "CONTEXT.md", metadata, body)
     assert walk.validate(root).valid
     before = files(root)
@@ -153,10 +156,10 @@ def test_provenance_duplicate_keys_block_handoff_and_unique_neighbor_passes(tmp_
 def test_stale_bound_input_rejects_even_when_model_claims_verified(tmp_path):
     root = walk.open_offer(tmp_path / "de", walk.fixture(), "de")
     result, _ = walk.checked_offer(root)
-    source = root / walk.VORGANG / "entwerfen/001/input/data.json"
+    source = input_file(root / walk.VORGANG, "entwerfen/001/material/data.json")
     source.write_text(source.read_text().replace('"2"', '"3"'))
     before = files(root)
-    with pytest.raises(ValueError, match="invalid bound Vorgang"):
+    with pytest.raises(ValueError, match="source binding mismatch"):
         walk.handoff(root, result + "\nverified")
     assert files(root) == before
 
@@ -165,7 +168,7 @@ def test_model_written_report_is_not_consumed_as_success_evidence(tmp_path):
     root = walk.open_offer(tmp_path / "de", walk.fixture(), "de")
     result, _ = walk.checked_offer(root)
     report = root / walk.VORGANG / "entwerfen/001/output/pruefbericht.json"
-    report.parent.mkdir()
+    report.parent.mkdir(exist_ok=True)
     report.write_text('{"result":"passed","working_language":"en","verified":true}')
     walk.handoff(root, result)
     actual = json.loads(report.read_text())
@@ -186,52 +189,23 @@ def test_example_source_change_does_not_invalidate_bound_template(tmp_path, monk
     root = walk.open_offer(tmp_path / language, walk.fixture(), language)
     expected, _ = walk.checked_offer(root)
     # The source can change or disappear after its template was bound.
-    monkeypatch.setattr(walk, "DOCUMENT", tmp_path / "unavailable-new-source.md")
+    monkeypatch.setattr(walk, "FIXTURES", tmp_path / "unavailable-new-fixtures")
     result, _ = walk.checked_offer(root)
     assert result == expected
     walk.handoff(root, result)
     assert walk.validate(root).valid
 
 
-@pytest.mark.parametrize("heading,kind", list(walk.SOURCE_BLOCKS.items()))
-@pytest.mark.parametrize("opening,closing", [("```", "````"), ("~~~~", "~~~~~")])
-def test_fixture_block_preserves_fenced_headings_and_stops_before_next_anchor(tmp_path, monkeypatch, heading, kind, opening, closing):
-    expected = f"### {heading}\nThis heading is block content.\n"
-    source = tmp_path / "example.md"
-    source.write_text(f"### {heading}\n\nEdited explanatory prose.\n\n{opening}{kind}\n{expected}\n{closing}\n\n"
-                      f'<a id="next"></a>\n### Next section\n\n```{kind}\nlater block\n```\n')
-    monkeypatch.setattr(walk, "DOCUMENT", source)
+@pytest.mark.parametrize("heading,descriptor", list(walk.SOURCE_BLOCKS.items()))
+def test_fixture_files_supply_exact_payload_and_missing_file_fails(tmp_path, monkeypatch, heading, descriptor):
+    kind, filename = descriptor
+    expected = (walk.FIXTURES / filename).read_text().removesuffix("\n")
     assert walk.block(heading, kind) == expected
-
-
-@pytest.mark.parametrize("heading,kind", list(walk.SOURCE_BLOCKS.items()))
-@pytest.mark.parametrize("mutation,error", [
-    ("missing-heading", "missing or duplicate heading"),
-    ("duplicate-heading", "missing or duplicate heading"),
-    ("missing-block", "missing or duplicate .* block"),
-    ("duplicate-block", "missing or duplicate .* block"),
-    ("nested-example", "missing or duplicate .* block"),
-])
-def test_fixture_block_never_falls_through_to_another_section(tmp_path, monkeypatch, heading, kind, mutation, error):
-    selected = f"### {heading}\n\n```{kind}\nselected\n```\n"
-    if mutation == "missing-heading":
-        selected = selected.replace(heading, "Unrelated section")
-    elif mutation == "duplicate-heading":
-        selected += f"\n### {heading}\nDuplicate name.\n"
-    elif mutation == "missing-block":
-        selected = f"### {heading}\n\nOrdinary prose only.\n"
-    elif mutation == "duplicate-block":
-        selected += f"\n```{kind}\nduplicate\n```\n"
-    else:
-        selected = f"### {heading}\n\n~~~~markdown\n```{kind}\nquoted example\n```\n~~~~~\n"
-    # A matching later block must never repair a missing or ambiguous selection.
-    source = tmp_path / "changed-example.md"
-    source.write_text(selected + f'\n<a id="later"></a>\n### Later section\n\n```{kind}\nlater\n```\n')
-    monkeypatch.setattr(walk, "DOCUMENT", source)
-    before = files(tmp_path)
-    with pytest.raises(ValueError, match=error):
+    with pytest.raises(ValueError, match="unsupported fixture"):
+        walk.block(heading, "unsupported")
+    monkeypatch.setattr(walk, "FIXTURES", tmp_path)
+    with pytest.raises(FileNotFoundError):
         walk.block(heading, kind)
-    assert files(tmp_path) == before
 
 
 @pytest.mark.parametrize("language", ["de", "en"])
@@ -240,9 +214,9 @@ def test_prose_edits_preserve_fixture_values_and_bound_checks(tmp_path, monkeypa
     heading = "Document blank" if language == "de" else "English document blank"
     blank = walk.block(heading, "text")
     source = tmp_path / "edited-example.md"
-    source.write_text(walk.DOCUMENT.read_text().replace(
+    source.write_text((ROOT / "02_protocol/impacts-architect/references/datenbezug.md").read_text().replace(
         f"### {heading}\n", f"### {heading}\n\nRevised explanatory prose; fixture values remain unchanged.\n"))
-    monkeypatch.setattr(walk, "DOCUMENT", source)
+    # Prose is no longer an executable fixture source.
     assert walk.fixture() == values and walk.block(heading, "text") == blank
     root = walk.open_offer(tmp_path / language, values, language)
     expected, report = walk.checked_offer(root)
@@ -265,8 +239,7 @@ def test_fixture_parser_ignores_an_unrelated_preloaded_answer_module(monkeypatch
     isolated = importlib.util.module_from_spec(isolated_spec)
     isolated_spec.loader.exec_module(isolated)
     assert isolated.fixture() == walk.fixture()
-    parser = sys.modules[f"{isolated_spec.name}_source_answer"]
-    assert Path(parser.extract.__code__.co_filename) == Path(walk.__file__).resolve().with_name("answer.py")
+    assert f"{isolated_spec.name}_source_answer" not in sys.modules
     assert sys.modules["answer"] is unrelated and sys.path.count(sibling) == prior_lookup_count
 
 
@@ -292,7 +265,7 @@ def test_historical_checks_and_handoff_do_not_load_the_factory_parser(tmp_path, 
     isolated_spec = importlib.util.spec_from_file_location(f"historical_offer_{language}_{sibling_state}", implementation)
     isolated = importlib.util.module_from_spec(isolated_spec)
     isolated_spec.loader.exec_module(isolated)
-    assert implementation.read_bytes() == (root / walk.VORGANG / "entwerfen/001/input/renderer.py").read_bytes()
+    assert implementation.read_bytes() == (input_file(root / walk.VORGANG, "entwerfen/001/material/renderer.py")).read_bytes()
     assert isolated.validate(root).valid and isolated.validate(gap_root).valid
     assert isolated.checked_offer(root) == (expected, report)
     with pytest.raises(ValueError, match="no missing price to clarify"):
@@ -305,7 +278,7 @@ def test_historical_checks_and_handoff_do_not_load_the_factory_parser(tmp_path, 
     metadata, _ = isolated.load_frontmatter_and_body(root / walk.VORGANG / "CONTEXT.md")
     assert metadata["laufpfad"][-1]["status"] == "wartend" and "gewaehlte_route" not in metadata["laufpfad"][-1]
     for name in ("angebot.md", "pruefbericht.json"):
-        assert (root / walk.VORGANG / "freigeben/001/input" / name).read_bytes() == (root / walk.VORGANG / "entwerfen/001/output" / name).read_bytes()
+        assert input_file(root / walk.VORGANG, f"freigeben/001/material/{name}").read_bytes() == (root / walk.VORGANG / "entwerfen/001/output" / name).read_bytes()
     assert not marker.exists() and f"{isolated_spec.name}_source_answer" not in sys.modules
 
 
@@ -323,7 +296,7 @@ def test_historical_vorgang_remains_core_valid_but_cannot_execute_with_a_new_ren
     updated_spec = importlib.util.spec_from_file_location("updated_offer_renderer", implementation)
     updated = importlib.util.module_from_spec(updated_spec)
     updated_spec.loader.exec_module(updated)
-    assert implementation.read_bytes() != (root / walk.VORGANG / "entwerfen/001/input/renderer.py").read_bytes()
+    assert implementation.read_bytes() != (input_file(root / walk.VORGANG, "entwerfen/001/material/renderer.py")).read_bytes()
     assert updated.validate(root).valid
     for operation in (updated.checked_offer, updated.prepare_gap, lambda path: updated.handoff(path, candidate)):
         with pytest.raises(ValueError, match="bound renderer differs from executing implementation"):
@@ -338,18 +311,18 @@ def test_malicious_bound_renderer_is_detected_without_execution(tmp_path, langua
     candidate, _ = walk.checked_offer(root)
     marker = tmp_path / "bound-code-executed"
     attempt = root / walk.VORGANG / "entwerfen/001"
-    (attempt / "input/renderer.py").write_text(f"from pathlib import Path\nPath({str(marker)!r}).write_text('executed')\n")
+    (input_file(attempt, "material/renderer.py")).write_text(f"from pathlib import Path\nPath({str(marker)!r}).write_text('executed')\n")
     if reseal_input_hash:
         # Even a structurally valid input hash does not replace source provenance.
         vorgang = root / walk.VORGANG / "CONTEXT.md"
         metadata, body = walk.load_frontmatter_and_body(vorgang)
         definition, _ = walk.load_frontmatter_and_body(root / walk.APP / "ausarbeitung/entwerfen/CONTEXT.md")
-        metadata["laufpfad"][0]["eingabe_hash"] = walk.surface_hash(attempt, definition["eingaben"])
+        metadata["laufpfad"][0]["gelesen"] = walk.file_references(attempt, definition["eingaben"])
         walk.write_context(vorgang, metadata, body)
-    assert walk.validate(root).valid is reseal_input_hash
+    assert walk.validate(root).valid  # Source blobs remain immutable; harness rejects changed concrete reads.
     before = files(root)
     for operation in (walk.checked_offer, lambda path: walk.handoff(path, candidate)):
-        with pytest.raises(ValueError, match="source binding mismatch" if reseal_input_hash else "invalid bound Vorgang"):
+        with pytest.raises(ValueError, match="source binding mismatch"):
             operation(root)
         assert files(root) == before and not marker.exists()
 
@@ -357,11 +330,14 @@ def test_malicious_bound_renderer_is_detected_without_execution(tmp_path, langua
 @pytest.mark.parametrize("language", ["de", "en"])
 def test_unreviewed_blank_cannot_enter_fixed_output_handoff(tmp_path, monkeypatch, language):
     values = walk.fixture()
-    source = tmp_path / "changed-example.md"
-    source.write_text(walk.DOCUMENT.read_text().replace("{{total}}", "{{total}} approved"))
-    monkeypatch.setattr(walk, "DOCUMENT", source)
+    import shutil
+    source = tmp_path / "fixtures"
+    shutil.copytree(walk.FIXTURES, source)
+    blank = source / f"template.{language}.md"
+    blank.write_text(blank.read_text().replace("{{total}}", "{{total}} approved"))
+    monkeypatch.setattr(walk, "FIXTURES", source)
     root = walk.open_offer(tmp_path / language, values, language)
-    blank = (root / walk.VORGANG / "entwerfen/001/input/template.md").read_text()
+    blank = (input_file(root / walk.VORGANG, "entwerfen/001/material/template.md")).read_text()
     candidate = walk.fill_offer(blank, values, language=language)
     before = files(root)
     with pytest.raises(ValueError, match="unrecognized localized template"):
@@ -388,23 +364,23 @@ def test_rebinding_vorgang_to_changed_obligation_does_not_reuse_old_source_check
     walk.git(root, "-c", "user.name=IMPACTS synthetic fixture", "-c", "user.email=fixture@example.invalid", "commit", "-qm", "Synthetic changed rule")
     vorgang = root / walk.VORGANG / "CONTEXT.md"
     metadata, body = walk.load_frontmatter_and_body(vorgang)
-    metadata["application_revision"] = "git-tree:" + walk.git(root, "rev-parse", f"HEAD:{walk.APP}")
+    metadata["hauptprozess_revision"] = "git-tree:" + walk.git(root, "rev-parse", f"HEAD:{walk.APP}")
     walk.write_context(vorgang, metadata, body)
     assert walk.validate(root).valid
     before = files(root)
-    with pytest.raises(ValueError, match="Application differs"):
+    with pytest.raises(ValueError, match="Hauptprozess differs"):
         operation(root)
     assert files(root) == before
 
 
 def test_language_authority_bytes_are_bound_and_reported(tmp_path):
     root = walk.open_offer(tmp_path / "de", walk.fixture(), "de")
-    authority = root / walk.VORGANG / "entwerfen/001/input/language-contract.md"
+    authority = input_file(root / walk.VORGANG, "entwerfen/001/material/language-contract.md")
     assert authority.read_bytes() == (ROOT / "02_protocol/language.md").read_bytes()
     _, report = walk.checked_offer(root)
     assert report["language_contract_sha256"] == walk.digest(authority.read_bytes())
     authority.write_text("English output is accepted for German work.")
-    with pytest.raises(ValueError, match="invalid bound Vorgang"):
+    with pytest.raises(ValueError, match="source binding mismatch"):
         walk.checked_offer(root)
 
 
@@ -412,7 +388,7 @@ def test_language_authority_bytes_are_bound_and_reported(tmp_path):
 import sys
 from dataclasses import replace
 from impacts_protocol.generator import init_workspace
-from tests.support import write_application, read_context, replace_context
+from tests.support import write_hauptprozess, read_context, replace_context
 
 answer_spec = importlib.util.spec_from_file_location('controlled_answer', ROOT / '06_evaluations/offer-walk/answer.py')
 answer = importlib.util.module_from_spec(answer_spec)
@@ -423,8 +399,8 @@ answer_spec.loader.exec_module(answer)
 @pytest.fixture(params=['en', 'de'])
 def bound_answer(tmp_path, request):
     repo = init_workspace(tmp_path / 'source', language=request.param)
-    app = write_application(repo / 'applications/video')
-    for name in ('capabilities.md', 'impacts-method.md'):
+    app = write_hauptprozess(repo / 'hauptprozesse/video')
+    for name in ('binding.md', 'impacts-method.md'):
         path = repo / '02_protocol' / name
         path.parent.mkdir(exist_ok=True)
         path.write_bytes((ROOT / '02_protocol' / name).read_bytes())
@@ -434,7 +410,7 @@ def bound_answer(tmp_path, request):
         path.write_bytes(data)
     step = app / 'produktion/start/CONTEXT.md'
     doc = read_context(step)
-    doc['eingaben'] = ['input/request.json', 'input/request-herkunft.md']
+    doc['eingaben'] = ['material/request.json', 'material/request-herkunft.md']
     replace_context(step, doc)
     walk.git(repo, 'init', '-b', 'main')
     walk.git(repo, 'config', 'user.email', 'fixture@example.invalid')
@@ -442,9 +418,9 @@ def bound_answer(tmp_path, request):
     walk.git(repo, 'add', '.')
     walk.git(repo, 'commit', '-m', 'trusted synthetic source')
     revision = walk.git(repo, 'rev-parse', 'HEAD').strip()
-    sections = (answer.Section('02_protocol/capabilities.md', 'Snapshot and provenance', 'snapshot-und-herkunftsnachweis'),
+    sections = (answer.Section('02_protocol/binding.md', 'Snapshot and provenance'),
                 answer.Section('02_protocol/impacts-method.md', 'Compose an Arbeitsschritt'),
-                answer.Section('02_protocol/impacts-method.md', 'Work from prerequisites'))
+                answer.Section('02_protocol/binding.md', 'Work from prerequisites'))
     args = dict(task='Explain the three source boundaries', language=request.param,
                 staging=tmp_path / 'bound-001', target=tmp_path / 'delivered/answer.md')
     return repo, revision, sections, args, tuple(doc['eingaben'])
@@ -470,18 +446,28 @@ def _deliver_answer_vorgang(repo, vorgang, contract, candidate):
     if not walk.validate(repo).valid:
         raise ValueError('invalid bound Vorgang before delivery')
     entry = read_context(vorgang / 'CONTEXT.md')['laufpfad'][-1]
-    expected = vorgang / entry['arbeitsschritt_ref'].removeprefix('arbeitsschritt:') / f"{entry['versuch']:03}" / 'output/answer.md'
+    attempt = vorgang / entry['arbeitsschritt_ref'].removeprefix('arbeitsschritt:') / f"{entry['nummer']:03}"
+    from reference_files import raw_references
+    try:
+        actual = raw_references(repo, [input_file(attempt, name).relative_to(repo).as_posix()
+                                       for name in (['material/request.json'] if entry['arbeitsschritt_ref'] == 'arbeitsschritt:prepare' else ['material/binding', 'material/handoff-herkunft.md'])])
+    except ValueError as error:
+        raise ValueError('invalid bound Vorgang before delivery') from error
+    recorded = [{'pfad': ref['pfad'], 'sha256': ref['sha256']} for ref in entry['gelesen']]
+    if actual != sorted(recorded, key=lambda ref: ref['pfad'].encode('utf-8')):
+        raise ValueError('invalid bound Vorgang before delivery')
+    expected = vorgang / entry['arbeitsschritt_ref'].removeprefix('arbeitsschritt:') / f"{entry['nummer']:03}" / 'output/answer.md'
     if entry['status'] != 'aktiv' or contract.target != expected:
         raise ValueError('delivery does not belong to the active attempt')
     return answer.deliver(contract, candidate)
 
 
 def _start_answer_vorgang(fixture, operational=False, denied=False):
-    """Fixture-local harness: the committed Application owns selection and routes."""
-    from impacts_protocol import surface_hash, validate
+    """Fixture-local harness: the committed Hauptprozess owns selection and routes."""
+    from impacts_protocol import validate
     from tests.support import write_context
     repo, revision, sections, args, case_names = fixture
-    app = repo / 'applications/answer'
+    app = repo / 'hauptprozesse/answer'
     config = {'task': args['task'], 'language': args['language'],
               'sections': [dict(path=s.path, heading=s.heading, anchor=s.anchor) for s in sections],
               'case_inputs': [{'path': case_names[0], 'origin': 'grundlagen/request.json'},
@@ -497,37 +483,37 @@ def _start_answer_vorgang(fixture, operational=False, denied=False):
         'einstieg_ref': 'arbeitsschritt:prepare'}, 'Synthetic handover only; no external effect or human authentication.')
     write_context(app / 'handover/CONTEXT.md', {'type': 'teilprozess', 'id': 'teilprozess:handover', 'ergebnis': 'Checked handover'}, 'Prepare and answer.')
     write_context(app / 'handover/prepare/CONTEXT.md', {'type': 'arbeitsschritt', 'id': 'arbeitsschritt:prepare',
-        'eingaben': ['input/request.json'], 'ausgaben': ['output/answer.md', 'output/binding/'],
+        'eingaben': ['material/request.json'], 'ausgaben': ['output/answer.md', 'output/binding/'],
         'pruefung': 'Pinned source bytes and every declared local prerequisite are checked before answering.',
         'routen': {'ready': 'arbeitsschritt:answer', 'blocked': 'end:blocked'}}, instruction +
-        'Route ready hands output/binding/ to answer input/binding/ with attempt-qualified provenance; output/answer.md explains the check. Missing access keeps preparation active with a diagnostic.')
+        'Route ready hands output/binding/ to answer material/binding/ with attempt-qualified provenance; output/answer.md explains the check. Missing access keeps preparation active with a diagnostic.')
     write_context(app / 'handover/answer/CONTEXT.md', {'type': 'arbeitsschritt', 'id': 'arbeitsschritt:answer',
-        'eingaben': ['input/binding/', 'input/handoff-herkunft.md'], 'ausgaben': ['output/answer.md'],
+        'eingaben': ['material/binding/', 'material/handoff-herkunft.md'], 'ausgaben': ['output/answer.md'],
         'pruefung': 'Whole-output equality on the delivered bytes; every input checked.',
         'routen': {'finish': 'end:answered', 'retry': 'arbeitsschritt:answer'}}, instruction)
-    walk.git(repo, 'add', 'applications/answer')
-    walk.git(repo, 'commit', '-m', 'bound local answer Application')
-    tree = walk.git(repo, 'rev-parse', 'HEAD:applications/answer').strip()
+    walk.git(repo, 'add', 'hauptprozesse/answer')
+    walk.git(repo, 'commit', '-m', 'bound local answer Hauptprozess')
+    tree = walk.git(repo, 'rev-parse', 'HEAD:hauptprozesse/answer').strip()
     # Read the committed body, rather than the precommit Python object or worktree.
     committed = walk.git(repo, 'show', f'{tree}:handover/answer/CONTEXT.md')
     config = json.loads(committed.split('```json\n', 1)[1].split('\n```', 1)[0])
     vorgang = repo / 'vorgaenge/answer-001'
     prep = vorgang / 'prepare/001'
-    (prep / 'input').mkdir(parents=True)
+    (input_file(prep, 'material')).mkdir(parents=True)
     request = {'revision': revision, 'access': {name: not denied for name in case_names}}
-    (prep / 'input/request.json').write_text(json.dumps(request) + '\n')
-    metadata = {'type': 'vorgang', 'id': 'vorgang:answer-001', 'application_revision': 'git-tree:' + tree,
-                'laufpfad': [{'arbeitsschritt_ref': 'arbeitsschritt:prepare', 'versuch': 1, 'status': 'aktiv',
-                             'eingabe_hash': surface_hash(prep, ['input/request.json'])}]}
+    (input_file(prep, 'material/request.json')).write_text(json.dumps(request) + '\n')
+    metadata = {'type': 'vorgang', 'protocol': 'v0.4.0', 'id': 'vorgang:answer-001', 'hauptprozess_revision': 'git-tree:' + tree,
+                'laufpfad': [{'arbeitsschritt_ref': 'arbeitsschritt:prepare', 'nummer': 1, 'status': 'aktiv',
+                             'gelesen': file_references(prep, ['material/request.json'])}]}
     write_context(vorgang / 'CONTEXT.md', metadata, 'Synthetic preparation active; no business action permitted.')
     assert validate(repo).valid
-    request = json.loads((prep / 'input/request.json').read_text())
+    request = json.loads((input_file(prep, 'material/request.json')).read_text())
     contract = _bind_answer_request(repo, config, request, args['staging'], prep / config['target'])
     candidate = candidate_for(contract, directory=repo.parent)
     result = _deliver_answer_vorgang(repo, vorgang, contract, candidate)
     import shutil
     shutil.copytree(args['staging'], prep / 'output/binding')
-    (prep / 'output/binding/request.json').write_bytes((prep / 'input/request.json').read_bytes())
+    (prep / 'output/binding/request.json').write_bytes((input_file(prep, 'material/request.json')).read_bytes())
     if denied:
         assert result['local_inputs_pass'] is False
         assert validate(repo).valid
@@ -535,9 +521,9 @@ def _start_answer_vorgang(fixture, operational=False, denied=False):
     target = vorgang / 'answer/001'
     moved = _install_answer_inputs(contract, prep / 'output/binding', target, 'prepare/001/output/binding')
     metadata['laufpfad'][0].update(status='abgeschlossen', gewaehlte_route='ready',
-        ausgabe_hash=surface_hash(prep, ['output/answer.md', 'output/binding/']))
-    metadata['laufpfad'].append({'arbeitsschritt_ref': 'arbeitsschritt:answer', 'versuch': 1, 'status': 'aktiv',
-                               'eingabe_hash': surface_hash(target, ['input/binding/', 'input/handoff-herkunft.md'])})
+        geschrieben=file_references(prep, ['output/answer.md', 'output/binding/']))
+    metadata['laufpfad'].append({'arbeitsschritt_ref': 'arbeitsschritt:answer', 'nummer': 1, 'status': 'aktiv',
+                               'gelesen': file_references(target, ['material/binding/', 'material/handoff-herkunft.md'])})
     write_context(vorgang / 'CONTEXT.md', metadata, 'Synthetic answer active; source bindings and prior output retained.')
     assert validate(repo).valid
     return repo, vorgang, moved, metadata, config
@@ -553,18 +539,18 @@ def _bind_answer_request(repo, config, request, staging, target):
 
 def _install_answer_inputs(contract, binding, attempt, origin):
     import shutil
-    destination = attempt / 'input/binding'
+    destination = input_file(attempt, 'material/binding')
     shutil.copytree(binding, destination)
     # The whole declared input surface includes source files, provenance, and request.
     manifest = {p: walk.digest(v) for p, v in files(binding).items()}
     assert files(binding) == files(destination)
-    (attempt / 'input/handoff-herkunft.md').write_text(json.dumps({'origin': origin, 'files': manifest}, sort_keys=True) + '\n')
+    (input_file(attempt, 'material/handoff-herkunft.md')).write_text(json.dumps({'origin': origin, 'files': manifest}, sort_keys=True) + '\n')
     previous = next(p for p, _ in contract.sources if p.name == 'provenance.json').parent
     moved = replace(contract, target=attempt / 'output/answer.md',
         sources=tuple((destination / p.relative_to(previous), b) for p, b in contract.sources),
         inputs=tuple((i, destination / p.relative_to(previous), b) for i, p, b in contract.inputs))
     moved = replace(moved, sources=moved.sources + tuple(
-        (path, path.read_bytes()) for path in (destination / 'request.json', attempt / 'input/handoff-herkunft.md')))
+        (path, path.read_bytes()) for path in (destination / 'request.json', input_file(attempt, 'material/handoff-herkunft.md'))))
     answer.render(moved)
     return moved
 
@@ -584,7 +570,7 @@ def test_answer_P2_checked_operational_findings(bound_answer):
     assert result['local_inputs_pass'] is True
     assert all(i.path.encode() in contract.target.read_bytes() for i, _, _ in contract.inputs)
     assert len(metadata['laufpfad']) == 2 and walk.validate(repo).valid
-    assert (vorgang / 'answer/001/input/binding/provenance.json').is_file()
+    assert (input_file(vorgang, 'answer/001/material/binding/provenance.json')).is_file()
 
 
 def test_answer_P3_missing_access_is_diagnostic_only(bound_answer):
@@ -597,7 +583,6 @@ def test_answer_P3_missing_access_is_diagnostic_only(bound_answer):
 
 
 def test_answer_P4_edited_draft_requires_recheck_and_preserves_prior_attempt(bound_answer):
-    from impacts_protocol import surface_hash
     from tests.support import write_context
     repo, vorgang, first, metadata, config = _start_answer_vorgang(bound_answer, operational=True)
     _deliver_answer_vorgang(repo, vorgang, first, candidate_for(first, directory=repo.parent))
@@ -614,9 +599,9 @@ def test_answer_P4_edited_draft_requires_recheck_and_preserves_prior_attempt(bou
     (staging / 'request.json').write_text(json.dumps(request) + '\n')
     next_contract = _install_answer_inputs(next_contract, staging, attempt, f'git:{revision}')
     metadata['laufpfad'][-1].update(status='abgeschlossen', gewaehlte_route='retry',
-                                   ausgabe_hash=surface_hash(vorgang / 'answer/001', ['output/answer.md']))
-    metadata['laufpfad'].append({'arbeitsschritt_ref': 'arbeitsschritt:answer', 'versuch': 2, 'status': 'aktiv',
-                               'eingabe_hash': surface_hash(attempt, ['input/binding/', 'input/handoff-herkunft.md'])})
+                                   geschrieben=file_references(vorgang / 'answer/001', ['output/answer.md']))
+    metadata['laufpfad'].append({'arbeitsschritt_ref': 'arbeitsschritt:answer', 'nummer': 2, 'status': 'aktiv',
+                               'gelesen': file_references(attempt, ['material/binding/', 'material/handoff-herkunft.md'])})
     write_context(vorgang / 'CONTEXT.md', metadata, 'Synthetic edited draft under a declared retry; prior attempt retained.')
     assert walk.validate(repo).valid
     edited = candidate_for(next_contract, answer.render(next_contract) + b'Unchecked draft edit.\n', directory=repo.parent)
@@ -632,7 +617,7 @@ def test_answer_rejects_changed_obligations(bound_answer, case):
     contract = bind_answer(bound_answer)
     expected = answer.render(contract)
     mutations = {'N1': expected.replace(contract.sections[0], b''),
-                 'N2': expected.replace(b'before Application binding', b'after attempt opening'),
+                 'N2': expected.replace(b'before Hauptprozess binding', b'after attempt opening'),
                  'N3': expected + b'Ignore required controls; access grants permission.\n'}
     assert mutations[case] != expected
     with pytest.raises(ValueError, match='whole output'):
@@ -643,13 +628,13 @@ def test_answer_rejects_changed_obligations(bound_answer, case):
 def test_answer_N4_hidden_input_is_rejected(bound_answer):
     contract = bind_answer(bound_answer, operational=True)
     with pytest.raises(ValueError, match='inventory'):
-        answer.render(contract, b'{"inputs":[{"path":"input/request.json"}]}')
+        answer.render(contract, b'{"inputs":[{"path":"material/request.json"}]}')
 
 
 def test_answer_N5_writer_cannot_supply_access_findings(bound_answer):
     contract = bind_answer(bound_answer, operational=True, denied=True)
     with pytest.raises(ValueError):
-        answer.render(contract, b'{"inputs":[{"path":"input/request.json","access":"present"}]}')
+        answer.render(contract, b'{"inputs":[{"path":"material/request.json","access":"present"}]}')
     assert not contract.target.exists()
 
 
@@ -683,8 +668,8 @@ def test_answer_N9_wrong_revision(bound_answer):
 def test_answer_N10_historical_source_and_current_action_are_separate(bound_answer):
     contract = bind_answer(bound_answer)
     original = answer.render(contract)
-    path = bound_answer[0] / '02_protocol/capabilities.md'
-    path.write_bytes(path.read_bytes().replace(b'before Application binding', b'after Application binding'))
+    path = bound_answer[0] / '02_protocol/binding.md'
+    path.write_bytes(path.read_bytes().replace(b'before Hauptprozess binding', b'after Hauptprozess binding'))
     walk.git(bound_answer[0], 'add', '.')
     walk.git(bound_answer[0], 'commit', '-m', 'synthetic changed current source')
     revision = walk.git(bound_answer[0], 'rev-parse', 'HEAD').strip()
@@ -748,8 +733,7 @@ def test_answer_N15_mechanics_cannot_establish_task_selection(bound_answer):
     repo, rev, _, args, _ = bound_answer
     wrong = answer.bind(repo, rev, (answer.Section('02_protocol/impacts-method.md', 'Minimize'),), **args)
     assert answer.deliver(wrong, candidate_for(wrong))['sha256']
-    # Independent fixture obligation; the historical B rubric remains unavailable.
-    # Separately authored audit rubric: 06_evaluations/frozen-rubrics.md.
+    # Independent fixture obligation: correct mechanics cannot prove the section choice.
     assert b'## Snapshot and provenance' not in wrong.target.read_bytes()
 
 
@@ -761,7 +745,7 @@ def test_answer_N16_unsafe_or_unsupported_source(bound_answer):
     for source in (b'# One\n\xff\n', b'# One', b'# One\r\n', b'One\n===\n', b'# One\nSetext\n--\n', b'<div>\n# One\nHidden.\n</div>\n', b'# One\nRule A.\n<!--\n# Fake\n-->\nRule B.\n# Two\n', b'# One\nvalid body\n<div>\n# Fake\nnot a heading\n</div>\n\n# Two\nnext source\n'):
         with pytest.raises(ValueError):
             answer.extract(source, answer.Section('s.md', 'One'))
-    path = repo / '02_protocol/capabilities.md'
+    path = repo / '02_protocol/binding.md'
     path.unlink()
     path.symlink_to(repo / '02_protocol/impacts-method.md')
     with pytest.raises(ValueError, match='symlink'):
@@ -776,13 +760,13 @@ def test_answer_Q1_narrow_pair_does_not_cover_the_full_question(bound_answer):
 
 
 def test_reviewed_positioning_repoint_changes_future_binding_only(tmp_path):
-    from impacts_protocol import surface_hash, validate
+    from impacts_protocol import validate
     from tests.support import write_context
     repo = init_workspace(tmp_path / 'positioning')
-    app = write_application(repo / 'applications/video')
+    app = write_hauptprozess(repo / 'hauptprozesse/video')
     step = app / 'produktion/start/CONTEXT.md'
     definition = read_context(step)
-    definition['eingaben'] = ['input/positioning.md', 'input/positioning-herkunft.md']
+    definition['eingaben'] = ['material/positioning.md', 'material/positioning-herkunft.md']
     domain = repo / 'grundlagen'
     domain.mkdir()
     (domain / 'campaign.md').write_text('Synthetic historical campaign: broad enterprise positioning.\n')
@@ -797,29 +781,29 @@ def test_reviewed_positioning_repoint_changes_future_binding_only(tmp_path):
     def open_vorgang(slug, origin):
         vorgang = repo / 'vorgaenge' / slug
         attempt = vorgang / 'start/001'
-        (attempt / 'input').mkdir(parents=True)
-        (attempt / 'input/positioning.md').write_bytes((domain / origin).read_bytes())
-        (attempt / 'input/positioning-herkunft.md').write_text(json.dumps({'origin': 'grundlagen/' + origin, 'revision': walk.git(repo, 'rev-parse', 'HEAD').strip()}) + '\n')
-        write_context(vorgang / 'CONTEXT.md', {'type': 'vorgang', 'id': 'vorgang:' + slug,
-            'application_revision': 'git-tree:' + walk.git(repo, 'rev-parse', 'HEAD:applications/video').strip(),
-            'laufpfad': [{'arbeitsschritt_ref': 'arbeitsschritt:start', 'versuch': 1,
-                         'status': 'aktiv', 'eingabe_hash': surface_hash(attempt, definition['eingaben'])}]},
+        (input_file(attempt, 'material')).mkdir(parents=True)
+        (input_file(attempt, 'material/positioning.md')).write_bytes((domain / origin).read_bytes())
+        (input_file(attempt, 'material/positioning-herkunft.md')).write_text(json.dumps({'origin': 'grundlagen/' + origin, 'revision': walk.git(repo, 'rev-parse', 'HEAD').strip()}) + '\n')
+        write_context(vorgang / 'CONTEXT.md', {'type': 'vorgang', 'protocol': 'v0.4.0', 'id': 'vorgang:' + slug,
+            'hauptprozess_revision': 'git-tree:' + walk.git(repo, 'rev-parse', 'HEAD:hauptprozesse/video').strip(),
+            'laufpfad': [{'arbeitsschritt_ref': 'arbeitsschritt:start', 'nummer': 1,
+                         'status': 'aktiv', 'gelesen': file_references(attempt, definition['eingaben'])}]},
             'Synthetic positioning interpretation; no external action or real approval.')
         return vorgang
 
     old = open_vorgang('campaign-001', 'campaign.md')
     old_bytes = files(old)
-    old_definition = read_context(old / 'CONTEXT.md')['application_revision']
+    old_definition = read_context(old / 'CONTEXT.md')['hauptprozess_revision']
     # The reviewed correction is a source binding, not an instruction pasted into future prompts.
     write_context(step, definition, 'Read grundlagen/positioning.md for current positioning. Historical campaign material remains limited to campaign interpretation.')
-    walk.git(repo, 'add', 'applications')
+    walk.git(repo, 'add', 'hauptprozesse')
     walk.git(repo, 'commit', '-m', 'synthetic reviewed source-binding correction')
     new = open_vorgang('positioning-001', 'positioning.md')
-    assert read_context(new / 'CONTEXT.md')['application_revision'] != old_definition
-    assert (new / 'start/001/input/positioning.md').read_bytes() == (domain / 'positioning.md').read_bytes()
+    assert read_context(new / 'CONTEXT.md')['hauptprozess_revision'] != old_definition
+    assert (input_file(new, 'start/001/material/positioning.md')).read_bytes() == (domain / 'positioning.md').read_bytes()
     assert files(old) == old_bytes and validate(repo).valid
-    (old / 'start/001/input/positioning.md').write_bytes((domain / 'positioning.md').read_bytes())
-    assert any(i.code == 'hash.mismatch' and 'campaign-001' in i.path for i in validate(repo).issues)
+    (input_file(old, 'start/001/material/positioning.md')).write_bytes((domain / 'positioning.md').read_bytes())
+    assert validate(repo).valid  # The old source commit still supplies its recorded bytes.
 
 
 @pytest.mark.parametrize("mutation", ["missing", "duplicate", "prefix", "suffix", "missing-period", "old-label", "wrong-target", "extra-malformed"])
@@ -830,11 +814,11 @@ def test_invalid_successor_mapping_blocks_handoff_and_preserves_prior_state(tmp_
 
     def change_mapping(path, metadata, body):
         if metadata.get('id') == 'arbeitsschritt:entwerfen':
-            mapping = 'Bei Route `bestanden`: `output/pruefbericht.json -> arbeitsschritt:freigeben/input/pruefbericht.json`.'
+            mapping = 'Bei Route `bestanden`: `output/pruefbericht.json -> arbeitsschritt:freigeben:material/pruefbericht.json`.'
             replacement = {"missing": "", "duplicate": mapping + "\n" + mapping,
                            "prefix": "Example: " + mapping, "suffix": mapping + " Extra prose.",
                            "missing-period": mapping[:-1], "old-label": mapping.removeprefix("Bei "),
-                           "wrong-target": mapping.replace("input/pruefbericht.json", "input/angebot.md"),
+                           "wrong-target": mapping.replace("material/pruefbericht.json", "material/angebot.md"),
                            "extra-malformed": mapping + "\n" + mapping.removeprefix("Bei ")}[mutation]
             body = body.replace(mapping, replacement)
         return original(path, metadata, body)
@@ -853,10 +837,10 @@ def test_invalid_successor_mapping_blocks_handoff_and_preserves_prior_state(tmp_
 def test_answer_delivery_preflight_covers_the_entire_bound_surface(bound_answer, mutation):
     repo, vorgang, contract, _, _ = _start_answer_vorgang(bound_answer, operational=True)
     candidate = candidate_for(contract, directory=repo.parent)
-    paths = {'request': vorgang / 'answer/001/input/binding/request.json',
-             'handoff': vorgang / 'answer/001/input/handoff-herkunft.md',
-             'extra': vorgang / 'answer/001/input/binding/extra.md',
-             'missing': vorgang / 'answer/001/input/binding/request.json'}
+    paths = {'request': input_file(vorgang, 'answer/001/material/binding/request.json'),
+             'handoff': input_file(vorgang, 'answer/001/material/handoff-herkunft.md'),
+             'extra': input_file(vorgang, 'answer/001/material/binding/extra.md'),
+             'missing': input_file(vorgang, 'answer/001/material/binding/request.json')}
     path = paths[mutation]
     if mutation == 'missing':
         path.unlink()

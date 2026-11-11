@@ -8,18 +8,18 @@ from pathlib import Path
 import pytest
 
 from impacts_protocol.view import blocks, project, read, selection, working_language, write, run
-from tests.support import git, write_application
+from tests.support import git, write_hauptprozess
 from tests.test_view import TEMPLATE_EN, TEMPLATE_DE, _ist_workspace, _workspace, elements, render_page, text_content
 
 
 @pytest.mark.parametrize('tail', ['    ', '\t', '    \n    '])
-def test_trailing_indented_blank_line_keeps_valid_application_readable(tmp_path, tail):
-    root = write_application(tmp_path / 'video')
+def test_trailing_indented_blank_line_keeps_valid_hauptprozess_readable(tmp_path, tail):
+    root = write_hauptprozess(tmp_path / 'video')
     path = root / 'produktion/start/CONTEXT.md'
     path.write_text(path.read_text() + '\n## Extra\n' + tail)
     from impacts_protocol.validator import validate
     assert validate(root).valid
-    assert not selection.application_page(root)['issues']
+    assert not selection.hauptprozess_page(root)['issues']
 
 
 def test_case_alias_output_cannot_mutate_workspace(tmp_path):
@@ -67,7 +67,7 @@ def test_workspace_language_ignores_fenced_example(tmp_path):
 def test_git_replacement_does_not_change_view_snapshot(tmp_path):
     root = _workspace(tmp_path)
     old = git(root, 'rev-parse', 'HEAD')
-    path = root / 'applications/video/produktion/start/CONTEXT.md'
+    path = root / 'hauptprozesse/video/produktion/start/CONTEXT.md'
     path.write_text(path.read_text() + '\n## Inputs\n\nActual newer content.\n')
     git(root, 'commit', '-qam', 'new source')
     current = git(root, 'rev-parse', 'HEAD')
@@ -93,10 +93,10 @@ def test_shared_alias_collections_do_not_expand_into_large_pages(tmp_path):
 
 
 def test_reported_prose_retains_mockup_without_visible_evidence_word(tmp_path):
-    root = write_application(tmp_path / 'video')
+    root = write_hauptprozess(tmp_path / 'video')
     path = root / 'produktion/start/CONTEXT.md'
     path.write_text(path.read_text() + '\n## Inputs\n\nSource says so (`reported`). Checked (`verified`).\n')
-    model = {**selection.application_page(root), 'language': 'de'}
+    model = {**selection.hauptprozess_page(root), 'language': 'de'}
     sheet = render_page(tmp_path, write.page_html(model), '#arbeitsschritt:start')['sheet']
     inputs = next(e for e in elements(sheet) if e['attrs'].get('id') == 's-inputs')
     assert 'Beleg' not in text_content(inputs)
@@ -104,12 +104,12 @@ def test_reported_prose_retains_mockup_without_visible_evidence_word(tmp_path):
     assert any(e['tagName']=='BUTTON' and e['attrs'].get('class')=='source-ref' for e in elements(inputs))
 
 
-def test_application_output_cannot_add_folder_to_workspace_applications(tmp_path):
+def test_hauptprozess_output_cannot_add_folder_to_workspace_hauptprozesse(tmp_path):
     from impacts_protocol.view import run
     root = _workspace(tmp_path)
     before = sorted(str(p.relative_to(root)) for p in root.rglob('*'))
     with pytest.raises(SystemExit, match='overlap'):
-        run(root / 'applications/video', root / 'applications/out')
+        run(root / 'hauptprozesse/video', root / 'hauptprozesse/out')
     assert sorted(str(p.relative_to(root)) for p in root.rglob('*')) == before
 
 
@@ -148,9 +148,9 @@ def test_finite_yaml_stays_readable(tmp_path):
  assert read.read_file(p,'ist.md')['meta']['value']==1.5
 
 @pytest.mark.parametrize('workspace',[False,True])
-def test_application_without_git_preserves_declared_workspace_boundary(tmp_path,monkeypatch,workspace):
- root=_workspace(tmp_path) if workspace else write_application(tmp_path/'video')
- source=root/'applications/video' if workspace else root
+def test_hauptprozess_without_git_preserves_declared_workspace_boundary(tmp_path,monkeypatch,workspace):
+ root=_workspace(tmp_path) if workspace else write_hauptprozess(tmp_path/'video')
+ source=root/'hauptprozesse/video' if workspace else root
  original=selection.subprocess.run
  def missing_git(args,*a,**kw):
   if args[0]=='git':raise FileNotFoundError('git is unavailable')
@@ -158,7 +158,7 @@ def test_application_without_git_preserves_declared_workspace_boundary(tmp_path,
  monkeypatch.setattr(selection.subprocess,'run',missing_git)
  assert run(source,tmp_path/'outside-view')==0
  if workspace:
-  with pytest.raises(SystemExit,match='overlap'):run(source,root/'applications/out')
+  with pytest.raises(SystemExit,match='overlap'):run(source,root/'hauptprozesse/out')
 
 
 @pytest.mark.parametrize('bad', ['arbeitsschritt:startä','arbeitsschritt:start.ä','äarbeitsschritt:start','`arbeitsschritt:start`ä','ä`arbeitsschritt:start`','arbeitsschritt:start, arbeitsschritt:start.ä'])
@@ -185,3 +185,19 @@ def test_valid_target_across_markup_uses_link_and_retains_original_spans(tmp_pat
     row = next(e for e in elements(sheet) if e['attrs'].get('class') == 'nrow')
     assert any(e['tagName'] == 'A' and e['attrs']['href'].endswith('#arbeitsschritt%3Astart')
                for e in elements(row))
+
+
+def test_processing_bare_contribution_names_are_not_invented_labels(tmp_path):
+    root = write_hauptprozess(tmp_path / 'video')
+    source = root / 'produktion/start/CONTEXT.md'
+    source.write_text(source.read_text(encoding='utf-8') +
+                      '\n## Processing\n\n- Agent\n- Human\n- Deterministic system\n- Classifier\n'
+                      '- Agent: inspect evidence\n- Human: decide\n- Procedure\n  - Agent\n',
+                      encoding='utf-8')
+    model = {**selection.hauptprozess_page(root), 'language': 'en'}
+    assert not model['issues']
+    sheet = render_page(tmp_path, write.page_html(model), '#arbeitsschritt:start')['sheet']
+    processing = next(e for e in elements(sheet) if e['attrs'].get('id') == 's-processing')
+    items = [text_content(e) for e in elements(processing) if e['tagName'] == 'LI']
+    assert items == ['•Agent', '•Human', '•Deterministic system', '•Classifier',
+                     'Agent: inspect evidence', 'Human: decide', '•Procedure', '•Agent']

@@ -1,7 +1,7 @@
 """File-native IMPACTS workspace protocol."""
 
 from .generator import init_workspace
-from .hashing import HashSurfaceError, surface_hash
+from .hashing import HashSurfaceError, file_references
 from .model import Issue, ValidationReport
 
 
@@ -18,6 +18,6 @@ __all__ = [
     "Issue",
     "ValidationReport",
     "init_workspace",
-    "surface_hash",
+    "file_references",
     "validate",
 ]

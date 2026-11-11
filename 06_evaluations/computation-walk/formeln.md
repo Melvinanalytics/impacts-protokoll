@@ -6,13 +6,13 @@ Status: synthetic example. Operation authority: [run.py](run.py); behavior is ch
 
 | Responsibility | Existing home | Boundary |
 |---|---|---|
-| Meaning, method, parameters and applicability | Domain formula file or earned Capability | No customer-specific rule becomes a Core requirement. |
+| Meaning, method, parameters and applicability | Its [Foundations home](../../02_protocol/impacts-architect/references/formwahl.md#data-kinds); an earned Capability links it | No customer-specific rule becomes a Core requirement. |
 | Expected sources and minimum controls | Calling Arbeitsschritt | Do not repeat the formula implementation. |
 | Actual values, origin and time basis | Input snapshot of one attempt | Unknown stays unknown; the snapshot is not the live source of truth. |
 | Values, blockers and interpretation | Ordinary output file | Correct arithmetic does not release a commitment. |
 | Next process action | Existing `pruefung` and route | A knowledge link is not an execution edge. |
 
-An input's declared origin is not independent source verification. Revisions, manual checks or monitoring are bound by the calling Arbeitsschritt according to use and risk, under the [public governance rule](../../02_protocol/capabilities.md#data-governance). This example has no source connector: all data is explicitly synthetic. `as_of` records the scenario timestamp; it does not establish source freshness or a validity period. `verified` in a supplied snapshot cannot authenticate its author or make a result current.
+An input's declared origin is not independent source verification. Revisions, manual checks or monitoring are bound by the calling Arbeitsschritt according to use and risk, under the [public governance rule](../../02_protocol/binding.md#source-inputs-for-core-hauptprozesse). This example has no source connector: all data is explicitly synthetic. `as_of` records the scenario timestamp; it does not establish source freshness or a validity period. `verified` in a supplied snapshot cannot authenticate its author or make a result current.
 
 ## Selected operations
 
@@ -28,7 +28,7 @@ Demand and economics are optional; each named resource requires hours and effort
 
 The code declares supported parameter names, units and numeric domains and emits the question for each unusable input. The snapshot supplies values, evidence labels and origins. Results expose local dependency names under `inputs`; these are local calculation bindings, not global node IDs. UI tables or a graph may project those bindings instead of maintaining a second dependency list. Identifying a responsible person for a resulting question belongs to the concrete Arbeitsschritt; the demo does not invent a customer role.
 
-## Partial, negative and changed outcomes
+## Partial, negative and changed results
 
 | Synthetic configuration | Modeled volume | Operating result/month | What it shows |
 |---|---:|---:|---|
@@ -50,7 +50,7 @@ The tests independently check these values and mutations. Compare complete confi
 - A human, agent and deterministic system may contribute within the same Arbeitsschritt. The calculator replaces none of the remaining authority or interaction requirements.
 - The complete input bytes and output evidence are visible. Do not supply secrets or unnecessary personal data. A production harness controls access, isolation and retention.
 - Runtime: Python 3.11+ standard library, Decimal precision 28; finite nonnegative inputs, positive effort, shares in [0,1]. Results are decimal strings. This example performs no financial settlement rounding; a real financial calculation needs its own approved rounding rules.
-- The local rule-file digest is diagnostic, not execution attestation or trust approval. Production reuse needs the Application-bound revision and host checks in the Capability contract.
+- The local rule-file digest is diagnostic, not execution attestation or trust approval. Production reuse needs the revision the Hauptprozess binds and host checks in the Capability contract.
 
 ## Transfer recipe
 

@@ -2,8 +2,8 @@
 type: arbeitsschritt
 id: arbeitsschritt:entscheiden
 eingaben:
-  - input/pruefbericht.md
-  - input/pruefbericht-herkunft.md
+  - material/pruefbericht.md
+  - material/pruefbericht-herkunft.md
 ausgaben:
   - output/entscheidung.md
 pruefung: Entscheidung nennt Prüfbericht, tatsächliche Gate-Entscheidung und Begründung
@@ -18,11 +18,11 @@ customer_touchpoint: sacred
 
 ## Ein Job
 
-Die tatsächliche menschliche Entscheidung zum gebundenen Prüfbericht mit Begründung festhalten. Diese Fixture ersetzt den Gate-Schritt erst in einer neuen Application-Revision; der historische Baum bleibt erhalten.
+Die tatsächliche menschliche Entscheidung zum gebundenen Prüfbericht mit Begründung festhalten. Diese Fixture ersetzt den Gate-Schritt erst in einer neuen Hauptprozess-Revision; der historische Baum bleibt erhalten.
 
 ## Eingaben
 
-`input/pruefbericht.md` und `input/pruefbericht-herkunft.md`. Das Producer-Mapping steht im erzeugenden Schritt `arbeitsschritt:pruefen`; der Vorgang belegt den versuchsqualifizierten Ursprung.
+`material/pruefbericht.md` und `material/pruefbericht-herkunft.md`. Das Producer-Mapping steht im erzeugenden Schritt `arbeitsschritt:pruefen`; der Vorgang belegt den versuchsqualifizierten Ursprung.
 
 ## Nicht laden
 
@@ -34,7 +34,7 @@ Vor Gate-Öffnung prüft das Harness Bericht, versuchsqualifizierten Ursprung, C
 
 ## Ausgaben und Wirkungen
 
-`output/entscheidung.md` nennt `Prüfbericht`, `Entscheidung` (`freigegeben` oder `abgelehnt`) und `Begründung` mit nicht leeren Werten. Das Harness erhält darin die empfangenen synthetischen Entscheidungsfelder einschließlich Inhaber und Entscheidungszeit sowie die gebundene Application-Revision und den Digest des entschiedenen Berichts. Keine externe Wirkung ist erlaubt.
+`output/entscheidung.md` nennt `Prüfbericht`, `Entscheidung` (`freigegeben` oder `abgelehnt`) und `Begründung` mit nicht leeren Werten. Das Harness erhält darin die empfangenen synthetischen Entscheidungsfelder einschließlich Inhaber und Entscheidungszeit sowie die gebundene Hauptprozess-Revision und den Digest des entschiedenen Berichts. Keine externe Wirkung ist erlaubt.
 
 ## Prüfung
 
@@ -42,7 +42,7 @@ Die aufgezeichnete Entscheidung stimmt mit der tatsächlichen belegten Entscheid
 
 ## Befugnis
 
-Die positive Fixture nennt `human:beispiel-pruefer` als gesetzten Entscheidungsinhaber. Eine echte Entscheidung benötigt ihre tatsächliche zuständige Person und den eingerichteten vertrauenswürdigen Herkunftsweg nach `02_protocol/capabilities.md#signale-und-human-gate`; die Fixture erteilt keine reale Befugnis.
+Die positive Fixture nennt `human:beispiel-pruefer` als gesetzten Entscheidungsinhaber. Eine echte Entscheidung benötigt ihre tatsächliche zuständige Person und den eingerichteten vertrauenswürdigen Herkunftsweg nach `02_protocol/binding.md#signals-and-human-gates`; die Fixture erteilt keine reale Befugnis.
 
 ## Ablauf
 

@@ -4,28 +4,28 @@ id: teilprozess:vorpruefung
 ergebnis: Prüffähiger Prüfbericht
 ---
 
-<!-- Translation source: 02_protocol/templates/teilprozess.md; sha256: bb39f46de2df4b17e99f61894f4854bcef2b2a30fe207488e5789634b5a2e40c -->
+<!-- Translation source: 02_protocol/templates/teilprozess.md; sha256: 53d0b82ef3ee02238163061f7b32fad0871ec0e0253637371b3df2d4b0711762 -->
 
 # Vorprüfung
 
-Ein Teilprozess ist ein fachlich geschlossener Abschnitt des Hauptprozesses. Seine Arbeitsschritte sind seine Unterordner; der Ordnername ist der Slug seiner ID. Beispielwerte ersetzen.
+Die Bedeutung des Teilprozesses (`02_protocol/ontology.md#protocol-vocabulary`) und den Zuschnitt nach Ergebnis (`02_protocol/impacts-architect/references/zuschnitt.md#teilprozess`) anwenden. Jede Aufforderung und jeden Beispielwert durch den Inhalt dieser Definition ersetzen; ungenutzte optionale Blöcke löschen.
 
 ## Beitrag zur Leistung
 
-Ein fachlich geschlossenes Ergebnis dieses Abschnitts, seinen Empfänger oder konsumierenden Folgeabschnitt und seine erlaubte Nutzung angeben. Den Bestandteil der Leistungsstückliste nennen, den der Abschnitt erzeugt oder vollendet, samt den Verbindungen, die er verantwortet, oder die Voraussetzung, die er herstellt, gemäß `02_protocol/impacts-architect/references/zuschnitt.md`, Abschnitt „Teilprozess“. Hauptprozess und untergeordnete Arbeitsschritte nicht wiederholen.
+Ein fachlich geschlossenes Ergebnis dieses Teilprozesses, seinen Empfänger oder konsumierenden Folge-Teilprozess und seine erlaubte Nutzung angeben. Den Bestandteil der Leistungsstückliste nennen, den seine Arbeitsschritte erzeugen oder vollenden, samt ihren Verbindungen, oder die Voraussetzung, die sie herstellen, gemäß `02_protocol/impacts-architect/references/zuschnitt.md`, Abschnitt „Teilprozess“. Hauptprozess und untergeordnete Arbeitsschritte nicht wiederholen.
 
 ## Eingaben und Grenzen
 
-Abschnittsübergreifend benötigte vorgelagerte Ergebnisse, Fachdefinitionen, Regeln, Ressourcen und Befugnisse benennen. Relevante Ausschlüsse und Bedingungen nennen, unter denen der Abschnitt sein Ergebnis nicht beanspruchen darf. Auf jede Quellenheimat verweisen; ihren Inhalt nicht in diesen Teilprozessvertrag kopieren.
+Im ganzen Teilprozess benötigte vorgelagerte Ergebnisse, Fachdefinitionen, Regeln, Ressourcen und Befugnisse benennen. Relevante Ausschlüsse und Bedingungen nennen, unter denen der Teilprozess sein Ergebnis nicht beanspruchen darf. Auf jede Quellenheimat verweisen; ihren Inhalt nicht in diesen Teilprozessvertrag kopieren.
 
 ## Zusammenspiel der Arbeitsschritte
 
-Jeden erforderlichen Bestandteil von `ergebnis` dem erzeugenden Arbeitsschritt zuordnen. Bei einer internen Übergabe auf die vom Producer deklarierte Übergabe und anwendbare Prüfung verweisen, ohne ihre Pfade zu wiederholen oder eine zweite Routentabelle zu führen. An einer terminalen Grenze stattdessen finalen Empfänger, akzeptiertes Ergebnis und anwendbares Ende nennen; keinen nachgelagerten Consumer erfinden. Jeder untergeordnete Arbeitsschritt muss zum Abschnittsergebnis beitragen.
+Jeden erforderlichen Bestandteil von `ergebnis` dem erzeugenden Arbeitsschritt zuordnen. Bei einer internen Übergabe auf die vom Producer deklarierte Übergabe und anwendbare Prüfung verweisen, ohne ihre Pfade zu wiederholen oder eine zweite Routentabelle zu führen. An einer terminalen Grenze stattdessen finalen Empfänger, Leistung und anwendbares Ende nennen; keinen nachgelagerten Consumer erfinden.
 
 ## Einrichtungsabschluss
 
-Die Definitionseinrichtung ist abgeschlossen, wenn jeder Ergebnisbestandteil erzeugenden Arbeitsschritt, sichtbare Ausgabe und anwendbare Prüfung hat; jedes interne Ergebnis referenziert seine konsumierende Grenze, jedes terminale Ergebnis nennt finalen Empfänger und Ende. Jede erforderliche Eingabe ist beschaffbar oder mit nächster Aktion und Nutzungsgrenze ausdrücklich offen, und kein untergeordneter Job oder Claim liegt außerhalb des Abschnittsbeitrags. Vor dem Kandidaten-Commit hier einen gestützten Fall, einen Fall mit fehlender oder widersprüchlicher Voraussetzung und einen Fall mit plausibler unzulässiger Schlussfolgerung über diesen Abschnitt festhalten und prüfen. Je Fall Voraussetzung, erwartetes Ergebnis, Prüfergebnis und offene Lücken festhalten. Synthetische Fälle kennzeichnen; erwartete Ergebnisse sind keine beobachteten Ausführungsergebnisse. Nach dem Commit liefert die Test-Phase beobachtete Harness-Evidenz für genau diese Revision. Strukturelle Gültigkeit und Designprüfung belegen weder Einsatzbereitschaft noch `ergebnis`.
+Die Definitionseinrichtung ist abgeschlossen, wenn jeder Ergebnisbestandteil erzeugenden Arbeitsschritt, sichtbare Ausgabe und anwendbare Prüfung hat; jedes interne Ergebnis referenziert seine konsumierende Grenze, jedes terminale Ergebnis nennt finalen Empfänger und Ende. Jede erforderliche Eingabe ist beschaffbar oder mit nächster Aktion und Nutzungsgrenze ausdrücklich offen, und kein untergeordneter Job oder Claim liegt außerhalb des Beitrags des Teilprozesses. Vor dem Kandidaten-Commit hier einen gestützten Fall, einen Fall mit fehlender oder widersprüchlicher Voraussetzung und einen Fall mit plausibler unzulässiger Schlussfolgerung über diesen Teilprozess festhalten und prüfen. Je Fall Voraussetzung und erwartetes Ergebnis festhalten. Die Prüfevidenz nach `02_protocol/impacts-method.md#maintain-agent-instructions` verlinken.
 
 ## Frühindikator
 
-Nur wenn eine früh beobachtbare Größe eine konkrete Steuerungsentscheidung unterstützt: Indikator, vermuteten Zusammenhang zur Kennzahl der Leistung und mögliche Handlung nennen. Der Zusammenhang bleibt `hypothesis`, bis beobachtete Ergebnisse ihn stützen. Sonst diesen Abschnitt weglassen; Beitrag und Ergebnis des Abschnitts bleiben erforderlich.
+Nur wenn eine früh beobachtbare Größe eine konkrete Steuerungsentscheidung unterstützt: Indikator, vermuteten Zusammenhang zur Kennzahl der Leistung und mögliche Handlung nennen. Sonst diesen Abschnitt weglassen; Beitrag und `ergebnis` bleiben erforderlich.

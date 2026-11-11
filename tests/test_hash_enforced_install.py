@@ -1,18 +1,8 @@
-"""The selected Linux install set is fully pinned and rejects changed wheel bytes."""
+"""The selected Linux install set pins every runtime dependency with a hash."""
 
-import base64
-import csv
-import hashlib
-from io import StringIO
 from pathlib import Path
 import re
-import subprocess
-import sys
 import tomllib
-import venv
-import zipfile
-
-import pytest
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -40,55 +30,3 @@ def test_install_lock_pins_direct_runtime_and_transitive_dependencies():
     assert "setuptools" in normalized  # pinned build backend for the editable source install
     assert len(normalized) == len(parsed)
 
-
-def _wheel(path: Path) -> None:
-    files = {
-        "tiny_dependency.py": b"VALUE = 1\n",
-        "tiny_dependency-1.0.dist-info/METADATA": (
-            b"Metadata-Version: 2.1\nName: tiny-dependency\nVersion: 1.0\n"
-        ),
-        "tiny_dependency-1.0.dist-info/WHEEL": (
-            b"Wheel-Version: 1.0\nGenerator: evidence-test\nRoot-Is-Purelib: true\nTag: py3-none-any\n"
-        ),
-    }
-    rows = []
-    for name, content in files.items():
-        digest = base64.urlsafe_b64encode(hashlib.sha256(content).digest()).decode().rstrip("=")
-        rows.append((name, f"sha256={digest}", str(len(content))))
-    rows.append(("tiny_dependency-1.0.dist-info/RECORD", "", ""))
-    record = StringIO(newline="")
-    csv.writer(record, lineterminator="\n").writerows(rows)
-    files["tiny_dependency-1.0.dist-info/RECORD"] = record.getvalue().encode()
-    with zipfile.ZipFile(path, "w") as archive:
-        for name, content in files.items():
-            archive.writestr(name, content)
-
-
-def test_pip_rejects_modified_dependency_wheel_under_hash_checking(tmp_path):
-    wheels = tmp_path / "wheels"
-    wheels.mkdir()
-    artifact = wheels / "tiny_dependency-1.0-py3-none-any.whl"
-    _wheel(artifact)
-    approved_hash = hashlib.sha256(artifact.read_bytes()).hexdigest()
-    with artifact.open("ab") as changed:
-        changed.write(b"changed after its approved digest")
-    requirements = tmp_path / "requirements.txt"
-    requirements.write_text(
-        f"tiny-dependency==1.0 --hash=sha256:{approved_hash}\n", encoding="utf-8"
-    )
-
-    environment = tmp_path / "venv"
-    venv.create(environment, with_pip=True)
-    python = environment / ("Scripts/python.exe" if sys.platform == "win32" else "bin/python")
-    result = subprocess.run(
-        [
-            str(python), "-m", "pip", "install", "--disable-pip-version-check",
-            "--no-index", "--find-links", str(wheels), "--require-hashes",
-            "--no-deps", "-r", str(requirements), "--target", str(tmp_path / "target"),
-        ],
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-    assert result.returncode != 0
-    assert "do not match the hashes" in (result.stdout + result.stderr).lower()

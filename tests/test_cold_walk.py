@@ -1,3 +1,6 @@
+import sys
+sys.path.insert(0, str(__import__("pathlib").Path(__file__).resolve().parents[1] / "06_evaluations"))
+from reference_files import input_file, references as file_references
 from contextlib import redirect_stdout
 from copy import deepcopy
 from importlib.util import module_from_spec, spec_from_file_location
@@ -15,7 +18,7 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 COLD_WALK = ROOT / "06_evaluations" / "cold-walk"
 CHECK_PATH = COLD_WALK / "check.py"
-BEISPIEL = COLD_WALK / "beispiel" / "applications" / "prueffall"
+BEISPIEL = COLD_WALK / "beispiel" / "hauptprozesse" / "prueffall"
 from impacts_protocol import validate
 
 
@@ -26,16 +29,16 @@ def _tree_bytes(root):
 def _producer(tmp_path):
     check = _check_module()
     root, _, _, revision, _ = check._prepare_workspace(tmp_path)
-    source = check._application_source(root, revision)
+    source = check._hauptprozess_source(root, revision)
     rules, provenance = check._materialize_source(root, source)
     harness = check.Harness(root, revision)
     entry = harness.open("pruefen", 1, {
-        "input/antrag.md": "Synthetic application.\n",
-        "input/antrag-herkunft.md": "Herkunft: synthetic\n",
+        "material/antrag.md": "Synthetic hauptprozess.\n",
+        "material/antrag-herkunft.md": "Herkunft: synthetic\n",
         source.input_path: rules.decode(), source.provenance_input: provenance,
     })
     payload = "Synthetic handoff report.\n"
-    handoff = check._application_handoff(root, revision, "pruefen", "bestanden")
+    handoff = check._hauptprozess_handoff(root, revision, "pruefen", "bestanden")
     inputs = {handoff.consumer_input: payload, handoff.provenance_input: check._handoff_provenance(handoff.origin("pruefen", 1), payload.encode())}
     return check, harness, entry, handoff, payload, inputs
 
@@ -44,7 +47,7 @@ def _terminal(tmp_path, *, open_attempt=True):
     from tests.support import write_context, write_workstep, git
     check = _check_module()
     root = check.init_workspace(tmp_path / "terminal-workspace")
-    app = root / "applications/prueffall"
+    app = root / "hauptprozesse/prueffall"
     write_context(app / "CONTEXT.md", {
         "type": "hauptprozess", "id": "hauptprozess:prueffall",
         "leistung": {"ergebnis": "Synthetic final report", "kennzahl": "time", "abnahme": ["final report"]},
@@ -53,13 +56,15 @@ def _terminal(tmp_path, *, open_attempt=True):
     part = app / "work"
     write_context(part / "CONTEXT.md", {"type": "teilprozess", "id": "teilprozess:work", "ergebnis": "Synthetic report"})
     write_workstep(part, "finish")
+    contract = part / "finish/CONTEXT.md"
+    contract.write_text(contract.read_text().replace("input/auftrag.md", "material/auftrag.md"))
     git(root, "init", "-b", "main")
     git(root, "config", "user.email", "test@example.invalid")
     git(root, "config", "user.name", "Synthetic fixture")
     git(root, "add", ".")
-    git(root, "commit", "-m", "synthetic terminal Application")
-    harness = check.Harness(root, git(root, "rev-parse", "HEAD:applications/prueffall"))
-    entry = harness.open("finish", 1, {"input/auftrag.md": "Synthetic task"}) if open_attempt else None
+    git(root, "commit", "-m", "synthetic terminal Hauptprozess")
+    harness = check.Harness(root, git(root, "rev-parse", "HEAD:hauptprozesse/prueffall"))
+    entry = harness.open("finish", 1, {"material/auftrag.md": "Synthetic task"}) if open_attempt else None
     return check, harness, entry
 
 
@@ -117,7 +122,7 @@ def test_proposed_human_approval_rejects_before_writes(tmp_path, approval):
     assert _vorgang_snapshot(harness) == before
 
 
-@pytest.mark.parametrize("surface", ["input", "output"])
+@pytest.mark.parametrize("surface", ["material", "output"])
 @pytest.mark.parametrize("mutation", [
     "none-value", "bytes-value", "surrogate-value", "none-key", "surrogate-key",
     "absolute-path", "parent-path", "wrong-folder", "parent-collision", "noncanonical-path",
@@ -126,7 +131,7 @@ def test_proposed_human_approval_rejects_before_writes(tmp_path, approval):
 def test_proposed_handoff_mapping_rejects_before_either_surface_writes(tmp_path, surface, mutation):
     check, harness, current, handoff, payload, inputs = _producer(tmp_path)
     outputs = {handoff.producer_output: payload}
-    files = inputs if surface == "input" else outputs
+    files = inputs if surface == "material" else outputs
     extra = f"{surface}/extra.md"
     if mutation == "none-value":
         files[extra] = None
@@ -143,17 +148,17 @@ def test_proposed_handoff_mapping_rejects_before_either_surface_writes(tmp_path,
     elif mutation == "parent-path":
         files[f"{surface}/../../outside.md"] = "extra"
     elif mutation == "wrong-folder":
-        files["output/extra.md" if surface == "input" else "input/extra.md"] = "extra"
+        files["output/extra.md" if surface == "material" else "material/extra.md"] = "extra"
     elif mutation == "parent-collision":
-        files[(handoff.consumer_input if surface == "input" else handoff.producer_output) + "/child"] = "extra"
+        files[(handoff.consumer_input if surface == "material" else handoff.producer_output) + "/child"] = "extra"
     elif mutation == "noncanonical-path":
         files[f"{surface}/./extra.md"] = "extra"
     else:
-        if surface == "input":
+        if surface == "material":
             (harness.vorgang_root / "entscheiden").write_text("existing parent file")
         else:
             blocker = harness.attempt("pruefen", 1) / "output/blocker"
-            blocker.parent.mkdir()
+            blocker.parent.mkdir(exist_ok=True)
             blocker.write_text("existing parent file")
             files["output/blocker/child"] = "extra"
     before = _vorgang_snapshot(harness)
@@ -162,13 +167,13 @@ def test_proposed_handoff_mapping_rejects_before_either_surface_writes(tmp_path,
     assert _vorgang_snapshot(harness) == before
 
 
-@pytest.mark.parametrize("surface", ["input", "output"])
+@pytest.mark.parametrize("surface", ["material", "output"])
 @pytest.mark.parametrize("position", ["leaf", "parent"])
 @pytest.mark.parametrize("component", ["a" * 256, "é" * 128, "trailing.", "trailing "])
 def test_unsupported_filename_components_reject_before_either_surface_writes(tmp_path, surface, position, component):
     check, harness, entry, handoff, payload, inputs = _producer(tmp_path)
     outputs = {handoff.producer_output: payload}
-    files = inputs if surface == "input" else outputs
+    files = inputs if surface == "material" else outputs
     relative = f"{surface}/{component}" + ("/child.md" if position == "parent" else "")
     files[relative] = "Synthetic extra file.\n"
     before = _vorgang_snapshot(harness)
@@ -185,12 +190,12 @@ def test_255_byte_filename_components_preserve_valid_handoff_and_raw_hashes(tmp_
     suffix = component + ("/child.md" if position == "parent" else "")
     extra = "Synthetic extra file.\n"
     outputs = {handoff.producer_output: payload, f"output/{suffix}": extra}
-    inputs[f"input/{suffix}"] = extra
+    inputs[f"material/{suffix}"] = extra
     consumer = harness.advance(entry, outputs, "bestanden", "entscheiden", 1, inputs)
     assert (harness.attempt("pruefen", 1) / f"output/{suffix}").read_bytes() == extra.encode()
-    assert (harness.attempt("entscheiden", 1) / f"input/{suffix}").read_bytes() == extra.encode()
-    assert entry["ausgabe_hash"] == check.surface_hash(harness.attempt("pruefen", 1), harness.steps["pruefen"]["ausgaben"])
-    assert consumer["eingabe_hash"] == check.surface_hash(harness.attempt("entscheiden", 1), harness.steps["entscheiden"]["eingaben"])
+    assert input_file(harness.attempt("entscheiden", 1), f"material/{suffix}").read_bytes() == extra.encode()
+    assert entry["geschrieben"] == check.file_references(harness.attempt("pruefen", 1), ["output"])
+    assert consumer["gelesen"] == check.file_references(harness.attempt("entscheiden", 1), harness.steps["entscheiden"]["eingaben"])
     assert validate(harness.root).valid
 
 
@@ -208,7 +213,7 @@ def test_initial_filename_components_reject_before_writes(tmp_path, component):
     check, harness, _ = _terminal(tmp_path, open_attempt=False)
     before = _vorgang_snapshot(harness)
     with pytest.raises(check.ProofError, match="unsupported filename component"):
-        harness.open("finish", 1, {"input/auftrag.md": "task", f"input/{component}": "extra"})
+        harness.open("finish", 1, {"material/auftrag.md": "task", f"material/{component}": "extra"})
     assert _vorgang_snapshot(harness) == before
     assert not harness.vorgang_root.exists()
 
@@ -222,14 +227,14 @@ def test_terminal_filename_components_reject_before_writes(tmp_path, component):
     assert _vorgang_snapshot(harness) == before
 
 
-@pytest.mark.parametrize("surface", ["input", "output"])
+@pytest.mark.parametrize("surface", ["material", "output"])
 @pytest.mark.parametrize("collision", ["case", "unicode", "case-parent", "unicode-parent"])
 def test_proposed_portable_name_collisions_reject_before_writes(tmp_path, surface, collision):
     check, harness, current, handoff, payload, inputs = _producer(tmp_path)
     outputs = {handoff.producer_output: payload}
-    files = inputs if surface == "input" else outputs
+    files = inputs if surface == "material" else outputs
     if collision.startswith("case"):
-        original = handoff.consumer_input if surface == "input" else handoff.producer_output
+        original = handoff.consumer_input if surface == "material" else handoff.producer_output
         alias = original.upper().replace(surface.upper() + "/", surface + "/", 1)
     else:
         original = f"{surface}/caf\u00e9.md"
@@ -246,54 +251,62 @@ def test_proposed_portable_name_collisions_reject_before_writes(tmp_path, surfac
 
 def test_distinct_unicode_and_case_names_preserve_valid_handoff(tmp_path):
     check, harness, current, handoff, payload, inputs = _producer(tmp_path)
-    inputs.update({"input/caf\u00e9-1.md": "first", "input/CAF\u00c9-2.md": "second"})
+    inputs.update({"material/caf\u00e9-1.md": "first", "material/CAF\u00c9-2.md": "second"})
     outputs = {handoff.producer_output: payload, "output/caf\u00e9-1.md": "first", "output/CAF\u00c9-2.md": "second"}
     consumer = harness.advance(current, outputs, "bestanden", "entscheiden", 1, inputs)
-    assert consumer["status"] == "wartend" and consumer["wiedereinstieg"]["continuation_ref"] == "entscheidung:entscheiden-001"
-    assert (harness.attempt("entscheiden", 1) / "input/caf\u00e9-1.md").read_text() == "first"
-    assert (harness.attempt("entscheiden", 1) / "input/CAF\u00c9-2.md").read_text() == "second"
+    assert consumer["status"] == "wartend" and consumer["wiedereinstieg"]["continuation_ref"] == "vorgaenge/prueffall-001/entscheiden/001/output/warten.md"
+    assert (input_file(harness.attempt("entscheiden", 1), "material/caf\u00e9-1.md")).read_text() == "first"
+    assert (input_file(harness.attempt("entscheiden", 1), "material/CAF\u00c9-2.md")).read_text() == "second"
     assert validate(harness.root).valid
 
 
 def test_valid_proposed_transition_neighbors_keep_extra_files_and_real_hashes(tmp_path):
     check, harness, entry, handoff, payload, inputs = _producer(tmp_path)
-    harness.wait(entry, "resume", "opaque:synthetic-receipt")
+    request = harness.attempt("pruefen", 1) / "output/warten.md"
+    request.parent.mkdir(parents=True, exist_ok=True)
+    request.write_text("Synthetic request sent; response awaited.\n")
+    harness.wait(entry, "resume", request.relative_to(harness.root).as_posix())
     outputs = {handoff.producer_output: payload, "output/notes/context.md": "extra output"}
-    inputs["input/notes/context.md"] = "extra input"
-    consumer = harness.advance(entry, outputs, "bestanden", "entscheiden", 2, inputs)
+    inputs["material/notes/context.md"] = "extra input"
+    consumer = harness.advance(entry, outputs, "bestanden", "entscheiden", 1, inputs)
     decision = check._load_human_decision(check.HUMAN_DECISION)
     decision["freigabe"]["at"] = "2040-02-29T23:59:59+02:00"
     harness.close_human(consumer, decision)
     assert (harness.attempt("pruefen", 1) / "output/notes/context.md").read_text() == "extra output"
-    attempt = harness.attempt("entscheiden", 2)
-    assert (attempt / "input/notes/context.md").read_text() == "extra input"
-    assert consumer["eingabe_hash"] == check.surface_hash(attempt, harness.steps["entscheiden"]["eingaben"])
-    assert consumer["ausgabe_hash"] == check.surface_hash(attempt, harness.steps["entscheiden"]["ausgaben"])
+    attempt = harness.attempt("entscheiden", 1)
+    assert (input_file(attempt, "material/notes/context.md")).read_text() == "extra input"
+    assert consumer["gelesen"] == check.file_references(attempt, harness.steps["entscheiden"]["eingaben"])
+    assert consumer["geschrieben"] == check.file_references(attempt, ["output/"])
     assert validate(harness.root).valid
 
 
-@pytest.mark.parametrize("mutation", ["input", "stale-entry", "stale-router", "stale-revision", "stale-id", "stale-type", "wrong-route", "existing-successor"])
+@pytest.mark.parametrize("mutation", ["material", "stale-entry", "stale-router", "stale-revision", "stale-id", "stale-type", "wrong-route", "existing-successor"])
 def test_transition_rejects_before_any_vorgang_writes(tmp_path, mutation):
     check, harness, entry, handoff, payload, inputs = _producer(tmp_path)
     candidate = entry
-    if mutation == "input":
-        (harness.attempt("pruefen", 1) / "input/antrag.md").write_text("tampered")
-        assert "hash.mismatch" in {issue.code for issue in validate(harness.root).issues}
+    if mutation == "material":
+        (input_file(harness.attempt("pruefen", 1), "material/antrag.md")).write_text("tampered")
+        assert validate(harness.root).valid  # Core reads the recorded source blob; harness checks its concrete read.
     elif mutation == "stale-entry":
         candidate = dict(entry)
     elif mutation == "stale-router":
         path = harness.vorgang_root / "CONTEXT.md"
         path.write_text(path.read_text().replace("status: aktiv", "status: wartend"))
     elif mutation == "existing-successor":
-        (harness.attempt("entscheiden", 1) / "input").mkdir(parents=True)
+        (input_file(harness.attempt("entscheiden", 1), "material")).mkdir(parents=True)
     elif mutation.startswith("stale-"):
         from tests.support import read_context, replace_context
         path = harness.vorgang_root / "CONTEXT.md"
         metadata = read_context(path)
-        field = {"stale-revision": "application_revision", "stale-id": "id", "stale-type": "type"}[mutation]
-        metadata[field] = ("git-tree:" + check._git(harness.root, "rev-parse", "HEAD^:applications/prueffall") if field == "application_revision" else "vorgang:other" if field == "id" else "workspace")
+        field = {"stale-revision": "hauptprozess_revision", "stale-id": "id", "stale-type": "type"}[mutation]
+        if field == "hauptprozess_revision":
+            changed = harness.root / "hauptprozesse/prueffall/CONTEXT.md"
+            changed.write_text(changed.read_text() + "\nSynthetic alternate binding.\n")
+            check._git(harness.root, "add", "hauptprozesse")
+            check._git(harness.root, "commit", "-qm", "Alternate binding fixture")
+        metadata[field] = ("git-tree:" + check._git(harness.root, "rev-parse", "HEAD:hauptprozesse/prueffall") if field == "hauptprozess_revision" else "vorgang:other" if field == "id" else "workspace")
         replace_context(path, metadata)
-        if field == "application_revision":
+        if field == "hauptprozess_revision":
             assert validate(harness.root).valid
     before = _tree_bytes(harness.vorgang_root)
     with pytest.raises(check.ProofError):
@@ -304,8 +317,8 @@ def test_transition_rejects_before_any_vorgang_writes(tmp_path, mutation):
 @pytest.mark.parametrize("operation", ["wait", "close", "open", "advance"])
 def test_all_local_successor_mutations_recheck_current_bound_input(tmp_path, operation):
     check, harness, entry, handoff, payload, inputs = _producer(tmp_path)
-    (harness.attempt("pruefen", 1) / "input/antrag.md").write_text("tampered")
-    assert "hash.mismatch" in {issue.code for issue in validate(harness.root).issues}
+    (input_file(harness.attempt("pruefen", 1), "material/antrag.md")).write_text("tampered")
+    assert validate(harness.root).valid  # Core reads the recorded source blob; harness checks its concrete read.
     before = _vorgang_snapshot(harness)
     with pytest.raises(check.ProofError):
         if operation == "wait":
@@ -347,10 +360,10 @@ def test_handoff_reader_rejects_duplicate_recognized_labels(label, identical):
 def test_new_gate_revision_preserves_legacy_definition_bytes(tmp_path):
     check = _check_module()
     root, _, _, revision, _ = check._prepare_workspace(tmp_path)
-    historical = check._git_show(root, "HEAD^", "applications/prueffall/" + check.DECISION_STEP)
+    historical = check._git_show(root, "HEAD^", "hauptprozesse/prueffall/" + check.DECISION_STEP)
     assert historical == (BEISPIEL / check.DECISION_STEP).read_bytes()
     assert check._git_show(root, revision, check.DECISION_STEP) == check.GATE_REVISION.read_bytes()
-    assert check._git(root, "rev-parse", "HEAD^:applications/prueffall") != revision
+    assert check._git(root, "rev-parse", "HEAD^:hauptprozesse/prueffall") != revision
 
 
 def test_final_rejection_ends_new_vorgang_negatively(tmp_path):
@@ -391,11 +404,11 @@ def test_public_close_cannot_leave_a_half_closed_nonterminal_vorgang(tmp_path):
     assert entry["status"] == "aktiv"
 
 
-@pytest.mark.parametrize("mutation", ["input", "binding"])
+@pytest.mark.parametrize("mutation", ["material", "binding"])
 def test_terminal_close_rechecks_current_inputs_and_identity_before_writes(tmp_path, mutation):
     check, harness, entry = _terminal(tmp_path)
-    if mutation == "input":
-        (harness.attempt("finish", 1) / "input/auftrag.md").write_text("tampered")
+    if mutation == "material":
+        (input_file(harness.attempt("finish", 1), "material/auftrag.md")).write_text("tampered")
     else:
         from tests.support import read_context, replace_context
         path = harness.vorgang_root / "CONTEXT.md"
@@ -456,7 +469,7 @@ def main_result():
     return exit_code, output.getvalue()
 
 
-def test_example_application_validates_on_its_own():
+def test_example_hauptprozess_validates_on_its_own():
     report = validate(BEISPIEL)
 
     assert report.valid, report.issues
@@ -474,15 +487,15 @@ def test_walk_runs_the_vorgang_through_loop_wait_and_human_gate(walk_result):
 def test_walk_proves_the_input_hash_fires_on_mutation(walk_result):
     result = walk_result
 
-    assert "hash.mismatch" in result.mutation_codes
+    assert "binding.reference_digest" in result.mutation_codes
     assert result.valid
 
 
 def test_walk_main_prints_the_router_chain_and_passes(main_result):
     exit_code, output = main_result
     assert exit_code == 0
-    assert "ROUTER applications/prueffall/CONTEXT.md" in output
-    assert "ROUTER applications/prueffall/vorpruefung/pruefen/CONTEXT.md" in output
+    assert "ROUTER hauptprozesse/prueffall/CONTEXT.md" in output
+    assert "ROUTER hauptprozesse/prueffall/vorpruefung/pruefen/CONTEXT.md" in output
     assert "STOP" in output
     assert output.rstrip().endswith("PASS cold walk")
 
@@ -490,14 +503,15 @@ def test_walk_main_prints_the_router_chain_and_passes(main_result):
 def test_cold_walk_script_binds_its_checkout_source(tmp_path):
     checkout = tmp_path / "checkout"
     shutil.copytree(COLD_WALK, checkout / "06_evaluations" / "cold-walk")
+    shutil.copyfile(ROOT / "06_evaluations/reference_files.py", checkout / "06_evaluations/reference_files.py")
     shutil.copytree(ROOT / "02_protocol", checkout / "02_protocol")
     shutil.copytree(ROOT / "src", checkout / "src")
     hashing = checkout / "src" / "impacts_protocol" / "hashing.py"
     source = hashing.read_text(encoding="utf-8")
     hashing.write_text(
         source.replace(
-            '    attempt_root = Path(attempt_root)\n',
-            '    return "sha256:" + "0" * 64\n',
+            'hashlib.file_digest(content, "sha256").hexdigest()',
+            '"0" * 64',
             1,
         ),
         encoding="utf-8",
@@ -511,12 +525,13 @@ def test_cold_walk_script_binds_its_checkout_source(tmp_path):
     )
 
     assert result.returncode == 1
-    assert "FAIL cold walk" in result.stdout
+    assert "Harness read differs from recorded reference" in result.stderr
 
 
 def test_cold_walk_rejects_duplicate_human_decision_keys_in_subprocess(tmp_path):
     checkout = tmp_path / "checkout"
     shutil.copytree(COLD_WALK, checkout / "06_evaluations" / "cold-walk")
+    shutil.copyfile(ROOT / "06_evaluations/reference_files.py", checkout / "06_evaluations/reference_files.py")
     shutil.copytree(ROOT / "02_protocol", checkout / "02_protocol")
     shutil.copytree(ROOT / "src", checkout / "src")
     decision = (
@@ -571,7 +586,7 @@ def test_human_decision_yaml_syntax_error_reports_path_line_and_remedy(tmp_path)
     assert "correct the YAML fixture" in str(error.value)
 
 
-def test_walk_imports_the_application_into_a_second_repository_with_equal_oid(walk_result):
+def test_walk_imports_the_hauptprozess_into_a_second_repository_with_equal_oid(walk_result):
     result = walk_result
 
     assert result.import_oid_equal
@@ -590,8 +605,8 @@ def test_walk_import_rejects_missing_capability_then_executes_materialized_tree(
 def test_import_executes_with_checked_snapshot_from_external_source_workspace(tmp_path):
     check = _check_module()
     root, _, _, revision, workspace_revision = check._prepare_workspace(tmp_path)
-    call = check._application_call(root, revision)
-    source = check._application_source(root, revision)
+    call = check._hauptprozess_call(root, revision)
+    source = check._hauptprozess_source(root, revision)
     rules, provenance = check._materialize_source(root, source)
 
     state, equal_oid, proofs, rejections = check._import_into_second_repository(
@@ -605,15 +620,15 @@ def test_import_executes_with_checked_snapshot_from_external_source_workspace(tm
     target = tmp_path / "kunde"
     assert not (target / source.path).exists()
     attempt = target / "vorgaenge" / check.VORGANG / "pruefen/001"
-    assert (attempt / source.input_path).read_bytes() == rules
-    assert (attempt / source.provenance_input).read_text(encoding="utf-8") == provenance
+    assert (input_file(attempt, source.input_path)).read_bytes() == rules
+    assert (input_file(attempt, source.provenance_input)).read_text(encoding="utf-8") == provenance
 
 
 def test_import_commits_name_a_resolvable_source_and_full_commit(tmp_path):
     check = _check_module()
     root, _, _, revision, workspace_revision = check._prepare_workspace(tmp_path)
-    call = check._application_call(root, revision)
-    source = check._application_source(root, revision)
+    call = check._hauptprozess_call(root, revision)
+    source = check._hauptprozess_source(root, revision)
     rules, provenance = check._materialize_source(root, source)
 
     check._import_into_second_repository(
@@ -624,12 +639,12 @@ def test_import_commits_name_a_resolvable_source_and_full_commit(tmp_path):
         ["git", "-C", str(tmp_path / "kunde"), "log", "--reverse", "--format=%s"], text=True,
     ).splitlines()
     pattern = re.compile(r"(?:import|materialize) (\S+) from (/.+)@([0-9a-f]+) \(tree ([0-9a-f]+)\)")
-    matches = [pattern.fullmatch(subject) for subject in subjects]
+    matches = [pattern.fullmatch(subject) for subject in subjects if subject != "Bind synthetic record"]
     assert all(matches), subjects
     records = [match.groups() for match in matches]
 
     assert records == [
-        (f"applications/{check.APPLICATION}", root.resolve().as_posix(), workspace_revision, revision),
+        (f"hauptprozesse/{check.HAUPTPROZESS}", root.resolve().as_posix(), workspace_revision, revision),
         (Path(call.path).parent.as_posix(), root.resolve().as_posix(), workspace_revision, call.tree_oid),
     ]
     # Re-resolve each tree from the destination record alone.
@@ -662,8 +677,8 @@ def _observe_execution_and_opening(check, monkeypatch):
 def test_import_rejects_false_source_provenance_before_execution_or_opening(tmp_path, monkeypatch, field):
     check = _check_module()
     root, _, _, revision, workspace_revision = check._prepare_workspace(tmp_path)
-    call = check._application_call(root, revision)
-    source = check._application_source(root, revision)
+    call = check._hauptprozess_call(root, revision)
+    source = check._hauptprozess_source(root, revision)
     rules, provenance = check._materialize_source(root, source)
     check._verify_source(root, source, rules, provenance)
     original = check._fields(provenance)[field]
@@ -695,8 +710,8 @@ def test_import_stops_on_unreachable_source_revision_before_execution_or_opening
 ):
     check = _check_module()
     root, _, _, revision, workspace_revision = check._prepare_workspace(tmp_path)
-    call = check._application_call(root, revision)
-    source = check._application_source(root, revision)
+    call = check._hauptprozess_call(root, revision)
+    source = check._hauptprozess_source(root, revision)
     rules, provenance = check._materialize_source(root, source)
     configured_source = tmp_path / configured
     if configured == "shallow":
@@ -735,14 +750,14 @@ def _blobless_source(root, tmp_path):
 def test_import_stops_on_unreadable_source_bytes_before_execution_or_opening(tmp_path, monkeypatch):
     check = _check_module()
     root, _, _, revision, workspace_revision = check._prepare_workspace(tmp_path)
-    call = check._application_call(root, revision)
-    source = check._application_source(root, revision)
+    call = check._hauptprozess_call(root, revision)
+    source = check._hauptprozess_source(root, revision)
     rules, provenance = check._materialize_source(root, source)
     blobless = _blobless_source(root, tmp_path)
     executions, openings = _observe_execution_and_opening(check, monkeypatch)
     expected = (
         "source bytes unreadable in configured source repository: "
-        f"{workspace_revision}:applications/{check.APPLICATION}"
+        f"{workspace_revision}:hauptprozesse/{check.HAUPTPROZESS}"
     )
 
     with pytest.raises(check.ProofError, match=re.escape(expected)):
@@ -758,7 +773,7 @@ def test_import_stops_on_unreadable_source_bytes_before_execution_or_opening(tmp
 def test_source_check_stops_on_unreadable_source_bytes(tmp_path):
     check = _check_module()
     root, _, _, revision, _ = check._prepare_workspace(tmp_path)
-    source = check._application_source(root, revision)
+    source = check._hauptprozess_source(root, revision)
     rules, provenance = check._materialize_source(root, source)
     blobless = _blobless_source(root, tmp_path)
     expected = (
@@ -803,7 +818,7 @@ def test_walk_binds_and_replays_the_exact_capability_authority(walk_result):
     result = walk_result
 
     assert {
-        "capability.application_tuple_executed",
+        "capability.hauptprozess_tuple_executed",
         "capability.path_resolved_at_workspace_revision",
         "capability.old_revision_replayed",
     } <= _proofs(result)
@@ -818,7 +833,7 @@ def test_walk_materializes_source_from_bound_commit_and_rejects_false_provenance
     result = walk_result
 
     assert {
-        "application.source_requirement_drives_resolution",
+        "hauptprozess.source_requirement_drives_resolution",
         "source.bound_snapshot",
         "source.dirty_worktree_ignored",
     } <= _proofs(result)
@@ -834,7 +849,7 @@ def test_walk_connects_step_files_by_attempt_origin_and_content_digest(walk_resu
     result = walk_result
 
     assert {
-        "application.handoff_mapping_drives_origin",
+        "hauptprozess.handoff_mapping_drives_origin",
         "handoff.content_and_origin_bound",
     } <= _proofs(result)
     assert {
@@ -861,3 +876,56 @@ def test_walk_preflights_gate_before_mutation_and_requires_external_decision_fix
         "handoff.wrong_producer_file",
         "handoff.useless_control_evidence",
     } <= _rejections(result)
+
+
+@pytest.mark.parametrize("revision", [None, "git-tree:", "git-tree:<oid>", "git:" + "a" * 40])
+def test_step_naming_capability_without_bound_tree_is_rejected(tmp_path, revision):
+    check = _check_module()
+    root, _, _, _, _ = check._prepare_workspace(tmp_path)
+    step = root / "hauptprozesse" / check.HAUPTPROZESS / check.CALL_STEP
+    body = step.read_text(encoding="utf-8")
+    body += "\nUse capabilities/unbound/CONTEXT.md.\n"
+    if revision is not None:
+        body += f"- Capability-Pfad: `capabilities/unbound/CONTEXT.md`\n- Capability-Revision: `{revision}`\n"
+    step.write_text(body, encoding="utf-8")
+    check._git(root, "add", ".")
+    check._git(root, "commit", "-q", "-m", "synthetic unbound Capability")
+    tree = check._git(root, "rev-parse", f"HEAD:hauptprozesse/{check.HAUPTPROZESS}")
+    with pytest.raises(check.ProofError, match="Capability lacks bound git-tree revision: unbound"):
+        check.Harness(root, tree)
+
+
+def test_step_naming_capability_with_bound_tree_passes(tmp_path):
+    check = _check_module()
+    root, _, capability_tree, tree, _ = check._prepare_workspace(tmp_path)
+    harness = check.Harness(root, tree)
+    assert "pruefen" in harness.steps
+    assert check._hauptprozess_call(root, tree).tree_oid == capability_tree
+
+
+def test_loop_without_readable_bound_is_rejected_by_cold_walk(tmp_path):
+    from tests.support import git
+    check = _check_module()
+    root, _, _, revision, _ = check._prepare_workspace(tmp_path)
+    path = root / 'hauptprozesse/prueffall/vorpruefung/nachfordern/CONTEXT.md'
+    path.write_text('\n'.join(line for line in path.read_text().splitlines() if not line.startswith('Loop bound:')) + '\n')
+    git(root, 'add', 'hauptprozesse')
+    git(root, '-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid', 'commit', '-qm', 'Synthetic missing bound')
+    revision = git(root, 'rev-parse', 'HEAD:hauptprozesse/prueffall')
+    with pytest.raises(check.ProofError, match='Loop bound missing'):
+        check.Harness(root, revision)
+
+
+@pytest.mark.parametrize('target', ['arbeitsschritt:entscheiden/input/pruefbericht.md',
+                                    'arbeitsschritt:entscheiden:material/undeclared.md'])
+def test_handoff_rejects_old_syntax_and_undeclared_slot(tmp_path, target):
+    from tests.support import git
+    check = _check_module()
+    root, _, _, _, _ = check._prepare_workspace(tmp_path)
+    path = root / 'hauptprozesse/prueffall/vorpruefung/pruefen/CONTEXT.md'
+    path.write_text(path.read_text().replace('arbeitsschritt:entscheiden:material/pruefbericht.md', target))
+    git(root, 'add', 'hauptprozesse')
+    git(root, '-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid', 'commit', '-qm', 'Synthetic bad mapping')
+    revision = git(root, 'rev-parse', 'HEAD:hauptprozesse/prueffall')
+    with pytest.raises(check.ProofError, match='not unique|declared consumer input slot'):
+        check._hauptprozess_handoff(root, revision, 'pruefen', 'bestanden')

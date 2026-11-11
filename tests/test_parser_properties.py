@@ -1,6 +1,8 @@
+from datetime import date
 import json
 import os
 from pathlib import Path
+import random
 import subprocess
 import sys
 from tempfile import TemporaryDirectory
@@ -10,14 +12,16 @@ import pytest
 import yaml
 from hypothesis import given, settings, strategies as st
 
-from impacts_protocol import init_workspace, io
-from impacts_protocol.hashing import surface_hash
+from impacts_protocol import init_workspace, io, validate
+from impacts_protocol.hashing import file_references
 from impacts_protocol.io import (
     DuplicateKeyError,
     load_frontmatter_and_body,
     load_yaml_strict,
 )
 
+
+ROOT = Path(__file__).resolve().parents[1]
 
 HYPOTHESIS_SETTINGS = settings(
     max_examples=40,
@@ -225,19 +229,19 @@ def test_yaml_loader_accepts_bounded_alias_reuse_and_nesting():
     assert nested == {"leaf": "retained"}
 
 
-def test_frontmatter_read_keeps_bom_bytes_in_the_existing_surface_hash(tmp_path):
+def test_frontmatter_read_keeps_bom_bytes_in_the_existing_file_references(tmp_path):
     path = tmp_path / "CONTEXT.md"
     original = b"---\r\ntype: workspace\r\n---\r\n\r\n# Body\r\n"
     raw = _BOM + original
     path.write_bytes(raw)
-    with_bom_hash = surface_hash(tmp_path, ["CONTEXT.md"])
+    with_bom_hash = file_references(tmp_path, ["CONTEXT.md"])
 
     load_frontmatter_and_body(path)
 
     assert path.read_bytes() == raw
-    assert surface_hash(tmp_path, ["CONTEXT.md"]) == with_bom_hash
+    assert file_references(tmp_path, ["CONTEXT.md"]) == with_bom_hash
     path.write_bytes(original)
-    assert surface_hash(tmp_path, ["CONTEXT.md"]) != with_bom_hash
+    assert file_references(tmp_path, ["CONTEXT.md"]) != with_bom_hash
 
 
 @pytest.mark.parametrize(
@@ -247,7 +251,7 @@ def test_frontmatter_read_keeps_bom_bytes_in_the_existing_surface_hash(tmp_path)
         ("\u00c5land.md", "A\u030aland.md"),
     ],
 )
-def test_surface_hash_keeps_nfc_and_nfd_path_names_byte_distinct(
+def test_file_references_keeps_nfc_and_nfd_path_names_byte_distinct(
     tmp_path, nfc_name, nfd_name
 ):
     stored_names = []
@@ -259,7 +263,7 @@ def test_surface_hash_keeps_nfc_and_nfd_path_names_byte_distinct(
         (input_dir / file_name).write_bytes(b"same file bytes\n")
         stored_name = next(input_dir.iterdir()).name
         stored_names.append(stored_name)
-        digests.append(surface_hash(root, [f"input/{stored_name}"]))
+        digests.append(file_references(root, [f"input/{stored_name}"]))
 
     assert unicodedata.normalize("NFC", stored_names[0]) == unicodedata.normalize(
         "NFC", stored_names[1]
@@ -284,7 +288,7 @@ def test_frontmatter_preserves_canonically_equivalent_scalar_bytes_and_hashes(
 
         metadata, _ = load_frontmatter_and_body(path)
         parsed_values.append(metadata["label"])
-        digests.append(surface_hash(root, ["CONTEXT.md"]))
+        digests.append(file_references(root, ["CONTEXT.md"]))
         assert path.read_bytes() == raw
 
     assert parsed_values == list(values)
@@ -321,3 +325,328 @@ def test_cli_validator_reports_duplicate_key_source_location(tmp_path):
         in result.stdout
     )
     assert result.stderr == ""
+
+
+# Loader backends: the C and Python safe loaders must agree on every input.
+def test_default_loader_selects_fast_safe_parser_when_available():
+    expected = yaml.CSafeLoader if hasattr(yaml, "CSafeLoader") else yaml.SafeLoader
+    assert io._StrictLoader.__bases__ == (expected,)
+
+
+@pytest.fixture(params=["python", "c"])
+def strict_yaml_path(request, monkeypatch):
+    if request.param == "c" and not hasattr(yaml, "CSafeLoader"):
+        pytest.skip("PyYAML C extension unavailable")
+    base = yaml.CSafeLoader if request.param == "c" else yaml.SafeLoader
+    forced = io._strict_loader(base)
+    monkeypatch.setattr(io, "_StrictLoader", forced)
+    if request.param == "python":
+        monkeypatch.setattr(io, "_PythonStrictLoader", forced)
+    assert io._StrictLoader.__bases__ == (base,)
+    return request.param
+
+
+def _typed(value):
+    if isinstance(value, dict):
+        return (dict, tuple((key, _typed(child)) for key, child in value.items()))
+    if isinstance(value, list):
+        return (list, tuple(_typed(child) for child in value))
+    return (type(value), value)
+
+
+def test_safe_yaml_paths_preserve_scalar_types_aliases_and_body(tmp_path, strict_yaml_path):
+    path = tmp_path / "CONTEXT.md"
+    path.write_text(
+        "---\n"
+        "type: vorgang\n"
+        "implicit:\n"
+        "  truth: yes\n"
+        "  falsehood: false\n"
+        "  integer: 42\n"
+        "  decimal: 3.5\n"
+        "  date: 2026-09-25\n"
+        "  empty: null\n"
+        "nested: &nested\n"
+        "  child: {name: text, count: 2}\n"
+        "alias: *nested\n"
+        "---\n# Body\n",
+        encoding="utf-8",
+    )
+    metadata, body = load_frontmatter_and_body(path, tmp_path)
+    reference = yaml.load(
+        path.read_text().split("---")[1], Loader=io._strict_loader(yaml.SafeLoader)
+    )
+    assert _typed(metadata) == _typed(reference)
+    assert metadata["implicit"] == {
+        "truth": True,
+        "falsehood": False,
+        "integer": 42,
+        "decimal": 3.5,
+        "date": date(2026, 9, 25),
+        "empty": None,
+    }
+    assert metadata["nested"] is metadata["alias"]
+    assert body == "# Body"
+
+
+@pytest.mark.parametrize("source,error", [
+    ("type: a\ntype: b", DuplicateKeyError),
+    ("type: a\nnested: {x: 1, x: 2}", DuplicateKeyError),
+    ("type: a\nnested: {1: x}", ValueError),
+    ("type: a\n<<: {x: 1}", ValueError),
+    ("type: a\nnested: {<<: {x: 1}}", ValueError),
+    ("type: !!python/object/apply:os.system ['true']", ValueError),
+    ("type: [", ValueError),
+])
+def test_safe_yaml_paths_reject_bad_mappings_and_tags(
+    tmp_path, strict_yaml_path, source, error
+):
+    path = tmp_path / "CONTEXT.md"
+    path.write_text(f"---\n{source}\n---\n", encoding="utf-8")
+    with pytest.raises(error) as caught:
+        load_frontmatter_and_body(path, tmp_path)
+    if error is DuplicateKeyError:
+        assert caught.value.key in {"type", "x"}
+    elif "<<:" in source or "!!python" in source or source.endswith("["):
+        assert "invalid frontmatter YAML:" in str(caught.value)
+    else:
+        assert "frontmatter keys must be strings" in str(caught.value)
+
+
+def test_frontmatter_yaml_syntax_error_uses_original_markdown_location_and_safe_fix(
+    tmp_path, strict_yaml_path
+):
+    path = tmp_path / "CONTEXT.md"
+    path.write_text(
+        "---\n"
+        "type: workspace\n"
+        "name: Bakery: East\n"
+        "---\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError) as caught:
+        load_frontmatter_and_body(path, tmp_path)
+
+    message = str(caught.value)
+    assert message.startswith("invalid frontmatter YAML: line 3, column 13:")
+    assert "mapping values are not allowed" in message
+    assert "inspect indentation and YAML punctuation at this location" in message
+    assert "quote ambiguous scalar text such as values containing ': '" in message
+    assert "line 2, column 13" not in message
+
+
+def test_standalone_yaml_syntax_error_keeps_unshifted_source_location(strict_yaml_path):
+    source = "type: workspace\nname: Bakery: East\n"
+
+    with pytest.raises(yaml.YAMLError) as caught:
+        io.load_yaml_strict(source)
+
+    message = str(caught.value)
+    assert message.startswith("line 2, column 13:")
+    assert "mapping values are not allowed" in message
+    assert "line 3, column 13" not in message
+
+
+@pytest.mark.parametrize("source,error", [
+    ("outer: {x: 1, x: 2}", DuplicateKeyError),
+    ("outer: {1: x}", ValueError),
+    ("outer: {<<: {x: 1}}", yaml.YAMLError),
+])
+def test_strict_mapping_constructor_runs_on_each_backend(
+    strict_yaml_path, source, error
+):
+    with pytest.raises(error):
+        yaml.load(source, Loader=io._StrictLoader)
+
+
+@pytest.mark.parametrize("tag", ["bool", "timestamp"])
+def test_native_scalar_constructor_failures_are_yaml_errors_at_source_node(strict_yaml_path, tag):
+    source = f"probe: !!{tag} CANARY_SCALAR\n"
+    with pytest.raises(yaml.YAMLError) as caught:
+        yaml.load(source, Loader=io._StrictLoader)
+    assert caught.value.problem_mark.line == 0
+    assert caught.value.problem_mark.column == 7
+    with pytest.raises(yaml.YAMLError, match=f"line 1, column 8: invalid YAML {tag} scalar"):
+        io.load_yaml_strict(source)
+
+
+def test_normalized_native_scalar_neighbors_keep_safe_yaml_types(strict_yaml_path):
+    from datetime import date, datetime
+    source = "flag: !!bool YES\nday: !!timestamp 2040-04-07\ntime: !!timestamp 2040-04-07T09:17:32+00:00\ncount: !!int 42\namount: !!float 2.5\n"
+    metadata = yaml.load(source, Loader=io._StrictLoader)
+    assert metadata["flag"] is True
+    assert type(metadata["day"]) is date
+    assert type(metadata["time"]) is datetime
+    assert metadata["count"] == 42 and type(metadata["count"]) is int
+    assert metadata["amount"] == 2.5 and type(metadata["amount"]) is float
+    assert io.load_yaml_strict(source) == metadata
+
+
+def test_safe_yaml_paths_keep_validator_findings(tmp_path, strict_yaml_path):
+    root = init_workspace(tmp_path / "kunde")
+    path = root / "CONTEXT.md"
+    path.write_text("---\ntype: workspace\ntype: other\n---\n", encoding="utf-8")
+    report = validate(root)
+    assert [(issue.code, issue.path) for issue in report.issues] == [
+        ("format.invalid", "CONTEXT.md")
+    ]
+
+
+@pytest.mark.parametrize("source", [
+    "extra: a\tb",                    # C accepts; Python rejects
+    'extra: "\\uD800"',             # Python accepts; C rejects
+    "extra: [a:]",                    # Python accepts; C rejects
+    "extra: !",                       # both accept with different scalar values
+    "extra: {a: 1?}",                 # C accepts; Python rejects
+    "extra: {a: 1, b: true}",         # supported flow mapping
+    "extra: &anchor [one, two]\ncopy: *anchor",
+    "extra: 'quoted # text'",
+    "extra: null",
+    "extra: yes",
+    "extra: 0x2a",
+    "extra: 2026-09-25",
+    "extra:\n  nested:\n    count: 3",
+    "extra:\n  - one\n  - two",
+    "extra: |\n  line one\n  line two",
+    "extra: {a: 1, a: 2}",           # nested duplicate
+    "extra: {1: value}",             # non-string key
+    "extra: {<<: {a: 1}}",           # merge key rejected
+    "extra: !!python/object/apply:os.system ['true']",
+    "extra: [",
+])
+def test_loader_matches_python_contract_in_full_validate(tmp_path, source, monkeypatch):
+    root = init_workspace(tmp_path / "kunde")
+    (root / "CONTEXT.md").write_text(
+        f"---\ntype: workspace\n{source}\n---\n", encoding="utf-8"
+    )
+    monkeypatch.setattr(io, "_StrictLoader", io._PythonStrictLoader)
+    try:
+        expected_metadata, expected_body = load_frontmatter_and_body(root / "CONTEXT.md", root)
+    except ValueError as error:
+        expected_error = (type(error), str(error))
+    else:
+        expected_error = None
+    expected = validate(root)
+    if not hasattr(yaml, "CSafeLoader"):
+        pytest.skip("PyYAML C extension unavailable")
+    monkeypatch.setattr(io, "_StrictLoader", io._strict_loader(yaml.CSafeLoader))
+    if expected_error is None:
+        metadata, body = load_frontmatter_and_body(root / "CONTEXT.md", root)
+        assert _typed(metadata) == _typed(expected_metadata)
+        assert body == expected_body
+    else:
+        with pytest.raises(expected_error[0]) as caught:
+            load_frontmatter_and_body(root / "CONTEXT.md", root)
+        assert str(caught.value) == expected_error[1]
+    assert validate(root) == expected
+
+
+def test_plain_block_fast_path_matches_python_on_seeded_corpus():
+    if not hasattr(yaml, "CSafeLoader"):
+        pytest.skip("PyYAML C extension unavailable")
+    rng = random.Random(52)
+    alphabet = "ab01: ,\n-./()_é"
+    seeds = (
+        "type: workspace",
+        "root: a",
+        "root:\n  a: 1",
+        "root:\n  - a",
+        "- a\n- b",
+    )
+    c_loader = io._strict_loader(yaml.CSafeLoader)
+
+    def outcome(source, loader):
+        try:
+            return ("value", _typed(yaml.load(source, Loader=loader)))
+        except DuplicateKeyError as error:
+            return ("duplicate", error.key)
+        except ValueError as error:
+            return ("value_error", str(error))
+        except yaml.YAMLError:
+            return ("yaml_error",)
+
+    for seed in seeds:
+        for _ in range(120):
+            source = seed
+            for _ in range(rng.randint(1, 4)):
+                position = rng.randrange(len(source) + 1)
+                replacement = rng.choice(alphabet)
+                delete = int(rng.random() < 0.4)
+                source = source[:position] + replacement + source[position + delete:]
+            assert outcome(source, c_loader) == outcome(source, io._PythonStrictLoader), source
+
+
+def test_python_fallback_imports_without_c_extension(tmp_path):
+    path = tmp_path / "CONTEXT.md"
+    path.write_text("---\ntype: workspace\n---\n", encoding="utf-8")
+    program = (
+        "import sys, yaml; "
+        "yaml.__dict__.pop('CSafeLoader', None); "
+        "sys.path.insert(0, sys.argv[1]); "
+        "from impacts_protocol import io; "
+        "assert io._StrictLoader.__bases__ == (yaml.SafeLoader,); "
+        "assert io.load_frontmatter(sys.argv[2]) == {'type': 'workspace'}"
+    )
+    check = subprocess.run(
+        [sys.executable, "-c", program, str(ROOT / "src"), str(path)],
+        capture_output=True, text=True,
+    )
+    assert check.returncode == 0, check.stderr
+
+
+def test_c_rejection_retries_python_for_plain_frontmatter(tmp_path, monkeypatch):
+    if not hasattr(yaml, "CSafeLoader"):
+        pytest.skip("PyYAML C extension unavailable")
+    path = tmp_path / "CONTEXT.md"
+    path.write_text("---\ntype: workspace\n---\n", encoding="utf-8")
+    original_load = yaml.load
+    calls = []
+
+    def reject_c(source, Loader):
+        calls.append(Loader)
+        if Loader is io._StrictLoader:
+            raise yaml.YAMLError("C parser rejected fixture")
+        return original_load(source, Loader=Loader)
+
+    monkeypatch.setattr(io.yaml, "load", reject_c)
+    assert load_frontmatter_and_body(path, tmp_path) == ({"type": "workspace"}, "")
+    assert calls == [io._StrictLoader, io._PythonStrictLoader]
+
+
+@pytest.mark.parametrize("text", [
+    "---\ntype: [\n---\n",                      # malformed YAML
+    "---\ntype: vorgang\n",                     # no closing delimiter
+    "---\n- a\n- b\n---\n",                     # frontmatter not a mapping
+    "---\n1: x\n---\n",                         # non-string key
+    "---\ntype: vorgang\n<<:\n  id: vorgang:x\n---\n",  # YAML merge key
+])
+def test_frontmatter_malformed_partitions_fail_closed(tmp_path, text):
+    path = tmp_path / "CONTEXT.md"
+    path.write_text(text, encoding="utf-8")
+    with pytest.raises(ValueError):
+        load_frontmatter_and_body(path, tmp_path)
+
+
+def test_non_utf8_context_fails_closed(tmp_path):
+    path = tmp_path / "CONTEXT.md"
+    path.write_bytes(b"---\ntype: vorgang\n---\n\nK\xf6rper\n")
+    with pytest.raises(ValueError):
+        load_frontmatter_and_body(path, tmp_path)
+
+
+def test_block_scalar_with_bare_dashes_line_is_silently_truncated(tmp_path):
+    """B-4 characterization: the line-based splitter closes frontmatter early.
+
+    The truncation can only drop schema fields (fail closed) or shorten a
+    free-text value without machine notice. This test pins the current
+    behavior so any repair must update it deliberately.
+    """
+    path = tmp_path / "CONTEXT.md"
+    path.write_text(
+        "---\ntype: vorgang\nnote: >\n  line one\n---\n  line two\n---\n",
+        encoding="utf-8",
+    )
+    metadata, body = load_frontmatter_and_body(path, tmp_path)
+    assert metadata == {"type": "vorgang", "note": "line one"}
+    assert "line two" in body

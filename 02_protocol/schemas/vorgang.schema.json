@@ -6,34 +6,19 @@
   "additionalProperties": false,
   "properties": {
     "type": {"const": "vorgang"},
+    "protocol": {"type": "string", "pattern": "^v(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?![\\s\\S])"},
     "id": {"type": "string", "pattern": "^vorgang:[a-z0-9]+(?:-[a-z0-9]+)*$"},
-    "application_revision": {"type": "string", "pattern": "^git-tree:(?:[0-9a-f]{40}|[0-9a-f]{64})$"},
+    "hauptprozess_revision": {"type": "string", "pattern": "^git-tree:(?:[0-9a-f]{40}|[0-9a-f]{64})$"},
     "laufpfad": {
       "type": "array",
       "minItems": 1,
-      "items": {"$ref": "#/$defs/laufpfadeintrag"}
-    }
-  },
-  "required": ["type", "id", "application_revision", "laufpfad"],
-  "$defs": {
-    "laufpfadeintrag": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "arbeitsschritt_ref": {"type": "string", "pattern": "^arbeitsschritt:[a-z0-9]+(?:-[a-z0-9]+)*$"},
-        "versuch": {"type": "integer", "minimum": 1, "maximum": 999},
-        "status": {"enum": ["aktiv", "wartend", "abgeschlossen"]},
-        "status_seit": {"$ref": "#/$defs/zeitpunkt"},
-        "eingabe_hash": {"$ref": "#/$defs/hash"},
-        "gewaehlte_route": {"type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"},
-        "ausgabe_hash": {"$ref": "#/$defs/hash"},
-        "wiedereinstieg": {"$ref": "#/$defs/wiedereinstieg"},
-        "freigabe": {"$ref": "#/$defs/freigabe"}
-      },
-      "required": ["arbeitsschritt_ref", "versuch", "status", "eingabe_hash"]
+      "items": {"$ref": "#/$defs/versuch"}
     },
-    "hash": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
-    "zeitpunkt": {"type": "string", "format": "date-time", "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|[+-]([01][0-9]|2[0-3]):[0-5][0-9])$"},
+    "vorgaenger": {"type": "string", "pattern": "^vorgaenge/[a-z0-9]+(?:-[a-z0-9]+)*/CONTEXT\\.md(?![\\s\\S])"}
+  },
+  "required": ["type", "protocol", "id", "hauptprozess_revision", "laufpfad"],
+  "$defs": {
+    "zeitpunkt": {"type": "string", "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?(Z|[+-]([01][0-9]|2[0-3]):[0-5][0-9])$"},
     "wiedereinstieg": {
       "type": "object",
       "additionalProperties": false,
@@ -52,6 +37,28 @@
         "at": {"$ref": "#/$defs/zeitpunkt"}
       },
       "required": ["by", "at"]
+    },
+    "versuch": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "arbeitsschritt_ref": {"type": "string", "pattern": "^arbeitsschritt:[a-z0-9]+(?:-[a-z0-9]+)*$"},
+        "status": {"enum": ["aktiv", "wartend", "abgeschlossen", "abgebrochen"]},
+        "status_seit": {"$ref": "#/$defs/zeitpunkt"},
+        "gewaehlte_route": {"type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"},
+        "wiedereinstieg": {"$ref": "#/$defs/wiedereinstieg"},
+        "freigabe": {"$ref": "#/$defs/freigabe"},
+        "nummer": {"type": "integer", "minimum": 1, "maximum": 999},
+        "gelesen": {
+          "type": "array",
+          "items": {"$ref": "urn:impacts:schema:arbeitsschritt:v1#/$defs/dateireferenz"}
+        },
+        "geschrieben": {
+          "type": "array",
+          "items": {"$ref": "urn:impacts:schema:arbeitsschritt:v1#/$defs/ausgabereferenz"}
+        }
+      },
+      "required": ["arbeitsschritt_ref", "nummer", "status", "gelesen"]
     }
   }
 }

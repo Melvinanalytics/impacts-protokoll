@@ -12,24 +12,25 @@ from io import StringIO
 import json
 from pathlib import Path
 import re
+import sys
 
 import pytest
 import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
 
-from impacts_protocol.validator import SCHEMA_REGISTRY
+from impacts_protocol.validator import SCHEMA_NAMES, SCHEMA_REGISTRY
 
 
 DOCUMENT = ROOT / "02_protocol/impacts-architect/references/datenbezug.md"
+FIXTURES = ROOT / "06_evaluations/offer-walk/fixtures"
 
 
 @pytest.fixture
 def source():
-    text = DOCUMENT.read_text(encoding="utf-8")
-    model = yaml.safe_load(re.search(r"```markdown\n---\n(.*?)\n---", text, re.S)[1])["x_tables"]
-    blocks = re.findall(r"^### `records/([^`]+)\.csv`\n\n```csv\n(.*?)\n```", text, re.M | re.S)
-    tables = {name: list(csv.DictReader(StringIO(body))) for name, body in blocks}
+    model = yaml.safe_load((FIXTURES / "grundlagen/geschaeftsdaten.md").read_text().split("---")[1])["x_tables"]
+    tables = {path.stem: list(csv.DictReader(StringIO(path.read_text())))
+              for path in (FIXTURES / "records").glob("*.csv")}
     assert set(tables) == set(model)
     return model, tables
 
@@ -160,7 +161,7 @@ def test_valid_foreign_key_does_not_verify_source_truth(source):
 
 
 def test_compact_document_view_matches_computed_excerpt(source):
-    shown = json.loads(re.search(r"```json\n(.*?)\n```", DOCUMENT.read_text(), re.S)[1])
+    shown = json.loads((FIXTURES / "excerpt.json").read_text())
     result = read(source)
     assert shown["customer_id"] == result["customer"]["customer_id"]
     assert shown["as_of"] == result["as_of"]
@@ -171,13 +172,101 @@ def test_compact_document_view_matches_computed_excerpt(source):
             assert value == (Decimal(full[key]) if key == "quantity" else full[key])
 
 
+# Knowledge form: resolution through declared links only.
+
+
+def test_form_is_local_vocabulary_not_a_core_pipeline():
+    """The knowledge form must not masquerade as a Core object: its frontmatter
+    type is local vocabulary, and no laufpfad/route machinery is involved."""
+    text = DOCUMENT.read_text(encoding="utf-8")
+    model_type = yaml.safe_load((FIXTURES / "grundlagen/geschaeftsdaten.md").read_text().split("---")[1])["type"]
+    assert model_type == "DomainModel"
+    assert model_type not in SCHEMA_NAMES
+    assert "laufpfad" not in text.split("## Domain model and source tables")[1].split("## Bind a working excerpt")[0]
+
+
+def test_fresh_reader_resolves_fact_through_declared_links(source):
+    """Fact: agreed scope of C-1 at 2026-09-10, resolved only via the
+    x_tables resource/foreign-key links (hand-computed oracle)."""
+    result = read(source, customer_id="C-1", as_of="2026-09-10")
+    assert result["customer"]["customer_id"] == "C-1"
+    assert [(r["agreement_id"], r["version"]) for r in result["agreements"]] == [("A-1", "2")]
+    assert [(r["item_id"], r["quantity"], r["unit"]) for r in result["items"]] == [
+        ("I-2", "2", "Stück"), ("I-3", "12", "Stunde")]
+
+
+def test_empty_valid_to_is_confirmed_open_end_not_unknown(source):
+    """A-2 v1 has empty valid_to: documented as 'bestätigtes offenes Ende'.
+    It must stay selectable at any later date — missing != false/zero."""
+    result = read(source, "C-2", "2031-01-01")
+    assert [r["agreement_id"] for r in result["agreements"]] == ["A-2"]
+    assert [r["item_id"] for r in result["items"]] == ["I-4"]
+
+
+def test_multi_entity_relationship_keeps_direction_and_multiplicity(source):
+    """agreement_items -> agreements (composite key, agreed_under_version);
+    items -> products|services (exactly one, catalog KIND)."""
+    model, _ = source
+    links = {l["meaning"]: l for l in model["agreement_items"]["foreign_keys"]}
+    assert links["agreed_under_version"]["fields"] == ["agreement_id", "agreement_version"]
+    assert links["agreed_under_version"]["references"] == ["agreement_id", "version"]
+    assert model["agreement_items"]["exactly_one"] == ["product_id", "service_id"]
+
+
+def test_kind_vs_instance_and_requested_offered_agreed_delivered(source):
+    """The excerpt carries catalog KINDS under an AGREED state only. No
+    requested/offered/delivered/consumed/price claim may appear or be derived."""
+    result = read(source)
+    for row in result["products"] + result["services"]:
+        assert set(row) <= {("product_id"), ("service_id"), "label"}
+    blob = repr(result).lower()
+    for forbidden in ("delivered", "geliefert", "consumed", "verbrauch", "price", "preis"):
+        assert forbidden not in blob
+    # zero agreed quantity is structurally permitted but still asserts no delivery
+    src = copy.deepcopy(source)
+    src[1]["agreement_items"][1]["quantity"] = "0"
+    result0 = read(src)
+    assert result0["items"][0]["quantity"] == "0"  # present, agreed, nothing more
+
+
+def test_forbidden_transitive_inference_stays_open(source):
+    """C-1 -> A-1/2 -> I-3 -> S-20 establishes NO 'S-20 covers C-1's delivered
+    device' claim. The document's own checkable-questions table fixes the
+    expected answer as `open`; the reader must produce no such link."""
+    text = DOCUMENT.read_text(encoding="utf-8")
+    row = next(l for l in text.splitlines() if "cover the delivered device" in l)
+    assert "`open`" in row
+    result = read(source)
+    assert not any("cover" in key or "device" in key
+                   for service in result["services"] for key in service)
+
+
+def test_units_do_not_sum_across_kinds(source):
+    """2 Stück + 12 Stunde is not 14 of anything; separate positions retained."""
+    result = read(source)
+    units = {r["unit"] for r in result["items"]}
+    assert units == {"Stück", "Stunde"}
+    assert len(result["items"]) == 2  # not collapsed into one summed position
+
+
+def test_unlinked_neighbor_table_is_rejected_not_silently_read(tmp_path, monkeypatch):
+    """Domain meaning must come through intended links, not folder proximity:
+    a decoy CSV block sitting next to the linked ones is not part of the model
+    and must trip the fixture's link-coverage guard."""
+    import shutil
+    fixture_copy = tmp_path / "fixtures"
+    shutil.copytree(FIXTURES, fixture_copy)
+    (fixture_copy / "records/decoy.csv").write_text("customer_id,display_name\nC-1,Lockvogel\n")
+    monkeypatch.setattr(sys.modules[__name__], "FIXTURES", fixture_copy)
+    with pytest.raises(AssertionError):
+        source.__wrapped__()
+
+
 @pytest.fixture
 def offer():
-    text = DOCUMENT.read_text(encoding="utf-8")
-    template = re.search(r"```text\n(.*?)\n```", text.split("### Document blank\n", 1)[1], re.S)[1]
-    values = json.loads(re.search(r"```json\n(.*?)\n```", text.split("### Concrete Vorgang inputs\n", 1)[1], re.S)[1])
-    expected = re.search(r"```text\n(.*?)\n```", text.split("### Filled output\n", 1)[1], re.S)[1]
-    return template, values, expected
+    return ((FIXTURES / "template.de.md").read_text().removesuffix("\n"),
+            json.loads((FIXTURES / "data.json").read_text()),
+            (FIXTURES / "filled.md").read_text().removesuffix("\n"))
 
 
 # Use the executed example implementation; do not maintain a second calculator.
@@ -230,8 +319,7 @@ def test_offer_cannot_hide_an_unfilled_required_placeholder(offer):
 
 @pytest.fixture
 def offer_workstep():
-    section = DOCUMENT.read_text().split("### Worked workstep contract\n", 1)[1]
-    return yaml.safe_load(re.search(r"```markdown\n---\n(.*?)\n---", section, re.S)[1])
+    return yaml.safe_load((FIXTURES / "arbeitsschritt.md").read_text().split("---")[1])
 
 
 def test_worked_offer_step_uses_the_existing_core_schema(offer_workstep):

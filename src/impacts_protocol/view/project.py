@@ -7,43 +7,54 @@ missing, and the page says so.
 """
 from __future__ import annotations
 
+from impacts_protocol.model import ATTEMPT_PHASE, derive_progress
+
 import re
+from datetime import datetime
 
 # One phase vocabulary; page.html holds the words (PHASE). Position is not progress: a waiting
 # step keeps its own quiet phase, never the green of the current position.
-ENTRY_PHASE = {"abgeschlossen": "done", "aktiv": "current", "wartend": "waiting"}
 
-# Subtitles quoted verbatim from the protocol templates; a heading without a template sentence gets none.
-SUBTITLE = {
-    "arbeitsschritt": {
-        "ein job": "Ein Satz: Ergebnis dieses Jobs, Empfänger und erlaubte Nutzung.",
-        "one job": "One sentence: the result this job produces, its recipient and permitted use.",
-        "nicht laden": "Was dieser Arbeitsschritt bewusst nicht liest",
-        "excluded context": "Name material outside this job's required context.",
-        "befugnis": "Wer darf in diesem Job was entscheiden, einsehen oder bewirken, und wer muss selbst handeln?",
-        "authority": "Who may decide, access or cause what in this job, and who must act in person?",
-        "ablauf": "Was löst diesen Job aus, wohin führt jedes Ergebnis, und was geschieht beim Warten?",
-        "flow": "What starts this job, where each outcome leads and what happens while it waits.",
-    },
-    "vorgang": {
-        "betreff": "Wer oder was Gegenstand dieses Vorgangs ist.",
-        "subject": "Who or what this Vorgang concerns.",
-    },
-}
-JOB, AUTHORITY, FLOW = {"ein job", "one job"}, {"human check", "menschliche prüfung", "befugnis", "authority"}, {"ablauf", "flow"}
-PROCESSING = {"verarbeitung", "processing"}
-# The four contribution kinds of zuschnitt.md "Automation boundary", in both template languages; not exclusive per step.
+# Accepted headings have one home; each reader derives its original subset.
+# Tuple fields: source heading, sheet area, template subtitle, page word key.
+STEP_HEADINGS = [
+    ('ein job', 'job', 'Ein Satz: Ergebnis dieses Jobs, Empfänger und erlaubte Nutzung.', 'one_job'),
+    ('one job', 'job', 'One sentence: the result this job produces, its recipient and permitted use.', 'one_job'),
+    ('eingaben', 'inputs', None, 'eingaben'),
+    ('inputs', 'inputs', None, 'eingaben'),
+    ('nicht laden', 'excluded', 'Was dieser Arbeitsschritt bewusst nicht liest', None),
+    ('excluded context', 'excluded', "Name material outside this job's required context.", 'nicht_laden'),
+    ('verarbeitung', 'processing', None, 'verarbeitung'),
+    ('processing', 'processing', None, 'verarbeitung'),
+    ('handgriffe', 'handgrips', None, None),
+    ('handgrips', 'handgrips', None, 'handgriffe'),
+    ('ausgaben und wirkungen', 'outputs', None, None),
+    ('outputs and effects', 'outputs', None, 'ausgaben_und_wirkungen'),
+    ('ausgaben', 'outputs', None, 'ausgaben'),
+    ('outputs', 'outputs', None, 'ausgaben'),
+    ('prüfung', 'check', None, 'prufung'),
+    ('check', 'check', None, 'prufung'),
+    ('befugnis', 'authority', 'Wer darf in diesem Job was entscheiden, einsehen oder bewirken, und wer muss selbst handeln?', 'befugnis'),
+    ('authority', 'authority', 'Who may decide, access or cause what in this job, and who must act in person?', 'befugnis'),
+    ('human check', 'authority', None, 'human_check'),
+    ('menschliche prüfung', 'authority', None, 'human_check'),
+    ('ablauf', 'flow', 'Womit beginnt dieser Job, wohin führt jede Route, und was geschieht beim Warten?', 'flow_title'),
+    ('flow', 'flow', 'What starts this job, where each route leads and what happens while it waits.', 'flow_title'),
+    ('tools', None, None, 'tools_title'),
+    ('werkzeuge', None, None, 'tools_title'),
+    ('capability call', None, None, 'capability_call'),
+]
+SUBJECT_HEADINGS = {"Gegenstand": "Wofür seine Leistung geschuldet ist",
+                    "Subject": "What its Leistung is owed for"}
+SUBTITLE = {"arbeitsschritt": {name: subtitle for name, _, subtitle, _ in STEP_HEADINGS if subtitle},
+            "vorgang": {name.lower(): subtitle for name, subtitle in SUBJECT_HEADINGS.items()}}
+SHEET = {name: area for name, area, _, _ in STEP_HEADINGS if area}
+JOB, AUTHORITY, FLOW, PROCESSING = ({name for name, area in SHEET.items() if area == key}
+                                   for key in ("job", "authority", "flow", "processing"))
+PAGE_HEADINGS = {name: word for name, _, _, word in STEP_HEADINGS if word}
 EXECUTION = {"deterministisches system": "deterministic", "deterministic system": "deterministic",
              "klassifikator": "classifier", "classifier": "classifier", "agent": "agent", "mensch": "human", "human": "human"}
-
-# Display sections reuse template meanings; unknown headings stay verbatim and unnumbered.
-SHEET = {"ein job": "job", "one job": "job", "eingaben": "inputs", "inputs": "inputs",
-         "nicht laden": "excluded", "excluded context": "excluded", "verarbeitung": "processing",
-         "processing": "processing", "handgriffe": "handgrips", "handgrips": "handgrips",
-         "ausgaben und wirkungen": "outputs", "outputs and effects": "outputs", "ausgaben": "outputs",
-         "outputs": "outputs", "prüfung": "check", "check": "check", "befugnis": "authority",
-         "authority": "authority", "human check": "authority", "menschliche prüfung": "authority",
-         "ablauf": "flow", "flow": "flow"}
+OWNER_LABELS = ("owner", "role", "verantwortlich", "rolle", "responsible")
 
 
 def sheet_parts(node: dict) -> list[dict]:
@@ -84,7 +95,7 @@ def first_sentence(spans: list | None) -> list | None:
 def step_owners(node: dict) -> list[dict]:
     """Only explicit owner/role labels, never a performer inferred from processing prose."""
     found = []
-    names = {"owner", "role", "responsible", "verantwortlich", "rolle"}
+    names = OWNER_LABELS
     for part in node["sections"]:
         for block in part["blocks"]:
             entries = ([{"spans": block["spans"], "depth": 0}] if block["type"] == "para" else
@@ -103,6 +114,27 @@ def step_owners(node: dict) -> list[dict]:
                         offset = 0
                     found.append({"spans": value_spans, "line": line, "heading": part["heading"]})
                 line += 1 + text.count("\n")
+    return found
+
+
+DATA_KINDS = {"Work", "Foundations", "Population", "Received source", "Commitment",
+              "Subject record", "Decision record", "Run record"}
+
+
+def source_kinds(node: dict) -> list[dict]:
+    """Read source-requirement kinds as declared material, without inferring authority."""
+    found = []
+    for part in node["sections"]:
+        source = None
+        for block in part["blocks"]:
+            for item in block.get("items", []):
+                if item["depth"] != 0:
+                    continue
+                label, colon, value = plain(item["spans"]).partition(":")
+                if colon and label.strip() == "Quell-Eingabe":
+                    source = value.strip()
+                elif colon and label.strip() == "Datenart":
+                    found.append({"input": source, "kind": value.strip() if value.strip() in DATA_KINDS else None})
     return found
 
 
@@ -165,44 +197,14 @@ def annotate(nodes: list[dict]) -> None:
             part["subtitle"] = known.get(heading_key(part))
         if node["kind"] == "arbeitsschritt":
             node.update(step_refs(node), routes=route_rows(by_id, order, node["id"]))
-            node.update(sheet_parts=sheet_parts(node), job_summary=first_sentence(node["job"]), owners=step_owners(node))
+            node.update(sheet_parts=sheet_parts(node), job_summary=first_sentence(node["job"]), owners=step_owners(node),
+                        source_kinds=source_kinds(node))
 
 
-def phases(nodes: list[dict], entries: list[dict]) -> dict:
-    """Display state from the laufpfad: the latest entry per step wins. Core forbids an empty laufpfad."""
-    steps = {n["id"]: n for n in nodes if n["kind"] == "arbeitsschritt"}
-    phase = {entry["arbeitsschritt_ref"]: ENTRY_PHASE[entry["status"]] for entry in entries}
-    # A closed attempt is not an accepted result. Only the laufpfad decides, never the display order:
-    # re-entering a step on the Vorgang's current path returns the Vorgang there, and each step passed since
-    # then shows "looped" instead of "done" until a later attempt of its own.
-    path: list[str] = []
-    looped: set[str] = set()
-    for entry in entries:
-        ref = entry["arbeitsschritt_ref"]
-        looped.discard(ref)
-        if ref in path:
-            cut = path.index(ref) + 1
-            looped.update(path[cut:])
-            del path[cut:]
-        else:
-            path.append(ref)
-    for step in looped:
-        if phase[step] == "done":
-            phase[step] = "looped"
-    last = entries[-1]
-    current, ended = last["arbeitsschritt_ref"], None
-    routes = steps[current]["meta"]["routen"]
-    if last["status"] == "abgeschlossen":
-        target = routes[last["gewaehlte_route"]]
-        if target in steps:
-            current, phase[target] = target, "next"
-        else:
-            current, ended = None, target
-    elif last["status"] == "wartend":
-        for target in routes.values():
-            if target in steps and target not in phase:
-                phase[target] = "possible"
-    return {"phase": phase, "current": current, "ended": ended}
+def phases(nodes: list[dict], entries: list[dict], *, superseded: bool = False) -> dict:
+    """Project Core's single progress derivation."""
+    return derive_progress(entries, {n["id"]: n["meta"] for n in nodes if n["kind"] == "arbeitsschritt"},
+                           nodes[0].get("meta", {}).get("leistung", {}), superseded=superseded)
 
 
 def direction(by_id: dict, order: list[str], source: str, target: str) -> str:
@@ -247,9 +249,9 @@ def map_tree(nodes: list[dict], vorgang: dict | None, view: dict | None) -> dict
         mine = [(i, e) for i, e in enumerate(entries, 1) if e["arbeitsschritt_ref"] == step_id]
         last = mine[-1][1] if mine else None
         if len(mine) > 1 or (last and last["status"] != "abgeschlossen"):
-            node["children"] += [box(f"Versuch {e['versuch']}", "attempt", ENTRY_PHASE[e["status"]], attempt=e["versuch"], entry=i)
+            node["children"] += [box(f"Versuch {e['nummer']}", "attempt", ATTEMPT_PHASE[e["status"]], attempt=e["nummer"], entry=i)
                                  for i, e in mine]
-        chosen_in = {e["gewaehlte_route"]: e["versuch"] for _, e in mine if e.get("gewaehlte_route")}
+        chosen_in = {e["gewaehlte_route"]: e["nummer"] for _, e in mine if e.get("gewaehlte_route")}
         for route, target, target_title, way in route_rows(by_id, order, step_id):
             chosen = bool(last and last["status"] == "abgeschlossen" and last.get("gewaehlte_route") == route)
             if phase in ("", "current", "waiting"):
@@ -273,18 +275,6 @@ def map_tree(nodes: list[dict], vorgang: dict | None, view: dict | None) -> dict
     return box(title_of(root), "hp", "reached" if view and view["ended"] else container(parts), ref=root["id"], children=parts)
 
 
-def stage(nodes: list[dict], ref: str) -> int | str | None:
-    """The Hauptprozess's stage for a step or end; open when it assigns stages but not this one."""
-    stages = nodes[0]["meta"].get("stufen")
-    return None if not stages else stages.get(ref, "open")
-
-
-def achieved(nodes: list[dict], end: str) -> bool | str:
-    """Whether a reached end achieves the Leistung; open when the Hauptprozess does not say."""
-    ends = nodes[0]["meta"]["leistung"].get("erreicht")
-    return "open" if ends is None else end in ends
-
-
 def stand(nodes: list[dict], vorgang: dict | None, view: dict | None) -> dict:
     """Where the Vorgang stands, as plain fields for the page's fixed sentences."""
     if vorgang is None:
@@ -293,24 +283,26 @@ def stand(nodes: list[dict], vorgang: dict | None, view: dict | None) -> dict:
     order = [n["id"] for n in nodes if n["kind"] == "arbeitsschritt"]
     entries = vorgang["meta"]["laufpfad"]
     last = entries[-1]
-    found = dict.fromkeys(("kind", "entry", "entries", "step", "step_title", "part_title", "versuch", "gate", "routes",
+    found = dict.fromkeys(("kind", "entry", "entries", "step", "step_title", "part_title", "nummer", "gate", "routes",
                            "ausloeser", "continuation_ref", "faellig", "status_seit", "from_step", "from_title", "route", "end",
                            "stufe", "erreicht"))
-    found.update(entry=len(entries), entries=len(entries), status_seit=last.get("status_seit"))
+    found.update(entry=len(entries), entries=len(entries), status_seit=last.get("status_seit"), stufe=view.get("subject_stage", "open"))
     source = last["arbeitsschritt_ref"]
-    if last["status"] == "abgeschlossen":
+    if view["status"] in ("zwischen", "beendet"):
         found.update(from_step=source, from_title=title_of(by_id[source]), route=last["gewaehlte_route"])
     if view["ended"]:
-        found.update(kind="ended", end=short(view["ended"]), stufe=stage(nodes, view["ended"]),
-                     erreicht=achieved(nodes, view["ended"]))
+        found.update(kind="ended", end=short(view["ended"]), erreicht=view["erreicht"])
+        return found
+    if view["status"] in ("abgebrochen", "superseded"):
+        found.update(kind="stopped" if view["status"] == "abgebrochen" else "superseded", erreicht=view["erreicht"])
         return found
     step = view["current"]
     found.update(step=step, step_title=title_of(by_id[step]), part_title=title_of(by_id[by_id[step]["parent"]]),
-                 gate=by_id[step]["meta"].get("gate"), routes=route_rows(by_id, order, step), stufe=stage(nodes, step))
-    if last["status"] == "abgeschlossen":
+                 gate=by_id[step]["meta"].get("gate"), routes=route_rows(by_id, order, step))
+    if view["status"] == "zwischen":
         found["kind"] = "next"
     else:
-        found.update(kind="current" if last["status"] == "aktiv" else "waiting", versuch=last["versuch"])
+        found.update(kind={"aktiv": "current", "wartend": "waiting"}[view["status"]], nummer=view["nummer"])
         resume = last.get("wiedereinstieg") or {}
         found.update(ausloeser=resume.get("ausloeser"), continuation_ref=resume.get("continuation_ref"), faellig=resume.get("faellig"))
     return found
@@ -318,14 +310,86 @@ def stand(nodes: list[dict], vorgang: dict | None, view: dict | None) -> dict:
 
 def vorgang_summary(name: str, model: dict, head: str | None) -> dict:
     summary = {"page": name, "id": model["selection"]["vorgang"], "issues": model["issues"]}
+    if model.get("not_judged"):
+        summary["not_judged"] = model["not_judged"]
+        return summary
     if model["issues"]:
         return summary
     vorgang = model["vorgang"]
     summary.update(
         id=vorgang["id"], title=vorgang["title"], revision=model["selection"]["revision"], path=vorgang["path"],
         stand=model["stand"], statuses=[e["status"] for e in vorgang["meta"]["laufpfad"]],
+        attempt_phases=model["attempt_phases"],
         matches_head=None if head is None else model["selection"]["revision"] == f"git-tree:{head}")
     return summary
+
+
+def due_list(pages: dict[str, dict]) -> list[dict]:
+    """Current waits, ordered by their recorded check instant; missing timing stays visible.
+
+    No wall-clock judgement, route selection or record-deadline interpretation.
+    """
+    rows = []
+    for page, model in pages.items():
+        if model["kind"] != "vorgang" or model["issues"] or model.get("not_judged"):
+            continue
+        view = model["view"]
+        if view["status"] != "wartend":
+            continue
+        entry = model["vorgang"]["meta"]["laufpfad"][-1]
+        resume = entry.get("wiedereinstieg") or {}
+        rows.append({"page": page, "id": model["vorgang"]["id"], "step": view["current"],
+                     "faellig": resume.get("faellig"), "ausloeser": resume.get("ausloeser"),
+                     "missing_due": not resume.get("faellig")})
+    return sorted(rows, key=lambda r: (r["missing_due"],
+                  datetime.fromisoformat(r["faellig"]).timestamp() if r["faellig"] else 0, r["page"]))
+
+
+def funnel(pages: dict[str, dict], records: list[dict] | None = None) -> list[dict]:
+    """Count Stage records once by resolved address, with no universal stage order.
+
+    Missing links are not identities. Conflicting reads of one address stay open.
+    """
+    subjects = {}
+    for record in records or []:
+        subjects.setdefault(record["record"], set()).add(record["stage"])
+    for model in pages.values():
+        if model["kind"] != "vorgang" or model["issues"] or model.get("not_judged"):
+            continue
+        subject = model.get("subject")
+        if subject:
+            subjects.setdefault(subject["record"], set()).add(subject["stage"])
+    groups = {}
+    for record, stages in subjects.items():
+        stage = next(iter(stages)) if len(stages) == 1 else "open"
+        groups.setdefault(stage, []).append(record)
+    return [{"stage": stage, "count": len(records), "records": sorted(records)}
+            for stage, records in sorted(groups.items())]
+
+
+def step_queues(pages: dict[str, dict]) -> list[dict]:
+    """One queue per Arbeitsschritt and bound Hauptprozess revision, including empty queues.
+
+    Zwischen names the unopened successor (nummer=None); it invents no attempt.
+    """
+    queues = {}
+    for page, model in pages.items():
+        if model["kind"] not in ("hauptprozess", "vorgang") or model["issues"] or model.get("not_judged"):
+            continue
+        hp = model["nodes"][0]["id"]
+        tree = model["selection"].get("tree")
+        revision = f"git-tree:{tree}" if tree else model["selection"]["revision"]
+        view = model.get("view")
+        for node in model["nodes"]:
+            if node["kind"] != "arbeitsschritt":
+                continue
+            key = hp, revision, node["id"]
+            queue = queues.setdefault(key, {"hauptprozess": hp, "revision": revision,
+                                           "step": node["id"], "title": title_of(node), "vorgaenge": []})
+            if view and view["status"] in ("aktiv", "wartend", "zwischen") and view["current"] == node["id"]:
+                queue["vorgaenge"].append({"page": page, "id": model["vorgang"]["id"],
+                                          "status": view["status"], "nummer": view["nummer"]})
+    return [queues[key] for key in sorted(queues)]
 
 
 def ist_title(model: dict) -> str:
@@ -338,26 +402,15 @@ def ist_title(model: dict) -> str:
     return name if isinstance(name, str) and name.strip() else node["title"] or stem
 
 
-def stage_coverage(nodes: list[dict]) -> dict | None:
-    """How many steps and ends of an Application its Hauptprozess assigns a stage; None without stages."""
-    stages = nodes[0]["meta"].get("stufen")
-    if not stages:
-        return None
-    steps = [n for n in nodes if n["kind"] == "arbeitsschritt"]
-    ends = {target for n in steps for target in n["meta"]["routen"].values() if target.startswith("end:")}
-    refs = [n["id"] for n in steps] + sorted(ends)
-    return {"assigned": sum(ref in stages for ref in refs), "of": len(refs)}
-
-
 def overview(workspace: str, pages: dict[str, dict], heads: dict[str, str | None],
              workspace_issues: list[dict], has_head: bool, ist_skipped: list[dict] | None,
-             schemas: dict[str, dict]) -> dict:
+             schemas: dict[str, dict], *, records: list[dict] | None = None) -> dict:
     """Leistungen, each with its Vorgänge, and the Ist-Prozess files. No edges between Hauptprozesse:
-    Core declares none, and the view does not invent them. A Vorgang whose Application is
+    Core declares none, and the view does not invent them. A Vorgang whose Hauptprozess is
     no longer in the working files keeps the Leistung of the revision it binds."""
-    applications, by_hp = [], {}
+    hauptprozesse, by_hp = [], {}
     for name, model in pages.items():
-        if model["kind"] != "application":
+        if model["kind"] != "hauptprozess":
             continue
         folder = model["selection"]["folder"]
         head, tree = heads.get(folder), model["selection"].get("tree")
@@ -366,27 +419,25 @@ def overview(workspace: str, pages: dict[str, dict], heads: dict[str, str | None
         if not model["issues"]:
             hp = model["nodes"][0]
             entry.update(id=hp["id"], title=hp["title"], leistung=hp["meta"]["leistung"],
-                         steps=sum(1 for n in model["nodes"] if n["kind"] == "arbeitsschritt"),
-                         stufen=stage_coverage(model["nodes"]))
+                         steps=sum(1 for n in model["nodes"] if n["kind"] == "arbeitsschritt"))
             by_hp[hp["id"]] = entry
-        applications.append(entry)
+        hauptprozesse.append(entry)
     unassigned = []
     for name, model in pages.items():
         if model["kind"] != "vorgang":
             continue
-        if model["issues"]:
+        if model["issues"] or model.get("not_judged"):
             unassigned.append(vorgang_summary(name, model, None))
             continue
         hp, revision = model["nodes"][0], model["selection"]["revision"]
-        # A vanished Application is known only per bound revision; each may state another Leistung.
+        # A vanished Hauptprozess is known only per bound revision; each may state another Leistung.
         key = hp["id"] if hp["id"] in by_hp else (hp["id"], revision)
         if key not in by_hp:
             by_hp[key] = {"page": None, "folder": None, "current": False, "issues": [], "head": None,
                           "same_as_head": None, "vorgaenge": [], "id": hp["id"], "revision": revision,
                           "title": hp["title"], "leistung": hp["meta"]["leistung"],
-                          "steps": sum(1 for n in model["nodes"] if n["kind"] == "arbeitsschritt"),
-                          "stufen": stage_coverage(model["nodes"])}
-            applications.append(by_hp[key])
+                          "steps": sum(1 for n in model["nodes"] if n["kind"] == "arbeitsschritt")}
+            hauptprozesse.append(by_hp[key])
         owner = by_hp[key]
         owner["vorgaenge"].append(vorgang_summary(name, model, owner["head"]))
     ist = None
@@ -398,18 +449,20 @@ def overview(workspace: str, pages: dict[str, dict], heads: dict[str, str | None
                          for name, m in pages.items() if m["kind"] == "ist-prozess"],
                "skipped": ist_skipped}
     vorgaenge = [m for m in pages.values() if m["kind"] == "vorgang"]
-    current = [a for a in applications if a["current"]]
-    population = {"applications": len(current), "applications_refused": sum(bool(a["issues"]) for a in current),
-                  "historic": len(applications) - len(current),
+    current = [a for a in hauptprozesse if a["current"]]
+    population = {"hauptprozesse": len(current), "hauptprozesse_refused": sum(bool(a["issues"]) for a in current),
+                  "historic": len(hauptprozesse) - len(current),
                   "vorgaenge": len(vorgaenge), "vorgaenge_refused": sum(bool(m["issues"]) for m in vorgaenge),
+                  "vorgaenge_not_judged": sum(bool(m.get("not_judged")) for m in vorgaenge),
                   "ist": len(ist["pages"]) if ist else 0}
-    shown = [m for m in pages.values() if m["kind"] == "application" and not m["issues"]]
+    shown = [m for m in pages.values() if m["kind"] == "hauptprozess" and not m["issues"]]
     counts = {kind: sum(n["kind"] == kind for m in shown for n in m["nodes"]) for kind in ("hauptprozess", "teilprozess", "arbeitsschritt")}
-    counts |= {"leistung": counts["hauptprozess"], "vorgang": sum(not m["issues"] for m in vorgaenge),
-               "laufpfadeintrag": sum(len(m["vorgang"]["meta"]["laufpfad"]) for m in vorgaenge if not m["issues"])}
-    return {"format": "impacts-view/3", "kind": "overview", "selection": {"workspace": workspace, "head": has_head},
+    counts |= {"leistung": counts["hauptprozess"], "vorgang": sum(not m["issues"] and not m.get("not_judged") for m in vorgaenge),
+               "versuch": sum(len(m["vorgang"]["meta"]["laufpfad"]) for m in vorgaenge if not m["issues"] and not m.get("not_judged"))}
+    return {"format": "impacts-view/5", "kind": "overview", "selection": {"workspace": workspace, "head": has_head},
             "issues": workspace_issues, "population": population,
-            "applications": applications, "unassigned": unassigned, "ist": ist,
+            "hauptprozesse": hauptprozesse, "unassigned": unassigned, "ist": ist,
+            "due_list": due_list(pages), "funnel": funnel(pages, records), "step_queues": step_queues(pages),
             "data_model": data_model(schemas, counts)}
 
 
@@ -417,20 +470,20 @@ def overview(workspace: str, pages: dict[str, dict], heads: dict[str, str | None
 
 ENTITIES = ("hauptprozess", "leistung", "teilprozess", "arbeitsschritt", "vorgang")
 # Where each kind lives in a workspace; a list item names its file and field.
-HOMES = {"hauptprozess": "applications/<slug>/CONTEXT.md", "leistung": "applications/<slug>/CONTEXT.md · leistung",
-         "teilprozess": "applications/<slug>/<teil>/CONTEXT.md", "arbeitsschritt": "applications/<slug>/<teil>/<schritt>/CONTEXT.md",
-         "vorgang": "vorgaenge/<slug>/CONTEXT.md", "laufpfadeintrag": "vorgaenge/<slug>/CONTEXT.md · laufpfad"}
+HOMES = {"hauptprozess": "hauptprozesse/<slug>/CONTEXT.md", "leistung": "hauptprozesse/<slug>/CONTEXT.md · leistung",
+         "teilprozess": "hauptprozesse/<slug>/<teil>/CONTEXT.md", "arbeitsschritt": "hauptprozesse/<slug>/<teil>/<schritt>/CONTEXT.md",
+         "vorgang": "vorgaenge/<slug>/CONTEXT.md", "versuch": "vorgaenge/<slug>/CONTEXT.md · laufpfad"}
 # A reference names its target kind as the prefix of a pattern, such as ^(?:arbeitsschritt|end):.
 PREFIX = re.compile(r"^\^(?:\((?:\?:)?([a-z-]+(?:\|[a-z-]+)*)\)|([a-z-]+)):")
-# Prefixes that point at something: a kind, an end, a record state or the bound Application tree.
-POINTS = {*ENTITIES, "laufpfadeintrag", "end", "stand", "git-tree"}
+# Prefixes that point at something: a kind, an end, a record state or the bound Hauptprozess tree.
+POINTS = {*ENTITIES, "versuch", "end", "stand", "git-tree"}
 
 
 def targets(schema: dict, defs: dict) -> list[str]:
     """What a field's values or keys point to, read from its $ref and prefix patterns."""
     found = []
     ref = schema.get("$ref", "")
-    if ref.startswith("urn:impacts:schema:"):
+    if ref.startswith("urn:impacts:schema:") and "#" not in ref:
         found.append(ref.split(":")[3])
     elif ref.startswith("#/$defs/"):
         name = ref.removeprefix("#/$defs/")
@@ -470,11 +523,12 @@ def data_model(schemas: dict[str, dict], counts: dict[str, int]) -> list[dict]:
 LABELS = ("open", "hypothesis", "reported", "verified")  # weakest first
 NAMES = {"analysis": {"analyse", "analysis"}, "conditions": {"geforderte bedingungen", "required conditions"},
          "activities": {"tätigkeiten in ablaufreihenfolge", "activities in flow order"}}
-HEADS = {"analysis": (["nr.", "dient", "ergebnisarbeit", "koordination", "fehlerfolge", "doppelung", "überschuss",
+NUMBER_COLUMNS = ("nr.", "no.")
+HEADS = {"analysis": ([NUMBER_COLUMNS[0], "dient", "ergebnisarbeit", "koordination", "fehlerfolge", "doppelung", "überschuss",
                        "vorgeschlagene maßnahme"],
-                      ["no.", "serves", "result work", "coordination", "failure demand", "duplicate", "excess", "proposed move"]),
+                      [NUMBER_COLUMNS[1], "serves", "result work", "coordination", "failure demand", "duplicate", "excess", "proposed move"]),
          "conditions": (["id", "bedingung", "urheber und grundlage", "evidenz"], ["id", "condition", "imposed by and basis", "evidence"]),
-         "activities": (["nr.", "tätigkeit"], ["no.", "activity"])}
+         "activities": ([NUMBER_COLUMNS[0], "tätigkeit"], [NUMBER_COLUMNS[1], "activity"])}
 MARK = {"ja": "yes", "yes": "yes", "nein": "no", "no": "no", "offen": "open", "open": "open"}
 LEADING = re.compile(r"^\W*([A-Za-zÄÖÜäöüß]+)")
 CODE_LIKE = re.compile(r"[A-Z]{1,3}\d+")
@@ -511,6 +565,85 @@ def answer(spans: list[list[str]]) -> dict:
     lead = LEADING.match(rest)
     tail = rest[lead.end():] if lead and lead.group(1) == word else rest
     return {"mark": mark, "word": word, "labels": found, "spans": spans, "solid": solid, "more": bool(re.search(r"\w", tail))}
+
+
+# Leading phrases are the capture interface, not classifications inferred from prose.
+SEPARATION = {"yes, required": "required", "ja, erforderlich": "required",
+              "yes, today only": "today", "ja, nur heute": "today"}
+BASIS = {"recipient acceptance": "recipient", "third-party obligation": "third-party",
+         "own rule, confirmed": "confirmed", "own rule, open": "open",
+         "abnahme durch den empfänger": "recipient", "die abnahme durch den empfänger": "recipient",
+         "pflicht eines dritten": "third-party",
+         "eigene regel, bestätigt": "confirmed", "eigene regel, offen": "open"}
+MINIMIZE_ROWS = (
+    "Failure demand",
+    "Duplicate",
+    "Neither result work nor coordination",
+    "Coordination separated only by today's roles, systems, access or schedule",
+    "Work that only an own rule requires, not yet confirmed by its owner for this scope",
+    "Excess",
+    "Coordination across a required separation",
+    "Result work for a recipient condition, a third-party obligation or an own rule its owner has confirmed",
+)
+# A bare Keep names several rows; it cannot distinguish their different conditions.
+MOVE_NAMES = {"correct": (1,), "keep": (2, 7, 8), "remove": (3,),
+              "remove the separation": (4,), "ask": (5,), "trim": (6,),
+              "den formularfehler seinem eigentümer melden und das formular korrigieren": (1,),
+              "behalten": (2, 7, 8),
+              "trennung aufheben": (4,), "abteilungsleitung fragen": (5,),
+              "bericht auf befunde mit verweisen kürzen": (6,)}
+
+
+
+def _prefix(text: str, vocabulary: dict) -> str | None:
+    text = text.strip().casefold()
+    return next((value for key, value in vocabulary.items()
+                 if text.startswith(key) and (len(text) == len(key) or not text[len(key)].isalnum())), None)
+
+
+def minimize(row: dict, conditions: dict) -> dict:
+    """First applicable prose-table row; an unknown earlier premise blocks later rows."""
+    answers = row["answers"]
+    work, coordination, failure, duplicate, excess = ("open" if "open" in a["labels"] else a["mark"] for a in answers)
+    def result(number=None, missing=None):
+        proposal = plain(row["move"]["spans"])
+        move = _prefix(proposal, {name: name for name in sorted(MOVE_NAMES, key=len, reverse=True)})
+        alternatives = MOVE_NAMES.get(move, ())
+        mismatch = bool(alternatives and number not in alternatives)
+        return {"row": number, "reason": missing, "mismatch": bool(number and mismatch)}
+    for number, mark in ((1, failure), (2, duplicate)):
+        if mark not in {"yes", "no"}:
+            return result(missing=MINIMIZE_ROWS[number - 1])
+        if mark == "yes":
+            return result(number)
+    if work == coordination == "no":
+        return result(3)
+    if "yes" not in {work, coordination}:
+        return result(missing=MINIMIZE_ROWS[2])
+    if coordination not in {"yes", "no"}:
+        return result(missing=MINIMIZE_ROWS[3])
+    separation = _prefix(plain(answers[1]["spans"]), SEPARATION) if coordination == "yes" else None
+    if coordination == "yes" and separation is None:
+        return result(missing=MINIMIZE_ROWS[3])
+    if separation == "today":
+        return result(4)
+    bases = []
+    for cid in row["serves"]["ids"]:
+        condition = conditions[cid]
+        if condition["status"] != "found":
+            return result(missing=MINIMIZE_ROWS[4])
+        bases.append(_prefix(plain(condition["cells"][1]), BASIS))
+    if not bases or row["serves"]["unknown"] or None in bases:
+        return result(missing=MINIMIZE_ROWS[4])
+    if all(b in {"confirmed", "open"} for b in bases) and "open" in bases:
+        return result(5)
+    if excess not in {"yes", "no"}:
+        return result(missing=MINIMIZE_ROWS[5])
+    if excess == "yes":
+        return result(6)
+    if separation == "required":
+        return result(7)
+    return result(8)
 
 
 def _scopes(node: dict, kind: str) -> list[list[tuple[int, int, dict]]]:
@@ -622,6 +755,8 @@ def necessity(node: dict) -> dict:
             "move": {"spans": cells[7], "labels": labels([cells[7]]), "targets": _unique(match.group(1) for match in targets),
                      "prose": _move_prose(cells[7], [match.span() for match in targets]),
                      "removed": any(kind == "code" and text.strip() == REMOVED for kind, text, _ in cells[7]), "resolved": None}})
+    for row in result["rows"]:
+        row["minimize"] = minimize(row, result["conditions"] or {})
     reconcile_ist(result)
     result["status"] = "table"
     result["open_count"] = sum(a["mark"] == "open" for row in result["rows"] for a in row["answers"])
@@ -673,12 +808,12 @@ def reconcile_ist(result: dict) -> None:
 
 
 def link_ist(pages: dict[str, dict]) -> None:
-    """Resolve each target step of every Ist analysis against the Applications of the same view, all read
-    from the working files. A step found in no or in several Applications stays a gap; each found step
+    """Resolve each target step of every Ist analysis against the Hauptprozesse of the same view, all read
+    from the working files. A step found in no or in several Hauptprozesse stays a gap; each found step
     lists the Ist rows that name it. Nothing is matched by title."""
     steps: dict[str, list] = {}
     for name, model in pages.items():
-        if model["kind"] == "application" and not model["issues"]:
+        if model["kind"] == "hauptprozess" and not model["issues"]:
             for node in model["nodes"]:
                 if node["kind"] == "arbeitsschritt":
                     steps.setdefault(node["id"], []).append((name, model, node))
@@ -692,9 +827,9 @@ def link_ist(pages: dict[str, dict]) -> None:
                 if len(hits) != 1:
                     resolved.append({"ref": ref, "status": "missing" if not hits else "ambiguous"})
                     continue
-                page, application, node = hits[0]
+                page, hauptprozess, node = hits[0]
                 resolved.append({"ref": ref, "status": "found", "page": page, "title": title_of(node),
-                                 "application": title_of(application["nodes"][0]), "gate": node["meta"].get("gate") == "human",
+                                 "hauptprozess": title_of(hauptprozess["nodes"][0]), "gate": node["meta"].get("gate") == "human",
                                  "touchpoint": node["meta"].get("customer_touchpoint"),
                                  "execution": _unique(e["kind"] for e in node["execution"])})
                 node.setdefault("ist", []).append({"page": name, "nr": row["nr"], "file": model["selection"]["ist_prozess"],
