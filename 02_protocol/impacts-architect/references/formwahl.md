@@ -2,7 +2,7 @@
 
 Owns: ICM form selection with its work report, composition, native file homes, data kinds and analysis placement, Capability orientation, tooling selection and the Knowledge Walk. Reader: author. Does not own: process decomposition, see [Process decomposition](zuschnitt.md).
 
-Start with the unit that grows or repeats, or the bounded result whose steps can be declared. For business intake, use [Capture business meaning](../../impacts-method.md#capture-business-meaning). Given an offering or finished result, or when work is being set up or materially redesigned from an intended result, use [Reverse-engineer a product or service](../../impacts-method.md#reverse-engineer-a-product-or-service) before selecting a form or executor. This derivation can precede an established repeatable result. Refine form and populated home as evidence arrives; a provisional form confirms no process boundary.
+For business intake, use [Capture business meaning](../../impacts-method.md#capture-business-meaning). Given an offering or finished result, or when work is being set up or materially redesigned from an intended result, use [Reverse-engineer a product or service](../../impacts-method.md#reverse-engineer-a-product-or-service) before selecting a form or executor. This derivation can precede an established repeatable result. Refine form and populated home as evidence arrives; a provisional form confirms no process boundary.
 
 Apply [Author or change](../../ontology.md#author-or-change) for missing or changing meaning and [Use](../../ontology.md#use) for existing definitions. This covers every form, including work without a Pipeline; apply [evidence and obligations](../../ontology.md#evidence-and-obligations) at each use boundary. Customer-facing capture follows the [working language](../../language.md#enforce-at-use-boundaries).
 
@@ -25,7 +25,7 @@ Before any tree proposal, briefly state:
 
 For work being set up or materially redesigned, first apply [Reverse-engineer a product or service](../../impacts-method.md#reverse-engineer-a-product-or-service) to derive a provisional result boundary and necessary contributions. Use that derivation in the report below before selecting a form; it may establish that no repeatable process form exists yet.
 
-1. Observed units that grow or repeat, and bounded results whose steps can be declared.
+1. Observed or intended units, each in the [one-line form](zuschnitt.md#hauptprozess), whether they recur or run once.
 2. [Selected existing forms](#select-the-form) and their rationale.
 3. Explicitly deferred forms.
 4. Smallest populated starting home.
@@ -42,7 +42,7 @@ This report is conversational, not a repository artifact, file or frontmatter fi
 
 ## Composition
 
-Forms compose while retaining their responsibilities. A Record Library plus Knowledge Bundle alone is not an Umbrella. Other forms compose without one. Select an Umbrella only when several independent Pipelines already exist. When Core contracts are selected, only Pipelines become Hauptprozesse; each selected Pipeline is exactly one Hauptprozess.
+Forms compose while retaining their responsibilities. A Record Library plus Knowledge Bundle alone is not an Umbrella. Other forms compose without one. Select an Umbrella only when several independent Pipelines already exist. When Core contracts are selected, only Pipelines become Hauptprozesse; each selected Pipeline is exactly one Hauptprozess. A workspace with more than one Hauptprozess keeps a value-chain table in its root router: one row per Hauptprozess, linking its Leistung and its entry step's Auslöser lines; the row itself states only its unit, by link to the record kind; which end or outside event opens it; and every Hauptprozess or recipient that uses its end, upstream ones included. Copy no Leistung text; where one case stands is read at its [subject record](../../binding.md#record-writeback).
 
 ### Separation of Concerns
 

@@ -54,9 +54,9 @@ def test_legacy_skip_and_current_judgment_in_one_run(tmp_path, capsys):
     assert report.valid and len(report.not_judged) == 1
     assert main(['validate', str(root)]) == 0
     assert capsys.readouterr().out == (
-        'impacts validate v0.4.0 against pin v0.4.0: 1 Hauptprozesse, 1 Teilprozesse, '
+        'impacts validate v0.4.1 against pin v0.4.1: 1 Hauptprozesse, 1 Teilprozesse, '
         '2 Arbeitsschritte, 0 Vorgänge, 0 Versuche judged; 1 Vorgänge not judged; 0 definition trees outside hauptprozesse/\n'
-        'not judged under v0.4.0: vorgaenge/old/CONTEXT.md (records none)\n'
+        'not judged under v0.4.1: vorgaenge/old/CONTEXT.md (records none)\n'
     )
     assert main(['validate', str(root), '--json']) == 0
     assert json.loads(capsys.readouterr().out)['not_judged'] == [
@@ -79,7 +79,7 @@ def test_current_without_protocol_is_version_missing(tmp_path):
     replace_context(path, meta)
     report = validate(root)
     assert not report.not_judged
-    assert [i.message for i in report.issues] == ['protocol pin missing; add protocol: v0.4.0 to the frontmatter']
+    assert [i.message for i in report.issues] == ['protocol pin missing; add protocol: v0.4.1 to the frontmatter']
 
 
 @pytest.mark.parametrize('recorded', [None, 4, '', '0.4.0', 'v0.4', 'v0.4.0-rc1', 'v0.04.0', 'v0.4.0\n'])
@@ -97,12 +97,12 @@ def test_workspace_pin_required_and_well_formed(tmp_path):
     root, _, _ = run_fixture(tmp_path)
     path = root / 'CONTEXT.md'
     meta = read_context(path)
-    assert meta['protocol'] == 'v0.4.0'
+    assert meta['protocol'] == 'v0.4.1'
     del meta['protocol']
     replace_context(path, meta)
     missing = validate(root)
     assert not missing.valid
-    assert [(issue.code, issue.message) for issue in missing.issues] == [('schema.invalid', 'protocol pin missing; add protocol: v0.4.0 to the frontmatter')]
+    assert [(issue.code, issue.message) for issue in missing.issues] == [('schema.invalid', 'protocol pin missing; add protocol: v0.4.1 to the frontmatter')]
     meta['protocol'] = 'v0.4'
     replace_context(path, meta)
     assert not validate(root).valid
@@ -152,12 +152,12 @@ def test_mismatched_workspace_pin_skips_every_descendant(tmp_path, capsys, pin):
     (root / 'vorgaenge/old/CONTEXT.md').write_text('invalid Vorgang')
     report = validate(root)
     assert report.valid
-    assert report.not_judged == (NotJudged('CONTEXT.md', pin, 'v0.4.0'),)
+    assert report.not_judged == (NotJudged('CONTEXT.md', pin, 'v0.4.1'),)
     assert main(['validate', str(root)]) == 0
     assert capsys.readouterr().out == (
-        f'impacts validate v0.4.0 against pin {pin}: 0 Hauptprozesse, 0 Teilprozesse, '
+        f'impacts validate v0.4.1 against pin {pin}: 0 Hauptprozesse, 0 Teilprozesse, '
         '0 Arbeitsschritte, 0 Vorgänge, 0 Versuche judged; 0 Vorgänge not judged; 0 definition trees outside hauptprozesse/; workspace not judged\n'
-        f'workspace not judged under v0.4.0: pinned {pin}\n'
+        f'workspace not judged under v0.4.1: pinned {pin}\n'
     )
     assert main(['validate', str(root), '--json']) == 0
     assert json.loads(capsys.readouterr().out)['not_judged'] == [{'path': 'CONTEXT.md', 'protocol': pin}]
@@ -170,4 +170,18 @@ def test_missing_workspace_pin_is_one_issue_even_with_broken_descendants(tmp_pat
     (root / 'vorgaenge/old/CONTEXT.md').write_text('invalid Vorgang')
     report = validate(root)
     assert not report.not_judged
-    assert [(i.code, i.message) for i in report.issues] == [('schema.invalid', 'protocol pin missing; add protocol: v0.4.0 to the frontmatter')]
+    assert [(i.code, i.message) for i in report.issues] == [('schema.invalid', 'protocol pin missing; add protocol: v0.4.1 to the frontmatter')]
+
+
+def test_previous_patch_pin_is_judged_under_the_installed_release(tmp_path, capsys):
+    root, _, vorgang = run_fixture(tmp_path)
+    replace_context(root / 'CONTEXT.md', {'type': 'workspace', 'protocol': 'v0.4.0'})
+    assert read_context(vorgang / 'CONTEXT.md')['protocol'] == 'v0.4.0'
+    report = validate(root)
+    assert report.release == 'v0.4.1' and report.pin == 'v0.4.0'
+    assert report.valid and not report.not_judged
+    assert main(['validate', str(root)]) == 0
+    assert capsys.readouterr().out.startswith(
+        'impacts validate v0.4.1 against pin v0.4.0: 1 Hauptprozesse, 1 Teilprozesse, '
+        '2 Arbeitsschritte, 1 Vorgänge, 1 Versuche judged; 0 Vorgänge not judged'
+    )

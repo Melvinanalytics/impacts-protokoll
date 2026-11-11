@@ -384,7 +384,7 @@ class Harness:
 
     def _preflight_vorgang(self, entries: list[dict]) -> None:
         metadata = {
-            "type": "vorgang", "protocol": "v0.4.0",
+            "type": "vorgang", "protocol": "v0.4.1",
             "id": f"vorgang:{VORGANG}",
             "hauptprozess_revision": f"git-tree:{self.revision}",
             "laufpfad": entries,
@@ -481,7 +481,7 @@ class Harness:
         if not self.laufpfad or self.laufpfad[-1] is not entry or entry.get("status") not in {"aktiv", "wartend"}:
             raise ProofError("Transition requires the current unresolved entry")
         persisted = load_frontmatter(self.vorgang_root / "CONTEXT.md")
-        binding = {"type": "vorgang", "protocol": "v0.4.0", "id": f"vorgang:{VORGANG}", "hauptprozess_revision": f"git-tree:{self.revision}"}
+        binding = {"type": "vorgang", "protocol": "v0.4.1", "id": f"vorgang:{VORGANG}", "hauptprozess_revision": f"git-tree:{self.revision}"}
         if any(persisted.get(key) != value for key, value in binding.items()):
             raise ProofError("Vorgang binding differs from the current harness binding")
         if persisted.get("laufpfad") != self.laufpfad:
@@ -521,7 +521,7 @@ class Harness:
 
     def _write(self) -> None:
         metadata = {
-            "type": "vorgang", "protocol": "v0.4.0",
+            "type": "vorgang", "protocol": "v0.4.1",
             "id": f"vorgang:{VORGANG}",
             "hauptprozess_revision": f"git-tree:{self.revision}",
             "laufpfad": self.laufpfad,

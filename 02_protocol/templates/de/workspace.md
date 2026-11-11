@@ -1,9 +1,9 @@
 ---
 type: workspace
-protocol: v0.4.0
+protocol: v0.4.1
 ---
 
-<!-- Translation source: 02_protocol/templates/workspace.md; sha256: 566bef06b73d097a53616e75c28ef313e27d94acfe7881b468135db081e1a5a9 -->
+<!-- Translation source: 02_protocol/templates/workspace.md; sha256: a9366a112efd6473fde2e89e4d31e9c129ae434a4ede6aadcd43464dda3d7471 -->
 
 Working language: de
 
@@ -24,6 +24,7 @@ Konfigurierte Fakten hier festhalten und den Betriebsvertrag erhalten. Änderung
 - Architect-Einstieg: `<auflösbarer Pfad von 02_protocol/impacts-architect/SKILL.md>`
 - Harness und Einrichtungsreferenz, wenn Core-Vorgänge ausgeführt werden: `<eingerichtetes Harness und seine Einrichtungsreferenz, oder nicht gewählt>`
 - Fachliche Heimaten: `<Link und Zweck jeder Heimat>`
+- Wertschöpfungskette, bei mehr als einem Hauptprozess (`02_protocol/impacts-architect/references/formwahl.md#composition`): `<je Hauptprozess eine Zeile: Links auf Leistung und Auslöser-Zeilen; seine Einheit, verlinkt auf die Record-Art; welches Ende oder Außenereignis ihn öffnet; jeder Hauptprozess oder Empfänger, der sein Ende nutzt, auch vorgelagerte>`
 
 `Ablage: <name> <Ort oder System>, <Ort der Zugriffsregel>`: jede externe Ablage auf einer eigenen, nicht eingerückten Body-Zeile deklarieren; Agenten erfinden niemals eine Ablage.
 

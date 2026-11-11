@@ -145,7 +145,7 @@ class CliTests(unittest.TestCase):
                 self.assertEqual(0, main(["validate", str(target)]))
 
         self.assertEqual(
-            "impacts validate v0.4.0 against pin v0.4.0: 0 Hauptprozesse, 0 Teilprozesse, "
+            "impacts validate v0.4.1 against pin v0.4.1: 0 Hauptprozesse, 0 Teilprozesse, "
             "0 Arbeitsschritte, 0 Vorgänge, 0 Versuche judged; 0 Vorgänge not judged; 0 definition trees outside hauptprozesse/\n",
             default_stdout.getvalue(),
         )

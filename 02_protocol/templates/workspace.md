@@ -1,6 +1,6 @@
 ---
 type: workspace
-protocol: v0.4.0
+protocol: v0.4.1
 ---
 
 Working language: en
@@ -24,6 +24,7 @@ Record configured facts here and preserve the operating contract. Changes to ins
 - Architect entry: `<resolvable path of 02_protocol/impacts-architect/SKILL.md>`
 - Harness and setup reference, when Core execution is selected: `<configured harness and its setup reference, or not selected>`
 - Domain homes: `<link and purpose of each home>`
+- Value chain, with more than one Hauptprozess (`02_protocol/impacts-architect/references/formwahl.md#composition`): `<one row per Hauptprozess: links to its Leistung and Auslöser lines; its unit, linked to the record kind; which end or outside event opens it; every Hauptprozess or recipient that uses its end, upstream ones included>`
 
 `Ablage: <name> <location or system>, <access rule home>`: declare each external store on its own unindented body line; agents never invent a store.
 

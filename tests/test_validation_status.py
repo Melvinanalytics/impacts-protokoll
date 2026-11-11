@@ -37,13 +37,13 @@ def test_status_counts_header_and_external_pointer(tmp_path, capsys, reference_i
     assert report.judged == expected
     assert main(["validate", str(root)]) == 0
     assert capsys.readouterr().out.splitlines()[0] == (
-        "impacts validate v0.4.0 against pin v0.4.0: 1 Hauptprozesse, 1 Teilprozesse, "
+        "impacts validate v0.4.1 against pin v0.4.1: 1 Hauptprozesse, 1 Teilprozesse, "
         "2 Arbeitsschritte, 1 Vorgänge, 2 Versuche judged; 0 Vorgänge not judged; 0 definition trees outside hauptprozesse/"
     )
     assert main(["validate", str(root), "--json"]) == 0
     data = json.loads(capsys.readouterr().out)
     assert data["judged"] == expected
-    assert data["release"] == data["pin"] == "v0.4.0"
+    assert data["release"] == data["pin"] == "v0.4.1"
     assert data["superseded"] == []
     assert data["external_references"] == [{"vorgang": "vorgaenge/test/CONTEXT.md", "pointer": f"/laufpfad/0/gelesen/{reference_index}"}]
     assert data["external_references_not_verified"] == 1
@@ -128,7 +128,7 @@ def test_missing_pin_names_the_fix_and_rule(tmp_path, capsys):
     lines = capsys.readouterr().out.splitlines()
     assert "against pin none" in lines[0]
     assert lines[1] == (
-        "schema.invalid: CONTEXT.md: protocol pin missing; add protocol: v0.4.0 to the frontmatter "
+        "schema.invalid: CONTEXT.md: protocol pin missing; add protocol: v0.4.1 to the frontmatter "
         "(02_protocol/binding.md#validation-issue-codes)"
     )
 

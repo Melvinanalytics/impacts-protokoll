@@ -1,8 +1,10 @@
-<!-- Translation source: CONTRIBUTING.md; sha256: 4df17209e42a9d4d04bec9ac0b7cdba86d13154b33363e0bde7e0331d4ca97ed -->
+<!-- Translation source: CONTRIBUTING.md; sha256: 824dcddf8eaf3eccbe631f62ac8c6279221cda228b3096c91045cf4834df1a87 -->
 
 # Mitwirken
 
 Änderungen gelangen über einen geprüften Pull Request nach `main`. Kundenmaterial bleibt im Kunden-Repository. Revision, erwartetes und beobachtetes Verhalten, synthetische Evidenz und nicht ausgeführte Prüfungen angeben.
+
+Ausgabe v0.4.1 ändert nur Protokolltext; Schemas, Pflichtfelder, Issue-Codes, CLI-Befehle und Konformitätsfälle bleiben unverändert, und Pins auf v0.4.0 werden weiter beurteilt. Ein Vorgang trägt jetzt eine Verpflichtung: Bewerbung, der Zuschlag, der sie beendet, und der Auftrag, den er begründet, sind getrennte Vorgänge, und die Zusage, die eine Verpflichtung begründet, ist ihr Auslöser, nie eine Voraussetzung. Bevor ein Baum entsteht, wird seine wiederkehrende Einheit in einer Zeile benannt: Gegenstand, wer wem schuldet, das äußere Ereignis, ab dem geschuldet wird, und jedes Ende. Drei Schnittfragen werden beim Schneiden und vor jedem Wechsel des Protokoll-Pins gestellt. Ein Arbeitsbereich mit mehr als einem Hauptprozess führt eine Wertkettentabelle in seinem Wurzel-Router. Schleifendurchläufe eines Vorgängers zählen auf die Grenze seines Nachfolgers, und offene Arbeit des Vorgängers wird als Datensatzquelle gebunden.
 
 Ausgabe v0.4.0 verwendet `hauptprozesse/` und `hauptprozess_revision` und verlangt für neue Arbeit `protocol`-Pins im Arbeitsbereich und Vorgang; Arbeit mit einer anderen major.minor und gekennzeichnete Altbestände werden als nicht beurteilt statt als fehlgeschlagen gemeldet. Die Textausgabe der Validierung beginnt mit einer Statuszeile und verlinkt fehlgeschlagene Prüfungen mit ihren Regeln; JSON-Berichte verwenden `report_version: 3`. Eine `ablage`-Referenz muss einen Speicher nennen, der im Wurzel-Router des Arbeitsbereichs deklariert ist.
 

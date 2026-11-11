@@ -2,7 +2,7 @@
 
 Owns: the Leistung test, the cut into Hauptprozess, Teilprozess and Arbeitsschritt, when a gate, wait, loop or check is declared, executor choice at the automation boundary, and folder naming. Reader: author. Does not own: what happens when a declared element runs, see [Execution](../../binding.md#execution).
 
-Read this at the method's [Perfect](../../impacts-method.md#perfect) and [Augment](../../impacts-method.md#augment) phases. Each rule names its boundary test. Core fields, trees and attempt contracts apply when selected under [Tooling stop](formwahl.md#tooling-stop); source and evidence requirements apply to every form.
+Read this at the work report and [Identify](../../impacts-method.md#identify) for the unit, and at [Perfect](../../impacts-method.md#perfect) and [Augment](../../impacts-method.md#augment) for the cut. Each rule names its boundary test. Core fields, trees and attempt contracts apply when selected under [Tooling stop](formwahl.md#tooling-stop); source and evidence requirements apply to every form.
 
 ## Leistung
 
@@ -14,15 +14,34 @@ The complete path from `einstieg_ref` to the Leistung. Each terminal state gets 
 
 A Hauptprozess defines one kind of Leistung; each Vorgang owes one instance of it, from the Auslöser of its entry Arbeitsschritt to a terminal state an outsider could check, such as accepted, refused, cancelled, killed, or an owed condition met or missed by its deadline. A Vorgang achieves the Leistung when its result fulfills the acceptance and completion conditions, whether an internal or external party accepts it. Where `leistung.erreicht` is declared, it lists the ends that achieve the Leistung; every other end is negative. A later claim against a fulfilled obligation, such as a defect notice, is the Auslöser of another Vorgang; rule 3 decides whether its remedy needs another Hauptprozess.
 
-1. **New Leistung.** Open another Vorgang when further work owes a Leistung beyond the scope the current Vorgang owes; it belongs to another Hauptprozess only when the existing result contract cannot represent it (rule 3). Exercising an option or amending the same obligation before its end stays in the current Vorgang; after that end it opens another Vorgang. Waiting for the reply to this obligation stays inside; the reply that discharges it is its end, even when it is also the Auslöser of the next Vorgang. A separately commissioned assessment or decision with its own Leistung and completion conditions requires a separate Vorgang; rule 3 decides whether the existing Hauptprozess can represent it. A choice required within the current obligation stays in its job or gate. Override rights decide authority, not the cut.
-2. **Instance.** The subject (*Gegenstand*) is the domain object a Vorgang's Leistung is owed for. One Vorgang per subject that reaches its own terminal state. A period, round or batch is the subject when the Leistung is owed for it as a whole.
+**Repeating unit.** Before drawing a tree, state the unit in one line: subject, who owes whom, the event from which it is owed (its [Auslöser](../../binding.md#decision-results-and-auslöser): an outside event, or a date that opens the obligation, never a mere schedule) and every end, negative ones included. Example: `one parcel | carrier to shipper | accepted shipping order | delivered with proof, returned, declared lost`; one order of three parcels opens three. A unit that runs once is stated the same way. Rules 1 and 2 decide where one instance stops and the next begins. When the counterpart works in its own workspace, each side states its own unit; the other side's acts arrive as received sources at the subject record.
+
+The unit's instances are what the method works on: [Identify](../../impacts-method.md#identify) observes and counts them; [Minimize](../../impacts-method.md#minimize) judges each activity against one instance's Leistung and tests whether a batch is owed; [Perfect](../../impacts-method.md#perfect) routes every instance to an end; [Augment](../../impacts-method.md#augment) sizes context and executor by how often instances recur. The subject is a [business object](datenumgang.md#data-objects) whose record kind declares its identity rule once ([writeback](../../binding.md#record-writeback)); that key joins Auslöser sources, Vorgänge and the objects an instance touches.
+
+Synthetic contrasts:
+
+| Work | Unit | Not the unit |
+|---|---|---|
+| Parcel carrier | One parcel, from accepted order to delivered, returned or lost | The delivery tour, when each parcel is owed on its own: a batch formed for capacity (rule 2). A tour hired whole is the subject |
+| Month-end close | One month of one entity, from month end to sign-off or cancellation | A booking: within the close none is owed on its own |
+| Recruiting, employer | One application, from receipt to reply; one vacancy, from approved requisition to signed contract or closed unfilled | The shortlist: work or a decision record inside the vacancy. An agency commissioned to deliver it owes it as its unit (rule 1) |
+| Support contract | One incident, from report to fix, refusal or withdrawal; one month, from month end to its service-level statement | The contract: a [standing agreement](formwahl.md#data-kinds) with no execution state |
+
+1. **New Leistung.** Open another Vorgang when further work owes a Leistung beyond the scope the current Vorgang owes; it belongs to another Hauptprozess only when the existing result contract cannot represent it (rule 3). Exercising an option or amending the same obligation before its end stays in the current Vorgang; after that end it opens another Vorgang. Waiting for the reply to this obligation stays inside; the reply that discharges it is its end, even when it is also the Auslöser of the next Vorgang. A separately commissioned assessment or decision with its own Leistung and completion conditions requires a separate Vorgang; rule 3 decides whether the existing Hauptprozess can represent it. A choice required within the current obligation stays in its job or gate. Where an outside party's decision creates a new obligation with its own acceptance, such as an award that creates an order, the current Vorgang ends at that decision and its end is the next Auslöser. Override rights decide authority, not the cut.
+2. **Instance.** Before cutting, name what one Vorgang is owed for, to whom and from which commitment. The subject (*Gegenstand*) is the domain object a Vorgang's Leistung is owed for. One Vorgang per subject that reaches its own terminal state. A period, round or batch is the subject only when the Leistung is owed and accepted for it as a whole; a batch formed only for capacity, such as a tour of parcels each owed on its own, is not.
 3. **Definition.** Another definition is needed when the existing result and control contract cannot represent the required work. Supported input-bound scope, acceptance parameters and routes are configuration; identical end labels alone do not establish equivalent contracts.
 4. **Never alone.** A change of actor, tool, executor, document type, object count, recipient or duration does not cut.
 5. **Tie.** Keep work together unless separating removes evidenced coordination, recovery or duplicate-definition work.
 
+Ask three questions when cutting, and again before a repository moves its protocol pin:
+
+- Per end: what does the organisation owe whom at this moment?
+- Per wait on an outside party: does `abnahme` name the awaited decision, or can it return work to this Vorgang? If neither, the Vorgang ended earlier.
+- Per Auslöser line: is the Leistung owed the moment this event occurs?
+
 ## Teilprozess
 
-Group Arbeitsschritte under the [protocol meaning](../../ontology.md#protocol-vocabulary). Test: a person can describe its `ergebnis` without describing the other Teilprozesse. Cut by result; a department or person boundary signals a possible handoff but does not cut by itself. On its positive route, the grouped Arbeitsschritte produce or complete one required component of the [Leistungsstückliste](../../impacts-method.md#leistungsstückliste) with its joints, or establish an evidenced prerequisite for the remaining path. Its `ergebnis` names that contribution. A prerequisite alone does not justify a separate Teilprozess. Completing includes reaching required component states such as checked or released. A negative end does not claim successful completion of the Teilprozess; preserve evidence of components already produced, completed or delivered and effects already caused. Other work stays inside the Teilprozess it serves.
+Group Arbeitsschritte under the [protocol meaning](../../ontology.md#protocol-vocabulary). Test: a person can describe its `ergebnis` without describing the other Teilprozesse. Cut by result; a department or person boundary signals a possible handoff but does not cut by itself. On its positive route, the grouped Arbeitsschritte produce or complete one required component of the [Leistungsstückliste](../../impacts-method.md#leistungsstückliste) with its joints, or establish an evidenced prerequisite for the remaining path; the commitment that creates the Leistung's obligation is its Auslöser, never such a prerequisite. Its `ergebnis` names that contribution. A prerequisite alone does not justify a separate Teilprozess. Completing includes reaching required component states such as checked or released. A negative end does not claim successful completion of the Teilprozess; preserve evidence of components already produced, completed or delivered and effects already caused. Other work stays inside the Teilprozess it serves.
 
 ## Arbeitsschritt
 
@@ -66,6 +85,20 @@ Missing study quantities leave the forecast incomplete under this acceptance con
 The same November subject continues into `kapazitaetsplanung`, a second Hauptprozess whose Leistung is a checked capacity plan. Its entry rule takes the delivered forecast end as Auslöser. `vorgang:kapazitaet-november` binds `vorgang:vorausschau-november`'s checked output as a source with `sha256`; it does not route back into that Hauptprozess. Both Subject sections link `records/perioden/november/CONTEXT.md`. The period-kind home declares `forecast-needed`, `forecast-delivered`, `capacity-planned` once. The record's `Stage: forecast-delivered` cites the delivery event and links both Vorgänge and their commitment.
 
 Synthetic decision `entscheidung:planung-11` records the planning holder, 2026-11-10 decision date, source and revisions for November and December: "approve November capacity; defer December". Both period records cite that one decision. A gate requesting this selection uses `entschieden`; the selection is its readable output. Example derived due-list line: `November | capacity plan owed | planning holder | 2026-11-12T17:00:00+01:00 | decision planung-11 and forecast output | open capacity Vorgang when inputs pass`. This line coordinates; the record and bound outputs keep the facts. A missing forecast blocks only its dependent plan. An outside recipient's later response is a received source at the period record and does not reopen the delivered forecast Vorgang.
+
+### Synthetic supply chain
+
+`hypothesis`: design example, not observed execution evidence. One Vorgang per obligation; each end lands at the subject record, and only a declared Auslöser line opens the next Vorgang.
+
+| Link | `angebot` Hauptprozess | `auftrag` Hauptprozess |
+|---|---|---|
+| Owed for | One enquiry `anfrage-007`, to the enquiring client | One order for that enquiry, to the same client |
+| Auslöser | The holder's decision to bid on `anfrage-007`; checking the enquiry before it is its own obligation, owed to that holder from their request to check, and ends at that decision, because nothing is owed at a public enquiry's receipt | The written award: "Order for offer `anfrage-007`, carries the agreed scope; opens on the client's signed award; requires the offer in its submitted revision" |
+| Inputs | The enquiry as received source at `records/anfrage-007/` | The order record `records/auftraege/auftrag-007.md`, through which the award `records/anfrage-007/zuschlag.pdf` and the submitted offer, bound by revision, are reached; a direct order has neither |
+| Waits inside | For the client's questions, an invitation to the next procedure stage and the award: each can return work or is named by `abnahme` | For the recipient's acceptance of the delivered result |
+| Ends | `end:zuschlag`, `end:absage`, `end:rueckzug` | `end:abgenommen`, `end:abgebrochen` |
+
+The award ends the `angebot` Vorgang, because it creates a new obligation with its own acceptance; the record shows the owed opening until the `auftrag` entry opens. A direct order without an enquiry is a second Auslöser line of the `auftrag` entry; an order covering several awarded enquiries is one subject, whose entry binds its order record, through which each submitted offer is reached. When the client calls off phases one by one, each call-off after the previous Vorgang's end opens another `auftrag` Vorgang, linked at the order record. An accepted order also writes a reference record that the next `angebot` binds, so the chain feeds back without a route. A later defect notice arrives at `records/auftraege/auftrag-007.md` and is the Auslöser of the remedy; rule 3 decides whether `auftrag` can represent it.
 
 ## Loops
 

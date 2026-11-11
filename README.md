@@ -45,7 +45,7 @@ This diagram is orientation. The [ontology](02_protocol/ontology.md) owns eviden
 
 ## Get the protocol
 
-Edition v0.4.0. Once published, use the published immutable Release [v0.4.0](https://github.com/Melvinanalytics/impacts-protokoll/releases/tag/v0.4.0) for new work. Download the wheel, complete source archive and `SHA256SUMS`; verify every listed checksum before installing or using the source archive.
+Edition v0.4.1. Once published, use the published immutable Release [v0.4.1](https://github.com/Melvinanalytics/impacts-protokoll/releases/tag/v0.4.1) for new work. Download the wheel, complete source archive and `SHA256SUMS`; verify every listed checksum before installing or using the source archive.
 
 Keep the complete source together: method, Architect, references, templates and examples. Reading the archive needs no installation. A copied Architect folder is incomplete even when its `references/` folder is present: it also depends on parent protocol files and root guidance. The wheel contains the CLI, static Viewer HTML resource, schemas and templates; it does not contain the method, Architect, evaluations, tests or complete source guidance. Wheel users who need the source-provenance form can run `impacts template herkunft` (or add `--language de`). That template has nine evidence fields. Its field count describes this template; it is not a universal line-count rule.
 
@@ -123,8 +123,8 @@ source .venv/bin/activate
 
 Choose one installation source:
 
-- **Complete checkout:** once published, use the source tree extracted from the published immutable v0.4.0 Release after every listed `SHA256SUMS` entry passes. From the verified tree's root, run `python -m pip install -e .`.
-- **Release wheel:** once published, download the wheel, complete source archive and `SHA256SUMS` from the published immutable Release [v0.4.0](https://github.com/Melvinanalytics/impacts-protokoll/releases/tag/v0.4.0) into one folder. Verify every listed asset with `shasum -a 256 -c SHA256SUMS` (macOS/Linux), then install with `python -m pip install ./impacts_protocol-0.4.0-py3-none-any.whl`.
+- **Complete checkout:** once published, use the source tree extracted from the published immutable v0.4.1 Release after every listed `SHA256SUMS` entry passes. From the verified tree's root, run `python -m pip install -e .`.
+- **Release wheel:** once published, download the wheel, complete source archive and `SHA256SUMS` from the published immutable Release [v0.4.1](https://github.com/Melvinanalytics/impacts-protokoll/releases/tag/v0.4.1) into one folder. Verify every listed asset with `shasum -a 256 -c SHA256SUMS` (macOS/Linux), then install with `python -m pip install ./impacts_protocol-0.4.1-py3-none-any.whl`.
 
 Follow [Version and entry points](#version-and-entry-points) to identify the installed package and obtain its complete source. Then, outside the intended new customer folder:
 
