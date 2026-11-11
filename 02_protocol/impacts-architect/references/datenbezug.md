@@ -132,21 +132,13 @@ Neue Anfrage → Angebot O-1/Fassung 1 → Angebotspositionen
 
 This diagram names business relationships. A-3/1 and fulfillment evidence exist only after evidenced acceptance/delivery; neither exists in this scenario. Offer, acceptance and fulfillment are separate claims. Historical A-1/2 remains unchanged.
 
-## Company composition
-
-A domain router connects catalog, customer/contracts and Hauptprozesse, explaining which result each process supplies and which process consumes it.
+## Offer example
 
 Apply the [backward trace](../../impacts-method.md#reverse-engineer-a-product-or-service) to the synthetic offer below: an internally approved offer needs a decision on the exact checked draft; the draft needs prepared positions and a bound blank; the positions need request quantities, applicable price/rule evidence and a deterministic calculation. This is a proposed decomposition, not an observed customer workflow. The catalog alone supplies neither source access nor an execution contract.
 
 The supplied quantity/price fixtures support preparation within their stated scope. A missing applicable price leaves the affected amount `open` and requires acquisition before the calculating attempt; supported non-price preparation can continue. Even a filled offer establishes neither acceptance nor fulfillment of P-10/S-20. Those conclusions require separate evidence. These are expected design consequences; no new execution or human decision is asserted here.
 
-| Independent process, if justified | Prerequisites | Leistung |
-|---|---|---|
-| Create offer | Request, identified customer, applicable definitions/prices and blank. | Internally approved offer revision; sending is a separately permitted action. |
-| Fulfill agreed scope | Evidenced acceptance and applicable agreement. | Fulfillment evidence for the affected item/version, retaining partial quantities. |
-| Prepare billing, if needed | Agreed billing rule and its actual premises. | Checked billing revision referring to items and rule; delivery alone establishes neither due date nor billability. |
-
-This is an example boundary choice, not three mandatory company processes. Separately accepted Leistungen determine the split. Offer acceptance need not be the last step of drafting. For results crossing independent process boundaries, use the [source-input classification](../../binding.md#source-inputs-for-core-hauptprozesse). Larger companies compose these boundaries without duplicating domain definitions or delegating authority implicitly.
+This offer ends at an internally approved revision, because sending and the client's reply lie outside this example; where an offer sits in the chain from enquiry to order, see the [synthetic supply chain](zuschnitt.md#synthetic-supply-chain).
 
 ## Reusable offer pipeline
 

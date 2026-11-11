@@ -30,7 +30,7 @@ def test_init_creates_only_minimal_workspace():
             "vorgaenge",
         ]
         assert (root / ".gitattributes").read_bytes() == b"* -text\n"
-        assert load_frontmatter(root / "CONTEXT.md") == {"type": "workspace", "protocol": "v0.4.0"}
+        assert load_frontmatter(root / "CONTEXT.md") == {"type": "workspace", "protocol": "v0.4.1"}
 
 
 def test_cli_init_needs_no_customer_argument():

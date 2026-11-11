@@ -104,7 +104,7 @@ def test_cli_language_selection_persists_and_prints_matching_template(tmp_path, 
     root = tmp_path / language
     assert main(["init", str(root), "--language", language]) == 0
     data, body = load_frontmatter_and_body(root / "CONTEXT.md")
-    assert data == {"type": "workspace", "protocol": "v0.4.0"} and validate(root).valid
+    assert data == {"type": "workspace", "protocol": "v0.4.1"} and validate(root).valid
     assert f"Working language: {language}" in body
     init_output = capsys.readouterr().out
     assert "impacts validate" in init_output

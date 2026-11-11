@@ -2,6 +2,12 @@
 
 Changes enter `main` through a reviewed pull request. Keep customer material in its customer repository. Report the revision, expected and observed behavior, synthetic evidence, and checks not run.
 
+### v0.4.1
+
+This edition changes protocol text only; schemas, required fields, issue codes, CLI commands and conformance cases are unchanged, and v0.4.0 pins stay judged. One Vorgang now carries one obligation: a bid, the award that ends it and the order it creates are separate Vorgänge, and the commitment that creates an obligation is its Auslöser, never a prerequisite. Before a tree is drawn, its repeating unit is stated in one line: subject, who owes whom, the outside event it is owed from and every end. Three cut questions are asked when cutting and before a repository moves its protocol pin. A workspace with more than one Hauptprozess keeps a value-chain table in its root router. Loop passes made in a predecessor count toward its successor's bound, and open predecessor work binds as a record source.
+
+See [Process decomposition](02_protocol/impacts-architect/references/zuschnitt.md#hauptprozess) for the repeating unit, the cut rules and the synthetic supply chain.
+
 ### v0.4.0
 
 This edition uses `hauptprozesse/` and `hauptprozess_revision` and requires workspace and Vorgang `protocol` pins for new work; work recording another major.minor and marked legacy work is reported as not judged rather than failed. Validator text starts with a status line and links failed checks to their rules; JSON reports use `report_version: 3`. An `ablage` reference must name a store declared in the workspace root router.
