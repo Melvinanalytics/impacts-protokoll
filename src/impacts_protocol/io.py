@@ -54,10 +54,6 @@ class _InvalidMappingKeyError(ValueError):
             self.args = (self._message(),)
 
 
-class PathEscapeError(ValueError):
-    """A source path resolves outside its declared workspace root."""
-
-
 class _YamlSyntaxError(yaml.YAMLError):
     """Normalized YAML syntax failure with a stable source location."""
 
@@ -235,5 +231,5 @@ def _read_text(path: Path, root: Path | None) -> str:
     except (OSError, RuntimeError) as error:
         raise ValueError(f"cannot resolve source path: {error}") from error
     if root is not None and not resolved.is_relative_to(Path(root).resolve()):
-        raise PathEscapeError("source path resolves outside workspace root")
+        raise ValueError("source path resolves outside workspace root")
     return resolved.read_text(encoding="utf-8-sig")

@@ -1,35 +1,54 @@
 ---
 type: vorgang
+protocol: v0.4.0
 id: vorgang:prueffall-001
-application_revision: git-tree:0000000000000000000000000000000000000000
+hauptprozess_revision: git-tree:0000000000000000000000000000000000000000
+# vorgaenger: vorgaenge/prueffall-alt/CONTEXT.md
 laufpfad:
   - arbeitsschritt_ref: arbeitsschritt:pruefen
-    versuch: 1
+    nummer: 1
     status: abgeschlossen
-    eingabe_hash: sha256:0000000000000000000000000000000000000000000000000000000000000000
+    gelesen:
+      - eingabe: material/antrag.md
+        pfad: records/prueffall-001/antrag.md
+        revision: git-commit:0000000000000000000000000000000000000000
+        sha256: sha256:0000000000000000000000000000000000000000000000000000000000000000
+      - eingabe: material/antrag-herkunft.md
+        pfad: records/prueffall-001/antrag-herkunft.md
+        revision: git-commit:0000000000000000000000000000000000000000
+        sha256: sha256:0000000000000000000000000000000000000000000000000000000000000000
     gewaehlte_route: bestanden
-    ausgabe_hash: sha256:0000000000000000000000000000000000000000000000000000000000000000
+    geschrieben:
+      - pfad: vorgaenge/prueffall-001/pruefen/001/output/pruefbericht.md
+        sha256: sha256:0000000000000000000000000000000000000000000000000000000000000000
   - arbeitsschritt_ref: arbeitsschritt:entscheiden
-    versuch: 1
+    nummer: 1
     status: wartend
     status_seit: "2026-01-05T09:00:00+01:00"
-    eingabe_hash: sha256:0000000000000000000000000000000000000000000000000000000000000000
+    gelesen:
+      - eingabe: material/pruefbericht.md
+        pfad: vorgaenge/prueffall-001/pruefen/001/output/pruefbericht.md
+        sha256: sha256:0000000000000000000000000000000000000000000000000000000000000000
     wiedereinstieg:
       ausloeser: "gate: human (freigegeben | abgelehnt)"
-      continuation_ref: entscheiden/001/output/entscheidung.md
+      continuation_ref: vorgaenge/prueffall-001/entscheiden/001/output/entscheidung.md
       faellig: "2026-01-07T17:00:00+01:00"
 ---
 
 # Review case 001
 
-A Vorgang is one instance of a committed Application. Obtain `application_revision` from `git rev-parse HEAD:applications/<slug>`. `laufpfad` alone owns execution state; each entry has an attempt folder at `<arbeitsschritt>/<versuch>/`. An entry's optional `status_seit` is a quoted timestamp with offset stating when it received its current status: set by the harness at the transition or recovered from a source retained in its attempt folder. Without it the start is unknown; a commit time records the file change, not the status start. Replace example values and explain the Vorgang in the customer's bound working language.
+A Vorgang is one instance of a committed Hauptprozess. Obtain `hauptprozess_revision` from `git rev-parse HEAD:hauptprozesse/<slug>`. `laufpfad` lists the attempts, each with its folder at `<arbeitsschritt>/<nnn>/`. An attempt's optional `status_seit` is a quoted timestamp with offset stating when it received its current status: set by the harness at the transition or recovered from a source retained in its attempt folder. Without it the start is unknown. Replace example values and explain the Vorgang in the customer's bound working language.
 
 ## Subject
 
-Who or what this Vorgang concerns. Link the existing business record at its local home or source-system reference.
+What its Leistung is owed for, under the instance cut rule (`02_protocol/impacts-architect/references/zuschnitt.md#hauptprozess`). Link the existing business record at its local home or source-system reference. Its stage stays in that record.
 
 ## Progress
 
-Explain the execution path for people: current step and attempt, usable results, restricted drafts, missing evidence or decision, responsible person and next permitted work. Link the files; derive status from `laufpfad` rather than maintaining another status. Display these values, none empty: the position (the current step, or the last step and the end reached); the stage of the current step or reached end, if the Hauptprozess declares `stufen`; and the state: `aktiv` or `wartend` from the last entry, or `beendet` once an end is reached. At a reached end, also display whether it achieves the Leistung, as `leistung.erreicht` lists it. Derive them from `laufpfad`, the bound routes, those stages and that list; a value that cannot be derived reads `open`. A prepared draft establishes neither sending nor approval. For a wait, retain its declared event, its next check in `wiedereinstieg.faellig`, responsible follow-up and non-arrival handling under `02_protocol/impacts-architect/references/zuschnitt.md#waits`. An event alone authorizes no transition. A closed attempt states its route, not acceptance; a reached end names which end, not success; an elapsed `faellig` selects no route and supplies no decision.
+Derive position, status and Leistung achievement under `02_protocol/binding.md#vorgang-progress` at the workspace's recorded protocol source and revision.
 
-A `wartend` entry with its declared continuation is a correct, resumable pause: preserve usable preparation while the required decision or evidence remains open; it is neither failure nor a completed outcome.
+Explain usable results, restricted drafts, missing evidence or decision, responsible person and next permitted work with links to their files. A prepared draft establishes neither sending nor approval. A `wartend` attempt with its declared continuation preserves usable preparation while the required decision or evidence remains open. Retain its event, next check in `wiedereinstieg.faellig` and responsible follow-up under Waits (`02_protocol/binding.md#waits`), including the expiry transition table. An event alone authorizes no transition.
+
+## Friction
+
+Did the work run cleanly, or did friction push the agent off the protocol? Record the observation and bound revision here; classify and correct it under `02_protocol/impacts-method.md#reviewed-correction`.

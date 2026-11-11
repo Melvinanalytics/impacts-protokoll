@@ -22,14 +22,8 @@ def closes(line: str, fence: str) -> bool:
                 and not line[marker.end():].strip(" \t"))
 
 
-def sections(body: str, first_line: int) -> tuple[str | None, list[dict]]:
-    """Split a body at level-2 headings outside code fences; keep every line and its file line."""
-    title, _, parts = document(body, first_line)
-    return title, parts
-
-
 def document(body: str, first_line: int) -> tuple[str | None, int | None, list[dict]]:
-    """The same section reader, including the source line of the title."""
+    """Split a body at level-2 headings outside code fences; keep every line, its file line and the title line."""
     title, title_line, fence = None, None, None
     found = [{"heading": None, "line": first_line, "lines": [], "numbers": []}]
     for number, line in enumerate(body.split("\n"), start=first_line):

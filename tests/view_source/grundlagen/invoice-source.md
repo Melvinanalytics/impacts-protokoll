@@ -1,6 +1,6 @@
 # Vendor-invoice SOP reading case
 
-This synthetic case paraphrases a supplied invoice SOP. It is a procedure description, not an observed customer process, adopted policy, legal opinion or executed Core Application. Product names locate the described work; no current product feature or configured integration is asserted. The source does not establish a complete activity census, exception census, rule-owner inventory or five-question negatives.
+This synthetic case paraphrases a supplied invoice SOP. It is a procedure description, not an observed customer process, adopted policy, legal opinion, Core Hauptprozess or executed Vorgang. Product names locate the described work; no current product feature or configured integration is asserted. The source does not establish a complete activity census, exception census, rule-owner inventory or five-question negatives.
 
 Use the repository's ordinary process-capture/work-design route. Do not open `invoice-sop-expected.md`, private audits, other readers' answers or a grading key before completing your answer. No customer system, network research, actual invoice write or human approval is needed for this reading task.
 

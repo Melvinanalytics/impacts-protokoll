@@ -4,7 +4,6 @@ from __future__ import annotations
 import argparse
 from decimal import Decimal, DecimalException, Inexact, localcontext
 import hashlib
-import importlib.util
 import json
 import os
 from pathlib import Path
@@ -18,14 +17,17 @@ import yaml
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
-from impacts_protocol import init_workspace, surface_hash, validate
+from impacts_protocol import init_workspace, validate
+sys.path.insert(0, str(ROOT / "06_evaluations"))
+from reference_files import input_file, source_home, references as file_references, content_digest as digest, git
 from impacts_protocol.io import load_frontmatter_and_body
 
-DOCUMENT = ROOT / "02_protocol/impacts-architect/references/datenbezug.md"
-# These exact unanchored section names and block kinds are this fixture's source interface.
-SOURCE_BLOCKS = {"Concrete Vorgang inputs": "json", "Document blank": "text", "English document blank": "text"}
+FIXTURES = Path(__file__).resolve().parent / "fixtures"
+SOURCE_BLOCKS = {"Concrete Vorgang inputs": ("json", "data.json"),
+                 "Document blank": ("text", "template.de.md"),
+                 "English document blank": ("text", "template.en.md")}
 VORGANG = "vorgaenge/angebot-001"
-APP = "applications/angebot-erstellen"
+APP = "hauptprozesse/angebot-erstellen"
 UNITS = {"P-10": {"de": "Stück", "en": "piece"}, "S-20": {"de": "Stunde", "en": "hour"}}
 # Supported fixed blanks are pinned with the renderer, not resolved from live docs.
 TEMPLATE_SHA256 = {
@@ -35,31 +37,15 @@ TEMPLATE_SHA256 = {
 
 
 def block(heading: str, kind: str) -> str:
-    if SOURCE_BLOCKS.get(heading) != kind:
-        raise ValueError("unsupported fixture section or block kind")
-    # The live source parser belongs to fixture generation, never bound-Vorgang checks.
-    spec = importlib.util.spec_from_file_location(f"{__name__}_source_answer", Path(__file__).resolve().with_name("answer.py"))
-    answer = importlib.util.module_from_spec(spec)
-    sys.modules[spec.name] = answer
-    spec.loader.exec_module(answer)
-    section = answer.extract(DOCUMENT.read_bytes(), answer.Section(str(DOCUMENT), heading)).decode("utf-8")
-    # Match whole fences, so a nested example cannot supply the requested block.
-    fences = re.finditer(
-        r"(?ms)^ {0,3}(`{3,})([^\n]*)\n(.*?)^ {0,3}\1`*[ \t]*$"
-        r"|^ {0,3}(~{3,})([^\n]*)\n(.*?)^ {0,3}\4~*[ \t]*$", section)
-    matches = [body.removesuffix("\n") for fence in fences
-               for label, body in ((fence[2], fence[3]), (fence[5], fence[6])) if label == kind]
-    if len(matches) != 1:
-        raise ValueError(f"missing or duplicate {kind} block in {heading}")
-    return matches[0]
+    expected_kind, filename = SOURCE_BLOCKS[heading]
+    if kind != expected_kind:
+        raise ValueError("unsupported fixture block kind")
+    # Historical renderer received the fenced payload without its final newline.
+    return (FIXTURES / filename).read_text(encoding="utf-8").removesuffix("\n")
 
 
 def fixture() -> dict:
     return json.loads(block("Concrete Vorgang inputs", "json"))
-
-
-def digest(value: bytes) -> str:
-    return hashlib.sha256(value).hexdigest()
 
 
 def encode(value: object) -> str:
@@ -73,10 +59,6 @@ def unique_json_object(pairs: list[tuple[str, object]]) -> dict:
             raise ValueError(f"duplicate JSON key: {key!r}")
         result[key] = value
     return result
-
-
-def git(root: Path, *args: str) -> str:
-    return subprocess.check_output(["git", "-C", str(root), *args], text=True).strip()
 
 
 def write_context(path: Path, data: dict, body: str) -> None:
@@ -126,7 +108,7 @@ def fill_offer(template: str, values: dict, *, language: str = "de") -> str:
             total += amount
             unit = UNITS[kind][language]
             quantity_unit = unit if quantity == 1 or unit == "Stück" else unit + ("n" if language == "de" else "s")
-            positions.append(f"{item_id}: {kind} — {quantity} {quantity_unit} × {price:.2f} EUR/{unit} = {amount:.2f} EUR")
+            positions.append(f"{item_id}: {kind}: {quantity} {quantity_unit} × {price:.2f} EUR/{unit} = {amount:.2f} EUR")
     replacements = {key: str(values[key]) for key in ("offer_id", "version", "customer_id", "request_ref")}
     replacements.update(positions="\n".join(positions), total=f"{total:.2f}")
     result = template
@@ -152,10 +134,10 @@ def open_offer(target: Path, values: dict, language: str) -> Path:
     result = "Menschlich freigegebener interner Angebotsentwurf" if de else "Human-approved internal offer draft"
     scope = f"Ziel: {result}. Versand ist nicht erlaubt." if de else f"Target: {result}. Sending is not permitted."
     acceptance = [
-        "Die geprüften Fassungen von input/angebot.md und input/pruefbericht.json liegen als gebundene Eingaben bei arbeitsschritt:freigeben vor.",
+        "Die geprüften Fassungen von material/angebot.md und material/pruefbericht.json liegen als gebundene Eingaben bei arbeitsschritt:freigeben vor.",
         "Die verantwortliche Person hat ihre begründete Entscheidung freigegeben zu diesen gebundenen Eingaben in output/entscheidung.md von arbeitsschritt:freigeben dokumentiert; die gewählte Route freigegeben nach end:entwurf-freigegeben ist aufgezeichnet.",
     ] if de else [
-        "The checked revisions of input/angebot.md and input/pruefbericht.json are present as bound inputs at arbeitsschritt:freigeben.",
+        "The checked revisions of material/angebot.md and material/pruefbericht.json are present as bound inputs at arbeitsschritt:freigeben.",
         "The responsible person's reasoned freigegeben decision on those bound inputs is recorded in output/entscheidung.md at arbeitsschritt:freigeben; the selected freigegeben route to end:entwurf-freigegeben is recorded.",
     ]
     write_context(root / APP / "CONTEXT.md", {
@@ -164,7 +146,7 @@ def open_offer(target: Path, values: dict, language: str) -> Path:
         "einstieg_ref": "arbeitsschritt:entwerfen"}, scope)
     write_context(root / APP / "ausarbeitung/CONTEXT.md", {
         "type": "teilprozess", "id": "teilprozess:ausarbeitung", "ergebnis": result}, scope)
-    inputs = [f"input/{name}" for name in sources] + ["input/herkunft.json"]
+    inputs = [f"material/{name}" for name in sources] + ["material/herkunft.json"]
     write_context(root / APP / "ausarbeitung/entwerfen/CONTEXT.md", {
         "type": "arbeitsschritt", "id": "arbeitsschritt:entwerfen", "eingaben": inputs,
         "ausgaben": ["output/angebot.md", "output/pruefbericht.json"],
@@ -172,19 +154,19 @@ def open_offer(target: Path, values: dict, language: str) -> Path:
                     "checked_offer confirms input binding, identity, units, calculation and exact English output.",
         "routen": {"bestanden": "arbeitsschritt:freigeben", "fehlerhaft": "end:ungeklaert"}},
         ("MUST: Vor Übergabe an die menschliche Prüfung müssen gebundene Eingaben, Rechnung und deutsche Ausgabe geprüft sein.\n"
-         "Basis: Dieser gebundene Beispielvertrag, input/language-contract.md und input/renderer.py gelten ausschließlich für den synthetischen internen Entwurf.\n"
+         "Basis: Dieser gebundene Beispielvertrag, material/language-contract.md und material/renderer.py gelten ausschließlich für den synthetischen internen Entwurf.\n"
          "Prüfung: Das lokale Harness führt checked_offer aus und bindet den tatsächlichen Bericht output/pruefbericht.json an Eingaben, Regeln und Ausgabe.\n"
          "Fehlerfolge: Keine Übergabe; der aktuelle Schritt bleibt aktiv. Eine spätere Schließung über fehlerhaft führt nach end:ungeklaert.\n" if de else
          "MUST: Before human review, verify bound inputs, calculation and English output.\n"
-         "Basis: This bound example contract, input/language-contract.md and input/renderer.py apply only to the synthetic internal draft.\n"
+         "Basis: This bound example contract, material/language-contract.md and material/renderer.py apply only to the synthetic internal draft.\n"
          "Check: The local harness executes checked_offer and binds the actual output/pruefbericht.json report to inputs, rules and output.\n"
          "Failure: No handoff; the current step stays active. A later closure through fehlerhaft leads to end:ungeklaert.\n") +
         "Working language: " + language + "\n" +
-        "Bei Route `bestanden`: `output/angebot.md -> arbeitsschritt:freigeben/input/angebot.md`.\n" +
-        "Bei Route `bestanden`: `output/pruefbericht.json -> arbeitsschritt:freigeben/input/pruefbericht.json`.")
+        "Bei Route `bestanden`: `output/angebot.md -> arbeitsschritt:freigeben:material/angebot.md`.\n" +
+        "Bei Route `bestanden`: `output/pruefbericht.json -> arbeitsschritt:freigeben:material/pruefbericht.json`.")
     write_context(root / APP / "ausarbeitung/freigeben/CONTEXT.md", {
         "type": "arbeitsschritt", "id": "arbeitsschritt:freigeben",
-        "eingaben": ["input/angebot.md", "input/pruefbericht.json", "input/herkunft.json"],
+        "eingaben": ["material/angebot.md", "material/pruefbericht.json", "material/herkunft.json"],
         "ausgaben": ["output/entscheidung.md"], "gate": "human",
         "pruefung": "Die benannte Person entscheidet über den geprüften internen Entwurf und begründet freigegeben oder abgelehnt in output/entscheidung.md." if de else
                     "The named reviewer decides on the checked internal draft and records freigegeben or abgelehnt with reasons in output/entscheidung.md.",
@@ -193,7 +175,7 @@ def open_offer(target: Path, values: dict, language: str) -> Path:
         "Role: offer-process owner. The actual person and authority are open; identify and check them before a decision. Read the offer and check report. A reasoned decision remains pending; sending is outside this Vorgang.")
     git(root, "init", "-q")
     git(root, "add", ".")
-    git(root, "-c", "user.name=IMPACTS synthetic fixture", "-c", "user.email=fixture@example.invalid", "commit", "-qm", "Synthetic offer inputs and Application")
+    git(root, "-c", "user.name=IMPACTS synthetic fixture", "-c", "user.email=fixture@example.invalid", "commit", "-qm", "Synthetic offer inputs and Hauptprozess")
     commit = git(root, "rev-parse", "HEAD")
     protocol = subprocess.run(["git", "-C", str(ROOT), "rev-parse", "--show-toplevel", "HEAD"], capture_output=True, text=True)
     reference = protocol.stdout.splitlines()
@@ -202,7 +184,7 @@ def open_offer(target: Path, values: dict, language: str) -> Path:
     architect_link = quote(Path(os.path.relpath(ROOT / "02_protocol/impacts-architect/SKILL.md", root.resolve())).as_posix(), safe="/")
     with (root / "CONTEXT.md").open("a", encoding="utf-8") as router:
         router.write(("\n## Synthetisches Angebotsbeispiel\n\n" if de else "\n## Synthetic offer example\n\n") +
-            f"[Application]({APP}/CONTEXT.md) · [" + ("Aktueller Vorgang" if de else "Current Vorgang") + f"]({VORGANG}/CONTEXT.md)\n\n" +
+            f"[Hauptprozess]({APP}/CONTEXT.md) · [" + ("Aktueller Vorgang" if de else "Current Vorgang") + f"]({VORGANG}/CONTEXT.md)\n\n" +
             ("Gebundene Quelldateien: " if de else "Bound source files: ") +
             "[data.json](grundlagen/data.json) · [renderer.py](grundlagen/renderer.py)\n\n" +
             ("Quellrevision: " if de else "Source revision: ") + f"`{commit}`.\n\n" +
@@ -212,13 +194,14 @@ def open_offer(target: Path, values: dict, language: str) -> Path:
              "These links open live reference pages; they bind no additional Vorgang inputs. The renderer copy is bound evidence, not a standalone program. Execute the example from the complete protocol checkout.\n"))
     provenance = {name: {"revision": commit, "path": f"grundlagen/{name}", "sha256": digest(text.encode())} for name, text in sources.items()}
     attempt = root / VORGANG / "entwerfen/001"
-    (attempt / "input").mkdir(parents=True)
+    (input_file(attempt, "material")).mkdir(parents=True)
     for name in sources:
         content = subprocess.check_output(["git", "-C", str(root), "show", f"{commit}:grundlagen/{name}"])
-        (attempt / "input" / name).write_bytes(content)
-    (attempt / "input/herkunft.json").write_text(encode(provenance))
-    entry = {"arbeitsschritt_ref": "arbeitsschritt:entwerfen", "versuch": 1, "status": "aktiv", "eingabe_hash": surface_hash(attempt, inputs)}
-    write_context(root / VORGANG / "CONTEXT.md", {"type": "vorgang", "id": "vorgang:angebot-001", "application_revision": "git-tree:" + git(root, "rev-parse", f"HEAD:{APP}"), "laufpfad": [entry]},
+        (input_file(attempt, "material") / name).write_bytes(content)
+    (input_file(attempt, "material/herkunft.json")).write_text(encode(provenance))
+    (attempt / "output").mkdir(parents=True, exist_ok=True)
+    entry = {"arbeitsschritt_ref": "arbeitsschritt:entwerfen", "nummer": 1, "status": "aktiv", "gelesen": file_references(attempt, inputs)}
+    write_context(root / VORGANG / "CONTEXT.md", {"type": "vorgang", "protocol": "v0.4.0", "id": "vorgang:angebot-001", "hauptprozess_revision": "git-tree:" + git(root, "rev-parse", f"HEAD:{APP}"), "laufpfad": [entry]},
                   "Entwurf in Bearbeitung; Freigabe und Versand stehen aus." if de else "Draft in progress; approval and sending remain pending.")
     return root
 
@@ -232,34 +215,34 @@ def bound_inputs(root: Path) -> tuple[dict, Path, str, str]:
         raise ValueError("draft step is not active")
     attempt = root / VORGANG / "entwerfen/001"
     provenance = json.loads(
-        (attempt / "input/herkunft.json").read_text(),
+        (input_file(attempt, "material/herkunft.json")).read_text(),
         object_pairs_hook=unique_json_object,
     )
-    app_tree = meta["application_revision"].removeprefix("git-tree:")
+    app_tree = meta["hauptprozess_revision"].removeprefix("git-tree:")
     for name in ("data.json", "template.md", "language.md", "renderer.py", "language-contract.md"):
         source = provenance[name]
         if git(root, "rev-parse", f'{source["revision"]}:{APP}') != app_tree:
-            raise ValueError("Application differs from bound source revision")
+            raise ValueError("Hauptprozess differs from bound source revision")
         if source["path"] != f"grundlagen/{name}":
             raise ValueError("wrong source path")
         original = subprocess.check_output(["git", "-C", str(root), "show", f'{source["revision"]}:{source["path"]}'])
-        if original != (attempt / "input" / name).read_bytes() or digest(original) != source["sha256"]:
+        if original != (input_file(attempt, "material") / name).read_bytes() or digest(original) != source["sha256"]:
             raise ValueError("source binding mismatch")
-    if (attempt / "input/renderer.py").read_bytes() != Path(__file__).read_bytes():
+    if (input_file(attempt, "material/renderer.py")).read_bytes() != Path(__file__).read_bytes():
         raise ValueError("bound renderer differs from executing implementation")
-    language = (attempt / "input/language.md").read_text().removeprefix("Working language: ").strip()
+    language = (input_file(attempt, "material/language.md")).read_text().removeprefix("Working language: ").strip()
     if language not in {"de", "en"}:
         raise ValueError("unsupported working language")
     definition = git(root, "show", f"{app_tree}:ausarbeitung/entwerfen/CONTEXT.md")
     if f"Working language: {language}\n" not in definition:
-        raise ValueError("working language differs from bound Application")
-    expected_mappings = {(f"output/{name}", f"arbeitsschritt:freigeben/input/{name}") for name in ("angebot.md", "pruefbericht.json")}
+        raise ValueError("working language differs from bound Hauptprozess")
+    expected_mappings = {(f"output/{name}", f"arbeitsschritt:freigeben:material/{name}") for name in ("angebot.md", "pruefbericht.json")}
     mapping_lines = [line for line in definition.splitlines() if 'Route `bestanden`' in line]
     actual_mappings = re.findall(r'(?m)^Bei Route `bestanden`: `(output/[^` ]+) -> (arbeitsschritt:[^` ]+)`\.$', definition)
     if len(mapping_lines) != 2 or len(actual_mappings) != 2 or set(actual_mappings) != expected_mappings:
         raise ValueError("unsupported bound handoff mappings")
     # The example supports exactly the published fixed blanks, not arbitrary translated prose.
-    blank = (attempt / "input/template.md").read_bytes()
+    blank = (input_file(attempt, "material/template.md")).read_bytes()
     if digest(blank) != TEMPLATE_SHA256[language]:
         raise ValueError("unrecognized localized template")
     return meta, attempt, language, blank.decode("utf-8")
@@ -268,10 +251,10 @@ def bound_inputs(root: Path) -> tuple[dict, Path, str, str]:
 def checked_offer(root: Path) -> tuple[str, dict]:
     """Preflight only. Does not write a report or mutate the Vorgang."""
     meta, attempt, language, blank = bound_inputs(root)
-    result = fill_offer(blank, json.loads((attempt / "input/data.json").read_text()), language=language)
-    report = {"working_language": language, "input_hash": meta["laufpfad"][0]["eingabe_hash"],
-              "renderer_sha256": digest(Path(__file__).read_bytes()), "application_revision": meta["application_revision"],
-              "language_contract_sha256": digest((attempt / "input/language-contract.md").read_bytes()), "output_sha256": digest(result.encode()),
+    result = fill_offer(blank, json.loads((input_file(attempt, "material/data.json")).read_text()), language=language)
+    report = {"working_language": language, "input_references": meta["laufpfad"][0]["gelesen"],
+              "renderer_sha256": digest(Path(__file__).read_bytes()), "hauptprozess_revision": meta["hauptprozess_revision"],
+              "language_contract_sha256": digest((input_file(attempt, "material/language-contract.md")).read_bytes()), "output_sha256": digest(result.encode()),
               "checks": ["source-binding", "identity", "units", "calculation", "fixed-language-output"],
               "result": "passed", "use": "Interner Entwurf; menschliche Entscheidung offen." if language == "de" else "Internal draft; human decision pending."}
     return result, report
@@ -280,7 +263,7 @@ def checked_offer(root: Path) -> tuple[str, dict]:
 def prepare_gap(root: Path) -> str:
     """Produce only an internal missing-price note for this fixture's scoped gap."""
     _, attempt, language, _ = bound_inputs(root)
-    values = json.loads((attempt / "input/data.json").read_text())
+    values = json.loads((input_file(attempt, "material/data.json")).read_text())
     if not any(item.get("unit_price") in (None, "") for item in values["items"]):
         raise ValueError("no missing price to clarify")
     result = ("Interner Klärungsvermerk: In den gebundenen Eingaben fehlt mindestens eine Preisangabe. Identität, Mengen, Einheiten und weitere Voraussetzungen sind ungeprüft. Eingaben und Preisquelle klären. Kein geprüftes Angebot, keine Preiszusage oder Versandfreigabe." if language == "de" else
@@ -302,24 +285,23 @@ def handoff(root: Path, candidate: str) -> None:
     for name, content in outputs.items():
         (attempt / "output").mkdir(exist_ok=True)
         (attempt / "output" / name).write_text(content)
-        (gate / "input").mkdir(parents=True, exist_ok=True)
-        (gate / "input" / name).write_text(content)
-    (gate / "input/herkunft.json").write_text(encode({name: {"origin": f"entwerfen/001/output/{name}", "sha256": digest(content.encode())} for name, content in outputs.items()}))
+        (input_file(gate, "material")).mkdir(parents=True, exist_ok=True)
+
+    (input_file(gate, "material/herkunft.json")).write_text(encode({name: {"origin": f"entwerfen/001/output/{name}", "sha256": digest(content.encode())} for name, content in outputs.items()}))
+    (gate / "output").mkdir(parents=True, exist_ok=True)
     entry = meta["laufpfad"][0]
-    entry.update(status="abgeschlossen", gewaehlte_route="bestanden", ausgabe_hash=surface_hash(attempt, ["output/angebot.md", "output/pruefbericht.json"]))
-    # An open gate decision is wartend: the named person supplies it and the harness only records it.
-    meta["laufpfad"].append({"arbeitsschritt_ref": "arbeitsschritt:freigeben", "versuch": 1, "status": "wartend",
-                             "eingabe_hash": surface_hash(gate, ["input/angebot.md", "input/pruefbericht.json", "input/herkunft.json"]),
+    entry.update(status="abgeschlossen", gewaehlte_route="bestanden", geschrieben=file_references(attempt, ["output/angebot.md", "output/pruefbericht.json"]))
+    # The packet is ready and this harness requests the decision at opening, so the gate is wartend.
+    meta["laufpfad"].append({"arbeitsschritt_ref": "arbeitsschritt:freigeben", "nummer": 1, "status": "wartend",
+                             "gelesen": [dict(ref, eingabe="material/" + Path(ref["pfad"]).name) for ref in file_references(attempt, ["output/angebot.md", "output/pruefbericht.json"])] + file_references(gate, ["material/herkunft.json"]),
                              "wiedereinstieg": {"ausloeser": "Begründete Entscheidung der benannten Person in output/entscheidung.md" if report["working_language"] == "de"
                                                 else "The named reviewer's reasoned decision in output/entscheidung.md",
-                                                "continuation_ref": "freigeben/001/output/entscheidung.md"}})
+                                                "continuation_ref": f"{VORGANG}/entwerfen/001/output/angebot.md"}})
     write_context(root / VORGANG / "CONTEXT.md", meta,
-                  ("Geprüfter Entwurf bereit. Menschliche Entscheidung und Versand stehen aus.\n\n[Angebot](freigeben/001/input/angebot.md) · [Prüfbericht](freigeben/001/input/pruefbericht.json) · [Herkunft](freigeben/001/input/herkunft.json)\n\n" if report["working_language"] == "de" else
-                   "Checked draft ready. Human decision and sending remain pending.\n\n[Offer](freigeben/001/input/angebot.md) · [Check report](freigeben/001/input/pruefbericht.json) · [Provenance](freigeben/001/input/herkunft.json)\n\n") +
-                  ("Aktueller Schritt: " if report["working_language"] == "de" else "Current step: ") +
-                  "[freigeben](../../applications/angebot-erstellen/ausarbeitung/freigeben/CONTEXT.md). " +
-                  ("Definition nur bearbeiten, ohne damit die gebundene Fassung dieses Vorgangs zu ändern; maßgeblich ist `application_revision` oben." if report["working_language"] == "de" else
-                   "Editing the definition does not change this Vorgang’s bound version; `application_revision` above is authoritative."))
+                  ("Geprüfter Entwurf bereit. Menschliche Entscheidung und Versand stehen aus.\n\n[Angebot](entwerfen/001/output/angebot.md) · [Prüfbericht](entwerfen/001/output/pruefbericht.json) · [Herkunft](../../records/angebot-001/freigeben/001/herkunft.json)\n\n" if report["working_language"] == "de" else
+                   "Checked draft ready. Human decision and sending remain pending.\n\n[Offer](entwerfen/001/output/angebot.md) · [Check report](entwerfen/001/output/pruefbericht.json) · [Provenance](../../records/angebot-001/freigeben/001/herkunft.json)\n\n") +
+                  ("Definition nur bearbeiten, ohne damit die gebundene Fassung dieses Vorgangs zu ändern; maßgeblich ist `hauptprozess_revision` oben." if report["working_language"] == "de" else
+                   "Editing the definition does not change this Vorgang’s bound version; `hauptprozess_revision` above is authoritative."))
 
 
 def daily_capacity(preparation: int, review: int, demand: int) -> dict:

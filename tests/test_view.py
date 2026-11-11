@@ -1,3 +1,4 @@
+from tests.support import fixture_path, fixture_references
 """Tests for `impacts view`, the read-only HTML view of IMPACTS files."""
 import base64
 import hashlib
@@ -11,14 +12,13 @@ from pathlib import Path
 
 import pytest
 
-from impacts_protocol import init_workspace, surface_hash
-from tests.support import git, read_context, replace_context, write_application, write_context
+from impacts_protocol import init_workspace
+from tests.support import git, read_context, replace_context, write_hauptprozess, write_context
 
 from impacts_protocol.cli import main
 from impacts_protocol.view import blocks, choose_language, project, read, selection, working_language, write
 
 HERE = Path(__file__).resolve().parent
-PACKAGE = Path(write.__file__).parent
 
 HOSTILE = "</script><script>alert(1)</script> __MODEL__ __POLICY__ [x](javascript:alert(1)) \u2028 & <b>"
 
@@ -145,7 +145,7 @@ ODD = [
 
 def test_sections_keep_title_preamble_fences_and_lines():
     body = "\n# Titel\n\nVorab `open`: Frage\n\n## Eins\n\n```md\n## kein Abschnitt\n```\n\n## Zwei\nText\n"
-    title, parts = blocks.sections(body, 5)
+    title, _, parts = blocks.document(body, 5)
     assert title == "Titel"
     assert [p["heading"] for p in parts] == [None, "Eins", "Zwei"]
     assert parts[0]["text"] == "Vorab `open`: Frage"
@@ -172,7 +172,7 @@ def test_unsupported_shapes_stay_verbatim():
 
 
 def test_real_fixture_sections_keep_every_word():
-    model = selection.application_page(HERE / "view_source" / "applications" / "invoice-entry")
+    model = selection.hauptprozess_page(HERE / "view_source" / "analyse" / "invoice-entry")
     assert model["issues"] == []
     for node in model["nodes"]:
         for part in node["sections"]:
@@ -181,25 +181,25 @@ def test_real_fixture_sections_keep_every_word():
                 assert word in rendered, (node["path"], part["heading"], word)
 
 
-# ---------- reading one Application ----------
+# ---------- reading one Hauptprozess ----------
 
-def test_invalid_application_is_refused_with_validator_issues(tmp_path):
-    root = write_application(tmp_path / "video")
+def test_invalid_hauptprozess_is_refused_with_validator_issues(tmp_path):
+    root = write_hauptprozess(tmp_path / "video")
     shutil.copytree(root / "produktion" / "start", root / "produktion" / "kopie")
-    model = selection.application_page(root)
-    assert "nodes" not in model and "reference.duplicate" in {i["code"] for i in model["issues"]}
+    model = selection.hauptprozess_page(root)
+    assert "nodes" not in model and "structure.duplicate_id" in {i["code"] for i in model["issues"]}
 
 
 def test_unknown_files_refuse_before_copying(tmp_path):
-    root = write_application(tmp_path / "video")
+    root = write_hauptprozess(tmp_path / "video")
     (root / "produktion" / "notes.bin").write_bytes(b"x" * 10)
-    assert selection.application_page(root)["issues"] == [
-        {"code": "structure.invalid", "path": "produktion/notes.bin", "message": "Unknown Application entry"}]
+    assert selection.hauptprozess_page(root)["issues"] == [
+        {"code": "structure.level", "path": "produktion/notes.bin", "message": "Unknown Hauptprozess entry"}]
 
 
 @pytest.mark.parametrize("damage", ["closing", "opening"])
 def test_line_separator_in_frontmatter_is_refused(tmp_path, damage):
-    root = write_application(tmp_path / "video")
+    root = write_hauptprozess(tmp_path / "video")
     step = root / "produktion" / "start" / "CONTEXT.md"
     text = step.read_text(encoding="utf-8")
     if damage == "closing":
@@ -207,16 +207,16 @@ def test_line_separator_in_frontmatter_is_refused(tmp_path, damage):
         step.write_text(head + "\u2028---\n" + body, encoding="utf-8")
     else:
         step.write_text("---\u2028" + text[4:], encoding="utf-8")
-    model = selection.application_page(root)
+    model = selection.hauptprozess_page(root)
     assert "nodes" not in model and model["issues"][0]["code"] == "view.unreadable"
 
 
 def test_route_order_survives_integer_like_labels(tmp_path):
-    root = write_application(tmp_path / "video")
+    root = write_hauptprozess(tmp_path / "video")
     step = root / "produktion" / "start" / "CONTEXT.md"
     step.write_text(step.read_text(encoding="utf-8").replace(
         "  weiter: arbeitsschritt:pruefen", "  '10': arbeitsschritt:pruefen\n  '2': end:abgebrochen"), encoding="utf-8")
-    model = selection.application_page(root)
+    model = selection.hauptprozess_page(root)
     assert model["issues"] == []
     start = next(n for n in model["nodes"] if n["id"] == "arbeitsschritt:start")
     assert [row[0] for row in start["routes"]] == ["10", "2"]
@@ -227,10 +227,10 @@ def test_route_order_survives_integer_like_labels(tmp_path):
 # ---------- the writer ----------
 
 def test_hostile_source_text_stays_data(tmp_path):
-    root = write_application(tmp_path / "video")
+    root = write_hauptprozess(tmp_path / "video")
     step = root / "produktion" / "start" / "CONTEXT.md"
     step.write_text(step.read_text(encoding="utf-8") + f"\n## Böse\n\n{HOSTILE}\n", encoding="utf-8")
-    model = selection.application_page(root)
+    model = selection.hauptprozess_page(root)
     html = write.page_html(model)
     assert html.count("</script>") == 2
     assert "innerHTML" not in html and "javascript:" not in html.split("__MODEL__")[0]
@@ -240,7 +240,7 @@ def test_hostile_source_text_stays_data(tmp_path):
 
 
 def test_policy_hashes_match_the_inline_code(tmp_path):
-    html = write.page_html(selection.application_page(write_application(tmp_path / "video")))
+    html = write.page_html(selection.hauptprozess_page(write_hauptprozess(tmp_path / "video")))
     policy = re.search(r'Content-Security-Policy" content="([^"]+)"', html).group(1)
     for tag in ("script", "style"):
         code = re.search(rf"<{tag}>(.*?)</{tag}>", html, re.S).group(1)
@@ -252,20 +252,20 @@ def test_page_script_is_valid_javascript(tmp_path):
     node = shutil.which("node")
     if node is None:
         pytest.skip("node not installed")
-    html = write.page_html(selection.application_page(write_application(tmp_path / "video")))
+    html = write.page_html(selection.hauptprozess_page(write_hauptprozess(tmp_path / "video")))
     script = tmp_path / "page.js"
     script.write_text(re.search(r"<script>(.*?)</script>", html, re.S).group(1), encoding="utf-8")
     assert subprocess.run([node, "--check", str(script)], capture_output=True).returncode == 0
 
 
 def test_same_files_give_same_bytes(tmp_path):
-    root = write_application(tmp_path / "video")
-    first = write.page_html(selection.application_page(root))
-    assert write.page_html(selection.application_page(root)) == first
+    root = write_hauptprozess(tmp_path / "video")
+    first = write.page_html(selection.hauptprozess_page(root))
+    assert write.page_html(selection.hauptprozess_page(root)) == first
 
 
 def test_output_folder_rules(tmp_path):
-    root = write_application(tmp_path / "video")
+    root = write_hauptprozess(tmp_path / "video")
     for out in (root / "view", tmp_path):
         with pytest.raises(SystemExit):
             run_cli(root, "--out", out)
@@ -289,7 +289,7 @@ def test_output_folder_rules(tmp_path):
 
 def test_swapped_parent_cannot_redirect_writes(tmp_path, monkeypatch):
     """The writer holds the checked folder; renaming its path to the source changes nothing."""
-    root = write_application(tmp_path / "video")
+    root = write_hauptprozess(tmp_path / "video")
     source = {p: p.read_bytes() for p in root.rglob("*") if p.is_file()}
     parent = tmp_path / "views"
     parent.mkdir()
@@ -308,7 +308,7 @@ def test_swapped_parent_cannot_redirect_writes(tmp_path, monkeypatch):
 
 
 def test_failed_generation_is_reported_and_nothing_is_deleted(tmp_path, monkeypatch):
-    root = write_application(tmp_path / "video")
+    root = write_hauptprozess(tmp_path / "video")
     real_fdopen = os.fdopen
 
     def fail(*args, **kwargs):
@@ -324,7 +324,7 @@ def test_failed_generation_is_reported_and_nothing_is_deleted(tmp_path, monkeypa
 
 
 def test_hard_link_at_output_name_is_refused(tmp_path):
-    root = write_application(tmp_path / "video")
+    root = write_hauptprozess(tmp_path / "video")
     elsewhere = tmp_path / "elsewhere.txt"
     elsewhere.write_text("unchanged")
     os.link(elsewhere, tmp_path / "view")
@@ -339,7 +339,7 @@ def test_whole_line_html_comment_is_its_own_block():
                      {"type": "para", "spans": [["t", "Text danach", ""]], "line": 8}]
     assert [b["type"] for b in blocks.blocks("<!-- a --> und Text")] == ["para"]
     assert [b["type"] for b in blocks.blocks("<!-- offen ohne Ende\nText")] == ["para"]
-    _, parts = blocks.sections(TEMPLATE_DE.read_text(encoding="utf-8").split("---\n", 2)[2], 18)
+    _, _, parts = blocks.document(TEMPLATE_DE.read_text(encoding="utf-8").split("---\n", 2)[2], 18)
     assert parts[0]["blocks"][0]["type"] == "comment" and "sha256" in parts[0]["blocks"][0]["text"]
 
 
@@ -350,55 +350,56 @@ def test_list_with_indented_code_stays_verbatim():
 
 # ---------- Vorgaenge and workspaces ----------
 
-def _workspace(base: Path, applications=("video",), vorgaenge=(("video-001", "video"),)) -> Path:
+def _workspace(base: Path, hauptprozesse=("video",), vorgaenge=(("video-001", "video"),)) -> Path:
     root = init_workspace(base / "kunde")
-    for name in applications:
-        write_application(root / "applications" / name)
-        hp = root / "applications" / name / "CONTEXT.md"
+    for name in hauptprozesse:
+        write_hauptprozess(root / "hauptprozesse" / name)
+        hp = root / "hauptprozesse" / name / "CONTEXT.md"
         hp.write_text(hp.read_text(encoding="utf-8").replace("hauptprozess:video", f"hauptprozess:{name}"), encoding="utf-8")
     git(root, "init", "-b", "main")
     git(root, "config", "user.email", "test@example.invalid")
     git(root, "config", "user.name", "Test")
     git(root, "add", ".")
-    git(root, "commit", "-m", "applications v1")
-    for slug, application in vorgaenge:
-        revision = git(root, "rev-parse", f"HEAD:applications/{application}")
+    git(root, "commit", "-m", "hauptprozesse v1")
+    for slug, hauptprozess in vorgaenge:
+        revision = git(root, "rev-parse", f"HEAD:hauptprozesse/{hauptprozess}")
         vorgang, entries = root / "vorgaenge" / slug, []
         # pruefen is a human gate. Its open decision is wartend under the current rule; an aktiv gate entry
         # stays valid for Vorgaenge recorded earlier, so this fixture keeps that older shape on purpose.
         for step, status in (("start", "abgeschlossen"), ("pruefen", "aktiv")):
             attempt = vorgang / step / "001"
-            (attempt / "input").mkdir(parents=True)
-            (attempt / "output").mkdir()
-            (attempt / "input" / "auftrag.md").write_text(step, encoding="utf-8")
-            entry = {"arbeitsschritt_ref": f"arbeitsschritt:{step}", "versuch": 1, "status": status,
-                     "eingabe_hash": surface_hash(attempt, ["input/auftrag.md"])}
+            (fixture_path(attempt, "input")).mkdir(parents=True)
+            (attempt / "output").mkdir(parents=True, exist_ok=True)
+            (fixture_path(attempt, "input") / "auftrag.md").write_text(step, encoding="utf-8")
+            entry = {"arbeitsschritt_ref": f"arbeitsschritt:{step}", "nummer": 1, "status": status,
+                     "gelesen": fixture_references(attempt, ["input/auftrag.md"])}
             if status == "abgeschlossen":
                 (attempt / "output" / "ergebnis.md").write_text("fertig", encoding="utf-8")
-                entry |= {"gewaehlte_route": "weiter", "ausgabe_hash": surface_hash(attempt, ["output/ergebnis.md"])}
+                entry |= {"gewaehlte_route": "weiter", "geschrieben": fixture_references(attempt, ["output/ergebnis.md"])}
             entries.append(entry)
-        write_context(vorgang / "CONTEXT.md", {"type": "vorgang", "id": f"vorgang:{slug}",
-                                           "application_revision": f"git-tree:{revision}", "laufpfad": entries}, f"# {slug}")
+        write_context(vorgang / "CONTEXT.md", {"type": "vorgang", "protocol": "v0.4.0", "id": f"vorgang:{slug}",
+                                           "hauptprozess_revision": f"git-tree:{revision}", "laufpfad": entries}, f"# {slug}")
     return root
 
 
 def test_vorgang_shows_the_bound_revision_not_the_working_tree(tmp_path):
     root = _workspace(tmp_path)
-    step = root / "applications" / "video" / "produktion" / "start" / "CONTEXT.md"
+    step = root / "hauptprozesse" / "video" / "produktion" / "start" / "CONTEXT.md"
     step.write_text(step.read_text(encoding="utf-8").replace("Erzeuge", "GEÄNDERT"), encoding="utf-8")
     model = selection.single_vorgang(root / "vorgaenge" / "video-001" / "CONTEXT.md")
     assert model["issues"] == []
     text = json.dumps(model, ensure_ascii=False)
     assert "Erzeuge das deklarierte Ergebnis" in text and "GEÄNDERT" not in text
     assert model["view"] == {"phase": {"arbeitsschritt:start": "done", "arbeitsschritt:pruefen": "current"},
-                             "current": "arbeitsschritt:pruefen", "ended": None}
+                             "current": "arbeitsschritt:pruefen", "ended": None, "status": "aktiv",
+                             "nummer": 1, "erreicht": None, "subject_stage": "open"}
 
 
 def test_invalid_vorgang_is_refused(tmp_path):
     root = _workspace(tmp_path)
-    (root / "vorgaenge" / "video-001" / "start" / "001" / "input" / "auftrag.md").write_text("verändert", encoding="utf-8")
+    (root / "vorgaenge/video-001/start/001/output/ergebnis.md").write_text("verändert", encoding="utf-8")
     model = selection.single_vorgang(root / "vorgaenge" / "video-001" / "CONTEXT.md")
-    assert "nodes" not in model and {i["code"] for i in model["issues"]} == {"hash.mismatch"}
+    assert "nodes" not in model and {i["code"] for i in model["issues"]} == {"binding.reference_digest"}
 
 
 def test_vorgang_outside_vorgaenge_is_refused(tmp_path):
@@ -480,7 +481,7 @@ def test_looped_follows_the_laufpfad_not_the_display_order():
 def _waiting_vorgang(root: Path, **entry) -> Path:
     context = root / "vorgaenge" / "video-001" / "CONTEXT.md"
     metadata = read_context(context)
-    metadata["laufpfad"][-1] |= {"status": "wartend", "wiedereinstieg": {"ausloeser": "Lieferschein", "continuation_ref": "mail:lieferschein"}}
+    metadata["laufpfad"][-1] |= {"status": "wartend", "wiedereinstieg": {"ausloeser": "Lieferschein", "continuation_ref": "vorgaenge/video-001/start/001/output/ergebnis.md"}}
     metadata["laufpfad"][-1] |= entry
     replace_context(context, metadata)
     return context
@@ -489,7 +490,7 @@ def _waiting_vorgang(root: Path, **entry) -> Path:
 def test_waiting_vorgang_shows_status_start_and_next_check_verbatim_without_judging_lateness(tmp_path):
     root = _workspace(tmp_path)
     context = _waiting_vorgang(root, status_seit="2026-10-20T09:00:00+02:00",
-                           wiedereinstieg={"ausloeser": "Lieferschein", "continuation_ref": "mail:lieferschein",
+                           wiedereinstieg={"ausloeser": "Lieferschein", "continuation_ref": "vorgaenge/video-001/start/001/output/ergebnis.md",
                                            "faellig": "2026-11-02T17:00:00+01:00"})
     model = selection.single_vorgang(context)
     assert model["issues"] == []
@@ -525,42 +526,65 @@ def test_missing_time_fields_stay_unknown(tmp_path):
     assert "Status since: unknown" in text and "No next check stated in history" in text
 
 
-def test_workspace_site_lists_every_application_and_vorgang(tmp_path):
-    root = _workspace(tmp_path, applications=("video", "schnitt"),
+def test_workspace_site_lists_every_hauptprozess_and_vorgang(tmp_path):
+    root = _workspace(tmp_path, hauptprozesse=("video", "schnitt"),
                       vorgaenge=(("video-001", "video"), ("video-002", "video"), ("schnitt-001", "schnitt")))
-    (root / "vorgaenge" / "video-002" / "start" / "001" / "input" / "auftrag.md").write_text("kaputt", encoding="utf-8")
+    (root / "vorgaenge/video-002/start/001/output/ergebnis.md").write_text("kaputt", encoding="utf-8")
     pages = selection.workspace_site(root)
     assert set(pages) == {"index.html", "a-schnitt.html", "a-video.html",
                           "v-schnitt-001.html", "v-video-001.html", "v-video-002.html"}
     overview = pages["index.html"]
-    assert overview["population"] == {"applications": 2, "applications_refused": 0, "historic": 0, "vorgaenge": 3, "vorgaenge_refused": 1, "ist": 0}
+    assert overview["population"] == {"hauptprozesse": 2, "hauptprozesse_refused": 0, "historic": 0, "vorgaenge": 3, "vorgaenge_refused": 1, "vorgaenge_not_judged": 0, "ist": 0}
     assert overview["ist"] is None
-    by_folder = {a["folder"]: a for a in overview["applications"]}
+    by_folder = {a["folder"]: a for a in overview["hauptprozesse"]}
     assert [r["page"] for r in by_folder["video"]["vorgaenge"]] == ["v-video-001.html"]
     assert [r["page"] for r in by_folder["schnitt"]["vorgaenge"]] == ["v-schnitt-001.html"]
     assert [r["page"] for r in overview["unassigned"]] == ["v-video-002.html"]
     assert overview["unassigned"][0]["issues"]
-    assert all(r["matches_head"] for a in overview["applications"] for r in a["vorgaenge"])
+    assert all(r["matches_head"] for a in overview["hauptprozesse"] for r in a["vorgaenge"])
     assert all(m["site"]["index"] == "index.html" for m in pages.values())
 
 
 def test_workspace_marks_vorgaenge_bound_to_an_older_definition(tmp_path):
     root = _workspace(tmp_path)
-    step = root / "applications" / "video" / "produktion" / "start" / "CONTEXT.md"
+    step = root / "hauptprozesse" / "video" / "produktion" / "start" / "CONTEXT.md"
     step.write_text(step.read_text(encoding="utf-8").replace("Erzeuge", "Erstelle"), encoding="utf-8")
-    git(root, "commit", "-qam", "application v2")
+    git(root, "commit", "-qam", "hauptprozess v2")
     overview = selection.workspace_site(root)["index.html"]
-    vorgang = overview["applications"][0]["vorgaenge"][0]
+    vorgang = overview["hauptprozesse"][0]["vorgaenge"][0]
     assert vorgang["matches_head"] is False and vorgang["stand"]["kind"] == "current"
+
+
+@pytest.mark.skipif(os.name == "nt", reason="requires POSIX executable permission bits")
+@pytest.mark.parametrize("mode, git_mode", [(0o650, "100644"), (0o641, "100644"), (0o744, "100755")],
+                         ids=["group-only", "other-only", "owner"])
+def test_hauptprozess_tree_identity_matches_git_executable_mode(tmp_path, mode, git_mode):
+    root = _workspace(tmp_path)
+    hauptprozess = root / "hauptprozesse" / "video"
+    context = hauptprozess / "CONTEXT.md"
+    try:
+        context.chmod(mode)
+    except OSError as error:
+        pytest.skip(f"filesystem cannot set executable permissions: {error}")
+    if context.stat().st_mode & 0o777 != mode:
+        pytest.skip("filesystem does not preserve POSIX executable permission bits")
+    git(root, "config", "core.filemode", "true")
+    rel = context.relative_to(root).as_posix()
+    git(root, "add", "--", rel)
+    assert git(root, "ls-files", "--stage", "--", rel).split()[0] == git_mode
+    tree = git(root, "write-tree")
+    expected = git(root, "rev-parse", f"{tree}:hauptprozesse/video")
+    algorithm = git(root, "rev-parse", "--show-object-format")
+    assert selection.tree_oid(hauptprozess, algorithm) == expected
 
 
 def test_workspace_inventory_keeps_files_and_links(tmp_path):
     root = _workspace(tmp_path)
     (root / "vorgaenge" / "notiz.md").write_text("x")
-    (root / "applications" / "alias").symlink_to(root / "applications" / "video")
+    (root / "hauptprozesse" / "alias").symlink_to(root / "hauptprozesse" / "video")
     pages = selection.workspace_site(root)
     overview = pages["index.html"]
-    assert overview["population"]["vorgaenge_refused"] == 1 and overview["population"]["applications_refused"] == 1
+    assert overview["population"]["vorgaenge_refused"] == 1 and overview["population"]["hauptprozesse_refused"] == 1
     assert {r["id"] for r in overview["unassigned"]} == {"vorgaenge/notiz.md"}
 
 
@@ -589,12 +613,12 @@ def test_unreadable_vorgang_is_listed_not_fatal(tmp_path):
     assert overview["population"]["vorgaenge"] == 2 and overview["population"]["vorgaenge_refused"] == 1
 
 
-def test_vorgang_whose_application_left_the_working_files_keeps_its_leistung(tmp_path):
+def test_vorgang_whose_hauptprozess_left_the_working_files_keeps_its_leistung(tmp_path):
     root = _workspace(tmp_path)
-    shutil.rmtree(root / "applications" / "video")
-    git(root, "commit", "-qam", "remove application")
+    shutil.rmtree(root / "hauptprozesse" / "video")
+    git(root, "commit", "-qam", "remove hauptprozess")
     overview = selection.workspace_site(root)["index.html"]
-    historic = [a for a in overview["applications"] if not a["current"]]
+    historic = [a for a in overview["hauptprozesse"] if not a["current"]]
     assert len(historic) == 1 and historic[0]["id"] == "hauptprozess:video"
     assert historic[0]["vorgaenge"][0]["page"] == "v-video-001.html" and not overview["unassigned"]
 
@@ -604,11 +628,11 @@ def test_waiting_and_reached_ends_are_not_progress():
              {"id": "teilprozess:t", "kind": "teilprozess", "parent": "hauptprozess:h", "children": ["arbeitsschritt:a"]},
              {"id": "arbeitsschritt:a", "kind": "arbeitsschritt", "parent": "teilprozess:t", "children": [],
               "meta": {"routen": {"stop": "end:abgebrochen"}}, "routes": [["stop", "end:abgebrochen"]]}]
-    waiting = [{"arbeitsschritt_ref": "arbeitsschritt:a", "versuch": 1, "status": "wartend"}]
+    waiting = [{"arbeitsschritt_ref": "arbeitsschritt:a", "nummer": 1, "status": "wartend"}]
     vorgang = {"id": "vorgang:r", "meta": {"laufpfad": waiting}}
     tree = project.map_tree(nodes, vorgang, project.phases(nodes, waiting))
     assert tree["children"][0]["children"][0]["phase"] == "waiting"
-    ended = [{"arbeitsschritt_ref": "arbeitsschritt:a", "versuch": 1, "status": "abgeschlossen", "gewaehlte_route": "stop"}]
+    ended = [{"arbeitsschritt_ref": "arbeitsschritt:a", "nummer": 1, "status": "abgeschlossen", "gewaehlte_route": "stop"}]
     vorgang = {"id": "vorgang:r", "meta": {"laufpfad": ended}}
     tree = project.map_tree(nodes, vorgang, project.phases(nodes, ended))
     route = tree["children"][0]["children"][0]["children"][0]
@@ -630,27 +654,30 @@ def test_waiting_attempt_is_not_active():
              {"id": "teilprozess:t", "kind": "teilprozess", "parent": "hauptprozess:h", "children": ["arbeitsschritt:a"]},
              {"id": "arbeitsschritt:a", "kind": "arbeitsschritt", "parent": "teilprozess:t", "children": [],
               "meta": {"routen": {"stop": "end:abgebrochen"}}, "routes": [["stop", "end:abgebrochen"]]}]
-    waiting = [{"arbeitsschritt_ref": "arbeitsschritt:a", "versuch": 1, "status": "wartend"}]
+    waiting = [{"arbeitsschritt_ref": "arbeitsschritt:a", "nummer": 1, "status": "wartend"}]
     tree = project.map_tree(nodes, {"id": "vorgang:r", "meta": {"laufpfad": waiting}}, project.phases(nodes, waiting))
     assert tree["children"][0]["children"][0]["children"][0]["phase"] == "waiting"
 
 
-def test_vanished_application_keeps_each_bound_leistung(tmp_path):
+def test_vanished_hauptprozess_keeps_each_bound_leistung(tmp_path):
     root = _workspace(tmp_path)
-    hp = root / "applications" / "video" / "CONTEXT.md"
+    hp = root / "hauptprozesse" / "video" / "CONTEXT.md"
     hp.write_text(hp.read_text(encoding="utf-8").replace("Veröffentlichtes Video", "Zweite Leistung"), encoding="utf-8")
-    git(root, "commit", "-qam", "applications v2")
+    git(root, "commit", "-qam", "hauptprozesse v2")
     second = root / "vorgaenge" / "video-002"
     shutil.copytree(root / "vorgaenge" / "video-001", second)
     vorgang = second / "CONTEXT.md"
-    v1, v2 = (git(root, "rev-parse", ref) for ref in ("HEAD~1:applications/video", "HEAD:applications/video"))
-    vorgang.write_text(vorgang.read_text(encoding="utf-8").replace(v1, v2).replace("vorgang:video-001", "vorgang:video-002"),
-                   encoding="utf-8")
-    shutil.rmtree(root / "applications" / "video")
+    v1, v2 = (git(root, "rev-parse", ref) for ref in ("HEAD~1:hauptprozesse/video", "HEAD:hauptprozesse/video"))
+    from tests.support import read_context, replace_context
+    metadata = read_context(vorgang)
+    metadata["id"] = "vorgang:video-002"
+    metadata["hauptprozess_revision"] = "git-tree:" + v2
+    replace_context(vorgang, metadata)
+    shutil.rmtree(root / "hauptprozesse" / "video")
     git(root, "add", "-A")
-    git(root, "commit", "-qm", "remove application")
+    git(root, "commit", "-qm", "remove hauptprozess")
     overview = selection.workspace_site(root)["index.html"]
-    historic = [a for a in overview["applications"] if not a["current"]]
+    historic = [a for a in overview["hauptprozesse"] if not a["current"]]
     assert sorted(a["leistung"]["ergebnis"] for a in historic) == ["Veröffentlichtes Video", "Zweite Leistung"]
     assert all(len(a["vorgaenge"]) == 1 for a in historic) and overview["population"]["historic"] == 2
 
@@ -661,7 +688,7 @@ def test_vorgang_evidence_changed_after_validation_is_refused(tmp_path, monkeypa
 
     def validate_then_change(path):
         report = real(path)
-        (root / "vorgaenge" / "video-001" / "start" / "001" / "input" / "auftrag.md").write_text("später", encoding="utf-8")
+        (root / "vorgaenge/video-001/start/001/output/ergebnis.md").write_text("später", encoding="utf-8")
         return report
 
     monkeypatch.setattr(selection, "validate", validate_then_change)
@@ -672,11 +699,11 @@ def test_vorgang_evidence_changed_after_validation_is_refused(tmp_path, monkeypa
 def test_head_moved_and_restored_cannot_relabel_the_definition(tmp_path, monkeypatch):
     root = _workspace(tmp_path)
     first = git(root, "rev-parse", "HEAD")
-    application_page, vorgang_page = selection.application_page, selection.vorgang_page
+    hauptprozess_page, vorgang_page = selection.hauptprozess_page, selection.vorgang_page
 
     def advance(*args):
-        page = application_page(*args)
-        hp = root / "applications" / "video" / "CONTEXT.md"
+        page = hauptprozess_page(*args)
+        hp = root / "hauptprozesse" / "video" / "CONTEXT.md"
         hp.write_text(hp.read_text(encoding="utf-8") + "\nNachtrag\n", encoding="utf-8")
         git(root, "commit", "-qam", "later")
         return page
@@ -685,10 +712,10 @@ def test_head_moved_and_restored_cannot_relabel_the_definition(tmp_path, monkeyp
         git(root, "reset", "-q", "--hard", first)
         return vorgang_page(*args)
 
-    monkeypatch.setattr(selection, "application_page", advance)
+    monkeypatch.setattr(selection, "hauptprozess_page", advance)
     monkeypatch.setattr(selection, "vorgang_page", restore)
     overview = selection.workspace_site(root)["index.html"]
-    assert overview["applications"][0]["head"] == git(root, "rev-parse", f"{first}:applications/video")
+    assert overview["hauptprozesse"][0]["head"] == git(root, "rev-parse", f"{first}:hauptprozesse/video")
 
 
 def test_fifo_in_a_vorgang_is_recorded_not_read(tmp_path):
@@ -740,8 +767,8 @@ def test_analysis_rows_carry_their_file_lines(tmp_path):
     assert found["status"] == "table" and found["heading_line"] == 59
     node = ist_node(tmp_path / "antrag.md")
     section, index = found["at"]
-    assert node["sections"][section]["blocks"][index]["line"] == 61
-    assert (found["rows"][0]["line"], found["rows"][11]["line"]) == (63, 74)
+    assert node["sections"][section]["blocks"][index]["line"] == 71
+    assert (found["rows"][0]["line"], found["rows"][11]["line"]) == (73, 84)
     assert found["conditions"]["C1"]["line"] == 35 and found["activities"]["3"]["line"] == 48
 
 
@@ -790,11 +817,27 @@ def test_ist_prozess_without_analysis_keeps_every_section(tmp_path):
 
 def _ist_workspace(tmp_path, files: dict) -> Path:
     root = _workspace(tmp_path)
-    folder = root / "grundlagen" / "ist-prozesse"
+    folder = root / "analyse"
     folder.mkdir(parents=True)
     for name, text in files.items():
         (folder / name).write_text(text, encoding="utf-8")
     return root
+
+
+def test_analysis_discovery_needs_no_foundations_and_keeps_candidates_separate(tmp_path):
+    root = _ist_workspace(tmp_path, {"antrag.md": TEMPLATE_EN.read_text(encoding="utf-8"),
+                                     "interview.md": "# Interview\n\nObservation, not a rule.\n"})
+    assert not (root / "grundlagen").exists()
+    candidate = root / "analyse" / "invoice-entry"
+    shutil.copytree(HERE / "view_source" / "analyse" / "invoice-entry", candidate)
+    pages = selection.workspace_site(root)
+    assert pages["i-antrag.html"]["selection"]["ist_prozess"] == "analyse/antrag.md"
+    assert {item["file"]: item["reason"] for item in pages["index.html"]["ist"]["skipped"]} == {
+        "analyse/interview.md": "missing-type", "analyse/invoice-entry": "dir"}
+    assert not any(page["selection"].get("hauptprozess") == "hauptprozess:invoice-entry"
+                   for page in pages.values())
+    # Explicit design inspection is still available without promoting the candidate.
+    assert selection.hauptprozess_page(candidate)["issues"] == []
 
 
 def test_hostile_ist_prozess_text_stays_data(tmp_path):
@@ -833,8 +876,8 @@ def test_links_reject_unsafe_fragments(tmp_path):
 def test_ist_inventory_lists_what_it_does_not_read(tmp_path):
     root = _ist_workspace(tmp_path, {"antrag.md": TEMPLATE_DE.read_text(encoding="utf-8"), "notiz.txt": "x",
                                      "router.md": "---\ntype: workspace\n---\n# R\n"})
-    (root / "grundlagen" / "ist-prozesse" / "alias.md").symlink_to(root / "grundlagen" / "ist-prozesse" / "antrag.md")
-    (root / "grundlagen" / "ist-prozesse" / "teil").mkdir()
+    (root / "analyse" / "alias.md").symlink_to(root / "analyse" / "antrag.md")
+    (root / "analyse" / "teil").mkdir()
     pages = selection.workspace_site(root)
     ist = pages["index.html"]["ist"]
     assert [p["page"] for p in ist["pages"]] == ["i-antrag.html"] and ist["pages"][0]["analysis"] == "table"
@@ -849,7 +892,7 @@ def test_ist_change_during_generation_writes_nothing(tmp_path, monkeypatch):
 
     def validate_and_edit(path):
         report = real(path)
-        (root / "grundlagen" / "ist-prozesse" / "antrag.md").write_text("geändert", encoding="utf-8")
+        (root / "analyse" / "antrag.md").write_text("geändert", encoding="utf-8")
         return report
 
     monkeypatch.setattr(selection, "validate", validate_and_edit)
@@ -891,19 +934,19 @@ def _vorgang(entries):
     return {"id": "vorgang:r", "title": None, "meta": {"laufpfad": entries}}
 
 
-DONE_A = {"arbeitsschritt_ref": "arbeitsschritt:a", "versuch": 1, "status": "abgeschlossen", "gewaehlte_route": "weiter"}
+DONE_A = {"arbeitsschritt_ref": "arbeitsschritt:a", "nummer": 1, "status": "abgeschlossen", "gewaehlte_route": "weiter"}
 
 
 def test_phases_keep_green_for_the_position_only():
     nodes = _nodes(gate="human")
     cases = {
-        "current": [DONE_A, {"arbeitsschritt_ref": "arbeitsschritt:b", "versuch": 1, "status": "aktiv"}],
+        "current": [DONE_A, {"arbeitsschritt_ref": "arbeitsschritt:b", "nummer": 1, "status": "aktiv"}],
         "next": [DONE_A],
-        "waiting": [DONE_A, {"arbeitsschritt_ref": "arbeitsschritt:b", "versuch": 1, "status": "wartend"}],
-        "ended": [DONE_A, {"arbeitsschritt_ref": "arbeitsschritt:b", "versuch": 1, "status": "abgeschlossen", "gewaehlte_route": "abgelehnt"},
-                  {"arbeitsschritt_ref": "arbeitsschritt:a", "versuch": 2, "status": "abgeschlossen", "gewaehlte_route": "weiter"},
-                  {"arbeitsschritt_ref": "arbeitsschritt:b", "versuch": 2, "status": "abgeschlossen", "gewaehlte_route": "freigegeben"},
-                  {"arbeitsschritt_ref": "arbeitsschritt:c", "versuch": 1, "status": "abgeschlossen", "gewaehlte_route": "stopp"}],
+        "waiting": [DONE_A, {"arbeitsschritt_ref": "arbeitsschritt:b", "nummer": 1, "status": "wartend"}],
+        "ended": [DONE_A, {"arbeitsschritt_ref": "arbeitsschritt:b", "nummer": 1, "status": "abgeschlossen", "gewaehlte_route": "abgelehnt"},
+                  {"arbeitsschritt_ref": "arbeitsschritt:a", "nummer": 2, "status": "abgeschlossen", "gewaehlte_route": "weiter"},
+                  {"arbeitsschritt_ref": "arbeitsschritt:b", "nummer": 2, "status": "abgeschlossen", "gewaehlte_route": "freigegeben"},
+                  {"arbeitsschritt_ref": "arbeitsschritt:c", "nummer": 1, "status": "abgeschlossen", "gewaehlte_route": "stopp"}],
     }
     for kind, entries in cases.items():
         view = project.phases(nodes, entries)
@@ -930,35 +973,36 @@ def test_stand_has_one_case_per_kind():
     # The aktiv entry at gate b is the older, still valid shape; the viewer must keep showing it.
     nodes = _nodes(gate="human")
     stand = lambda entries: project.stand(nodes, _vorgang(entries), project.phases(nodes, entries))
-    current = stand([DONE_A, {"arbeitsschritt_ref": "arbeitsschritt:b", "versuch": 1, "status": "aktiv"}])
-    assert (current["kind"], current["step_title"], current["part_title"], current["gate"], current["versuch"]) == ("current", "B", "T", "human", 1)
+    current = stand([DONE_A, {"arbeitsschritt_ref": "arbeitsschritt:b", "nummer": 1, "status": "aktiv"}])
+    assert (current["kind"], current["step_title"], current["part_title"], current["gate"], current["nummer"]) == ("current", "B", "T", "human", 1)
     assert [r[0] for r in current["routes"]] == ["freigegeben", "abgelehnt"]
     following = stand([DONE_A])
     assert (following["kind"], following["step"], following["from_title"], following["route"], following["entry"]) == ("next", "arbeitsschritt:b", "A", "weiter", 1)
     resume = {"ausloeser": "Unterlagen <b>da</b>", "continuation_ref": "records/x.md"}
-    waiting = stand([DONE_A, {"arbeitsschritt_ref": "arbeitsschritt:b", "versuch": 1, "status": "wartend", "wiedereinstieg": resume}])
+    waiting = stand([DONE_A, {"arbeitsschritt_ref": "arbeitsschritt:b", "nummer": 1, "status": "wartend", "wiedereinstieg": resume}])
     assert (waiting["kind"], waiting["ausloeser"], waiting["continuation_ref"]) == ("waiting", "Unterlagen <b>da</b>", "records/x.md")
-    bare = stand([DONE_A, {"arbeitsschritt_ref": "arbeitsschritt:b", "versuch": 1, "status": "wartend"}])
+    bare = stand([DONE_A, {"arbeitsschritt_ref": "arbeitsschritt:b", "nummer": 1, "status": "wartend"}])
     assert (bare["kind"], bare["ausloeser"]) == ("waiting", None)
-    ended = stand([DONE_A, {"arbeitsschritt_ref": "arbeitsschritt:b", "versuch": 1, "status": "abgeschlossen", "gewaehlte_route": "freigegeben"},
-                   {"arbeitsschritt_ref": "arbeitsschritt:c", "versuch": 1, "status": "abgeschlossen", "gewaehlte_route": "fertig"}])
+    ended = stand([DONE_A, {"arbeitsschritt_ref": "arbeitsschritt:b", "nummer": 1, "status": "abgeschlossen", "gewaehlte_route": "freigegeben"},
+                   {"arbeitsschritt_ref": "arbeitsschritt:c", "nummer": 1, "status": "abgeschlossen", "gewaehlte_route": "fertig"}])
     assert (ended["kind"], ended["end"], ended["route"], ended["from_title"], ended["entry"], ended["entries"]) == ("ended", "fertig", "fertig", "C", 3, 3)
     assert project.stand(nodes, None, None) == {"kind": "definition"}
 
 
 def test_vorgang_summary_copies_the_wait_verbatim(tmp_path):
     root = _workspace(tmp_path)
+    (root / "records/video.md").write_text("Synthetic request sent; waiting for approval.\n", encoding="utf-8")
     vorgang = root / "vorgaenge" / "video-001" / "CONTEXT.md"
     vorgang.write_text(vorgang.read_text(encoding="utf-8").replace("status: aktiv", "status: wartend\n  wiedereinstieg:\n"
                    "    ausloeser: Freigabe liegt vor\n    continuation_ref: records/video.md"), encoding="utf-8")
     overview = selection.workspace_site(root)["index.html"]
-    summary = overview["applications"][0]["vorgaenge"][0]
+    summary = overview["hauptprozesse"][0]["vorgaenge"][0]
     assert summary["issues"] == [], summary["issues"]
     assert (summary["stand"]["kind"], summary["stand"]["ausloeser"], summary["statuses"]) == ("waiting", "Freigabe liegt vor", ["abgeschlossen", "wartend"])
 
 
 def test_step_refs_say_nothing_the_file_does_not(tmp_path):
-    model = selection.application_page(write_application(tmp_path / "video"))
+    model = selection.hauptprozess_page(write_hauptprozess(tmp_path / "video"))
     steps = [n for n in model["nodes"] if n["kind"] == "arbeitsschritt"]
     for step in steps:
         assert set(step) >= {"job", "authority", "flow", "path_in_revision", "meta_lines"}
@@ -983,21 +1027,15 @@ def test_copy_is_quoted_from_the_protocol():
         for sentence in table.values():
             assert sentence in templates, sentence
     page = write.TEMPLATE.read_text(encoding="utf-8")
-    translation = (REPO / "02_protocol" / "translations" / "de.md").read_text(encoding="utf-8")
+    capture_sheet = (REPO / "02_protocol/impacts-architect/templates/de/ist-prozess.md").read_text(encoding="utf-8")
     tables = word_tables(page)
     question_keys = re.findall(r"W\.(\w+)", re.search(r"const QUESTIONS = \[(.*?)\];", page, re.S).group(1))
     found = [tables["de"][key] for key in question_keys]
-    assert len(found) == 5 and all(q in translation for q in found)
-    yes_key = re.search(r"const YES_NOTE = W\.(\w+);", page).group(1)
-    assert tables["de"][yes_key] in TEMPLATE_DE.read_text(encoding="utf-8")
+    assert len(found) == 5 and all(q in capture_sheet for q in found)
 
 
 
-def test_removed_parts_stay_removed():
-    package = "\n".join(p.read_text(encoding="utf-8") for p in PACKAGE.iterdir() if p.suffix in (".py", ".html"))
-    for gone in ("view.path", "function facts", "dblclick", "prefers-color-scheme: light", "prefers-color-scheme:light", "MAP_PHASE", "STATUS = {\"abgeschlossen\": \"erledigt\"",
-                 "Begründung anzeigen", "Leistung dieser Fassung", 'kv("Steht bei"', "scrollIntoView({block: \"nearest\", inline: \"center\""):
-        assert gone not in package, gone
+def test_fill_is_the_only_replace_children_call():
     page = write.TEMPLATE.read_text(encoding="utf-8")
     # replaceChildren(null) renders the text "null"; only the filtering helper may call it.
     assert page.count("replaceChildren(") == 1 and "const fill = (element, ...children) => element.replaceChildren(" in page
@@ -1015,15 +1053,15 @@ def test_answer_marks_a_caveat_behind_the_word(tmp_path):
     assert cell("offen, Katalog fehlt") and cell("Ja, nur für eine eigene Regel (`reported`)")
 
 
-def test_linked_grundlagen_is_listed_not_followed(tmp_path):
+def test_linked_analysis_is_listed_not_followed(tmp_path):
     root = _workspace(tmp_path)
-    outside = tmp_path / "draussen" / "ist-prozesse"
+    outside = tmp_path / "draussen" / "analyse"
     outside.mkdir(parents=True)
     (outside / "x.md").write_text("---\ntype: ist-prozess\nname: Geheim ausserhalb\n---\n# X\n", encoding="utf-8")
-    (root / "grundlagen").symlink_to(tmp_path / "draussen")
+    (root / "analyse").symlink_to(outside)
     pages = selection.workspace_site(root)
     assert not [n for n in pages if n.startswith("i-")]
-    assert pages["index.html"]["ist"] == {"pages": [], "skipped": [{"file": "grundlagen", "reason": "link"}]}
+    assert pages["index.html"]["ist"] == {"pages": [], "skipped": [{"file": "analyse", "reason": "link"}]}
     assert "Geheim" not in json.dumps(pages, default=str)
 
 
@@ -1076,16 +1114,16 @@ def test_ist_targets_resolve_only_within_this_view(tmp_path):
     assert len(step["ist"]) == 1
     backlink = step["ist"][0]
     assert {k: backlink[k] for k in ("page", "nr", "file", "activity")} == {
-        "page": "i-antrag.html", "nr": "8", "file": "grundlagen/ist-prozesse/antrag.md", "activity": "Entscheiden"}
+        "page": "i-antrag.html", "nr": "8", "file": "analyse/antrag.md", "activity": "Entscheiden"}
     assert backlink["row"] == rows["8"] and backlink["index"] == 7
     assert backlink["heading"] == "Analyse"
     # A Vorgang draws its bound revision, another snapshot: it gets no back links.
     assert all("ist" not in n for m in pages.values() if m["kind"] == "vorgang" for n in m.get("nodes", []))
 
 
-def test_a_step_in_two_applications_is_a_gap_not_a_choice(tmp_path):
-    root = _workspace(tmp_path, applications=("video", "schnitt"), vorgaenge=())
-    folder = root / "grundlagen" / "ist-prozesse"
+def test_a_step_in_two_hauptprozesse_is_a_gap_not_a_choice(tmp_path):
+    root = _workspace(tmp_path, hauptprozesse=("video", "schnitt"), vorgaenge=())
+    folder = root / "analyse"
     folder.mkdir(parents=True)
     ist_text(folder / "antrag.md", lambda t: t.replace("Trennung aufheben: Eingang legt die Fallakte direkt an (`hypothesis`)",
                                                       "Trennung aufheben (`hypothesis`); arbeitsschritt:start"))
@@ -1107,7 +1145,7 @@ def test_target_references_preserve_complete_identity(text, expected):
 
 def test_all_processing_sections_preserve_contributions_and_source_lines():
     body = "## Processing\n- Agent: Draft\n  continuation\n- Human: Decide\n\n## Other\n- Agent: ignored\n\n## Verarbeitung\n- Deterministisches System: Check\n- Klassifikator: Classify"
-    _, sections = blocks.sections(body, 11)
+    _, _, sections = blocks.document(body, 11)
     contributions = project.step_refs({"sections": sections})["execution"]
     assert [e["kind"] for e in contributions] == ["agent", "human", "deterministic", "classifier"]
     assert [e["line"] for e in contributions] == [12, 14, 20, 21]
@@ -1269,7 +1307,7 @@ def test_comparison_preserves_free_prose_and_partial_target_metadata(tmp_path):
         "Trennung aufheben: Eingang legt die Fallakte direkt an (`hypothesis`)",
         "Vorschlag; arbeitsschritt:start arbeitsschritt:fehlt")
     root = _ist_workspace(tmp_path, {"antrag.md": text})
-    source = root / "applications" / "video" / "produktion" / "start" / "CONTEXT.md"
+    source = root / "hauptprozesse" / "video" / "produktion" / "start" / "CONTEXT.md"
     source.write_text(source.read_text(encoding="utf-8") + "\n## Processing\n- Agent: Draft\n", encoding="utf-8")
     pages = selection.workspace_site(root)
     nec = pages["i-antrag.html"]["necessity"]
@@ -1310,14 +1348,14 @@ def test_word_tables_have_identical_keys():
     tables = word_tables(page)
     assert set(tables) == {"de", "en"}
     assert tables["de"].keys() == tables["en"].keys()
-    used = set(re.findall(r"\bW\.(\w+)", page))
+    used = set(re.findall(r"\bW\.(\w+)", page)) | set(project.PAGE_HEADINGS.values())
     assert used == set(tables["de"])
     assert all("—" not in text for text in tables["en"].values())
 
 
 @pytest.mark.parametrize("language", [None, "", "fr", "constructor", "__proto__"])
 def test_missing_or_unknown_page_language_is_a_plain_error(tmp_path, language):
-    model = {"kind": "application", "issues": []}
+    model = {"kind": "hauptprozess", "issues": []}
     if language is not None:
         model["language"] = language
     result = render_page(tmp_path, write.page_html(model))
@@ -1331,7 +1369,7 @@ def test_missing_or_unknown_page_language_is_a_plain_error(tmp_path, language):
 
 def test_english_workspace_renders_english_words_and_model(tmp_path):
     root = init_workspace(tmp_path / "english", language="en")
-    application = write_application(root / "applications" / "video")
+    hauptprozess = write_hauptprozess(root / "hauptprozesse" / "video")
     readable = {
         "Veröffentlichtes Video": "Published video", "Durchlaufzeit": "Time to finish",
         "Video veröffentlicht": "Video published", "Video-Produktion": "Video production",
@@ -1339,12 +1377,12 @@ def test_english_workspace_renders_english_words_and_model(tmp_path):
         "Ergebnis ist vollständig": "Result is complete", "## Bearbeitung": "## Processing",
         "Erzeuge das deklarierte Ergebnis.": "Produce the declared result.",
     }
-    for context in application.rglob("CONTEXT.md"):
+    for context in hauptprozess.rglob("CONTEXT.md"):
         text = context.read_text(encoding="utf-8")
         for german, english in readable.items():
             text = text.replace(german, english)
         context.write_text(text, encoding="utf-8")
-    step = application / "produktion" / "start" / "CONTEXT.md"
+    step = hauptprozess / "produktion" / "start" / "CONTEXT.md"
     template = (REPO / "02_protocol" / "templates" / "arbeitsschritt.md").read_text(encoding="utf-8")
     body = template.split("---\n", 2)[2]
     _, frontmatter, _ = step.read_text(encoding="utf-8").split("---\n", 2)
@@ -1353,7 +1391,7 @@ def test_english_workspace_renders_english_words_and_model(tmp_path):
                     "- Agent: Draft\n- Human: Decide\n\n## Source quotation\n"
                     "German source: unverändert `open` `hypothesis` `reported` `verified` `entfaellt`\n",
                     encoding="utf-8")
-    folder = root / "grundlagen" / "ist-prozesse"
+    folder = root / "analyse"
     folder.mkdir(parents=True)
     (folder / "request.md").write_text(TEMPLATE_EN.read_text(encoding="utf-8"), encoding="utf-8")
     (folder / "note.txt").write_text("Do not read", encoding="utf-8")
@@ -1373,7 +1411,7 @@ def test_english_workspace_renders_english_words_and_model(tmp_path):
         assert "Read-only view." in shown
         assert "Nur Ansicht." not in shown
         if filename == "a-video.html":
-            assert "Processing" in shown and "Outcome" in shown
+            assert "Processing" in shown and "Check result" in shown
             for label in ("Deterministic system", "Classifier", "Agent", "Human"):
                 assert label in shown
             assert "German source: unverändert" in shown and "entfaellt" in shown
@@ -1398,7 +1436,7 @@ def test_template_subtitles_match_the_heading_language(language):
         folder /= "de"
     for kind, subtitles in project.SUBTITLE.items():
         template = (folder / f"{kind}.md").read_text(encoding="utf-8")
-        _, sections = blocks.sections(template.split("---\n", 2)[2], 1)
+        _, _, sections = blocks.document(template.split("---\n", 2)[2], 1)
         for section in sections:
             heading = project.heading_key(section)
             if heading in subtitles:
@@ -1410,6 +1448,7 @@ def test_template_subtitles_match_the_heading_language(language):
 
 def test_english_waiting_history_preserves_status_token(tmp_path):
     root = _workspace(tmp_path)
+    (root / "records/video.md").write_text("Synthetic request sent; waiting for approval.\n", encoding="utf-8")
     path = root / "vorgaenge" / "video-001" / "CONTEXT.md"
     path.write_text(path.read_text(encoding="utf-8").replace(
         "status: aktiv", "status: wartend\n  wiedereinstieg:\n"
@@ -1424,7 +1463,7 @@ def test_english_waiting_history_preserves_status_token(tmp_path):
 
 
 def test_default_language_is_german_without_a_recorded_setting(tmp_path):
-    root = write_application(tmp_path / "video")
+    root = write_hauptprozess(tmp_path / "video")
     assert working_language(root) is None and choose_language(root, None) == "de"
     out = tmp_path / "view"
     assert main(["view", str(root), "--out", str(out)]) == 0
@@ -1486,12 +1525,12 @@ def test_open_ist_move_keeps_jump_control_separate_from_source_controls(tmp_path
 
 
 def test_legend_maps_labels_without_inventing_evidence(tmp_path):
-    root = write_application(tmp_path / "video")
+    root = write_hauptprozess(tmp_path / "video")
     path = root / "produktion" / "start" / "CONTEXT.md"
     path.write_text(path.read_text(encoding="utf-8") + "\n## One job\n\nResult. Another sentence.\n"
                     "\n## Inputs\n\nStated `reported`. Checked `verified`. Plain.\n"
                     "\n## Authority\n\nProposed `hypothesis`. Missing `open`.\n", encoding="utf-8")
-    model = {**selection.application_page(root), "language": "de"}
+    model = {**selection.hauptprozess_page(root), "language": "de"}
     sheet = render_page(tmp_path, write.page_html(model), "#arbeitsschritt:start")["sheet"]
     legend = next(e for e in elements(sheet) if e["attrs"].get("class") == "evidence-legend")
     assert text_content(legend) == "ohne Markierung: aus der Dateiabgeleitetoffen"
@@ -1502,14 +1541,14 @@ def test_legend_maps_labels_without_inventing_evidence(tmp_path):
     header = next(e for e in elements(sheet) if e["tagName"] == "HEADER")
     assert "Result." in text_content(header) and "Another sentence." not in text_content(header)
     assert "Verantwortlich" not in text_content(header)
-    assert "Definition, kein Ausführungsstand" in text_content(header)
+    assert "Definition, kein Ausführungszustand" in text_content(header)
     assert not any(e["attrs"].get("class") == "triad" for e in elements(sheet))
     opened = next(e for e in elements(sheet) if e["attrs"].get("id") == "s-open")
     assert "Missing" in text_content(opened)
 
 
 def test_sheet_uses_template_order_and_separate_handgrips_without_dropping_source(tmp_path):
-    root = write_application(tmp_path / "video")
+    root = write_hauptprozess(tmp_path / "video")
     path = root / "produktion" / "start" / "CONTEXT.md"
     path.write_text(path.read_text(encoding="utf-8") + "\n## Flow\n\nStart on arrival.\n"
                     "\n## Check\n\nCompare result.\n## Processing\n- Human: Compare\n- Agent: Draft\n"
@@ -1518,7 +1557,7 @@ def test_sheet_uses_template_order_and_separate_handgrips_without_dropping_sourc
                     "\n## Excluded context\n\nDo not load Y.\n\n## Inputs\n\nLoad X.\n"
                     "\n## Authority\n\nHolder decides.\n\n## Outputs and effects\n\nPacket written.\n"
                     "\n## One job\n\nDeliver packet.\n", encoding="utf-8")
-    model = {**selection.application_page(root), "language": "de"}
+    model = {**selection.hauptprozess_page(root), "language": "de"}
     sheet = render_page(tmp_path, write.page_html(model), "#arbeitsschritt:start")["sheet"]
     numbered = [e for e in elements(sheet) if e["tagName"] == "SECTION" and e["attrs"].get("id", "").startswith("s-")]
     assert [e["attrs"]["id"] for e in numbered] == ["s-job", "s-inputs", "s-processing", "s-handgrips", "s-outputs", "s-check", "s-authority", "s-flow"]
@@ -1565,16 +1604,16 @@ def test_ist_without_analysis_renders_source_sections_verbatim(tmp_path):
 
 
 def test_owner_is_shown_only_from_an_explicit_source_label(tmp_path):
-    root = write_application(tmp_path / "video")
+    root = write_hauptprozess(tmp_path / "video")
     path = root / "produktion" / "start" / "CONTEXT.md"
     original = path.read_text(encoding="utf-8")
     path.write_text(original + "\n## Processing\n\n- Human: Clerk processes the packet.\n", encoding="utf-8")
-    model = {**selection.application_page(root), "language": "de"}
+    model = {**selection.hauptprozess_page(root), "language": "de"}
     sheet = render_page(tmp_path, write.page_html(model), "#arbeitsschritt:start")["sheet"]
     header = next(e for e in elements(sheet) if e["tagName"] == "HEADER")
     assert "Verantwortlich" not in text_content(header)
     path.write_text(original + "\n## Authority\n\n- **Role**: Office Coordinator (`reported`)\n", encoding="utf-8")
-    model = {**selection.application_page(root), "language": "de"}
+    model = {**selection.hauptprozess_page(root), "language": "de"}
     step = next(n for n in model["nodes"] if n["id"] == "arbeitsschritt:start")
     assert project.plain(step["owners"][0]["spans"]) == "Office Coordinator (reported)"
     assert path.read_text().splitlines()[step["owners"][0]["line"] - 1].startswith("- **Role**:")
@@ -1585,11 +1624,11 @@ def test_owner_is_shown_only_from_an_explicit_source_label(tmp_path):
 
 
 def test_open_collection_links_each_marked_item_and_omits_unmarked_siblings(tmp_path):
-    root = write_application(tmp_path / "video")
+    root = write_hauptprozess(tmp_path / "video")
     path = root / "produktion" / "start" / "CONTEXT.md"
     path.write_text(path.read_text() + "\n## Inputs\n\n- First question `open`\n- Known sibling `reported`\n"
                     "- Second question `open`\n", encoding="utf-8")
-    model = {**selection.application_page(root), "language": "de"}
+    model = {**selection.hauptprozess_page(root), "language": "de"}
     sheet = render_page(tmp_path, write.page_html(model), "#arbeitsschritt:start")["sheet"]
     collection = next(e for e in elements(sheet) if e["attrs"].get("id") == "s-open")
     rows = [e for e in elements(collection) if e["tagName"] == "LI"]
@@ -1608,10 +1647,10 @@ def test_title_and_metadata_source_lines_are_exact_even_with_fenced_headings(tmp
 
 
 def test_missing_name_job_and_owner_are_omitted_from_the_header(tmp_path):
-    root = write_application(tmp_path / "video")
+    root = write_hauptprozess(tmp_path / "video")
     path = root / "produktion" / "start" / "CONTEXT.md"
     path.write_text(re.sub(r"^# .*$", "", path.read_text(), flags=re.M), encoding="utf-8")
-    model = {**selection.application_page(root), "language": "de"}
+    model = {**selection.hauptprozess_page(root), "language": "de"}
     sheet = render_page(tmp_path, write.page_html(model), "#arbeitsschritt:start")["sheet"]
     header = next(e for e in elements(sheet) if e["tagName"] == "HEADER")
     labels = [text_content(e["children"][0]) for e in elements(header) if e["attrs"].get("class") == "kv"]
@@ -1621,7 +1660,7 @@ def test_missing_name_job_and_owner_are_omitted_from_the_header(tmp_path):
 
 @pytest.mark.parametrize("language,more", [("de", "mehr anzeigen"), ("en", "show more")])
 def test_long_blocks_start_collapsed_and_short_blocks_stay_open(tmp_path, language, more):
-    root = write_application(tmp_path / "video")
+    root = write_hauptprozess(tmp_path / "video")
     path = root / "produktion" / "start" / "CONTEXT.md"
     long = "Ein belegter Satz mit vollständigem Quelltext. " * 9
     path.write_text(path.read_text() + "\n## Inputs\n\nKurz.\n\n" + long + "\n\n"
@@ -1631,7 +1670,7 @@ def test_long_blocks_start_collapsed_and_short_blocks_stay_open(tmp_path, langua
                     + "\n".join(f"| {i} | {long} |" for i in range(2)) + "\n\n"
                     + "| Nr. | Kurz |\n| --- | --- |\n"
                     + "\n".join(f"| {i} | x |" for i in range(5)) + "\n", encoding="utf-8")
-    model = {**selection.application_page(root), "language": language}
+    model = {**selection.hauptprozess_page(root), "language": language}
     sheet = render_page(tmp_path, write.page_html(model), "#arbeitsschritt:start")["sheet"]
     inputs = next(e for e in elements(sheet) if e["attrs"].get("id") == "s-inputs")
     previews = [e for e in elements(inputs) if e["attrs"].get("class") == "expandable"]
@@ -1648,11 +1687,11 @@ def test_long_blocks_start_collapsed_and_short_blocks_stay_open(tmp_path, langua
 
 
 def test_sections_have_one_source_line_with_all_sources_reachable(tmp_path):
-    root = write_application(tmp_path / "video")
+    root = write_hauptprozess(tmp_path / "video")
     path = root / "produktion" / "start" / "CONTEXT.md"
     path.write_text(path.read_text() + "\n## Inputs\n\nFirst.\n\n## Inputs\n\nSecond `open`.\n"
                     "\n## Nicht laden\n\nExcluded.\n", encoding="utf-8")
-    model = {**selection.application_page(root), "language": "de"}
+    model = {**selection.hauptprozess_page(root), "language": "de"}
     sheet = render_page(tmp_path, write.page_html(model), "#arbeitsschritt:start")["sheet"]
     for section in (e for e in elements(sheet) if e["tagName"] == "SECTION"):
         origins = [e for e in elements(section) if e["attrs"].get("class") == "origin"]
@@ -1672,7 +1711,7 @@ def test_sections_map_before_08_and_only_09_follows(tmp_path, outputs, authority
     text = TEMPLATE_DE.read_text().replace(
         "Trennung aufheben: Eingang legt die Fallakte direkt an (`hypothesis`)", "Vorschlag; arbeitsschritt:start")
     root = _ist_workspace(tmp_path, {"antrag.md": text})
-    path = root / "applications" / "video" / "produktion" / "start" / "CONTEXT.md"
+    path = root / "hauptprozesse" / "video" / "produktion" / "start" / "CONTEXT.md"
     path.write_text(path.read_text().replace("routen:", "gate: human\nrouten:").replace(
         "  weiter: arbeitsschritt:pruefen", "  freigegeben: arbeitsschritt:pruefen\n  abgelehnt: arbeitsschritt:start")
                     + f"\n## {outputs}\n\nDeclared output.\n\n## {authority}\n\nHolder `open`.\n"
@@ -1686,7 +1725,7 @@ def test_sections_map_before_08_and_only_09_follows(tmp_path, outputs, authority
     index = next(i for i, e in enumerate(sections) if e["attrs"].get("id") == "s-necessity")
     assert [e["attrs"].get("id") for e in sections[index + 1:]] == ["s-open"]
     output = next(e for e in sections if e["attrs"].get("id") == "s-outputs")
-    assert "04Ausgaben und Wirkungen" in text_content(output) and "Declared output." in text_content(output)
+    assert "04Ausgaben und Eingriffe" in text_content(output) and "Declared output." in text_content(output)
     authority_section = next(e for e in sections if e["attrs"].get("id") == "s-authority")
     assert text_content(authority_section["children"][-1]).startswith("Gate: Mensch entscheidet")
     assert "Holder" in text_content(authority_section) and "Human Check" not in text_content(authority_section)
@@ -1730,11 +1769,11 @@ def test_ist_guidance_collapses_below_header_and_main_necessity(tmp_path):
 
 
 def test_execution_labels_are_bold_and_contribution_uses_two_paragraphs(tmp_path):
-    root = write_application(tmp_path / "video")
+    root = write_hauptprozess(tmp_path / "video")
     path = root / "produktion" / "start" / "CONTEXT.md"
     path.write_text(path.read_text() + "\n## Verarbeitung\n\n- **Mensch**: Prüft.\n"
                     "- Deterministisches System: Rechnet.\n", encoding="utf-8")
-    model = {**selection.application_page(root), "language": "de"}
+    model = {**selection.hauptprozess_page(root), "language": "de"}
     sheet = render_page(tmp_path, write.page_html(model), "#arbeitsschritt:start")["sheet"]
     processing = next(e for e in elements(sheet) if e["attrs"].get("id") == "s-processing")
     labels = [text_content(e) for e in elements(processing) if e["tagName"] == "STRONG"]
@@ -1744,3 +1783,44 @@ def test_execution_labels_are_bold_and_contribution_uses_two_paragraphs(tmp_path
     paragraphs = [text_content(e) for e in elements(job) if e["tagName"] == "P"]
     assert "Produziertes Video" in paragraphs
     assert any(p.startswith("Leistung: ") for p in paragraphs)
+
+
+def test_prefixed_definition_folders_keep_view_ids_and_route_targets(tmp_path):
+    root = write_hauptprozess(tmp_path / "01-video")
+    (root / "produktion/start").rename(root / "produktion/02-start")
+    model = selection.hauptprozess_page(root)
+    assert model["issues"] == []
+    assert model["selection"]["hauptprozess"] == "hauptprozess:video"
+    steps = {n["id"]: n for n in model["nodes"]}
+    assert "arbeitsschritt:start" in steps
+    assert steps["arbeitsschritt:pruefen"]["meta"]["routen"]["abgelehnt"] == "arbeitsschritt:start"
+    assert "02-start" in steps["arbeitsschritt:start"]["path"]
+
+
+def test_shared_page_vocabulary_is_embedded_before_csp_hashing():
+    html = write.page_html({"language": "en", "kind": "workspace", "issues": []})
+    script = re.search(r"<script>(.*?)</script>", html, re.S)[1]
+    vocabulary = json.loads(re.search(r"const VOCABULARY = (.*?);", script)[1])
+    assert vocabulary == {"headings": project.PAGE_HEADINGS, "execution": project.EXECUTION,
+                          "owners": list(project.OWNER_LABELS)}
+    assert "__VOCABULARY__" not in html
+    digest = base64.b64encode(hashlib.sha256(script.encode()).digest()).decode()
+    assert "script-src 'sha256-" + digest + "'" in html
+
+
+def test_heading_import_preserves_localization_and_exact_reader_subsets(tmp_path):
+    node = shutil.which("node")
+    if node is None:
+        pytest.skip("node not installed")
+    html = write.page_html({"language": "en", "kind": "workspace", "issues": []})
+    code = html.split("const headingText =", 1)[1].split("const originOf", 1)[0]
+    script = tmp_path / "headings.js"
+    script.write_text("const VOCABULARY = " + json.dumps({"headings": project.PAGE_HEADINGS}) + ";\n"
+                      + "const W = " + json.dumps(word_tables(html)["en"]) + ";\n"
+                      + "const own = (obj, key) => Object.hasOwn(obj, key) ? obj[key] : null;\n"
+                      + "const headingText =" + code
+                      + "console.log(JSON.stringify(['Prüfung', 'fung', 'Nicht laden', 'Handgriffe', 'Human Check', 'One job › Check'].map(headingText)));")
+    result = subprocess.run([node, str(script)], capture_output=True, text=True, check=True)
+    assert json.loads(result.stdout) == ["Check", "fung", "Nicht laden", "Handgriffe", "Human check", "One job › Check"]
+    assert project.SHEET["nicht laden"] == "excluded" and "nicht laden" not in project.PAGE_HEADINGS
+    assert project.SHEET["handgriffe"] == "handgrips" and "handgriffe" not in project.PAGE_HEADINGS

@@ -10,7 +10,6 @@ ROOT = Path(__file__).resolve().parents[1]
 REPLAY = (
     ROOT
     / "06_evaluations"
-    / "business-operations-wave"
     / "delivery-replay"
     / "replay.py"
 )

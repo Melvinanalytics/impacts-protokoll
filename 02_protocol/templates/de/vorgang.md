@@ -1,37 +1,56 @@
 ---
 type: vorgang
+protocol: v0.4.0
 id: vorgang:prueffall-001
-application_revision: git-tree:0000000000000000000000000000000000000000
+hauptprozess_revision: git-tree:0000000000000000000000000000000000000000
+# vorgaenger: vorgaenge/prueffall-alt/CONTEXT.md
 laufpfad:
   - arbeitsschritt_ref: arbeitsschritt:pruefen
-    versuch: 1
+    nummer: 1
     status: abgeschlossen
-    eingabe_hash: sha256:0000000000000000000000000000000000000000000000000000000000000000
+    gelesen:
+      - eingabe: material/antrag.md
+        pfad: records/prueffall-001/antrag.md
+        revision: git-commit:0000000000000000000000000000000000000000
+        sha256: sha256:0000000000000000000000000000000000000000000000000000000000000000
+      - eingabe: material/antrag-herkunft.md
+        pfad: records/prueffall-001/antrag-herkunft.md
+        revision: git-commit:0000000000000000000000000000000000000000
+        sha256: sha256:0000000000000000000000000000000000000000000000000000000000000000
     gewaehlte_route: bestanden
-    ausgabe_hash: sha256:0000000000000000000000000000000000000000000000000000000000000000
+    geschrieben:
+      - pfad: vorgaenge/prueffall-001/pruefen/001/output/pruefbericht.md
+        sha256: sha256:0000000000000000000000000000000000000000000000000000000000000000
   - arbeitsschritt_ref: arbeitsschritt:entscheiden
-    versuch: 1
+    nummer: 1
     status: wartend
     status_seit: "2026-01-05T09:00:00+01:00"
-    eingabe_hash: sha256:0000000000000000000000000000000000000000000000000000000000000000
+    gelesen:
+      - eingabe: material/pruefbericht.md
+        pfad: vorgaenge/prueffall-001/pruefen/001/output/pruefbericht.md
+        sha256: sha256:0000000000000000000000000000000000000000000000000000000000000000
     wiedereinstieg:
       ausloeser: "gate: human (freigegeben | abgelehnt)"
-      continuation_ref: entscheiden/001/output/entscheidung.md
+      continuation_ref: vorgaenge/prueffall-001/entscheiden/001/output/entscheidung.md
       faellig: "2026-01-07T17:00:00+01:00"
 ---
 
-<!-- Translation source: 02_protocol/templates/vorgang.md; sha256: c587c2b64ff997d78c7607b07ba5a46f2689dc8db570124050009b49021d4b79 -->
+<!-- Translation source: 02_protocol/templates/vorgang.md; sha256: 9c7ccac903e3863b1ad01a4616ccf2a1e39cdbc2e384541735a5346adacc0015 -->
 
 # Prüffall 001
 
-Ein Vorgang ist eine Instanz einer committeten Application. `application_revision` kommt aus `git rev-parse HEAD:applications/<slug>`. Allein `laufpfad` besitzt den Ausführungszustand; jeder Eintrag besitzt seinen Versuchsordner unter `<arbeitsschritt>/<versuch>/`. Das optionale `status_seit` eines Eintrags ist ein Zeitpunkt mit Offset in Anführungszeichen und sagt, seit wann der Eintrag seinen aktuellen Status hat: vom Harness beim Übergang gesetzt oder aus einer im Versuchsordner aufbewahrten Quelle nachgetragen. Ohne diese Angabe ist der Beginn unbekannt; eine Commit-Zeit hält die Dateiänderung fest, nicht den Statusbeginn. Beispielwerte ersetzen.
+Ein Vorgang ist eine Instanz eines committeten Hauptprozesses. `hauptprozess_revision` kommt aus `git rev-parse HEAD:hauptprozesse/<slug>`. Allein `laufpfad` besitzt den Ausführungszustand; er listet die Versuche, jeder mit seinem Ordner unter `<arbeitsschritt>/<nnn>/`. Das optionale `status_seit` eines Versuchs ist ein Zeitpunkt mit Offset in Anführungszeichen und sagt, seit wann der Versuch seinen aktuellen Status hat: vom Harness beim Übergang gesetzt oder aus einer im Versuchsordner aufbewahrten Quelle nachgetragen. Ohne diese Angabe ist der Beginn unbekannt; eine Commit-Zeit hält die Dateiänderung fest, nicht den Statusbeginn. Beispielwerte ersetzen.
 
-## Betreff
+## Gegenstand
 
-Wer oder was Gegenstand dieses Vorgangs ist. Vorhandenen Geschäftsrecord über seine lokale Heimat oder Quellsystem-Referenz verlinken.
+Wofür seine Leistung geschuldet ist, nach der Instanz-Schnittregel (`02_protocol/impacts-architect/references/zuschnitt.md#hauptprozess`). Vorhandenen Geschäftsrecord über seine lokale Heimat oder Quellsystem-Referenz verlinken. Seine Stufe bleibt in diesem Record.
 
-## Stand
+## Fortschritt
 
-Erklärung des Laufpfads für Menschen: aktueller Schritt und Versuch, verwendbare Ergebnisse, noch begrenzte Entwürfe, fehlende Evidenz oder Entscheidung, zuständiger Mensch und nächste erlaubte Arbeit. Auf die jeweiligen Dateien verlinken; den Status aus `laufpfad` ableiten, statt einen weiteren Status zu pflegen. Diese Werte anzeigen, keinen leer: die Position (aktueller Schritt oder letzter Schritt und erreichtes Ende); die Stufe des aktuellen Schritts oder erreichten Endes, wenn der Hauptprozess `stufen` erklärt; und den Zustand: `aktiv` oder `wartend` aus dem letzten Eintrag, oder `beendet`, sobald ein Ende erreicht ist. An einem erreichten Ende zusätzlich anzeigen, ob es die Leistung erreicht, wie `leistung.erreicht` es aufführt. Alle aus `laufpfad`, den gebundenen Routen, diesen Stufen und dieser Liste ableiten; ein nicht ableitbarer Wert lautet `open`. Ein vorbereiteter Entwurf bedeutet weder Versand noch Freigabe. Bei Warten das erklärte Ereignis, die nächste Prüfung in `wiedereinstieg.faellig`, die zuständige Nachverfolgung und die Ausbleibensbehandlung nach `02_protocol/impacts-architect/references/zuschnitt.md#waits` erhalten. Ein Ereignis allein erlaubt keinen Übergang. Ein abgeschlossener Versuch nennt seine Route, keine Annahme; ein erreichtes Ende nennt, welches Ende, keinen Erfolg; ein verstrichenes `faellig` wählt keine Route und liefert keine Entscheidung.
+Position, Status und Leistungserreichung nach `02_protocol/binding.md#vorgang-progress` an der im Arbeitsbereich festgehaltenen Protokollquelle und Revision ableiten.
 
-Ein `wartend`-Eintrag mit seiner erklärten Fortsetzung ist eine korrekte, fortsetzbare Pause: verwendbare Vorbereitung bleibt erhalten, während die erforderliche Entscheidung oder Evidenz offen ist; das ist weder ein Fehler noch ein abgeschlossenes Ergebnis.
+Verwendbare Ergebnisse, noch begrenzte Entwürfe, fehlende Evidenz oder Entscheidung, zuständigen Menschen und nächste erlaubte Arbeit mit Links auf ihre Dateien erklären. Ein vorbereiteter Entwurf bedeutet weder Versand noch Freigabe. Ein `wartend`-Versuch mit seiner erklärten Fortsetzung erhält verwendbare Vorbereitung, während die erforderliche Entscheidung oder Evidenz offen ist. Sein Ereignis, die nächste Prüfung in `wiedereinstieg.faellig` und die zuständige Nachverfolgung nach Waits (`02_protocol/binding.md#waits`) erhalten, einschließlich der Übergangstabelle für Fristablauf. Ein Ereignis allein erlaubt keinen Übergang.
+
+## Reibung
+
+Lief die Arbeit reibungslos, oder drängte Reibung den Agenten aus dem Protokoll? Beobachtung und gebundene Revision hier festhalten; Einordnung und Korrektur folgen `02_protocol/impacts-method.md#reviewed-correction`.

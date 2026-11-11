@@ -1,96 +1,319 @@
 {
   "corpus_version": 1,
-  "target": "JSON CLI report_version 1",
-  "application_path": "applications/approval",
+  "target": "JSON CLI report_version 3",
+  "hauptprozess_path": "hauptprozesse/approval",
   "base_fixture": "fixtures/base",
   "cases": [
+    {
+      "id": "run-external-undeclared",
+      "command": "validate",
+      "fixture": "fixtures/cases/run-external-undeclared",
+      "git_binding": true,
+      "expected": {
+        "exit_code": 1,
+        "valid": false,
+        "issue_codes": [
+          "binding.reference_missing"
+        ],
+        "not_judged": [],
+        "external_references_not_verified": 1
+      },
+      "expected_issue_messages": [
+        "declare 'Ablage: synthetic-external-store <location>' in the workspace root router"
+      ]
+    },
+    {
+      "id": "run-external-list-item",
+      "command": "validate",
+      "fixture": "fixtures/cases/run-external-list-item",
+      "git_binding": true,
+      "expected": {
+        "exit_code": 1,
+        "valid": false,
+        "issue_codes": [
+          "binding.reference_missing"
+        ],
+        "not_judged": [],
+        "external_references_not_verified": 1
+      },
+      "expected_issue_messages": [
+        "declare 'Ablage: synthetic-external-store <location>' in the workspace root router"
+      ]
+    },
+    {
+      "id": "run-external-workspace-file",
+      "command": "validate",
+      "fixture": "fixtures/cases/run-external-workspace-file",
+      "git_binding": true,
+      "expected": {
+        "exit_code": 1,
+        "valid": false,
+        "issue_codes": [
+          "binding.reference_missing"
+        ],
+        "not_judged": [],
+        "external_references_not_verified": 1
+      }
+    },
+    {
+      "id": "run-external-two-unverified",
+      "command": "validate",
+      "fixture": "fixtures/cases/run-external-two-unverified",
+      "git_binding": true,
+      "expected": {
+        "exit_code": 0,
+        "valid": true,
+        "issue_codes": [],
+        "not_judged": [],
+        "external_references_not_verified": 2
+      }
+    },
+    {
+      "id": "numeric-first-segment",
+      "command": "validate",
+      "fixture": "fixtures/cases/numeric-first-segment",
+      "expected": {
+        "exit_code": 0,
+        "valid": true,
+        "issue_codes": [],
+        "not_judged": []
+      }
+    },
+    {
+      "id": "two-digit-display-prefix",
+      "command": "validate",
+      "fixture": "fixtures/cases/two-digit-display-prefix",
+      "expected": {
+        "exit_code": 0,
+        "valid": true,
+        "issue_codes": [],
+        "not_judged": []
+      }
+    },
+    {
+      "id": "two-digit-segment-in-id",
+      "command": "validate",
+      "fixture": "fixtures/cases/two-digit-segment-in-id",
+      "expected": {
+        "exit_code": 1,
+        "valid": false,
+        "issue_codes": [
+          "structure.level",
+          "structure.level"
+        ],
+        "not_judged": []
+      },
+      "expected_issue_paths": [
+        "hauptprozesse/approval/24-x",
+        "hauptprozesse/approval/24-x/24-x"
+      ],
+      "expected_issue_messages": [
+        "a two-digit first segment is a display prefix; the ID must omit it",
+        "a two-digit first segment is a display prefix; the ID must omit it"
+      ]
+    },
     {
       "id": "application-valid",
       "command": "validate",
       "fixture": null,
-      "expected": {"exit_code": 0, "valid": true, "issue_codes": []}
+      "expected": {
+        "exit_code": 0,
+        "valid": true,
+        "issue_codes": [],
+        "not_judged": []
+      }
     },
     {
       "id": "application-bad-folder",
       "command": "validate",
       "fixture": null,
-      "bad_folders": ["Bad Folder"],
-      "expected_issue_paths": ["applications/approval/Bad Folder"],
-      "expected": {"exit_code": 1, "valid": false, "issue_codes": ["structure.invalid"]}
+      "bad_folders": [
+        "Bad Folder"
+      ],
+      "expected_issue_paths": [
+        "hauptprozesse/approval/Bad Folder"
+      ],
+      "expected": {
+        "exit_code": 1,
+        "valid": false,
+        "issue_codes": [
+          "structure.level"
+        ],
+        "not_judged": []
+      }
     },
     {
       "id": "application-missing-required-field",
       "command": "validate",
       "fixture": "fixtures/cases/application-missing-required-field",
-      "expected": {"exit_code": 1, "valid": false, "issue_codes": ["schema.invalid"]}
+      "expected": {
+        "exit_code": 1,
+        "valid": false,
+        "issue_codes": [
+          "schema.invalid"
+        ],
+        "not_judged": []
+      }
     },
     {
       "id": "application-wrong-type",
       "command": "validate",
       "fixture": "fixtures/cases/application-wrong-type",
-      "expected": {"exit_code": 1, "valid": false, "issue_codes": ["schema.invalid"]}
+      "expected": {
+        "exit_code": 1,
+        "valid": false,
+        "issue_codes": [
+          "schema.invalid"
+        ],
+        "not_judged": []
+      }
     },
     {
       "id": "application-missing-routes",
       "command": "validate",
       "fixture": "fixtures/cases/application-missing-routes",
-      "expected": {"exit_code": 1, "valid": false, "issue_codes": ["schema.invalid"]}
+      "expected": {
+        "exit_code": 1,
+        "valid": false,
+        "issue_codes": [
+          "schema.invalid"
+        ],
+        "not_judged": []
+      }
     },
     {
       "id": "application-missing-routes-independent-defect",
       "command": "validate",
       "fixture": "fixtures/cases/application-missing-routes-independent-defect",
-      "expected": {"exit_code": 1, "valid": false, "issue_codes": ["process.gate", "schema.invalid"]}
+      "expected": {
+        "exit_code": 1,
+        "valid": false,
+        "issue_codes": [
+          "process.gate",
+          "schema.invalid"
+        ],
+        "not_judged": []
+      }
     },
     {
       "id": "application-case-sensitive-folder",
       "command": "validate",
       "fixture": null,
-      "filesystem_probe": {"kind": "case-sensitive"},
-      "bad_folders": ["Produktion"],
-      "expected_issue_paths": ["applications/approval/Produktion"],
-      "expected": {"exit_code": 1, "valid": false, "issue_codes": ["structure.invalid"]}
+      "filesystem_probe": {
+        "kind": "case-sensitive"
+      },
+      "bad_folders": [
+        "Produktion"
+      ],
+      "expected_issue_paths": [
+        "hauptprozesse/approval/Produktion"
+      ],
+      "expected": {
+        "exit_code": 1,
+        "valid": false,
+        "issue_codes": [
+          "structure.level"
+        ],
+        "not_judged": []
+      }
     },
     {
       "id": "application-long-component-folder",
       "command": "validate",
       "fixture": null,
-      "filesystem_probe": {"kind": "path-component", "length": 256},
+      "filesystem_probe": {
+        "kind": "path-component",
+        "length": 256
+      },
       "bad_folder_length": 256,
-      "expected_issue_paths": ["applications/approval/Bad_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"],
-      "expected": {"exit_code": 1, "valid": false, "issue_codes": ["structure.invalid"]}
+      "expected_issue_paths": [
+        "hauptprozesse/approval/Bad_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+      ],
+      "expected": {
+        "exit_code": 1,
+        "valid": false,
+        "issue_codes": [
+          "structure.level"
+        ],
+        "not_judged": []
+      }
     },
     {
       "id": "application-unicode-equivalent-folders",
       "command": "validate",
       "fixture": null,
-      "filesystem_probe": {"kind": "unicode-distinct"},
-      "bad_folders": ["caf\u00e9", "café"],
-      "expected_issue_paths": ["applications/approval/caf\u00e9", "applications/approval/café"],
-      "expected": {"exit_code": 1, "valid": false, "issue_codes": ["structure.invalid", "structure.invalid"]}
+      "filesystem_probe": {
+        "kind": "unicode-distinct"
+      },
+      "bad_folders": [
+        "caf\u00e9",
+        "cafe\u0301"
+      ],
+      "expected_issue_paths": [
+        "hauptprozesse/approval/caf\u00e9",
+        "hauptprozesse/approval/cafe\u0301"
+      ],
+      "expected": {
+        "exit_code": 1,
+        "valid": false,
+        "issue_codes": [
+          "structure.level",
+          "structure.level"
+        ],
+        "not_judged": []
+      }
     },
     {
       "id": "application-unresolved-route",
       "command": "validate",
       "fixture": "fixtures/cases/application-unresolved-route",
-      "expected": {"exit_code": 1, "valid": false, "issue_codes": ["reference.unresolved"]}
+      "expected": {
+        "exit_code": 1,
+        "valid": false,
+        "issue_codes": [
+          "reference.unresolved"
+        ],
+        "not_judged": []
+      }
     },
     {
       "id": "application-duplicate-yaml",
       "command": "validate",
       "fixture": "fixtures/cases/application-duplicate-yaml",
-      "expected": {"exit_code": 1, "valid": false, "issue_codes": ["format.invalid"]}
+      "expected": {
+        "exit_code": 1,
+        "valid": false,
+        "issue_codes": [
+          "format.invalid"
+        ],
+        "not_judged": []
+      }
     },
     {
       "id": "hash-fixed-vector",
       "command": "hash",
       "fixture": "fixtures/cases/hash-fixed-vector",
       "attempt": "hash-attempt",
-      "surfaces": ["input"],
+      "surfaces": [
+        "input"
+      ],
       "expected": {
         "exit_code": 0,
-        "digest": "sha256:e8fdf8b5a31291deb1c3fa4d982f85da0605a4e3dd5a2f340e2ad2ebf182b965",
-        "issue_codes": []
+        "issue_codes": [],
+        "references": [
+          {
+            "pfad": "input/a.txt",
+            "sha256": "sha256:87428fc522803d31065e7bce3cf03fe475096631e5e07bbd7a0fde60c4cf25c7"
+          },
+          {
+            "pfad": "input/z.txt",
+            "sha256": "sha256:0263829989b6fd954f72baaf2fc64bc2e2f01d692d4de72986ea808f6e99813f"
+          },
+          {
+            "pfad": "input/\u00e4.txt",
+            "sha256": "sha256:eefeabce9a2687ecae740bf791ad4e768b642ec837cc05e9677b25de098e2547"
+          }
+        ]
       }
     },
     {
@@ -98,15 +321,28 @@
       "command": "hash",
       "fixture": null,
       "attempt": "hash-attempt",
-      "surfaces": ["input/missing.txt"],
-      "expected": {"exit_code": 1, "digest": null, "issue_codes": ["hash.mismatch"]}
+      "surfaces": [
+        "input/missing.txt"
+      ],
+      "expected": {
+        "exit_code": 1,
+        "issue_codes": [
+          "binding.reference_missing"
+        ],
+        "references": null
+      }
     },
     {
       "id": "run-active-gate",
       "command": "validate",
       "fixture": "fixtures/cases/run-active-gate",
       "git_binding": true,
-      "expected": {"exit_code": 0, "valid": true, "issue_codes": []}
+      "expected": {
+        "exit_code": 0,
+        "valid": true,
+        "issue_codes": [],
+        "not_judged": []
+      }
     },
     {
       "id": "run-waiting",
@@ -114,7 +350,12 @@
       "fixture": "fixtures/cases/run-waiting",
       "git_binding": true,
       "repeat": 2,
-      "expected": {"exit_code": 0, "valid": true, "issue_codes": []}
+      "expected": {
+        "exit_code": 0,
+        "valid": true,
+        "issue_codes": [],
+        "not_judged": []
+      }
     },
     {
       "id": "run-resumed-gate",
@@ -122,42 +363,82 @@
       "fixture": "fixtures/cases/run-resumed-gate",
       "git_binding": true,
       "repeat": 2,
-      "expected": {"exit_code": 0, "valid": true, "issue_codes": []}
+      "expected": {
+        "exit_code": 0,
+        "valid": true,
+        "issue_codes": [],
+        "not_judged": []
+      }
     },
     {
       "id": "run-closed-gate-missing-approval",
       "command": "validate",
       "fixture": "fixtures/cases/run-closed-gate-missing-approval",
       "git_binding": true,
-      "expected": {"exit_code": 1, "valid": false, "issue_codes": ["trust.invalid"]}
+      "expected": {
+        "exit_code": 1,
+        "valid": false,
+        "issue_codes": [
+          "trust.invalid"
+        ],
+        "not_judged": []
+      }
     },
     {
       "id": "run-input-tampered",
       "command": "validate",
       "fixture": "fixtures/cases/run-input-tampered",
       "git_binding": true,
-      "expected": {"exit_code": 1, "valid": false, "issue_codes": ["hash.mismatch"]}
+      "expected": {
+        "exit_code": 1,
+        "valid": false,
+        "issue_codes": [
+          "binding.reference_digest"
+        ],
+        "not_judged": []
+      }
     },
     {
       "id": "run-output-tampered",
       "command": "validate",
       "fixture": "fixtures/cases/run-output-tampered",
       "git_binding": true,
-      "expected": {"exit_code": 1, "valid": false, "issue_codes": ["hash.mismatch"]}
+      "expected": {
+        "exit_code": 1,
+        "valid": false,
+        "issue_codes": [
+          "binding.reference_digest"
+        ],
+        "not_judged": []
+      }
     },
     {
       "id": "run-orphan-attempt",
       "command": "validate",
       "fixture": "fixtures/cases/run-orphan-attempt",
       "git_binding": true,
-      "expected": {"exit_code": 1, "valid": false, "issue_codes": ["run.invalid"]}
+      "expected": {
+        "exit_code": 1,
+        "valid": false,
+        "issue_codes": [
+          "execution.attempt"
+        ],
+        "not_judged": []
+      }
     },
     {
       "id": "run-duplicate-attempt",
       "command": "validate",
       "fixture": "fixtures/cases/run-duplicate-attempt",
       "git_binding": true,
-      "expected": {"exit_code": 1, "valid": false, "issue_codes": ["reference.duplicate"]}
+      "expected": {
+        "exit_code": 1,
+        "valid": false,
+        "issue_codes": [
+          "execution.attempt_duplicate"
+        ],
+        "not_judged": []
+      }
     },
     {
       "id": "run-historical-application",
@@ -165,39 +446,69 @@
       "fixture": "fixtures/cases/run-historical-application",
       "git_binding": true,
       "history_fixture": "fixtures/cases/run-historical-application-current",
-      "expected": {"exit_code": 0, "valid": true, "issue_codes": []}
+      "expected": {
+        "exit_code": 0,
+        "valid": true,
+        "issue_codes": [],
+        "not_judged": []
+      }
     },
     {
       "id": "run-coordinated-rewrite-boundary",
       "command": "validate",
       "fixture": "fixtures/cases/run-coordinated-rewrite-boundary",
       "git_binding": true,
-      "expected": {"exit_code": 0, "valid": true, "issue_codes": []}
+      "expected": {
+        "exit_code": 0,
+        "valid": true,
+        "issue_codes": [],
+        "not_judged": []
+      }
     },
     {
       "id": "application-single-bom",
       "command": "validate",
       "fixture": "fixtures/cases/application-single-bom",
-      "expected": {"exit_code": 0, "valid": true, "issue_codes": []}
+      "expected": {
+        "exit_code": 0,
+        "valid": true,
+        "issue_codes": [],
+        "not_judged": []
+      }
     },
     {
       "id": "application-repeated-bom",
       "command": "validate",
       "fixture": "fixtures/cases/application-repeated-bom",
-      "expected": {"exit_code": 1, "valid": false, "issue_codes": ["format.invalid"]}
+      "expected": {
+        "exit_code": 1,
+        "valid": false,
+        "issue_codes": [
+          "format.invalid"
+        ],
+        "not_judged": []
+      }
     },
     {
       "id": "hash-invalid-utf8-filename",
       "command": "hash",
       "fixture": null,
       "attempt": "hash-attempt",
-      "surfaces": ["input"],
+      "surfaces": [
+        "input"
+      ],
       "invalid_utf8_file": {
         "parent": "hash-attempt/input",
         "name_hex": "ff2e747874",
         "content_hex": "666978747572650a"
       },
-      "expected": {"exit_code": 1, "digest": null, "issue_codes": ["hash.mismatch"]}
+      "expected": {
+        "exit_code": 1,
+        "issue_codes": [
+          "binding.reference_missing"
+        ],
+        "references": null
+      }
     },
     {
       "id": "run-invalid-utf8-filename",
@@ -205,11 +516,648 @@
       "fixture": "fixtures/cases/run-invalid-utf8-filename",
       "git_binding": true,
       "invalid_utf8_file": {
-        "parent": "vorgaenge/approval-001/pruefen/001/input/daten",
+        "parent": "vorgaenge/approval-001/start/001/output",
         "name_hex": "ff2e747874",
         "content_hex": "666978747572650a"
       },
-      "expected": {"exit_code": 1, "valid": false, "issue_codes": ["hash.mismatch"]}
+      "expected": {
+        "exit_code": 1,
+        "valid": false,
+        "issue_codes": [
+          "binding.reference_missing"
+        ],
+        "not_judged": []
+      }
+    },
+    {
+      "id": "run-not-judged",
+      "command": "validate",
+      "fixture": "fixtures/cases/run-not-judged",
+      "expected": {
+        "exit_code": 0,
+        "valid": true,
+        "issue_codes": [],
+        "not_judged": [
+          {
+            "path": "vorgaenge/approval-001/CONTEXT.md",
+            "protocol": "v0.3.32"
+          }
+        ]
+      }
+    },
+    {
+      "id": "run-version-missing",
+      "command": "validate",
+      "fixture": "fixtures/cases/run-version-missing",
+      "expected": {
+        "exit_code": 1,
+        "valid": false,
+        "issue_codes": [
+          "schema.invalid"
+        ],
+        "not_judged": []
+      }
+    },
+    {
+      "id": "run-predecessor-start",
+      "command": "validate",
+      "fixture": "fixtures/cases/run-predecessor-start",
+      "git_binding": true,
+      "expected": {
+        "exit_code": 0,
+        "valid": true,
+        "issue_codes": [],
+        "not_judged": [
+          {
+            "path": "vorgaenge/approval-001/CONTEXT.md",
+            "protocol": "v0.3.31"
+          }
+        ]
+      }
+    },
+    {
+      "id": "run-predecessor-wrong-start",
+      "command": "validate",
+      "fixture": "fixtures/cases/run-predecessor-wrong-start",
+      "git_binding": true,
+      "expected": {
+        "exit_code": 0,
+        "valid": true,
+        "issue_codes": [],
+        "not_judged": [
+          {
+            "path": "vorgaenge/approval-001/CONTEXT.md",
+            "protocol": "v0.3.31"
+          }
+        ]
+      }
+    },
+    {
+      "id": "workspace-pin-v0.3.31",
+      "command": "validate",
+      "fixture": "fixtures/cases/workspace-pin-v0.3.31",
+      "expected": {
+        "exit_code": 0,
+        "valid": true,
+        "issue_codes": [],
+        "not_judged": [
+          {
+            "path": "CONTEXT.md",
+            "protocol": "v0.3.31"
+          }
+        ]
+      }
+    },
+    {
+      "id": "workspace-pin-v7.0.0",
+      "command": "validate",
+      "fixture": "fixtures/cases/workspace-pin-v7.0.0",
+      "expected": {
+        "exit_code": 0,
+        "valid": true,
+        "issue_codes": [],
+        "not_judged": [
+          {
+            "path": "CONTEXT.md",
+            "protocol": "v7.0.0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "workspace-version-missing",
+      "command": "validate",
+      "fixture": "fixtures/cases/workspace-version-missing",
+      "expected": {
+        "exit_code": 1,
+        "valid": false,
+        "issue_codes": [
+          "schema.invalid"
+        ],
+        "not_judged": []
+      }
+    },
+    {
+      "id": "run-empty-gelesen",
+      "command": "validate",
+      "fixture": "fixtures/cases/run-empty-gelesen",
+      "git_binding": true,
+      "expected": {
+        "exit_code": 1,
+        "valid": false,
+        "issue_codes": [
+          "schema.invalid"
+        ],
+        "not_judged": []
+      }
+    },
+    {
+      "id": "run-newer-than-pin",
+      "command": "validate",
+      "fixture": "fixtures/cases/run-newer-than-pin",
+      "git_binding": true,
+      "expected": {
+        "exit_code": 1,
+        "valid": false,
+        "issue_codes": [
+          "binding.revision"
+        ],
+        "not_judged": [
+          {
+            "path": "vorgaenge/approval-001/CONTEXT.md",
+            "protocol": "v0.5.0"
+          }
+        ]
+      }
+    },
+    {
+      "id": "run-input-slot-uncovered",
+      "command": "validate",
+      "fixture": "fixtures/cases/run-input-slot-uncovered",
+      "git_binding": true,
+      "expected": {
+        "exit_code": 1,
+        "valid": false,
+        "issue_codes": ["binding.reference_missing"],
+        "not_judged": []
+      }
+    },
+    {
+      "id": "run-external-capture",
+      "command": "validate",
+      "fixture": "fixtures/cases/run-external-capture",
+      "git_binding": true,
+      "expected": {
+        "exit_code": 0,
+        "valid": true,
+        "issue_codes": [],
+        "not_judged": []
+      }
+    },
+    {
+      "id": "run-unknown-underscore-child",
+      "command": "validate",
+      "fixture": "fixtures/cases/run-unknown-underscore-child",
+      "git_binding": true,
+      "expected": {
+        "exit_code": 1,
+        "valid": false,
+        "issue_codes": [
+          "execution.attempt"
+        ],
+        "not_judged": []
+      }
+    },
+    {
+      "id": "run-predecessor-live",
+      "command": "validate",
+      "fixture": "fixtures/cases/run-predecessor-live",
+      "git_binding": true,
+      "expected": {
+        "exit_code": 0,
+        "valid": true,
+        "issue_codes": [],
+        "not_judged": []
+      }
+    },
+    {
+      "id": "run-predecessor-two-successors",
+      "command": "validate",
+      "fixture": "fixtures/cases/run-predecessor-two-successors",
+      "git_binding": true,
+      "expected": {
+        "exit_code": 1,
+        "valid": false,
+        "issue_codes": [
+          "execution.attempt"
+        ],
+        "not_judged": [
+          {
+            "path": "vorgaenge/approval-001/CONTEXT.md",
+            "protocol": "v0.3.31"
+          }
+        ]
+      }
+    },
+    {
+      "id": "run-between-steps",
+      "command": "validate",
+      "fixture": "fixtures/cases/run-between-steps",
+      "git_binding": true,
+      "expected": {
+        "exit_code": 0,
+        "valid": true,
+        "issue_codes": [],
+        "not_judged": []
+      }
+    },
+    {
+      "id": "run-owner-ended",
+      "command": "validate",
+      "fixture": "fixtures/cases/run-owner-ended",
+      "git_binding": true,
+      "expected": {
+        "exit_code": 0,
+        "valid": true,
+        "issue_codes": [],
+        "not_judged": []
+      }
+    },
+    {
+      "id": "run-owner-end-no-attribution",
+      "command": "validate",
+      "fixture": "fixtures/cases/run-owner-end-no-attribution",
+      "git_binding": true,
+      "expected": {
+        "exit_code": 1,
+        "valid": false,
+        "issue_codes": [
+          "trust.invalid"
+        ],
+        "not_judged": []
+      }
+    },
+    {
+      "id": "run-owner-end-route",
+      "command": "validate",
+      "fixture": "fixtures/cases/run-owner-end-route",
+      "git_binding": true,
+      "expected": {
+        "exit_code": 1,
+        "valid": false,
+        "issue_codes": [
+          "execution.attempt"
+        ],
+        "not_judged": []
+      }
+    },
+    {
+      "id": "run-owner-end-continues",
+      "command": "validate",
+      "fixture": "fixtures/cases/run-owner-end-continues",
+      "git_binding": true,
+      "expected": {
+        "exit_code": 1,
+        "valid": false,
+        "issue_codes": [
+          "execution.attempt"
+        ],
+        "not_judged": []
+      }
+    },
+    {
+      "id": "run-selection-decision",
+      "command": "validate",
+      "fixture": "fixtures/cases/run-selection-decision",
+      "git_binding": true,
+      "expected": {
+        "exit_code": 0,
+        "valid": true,
+        "issue_codes": [],
+        "not_judged": []
+      }
+    },
+    {
+      "id": "run-unknown-input-slot",
+      "command": "validate",
+      "fixture": "fixtures/cases/run-unknown-input-slot",
+      "git_binding": true,
+      "expected": {
+        "exit_code": 1,
+        "valid": false,
+        "issue_codes": [
+          "binding.reference_missing",
+          "binding.reference_missing"
+        ],
+        "not_judged": []
+      }
+    },
+    {
+      "id": "run-protocol-break",
+      "command": "validate",
+      "fixture": "fixtures/cases/run-protocol-break",
+      "git_binding": true,
+      "expected": {
+        "exit_code": 0,
+        "valid": true,
+        "issue_codes": [],
+        "not_judged": []
+      }
+    },
+    {
+      "id": "application-retired-stufen",
+      "command": "validate",
+      "fixture": "fixtures/cases/application-retired-stufen",
+      "expected": {
+        "exit_code": 1,
+        "valid": false,
+        "issue_codes": [
+          "schema.invalid"
+        ],
+        "not_judged": []
+      }
+    },
+    {
+      "id": "run-owner-end-no-output",
+      "command": "validate",
+      "fixture": "fixtures/cases/run-owner-end-no-output",
+      "git_binding": true,
+      "expected": {
+        "exit_code": 1,
+        "valid": false,
+        "issue_codes": [
+          "execution.attempt"
+        ],
+        "not_judged": []
+      }
+    },
+    {
+      "id": "run-owner-end-wait",
+      "command": "validate",
+      "fixture": "fixtures/cases/run-owner-end-wait",
+      "git_binding": true,
+      "expected": {
+        "exit_code": 1,
+        "valid": false,
+        "issue_codes": [
+          "execution.attempt"
+        ],
+        "not_judged": []
+      }
+    },
+    {
+      "id": "run-predecessor-owner-stopped",
+      "command": "validate",
+      "fixture": "fixtures/cases/run-predecessor-owner-stopped",
+      "git_binding": true,
+      "expected": {
+        "exit_code": 1,
+        "valid": false,
+        "issue_codes": [
+          "execution.attempt",
+          "execution.attempt"
+        ],
+        "not_judged": []
+      }
+    },
+    {
+      "id": "run-predecessor-ended",
+      "command": "validate",
+      "fixture": "fixtures/cases/run-predecessor-ended",
+      "git_binding": true,
+      "expected": {
+        "exit_code": 1,
+        "valid": false,
+        "issue_codes": [
+          "execution.attempt",
+          "execution.attempt"
+        ],
+        "not_judged": []
+      }
+    },
+    {
+      "id": "run-continuation-missing",
+      "command": "validate",
+      "fixture": "fixtures/cases/run-continuation-missing",
+      "git_binding": true,
+      "expected": {
+        "exit_code": 1,
+        "valid": false,
+        "issue_codes": [
+          "binding.reference_missing"
+        ],
+        "not_judged": []
+      }
+    },
+    {
+      "id": "run-active-input-slot-uncovered",
+      "command": "validate",
+      "fixture": "fixtures/cases/run-active-input-slot-uncovered",
+      "git_binding": true,
+      "expected": {
+        "exit_code": 1,
+        "valid": false,
+        "issue_codes": [
+          "binding.reference_missing"
+        ],
+        "not_judged": []
+      }
+    },
+    {
+      "id": "run-active-input-slot-covered",
+      "command": "validate",
+      "fixture": "fixtures/cases/run-active-input-slot-covered",
+      "git_binding": true,
+      "expected": {
+        "exit_code": 0,
+        "valid": true,
+        "issue_codes": [],
+        "not_judged": [],
+        "external_references_not_verified": 1
+      }
+    },
+    {
+      "id": "run-input-orphan-commit",
+      "command": "validate",
+      "fixture": "fixtures/cases/run-input-orphan-commit",
+      "git_binding": true,
+      "orphan_source_commit": true,
+      "expected": {
+        "exit_code": 1,
+        "valid": false,
+        "issue_codes": [
+          "binding.reference_missing",
+          "binding.reference_missing"
+        ],
+        "not_judged": []
+      }
+    },
+    {
+      "id": "w6-routing-missing",
+      "command": "validate",
+      "fixture": "fixtures/cases/w6-routing-missing",
+      "expected": {
+        "exit_code": 1,
+        "valid": false,
+        "issue_codes": [
+          "routing.missing",
+          "structure.level"
+        ],
+        "not_judged": []
+      }
+    },
+    {
+      "id": "w6-routing-type",
+      "command": "validate",
+      "fixture": "fixtures/cases/w6-routing-type",
+      "expected": {
+        "exit_code": 1,
+        "valid": false,
+        "issue_codes": [
+          "routing.type"
+        ],
+        "not_judged": []
+      }
+    },
+    {
+      "id": "w6-no-end",
+      "command": "validate",
+      "fixture": "fixtures/cases/w6-no-end",
+      "expected": {
+        "exit_code": 1,
+        "valid": false,
+        "issue_codes": [
+          "process.no_end",
+          "process.no_end"
+        ],
+        "not_judged": []
+      }
+    },
+    {
+      "id": "w6-unreachable",
+      "command": "validate",
+      "fixture": "fixtures/cases/w6-unreachable",
+      "expected": {
+        "exit_code": 1,
+        "valid": false,
+        "issue_codes": [
+          "process.unreachable"
+        ],
+        "not_judged": []
+      }
+    },
+    {
+      "id": "w6-duplicate-id",
+      "command": "validate",
+      "fixture": "fixtures/cases/w6-duplicate-id",
+      "expected": {
+        "exit_code": 1,
+        "valid": false,
+        "issue_codes": [
+          "structure.duplicate_id"
+        ],
+        "not_judged": []
+      }
+    },
+    {
+      "id": "w6-second-atomic-error",
+      "command": "validate",
+      "fixture": "fixtures/cases/w6-second-atomic-error",
+      "expected": {
+        "exit_code": 1,
+        "valid": false,
+        "issue_codes": [
+          "schema.invalid",
+          "schema.invalid"
+        ],
+        "not_judged": []
+      },
+      "expected_issue_paths": [
+        "hauptprozesse/approval/produktion/start/CONTEXT.md",
+        "hauptprozesse/approval/produktion/pruefen/CONTEXT.md"
+      ]
+    },
+    {
+      "id": "w6-attempt-limit",
+      "command": "validate",
+      "fixture": "fixtures/cases/w6-attempt-limit",
+      "expected": {
+        "exit_code": 1,
+        "valid": false,
+        "issue_codes": [
+          "execution.attempt",
+          "execution.attempt_limit",
+          "schema.invalid"
+        ],
+        "not_judged": []
+      },
+      "git_binding": true
+    },
+    {
+      "id": "w6-unknown-step",
+      "command": "validate",
+      "fixture": "fixtures/cases/w6-unknown-step",
+      "expected": {
+        "exit_code": 1,
+        "valid": false,
+        "issue_codes": [
+          "execution.attempt",
+          "execution.attempt",
+          "execution.unknown_step"
+        ],
+        "not_judged": []
+      },
+      "git_binding": true
+    },
+    {
+      "id": "w6-attempt-sequence",
+      "command": "validate",
+      "fixture": "fixtures/cases/w6-attempt-sequence",
+      "expected": {
+        "exit_code": 1,
+        "valid": false,
+        "issue_codes": [
+          "execution.attempt",
+          "execution.attempt_sequence"
+        ],
+        "not_judged": []
+      },
+      "git_binding": true
+    },
+    {
+      "id": "w6-attempt-child",
+      "command": "validate",
+      "fixture": "fixtures/cases/w6-attempt-child",
+      "expected": {
+        "exit_code": 1,
+        "valid": false,
+        "issue_codes": [
+          "structure.attempt_child"
+        ],
+        "not_judged": []
+      },
+      "git_binding": true
+    },
+    {
+      "id": "w6-symlink",
+      "command": "validate",
+      "fixture": null,
+      "expected": {
+        "exit_code": 1,
+        "valid": false,
+        "issue_codes": [
+          "structure.symlink"
+        ],
+        "not_judged": []
+      },
+      "symlink": {
+        "path": "vorgaenge",
+        "target": "hauptprozesse"
+      }
+    },
+    {
+      "id": "run-successor-entry-empty-output",
+      "command": "validate",
+      "fixture": "fixtures/cases/run-successor-entry-empty-output",
+      "git_binding": true,
+      "expected": {
+        "exit_code": 0,
+        "valid": true,
+        "issue_codes": [],
+        "not_judged": []
+      }
+    },
+    {
+      "id": "run-successor-wait-empty-output",
+      "command": "validate",
+      "fixture": "fixtures/cases/run-successor-wait-empty-output",
+      "git_binding": true,
+      "expected": {
+        "exit_code": 0,
+        "valid": true,
+        "issue_codes": [],
+        "not_judged": []
+      }
     }
   ]
 }

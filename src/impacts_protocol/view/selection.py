@@ -1,9 +1,9 @@
 """Fix one immutable selection and turn it into page models.
 
-An Application is copied first, so Core and the view see the same bytes. A Vorgang is
+A Hauptprozess is copied first, so Core and the view see the same bytes. A Vorgang is
 drawn on the Git tree it binds. A workspace is the inventory of every entry under
-applications/ and vorgaenge/, each its own selection, plus the Ist-Prozess files under
-grundlagen/ist-prozesse/, read from the working files (Core does not check them); if the
+hauptprozesse/ and vorgaenge/, each its own selection, plus the Ist-Prozess files under
+analyse/, read from the working files (Core does not check them); if the
 inventory, an Ist-Prozess file or HEAD changes while the view is generated, nothing is written. Known limit: a Vorgang is validated on
 live workspace files; its whole folder must be byte-identical before validation and after
 reading, but a change undone in between stays undetected.
@@ -22,20 +22,22 @@ from tempfile import TemporaryDirectory
 
 import yaml
 
+from .project import SUBJECT_HEADINGS
 from impacts_protocol.io import load_frontmatter
+from impacts_protocol.hashing import _has_symlink_component
 from impacts_protocol.validator import SCHEMA_REGISTRY, validate
 
 # Private on purpose: a bound revision must be materialized exactly as the validator does.
 from impacts_protocol.validator import _materialize_tree
 
 from . import project
-from .read import Unreadable, issue_list, read_application, read_file, read_vorgang
+from .read import Unreadable, issue_list, read_hauptprozess, read_file, read_vorgang
 
-FORMAT = "impacts-view/3"
+FORMAT = "impacts-view/5"
 TREE = re.compile(r"git-tree:([0-9a-f]{40}|[0-9a-f]{64})")
 SLUG = re.compile(r"[a-z0-9]+(?:-[a-z0-9]+)*")
-FOLDERS = ("applications", "vorgaenge")
-IST = "grundlagen/ist-prozesse"  # source material, not a Core folder: kept out of FOLDERS and its issue filter
+FOLDERS = ("hauptprozesse", "vorgaenge")
+IST = "analyse"  # source material, not a Core folder: kept out of FOLDERS and its issue filter
 
 
 def git(folder: Path, *args: str) -> str | None:
@@ -52,18 +54,18 @@ def workspace_of(folder: Path) -> Path | None:
 
 
 def kind_of(path: Path) -> str:
-    """application, vorgang or workspace, from the selected path and its frontmatter type."""
+    """hauptprozess, vorgang or workspace, from the selected path and its frontmatter type."""
     path = path.resolve()
     if path.is_file():
         if path.name == "CONTEXT.md" and path.parent.parent.name == "vorgaenge":
             return "vorgang"
-        raise SystemExit(f"{path}: select an Application folder, a workspace folder or vorgaenge/<slug>/CONTEXT.md")
+        raise SystemExit(f"{path}: select a Hauptprozess folder, a workspace folder or vorgaenge/<slug>/CONTEXT.md")
     try:
         kind = load_frontmatter(path / "CONTEXT.md").get("type")
     except (OSError, ValueError) as error:
         raise SystemExit(f"{path}: cannot read CONTEXT.md: {error}")
     if kind in ("workspace", "hauptprozess"):
-        return "workspace" if kind == "workspace" else "application"
+        return "workspace" if kind == "workspace" else "hauptprozess"
     raise SystemExit(f"{path}: CONTEXT.md type must be workspace or hauptprozess, found {kind!r}")
 
 
@@ -86,15 +88,15 @@ def tree_oid(folder: Path, algorithm: str) -> str:
         else:
             data = child.read_bytes()
             blob = hashlib.new(algorithm, b"blob %d\0" % len(data) + data).digest()
-            mode = "100755" if os.stat(child).st_mode & 0o111 else "100644"
+            mode = "100755" if os.stat(child).st_mode & 0o100 else "100644"
             entries.append((child.name, mode, child.name, blob))
     body = b"".join(f"{mode} {name}".encode() + b"\0" + oid for _, mode, name, oid in sorted(entries))
     return hashlib.new(algorithm, b"tree %d\0" % len(body) + body).hexdigest()
 
 
 @contextmanager
-def application_copy(root: Path):
-    """Copy only what Core allows in an Application: folders, CONTEXT.md and symlinks (which Core
+def hauptprozess_copy(root: Path):
+    """Copy only what Core allows in a Hauptprozess tree: folders, CONTEXT.md and symlinks (which Core
     rejects). Any other entry is reported before its payload is copied."""
     with TemporaryDirectory(prefix="impacts-view-") as folder:
         copy, unknown = Path(folder) / root.name, []
@@ -114,43 +116,43 @@ def digest(nodes: list[dict]) -> str:
     return "sha256:" + hashlib.sha256(listing.encode()).hexdigest()
 
 
-def application_page(root: Path, algorithm: str | None = None) -> dict:
+def hauptprozess_page(root: Path, algorithm: str | None = None) -> dict:
     """`algorithm` is the workspace's Git object format; given, the page records the tree id of
     the bytes it actually read."""
-    selection = {"application": root.name, "folder": root.name, "revision": None, "vorgang": None, "tree": None}
+    selection = {"hauptprozess": root.name, "folder": root.name, "revision": None, "vorgang": None, "tree": None}
     try:
-        with application_copy(root.resolve()) as (copy, unknown):
+        with hauptprozess_copy(root.resolve()) as (copy, unknown):
             if unknown:
-                return refused("application", selection, [{"code": "structure.invalid", "path": p,
-                                                           "message": "Unknown Application entry"} for p in unknown])
-            issues, nodes = read_application(copy, root.name, check_slug=True)
+                return refused("hauptprozess", selection, [{"code": "structure.level", "path": p,
+                                                           "message": "Unknown Hauptprozess entry"} for p in unknown])
+            issues, nodes = read_hauptprozess(copy, root.name, check_slug=True)
             if algorithm and not issues:
                 selection["tree"] = tree_oid(copy, algorithm)
     except (Unreadable, OSError, ValueError) as error:
-        return unreadable("application", selection, root.name, error)
+        return unreadable("hauptprozess", selection, root.name, error)
     if issues:
-        return refused("application", selection, issues)
+        return refused("hauptprozess", selection, issues)
     project.annotate(nodes)
-    selection.update(application=nodes[0]["id"], revision=digest(nodes))
-    return {"format": FORMAT, "kind": "application", "selection": selection, "issues": [],
+    selection.update(hauptprozess=nodes[0]["id"], revision=digest(nodes))
+    return {"format": FORMAT, "kind": "hauptprozess", "selection": selection, "issues": [],
             "nodes": nodes, "vorgang": None, "view": None, "stand": project.stand(nodes, None, None),
             "map": project.map_tree(nodes, None, None)}
 
 
 def vorgang_issues(report, vorgang_rel: str) -> list[dict]:
-    """This Vorgang's issues plus every issue outside other Vorgänge and Applications: a broken
+    """This Vorgang's issues plus every issue outside other Vorgänge and Hauptprozesse: a broken
     workspace router or folder means Core may not have checked this Vorgang at all."""
     return issue_list([i for i in report.issues
                        if i.path == vorgang_rel or i.path.startswith(vorgang_rel + "/") or not i.path.startswith(tuple(f + "/" for f in FOLDERS))])
 
 
-def bound_application(workspace: Path, revision: str, cache: dict) -> tuple[list[dict], list[dict]]:
+def bound_hauptprozess(workspace: Path, revision: str, cache: dict) -> tuple[list[dict], list[dict]]:
     """A bound tree is immutable; read it once per generation."""
     if revision not in cache:
         with TemporaryDirectory(prefix="impacts-view-") as folder:
             if not _materialize_tree(workspace, TREE.fullmatch(revision).group(1), Path(folder)):
                 raise Unreadable(f"cannot read {revision}")
-            cache[revision] = read_application(Path(folder), revision, check_slug=False)
+            cache[revision] = read_hauptprozess(Path(folder), revision, check_slug=False)
             project.annotate(cache[revision][1])
     return cache[revision]
 
@@ -158,7 +160,13 @@ def bound_application(workspace: Path, revision: str, cache: dict) -> tuple[list
 def vorgang_page(path: Path, workspace: Path, report, before: dict | Exception, cache: dict) -> dict:
     """`report` is Core's validation of `workspace`; `before` is the Vorgang folder's state captured before it."""
     vorgang_rel = path.parent.relative_to(workspace).as_posix()
-    selection = {"application": None, "revision": None, "vorgang": vorgang_rel}
+    selection = {"hauptprozess": None, "revision": None, "vorgang": vorgang_rel}
+    skipped = [item for item in report.not_judged if item.path == f"{vorgang_rel}/CONTEXT.md"]
+    if skipped:
+        item = skipped[0]
+        return {"format": FORMAT, "kind": "vorgang", "selection": selection, "issues": [],
+                "not_judged": {"path": item.path, "protocol": item.protocol,
+                               "validator_protocol": item.validator_protocol, "message": item.message}}
     issues = vorgang_issues(report, vorgang_rel)
     if issues:
         return refused("vorgang", selection, issues)
@@ -168,19 +176,96 @@ def vorgang_page(path: Path, workspace: Path, report, before: dict | Exception, 
         vorgang = read_vorgang(path, f"{vorgang_rel}/CONTEXT.md")
         if before.get("CONTEXT.md") != vorgang["sha256"] or capture(path.parent) != before:
             raise Unreadable(f"{vorgang_rel} changed during generation; generate the view again")
-        revision = TREE.fullmatch(str(vorgang["meta"]["application_revision"]))
+        revision = TREE.fullmatch(str(vorgang["meta"]["hauptprozess_revision"]))
         if revision is None:
-            raise Unreadable("the validated Vorgang has no application_revision")
-        issues, nodes = bound_application(workspace, revision.group(0), cache)
+            raise Unreadable("the validated Vorgang has no hauptprozess_revision")
+        issues, nodes = bound_hauptprozess(workspace, revision.group(0), cache)
     except (Unreadable, OSError, ValueError) as error:
         return unreadable("vorgang", selection, vorgang_rel, error)
     if issues:
         return refused("vorgang", selection, issues)
-    selection.update(application=nodes[0]["id"], revision=revision.group(0))
+    selection.update(hauptprozess=nodes[0]["id"], revision=revision.group(0))
     project.annotate([vorgang])
-    view = project.phases(nodes, vorgang["meta"]["laufpfad"])
+    superseded = f"{vorgang_rel}/CONTEXT.md" in report.superseded
+    view = project.phases(nodes, vorgang["meta"]["laufpfad"], superseded=superseded)
+    subject = subject_record(path, workspace)
+    view["subject_stage"] = subject["stage"] if subject else "open"
     return {"format": FORMAT, "kind": "vorgang", "selection": selection, "issues": [], "nodes": nodes, "vorgang": vorgang,
+            "subject": subject, "attempt_phases": [project.ATTEMPT_PHASE[e["status"]] for e in vorgang["meta"]["laufpfad"]],
             "view": view, "stand": project.stand(nodes, vorgang, view), "map": project.map_tree(nodes, vorgang, view)}
+
+
+def subject_record(path: Path, workspace: Path) -> dict | None:
+    """Resolve the single Subject link; its address is navigation, not a domain identity mapping."""
+    try:
+        body = path.read_text(encoding="utf-8")
+    except (OSError, UnicodeError):
+        return None
+    headings = "|".join(re.escape(name) for name in SUBJECT_HEADINGS)
+    section = re.search(r"(?ms)^## (?:" + headings + r")\n(.*?)(?=^## |\Z)", body)
+    links = re.findall(r"\[[^\]]*\]\(([^)]+)\)", section[1]) if section else []
+    if len(links) != 1:
+        return None
+    relative, _, anchor = links[0].partition("#")
+    original = path.parent / relative
+    try:
+        target = original.resolve()
+        if not target.is_relative_to(workspace.resolve()) or not target.is_file() or _has_symlink_component(original, workspace):
+            return None
+        text = target.read_text(encoding="utf-8")
+        stage = record_stages(text).get(anchor, "open")
+    except (OSError, UnicodeError, RuntimeError):
+        return None
+    return {"record": target.relative_to(workspace.resolve()).as_posix() + ("#" + anchor if anchor else ""),
+            "stage": stage}
+
+
+def record_stages(text: str) -> dict[str, str]:
+    """W4's Stage line or anchored Stage column; repeated declarations stay open."""
+    found = {}
+    lines = re.findall(r"(?m)^Stage:(.*?)$", text)
+    if lines:
+        found[""] = [line.strip() or "open" for line in lines]
+    headers = []
+    for row in text.splitlines():
+        if not row.startswith("|"):
+            headers = []
+            continue
+        cells = [cell.strip() for cell in row.strip("|").split("|")]
+        if "Stage" in cells:
+            headers = cells
+        elif headers:
+            for anchor in re.findall(r"<a id=[\"']([^\"']+)[\"']></a>", row):
+                stage = (cells[headers.index("Stage")] if headers.count("Stage") == 1
+                         and len(cells) == len(headers) else "open")
+                found.setdefault(anchor, []).append(stage or "open")
+    return {anchor: values[0] if len(values) == 1 else "open" for anchor, values in found.items()}
+
+
+def record_inventory(workspace: Path) -> list[dict]:
+    """Readable Stage records under records/, without following symbolic links.
+
+    The digest participates in the generation stability check, not in domain identity.
+    """
+    root = workspace / "records"
+    if not root.is_dir() or root.is_symlink():
+        return []
+    found = []
+    for directory, folders, files in os.walk(root, followlinks=False):
+        folders[:] = sorted(name for name in folders if not Path(directory, name).is_symlink())
+        for name in sorted(files):
+            path = Path(directory, name)
+            if path.suffix != ".md" or path.is_symlink() or not path.is_file():
+                continue
+            try:
+                data = path.read_bytes()
+                stages = record_stages(data.decode("utf-8"))
+            except (OSError, UnicodeError) as error:
+                raise SystemExit(f"cannot read record {path}: {error}") from error
+            rel = path.relative_to(workspace).as_posix()
+            found.extend({"record": rel + ("#" + anchor if anchor else ""), "stage": stage,
+                          "sha256": hashlib.sha256(data).hexdigest()} for anchor, stage in stages.items())
+    return found
 
 
 def capture(folder: Path) -> dict | Exception:
@@ -240,24 +325,21 @@ def kind_of_entry(path: Path) -> str:
 
 
 def inventory(workspace: Path) -> dict[str, list[tuple[str, str]] | None]:
-    """Every entry under applications/ and vorgaenge/, with what it is; nothing is skipped.
-    Under grundlagen/ist-prozesse/ also each regular file's hash, since the view reads those
+    """Every entry under hauptprozesse/ and vorgaenge/, with what it is; nothing is skipped.
+    Under analyse/ also each regular file's hash, since the view reads those
     files from the working tree (None: the folder does not exist)."""
     found = {}
     for folder in FOLDERS:
         base = workspace / folder
         entries = sorted(base.iterdir()) if base.is_dir() and not base.is_symlink() else []
         found[folder] = [(p.name, "link" if p.is_symlink() else "dir" if p.is_dir() else "file") for p in entries]
-    # Each part of the path is checked, so a linked grundlagen/ cannot lead the view outside the workspace.
-    # A part that is a link or no folder stands as one entry "." whose third field is that part's path.
-    base, found[IST] = workspace, None
-    for rel in ("grundlagen", IST):
-        base = workspace / rel
-        if not base.is_symlink() and not base.exists():
-            return found
-        if base.is_symlink() or not base.is_dir():
-            found[IST] = [(".", kind_of_entry(base), rel)]
-            return found
+    # Refuse a linked analysis root before enumerating or reading any source files.
+    base, found[IST] = workspace / IST, None
+    if not base.is_symlink() and not base.exists():
+        return found
+    if base.is_symlink() or not base.is_dir():
+        found[IST] = [(".", kind_of_entry(base), IST)]
+        return found
     found[IST] = [(p.name, kind, entry_state(p) if kind == "file" else "")
                   for p in sorted(base.iterdir()) for kind in [kind_of_entry(p)]]
     return found
@@ -298,17 +380,18 @@ def ist_pages(workspace: Path, listing: list[tuple[str, str, str]], used: set[st
 def entry_issues(report, rel: str, kind: str) -> list[dict]:
     issues = issue_list([i for i in report.issues if i.path == rel or i.path.startswith(rel + "/")])
     message = {"link": "is a symlink", "file": "is a file, not a folder"}[kind]
-    return issues or [{"code": "structure.invalid", "path": rel, "message": message}]
+    return issues or [{"code": "structure.level", "path": rel, "message": message}]
 
 
 def workspace_site(workspace: Path, only: set[str] | None = None) -> dict[str, dict]:
-    """Every Application and every Vorgang as its own page, plus an overview as index.html.
+    """Every Hauptprozess and every Vorgang as its own page, plus an overview as index.html.
     With `only`, just the pages of those vorgaenge/ entries, each equal to its page in the full site."""
     workspace = workspace.resolve()
     if workspace_of(workspace) != workspace:
         raise SystemExit(f"{workspace} must be the root of a Git repository; Core resolves bound Vorgänge there")
     algorithm = git(workspace, "rev-parse", "--show-object-format") or "sha1"
-    state = lambda: (inventory(workspace), git(workspace, "rev-parse", "--verify", "-q", "HEAD"))
+    state = lambda: (inventory(workspace), git(workspace, "rev-parse", "--verify", "-q", "HEAD"),
+                     record_inventory(workspace) if only is None else [])
     first = state()
     if only is not None and (unknown := sorted(only - {name for name, _ in first[0]["vorgaenge"]})):
         raise SystemExit(f"no entry in vorgaenge/ is named {', '.join(unknown)}")
@@ -317,11 +400,11 @@ def workspace_site(workspace: Path, only: set[str] | None = None) -> dict[str, d
                  if kind == "dir" and chosen(name)}
     report = validate(workspace)
     used, pages, cache, heads = {"index.html"}, {}, {}, {}
-    for name, kind in first[0]["applications"] if only is None else []:
-        rel = f"applications/{name}"
+    for name, kind in first[0]["hauptprozesse"] if only is None else []:
+        rel = f"hauptprozesse/{name}"
         page = page_name("a", name, used)
-        pages[page] = application_page(workspace / rel, algorithm) if kind == "dir" else \
-            refused("application", {"application": name, "folder": name, "revision": None, "vorgang": None, "tree": None},
+        pages[page] = hauptprozess_page(workspace / rel, algorithm) if kind == "dir" else \
+            refused("hauptprozess", {"hauptprozess": name, "folder": name, "revision": None, "vorgang": None, "tree": None},
                     entry_issues(report, rel, kind))
         heads[name] = git(workspace, "rev-parse", f"{first[1]}:{rel}") if first[1] else None
     for name, kind in first[0]["vorgaenge"]:
@@ -330,10 +413,10 @@ def workspace_site(workspace: Path, only: set[str] | None = None) -> dict[str, d
         if not chosen(name):
             continue
         pages[page] = vorgang_page(workspace / rel / "CONTEXT.md", workspace, report, vorgaenge[name], cache) if kind == "dir" else \
-            refused("vorgang", {"application": None, "revision": None, "vorgang": rel}, entry_issues(report, rel, kind))
+            refused("vorgang", {"hauptprozess": None, "revision": None, "vorgang": rel}, entry_issues(report, rel, kind))
     skipped = None if first[0][IST] is None or only is not None else ist_pages(workspace, first[0][IST], used, pages)
     if state() != first:
-        raise SystemExit("the workspace inventory, an Ist-Prozess file or HEAD changed while the view was generated; "
+        raise SystemExit("the workspace inventory, an Ist-Prozess file, a record or HEAD changed while the view was generated; "
                          "nothing was written")
     if only is None:
         known = {f"{folder}/{name}" for folder in FOLDERS for name, _ in first[0][folder]}
@@ -342,7 +425,7 @@ def workspace_site(workspace: Path, only: set[str] | None = None) -> dict[str, d
                             or "/".join(i["path"].split("/")[:2]) not in known]
         project.link_ist(pages)
         pages["index.html"] = project.overview(workspace.name, pages, heads, workspace_issues, bool(first[1]), skipped,
-                                               SCHEMA_REGISTRY.schemas())
+                                               SCHEMA_REGISTRY.schemas(), records=first[2])
     for name, model in pages.items():
         model["site"] = {"index": "index.html", "self": name}
     return pages

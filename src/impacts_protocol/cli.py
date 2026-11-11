@@ -7,45 +7,16 @@ import sys
 import shlex
 
 from .generator import CLI_TEMPLATE_KINDS, LANGUAGES, init_workspace, template_text
-from .hashing import HashSurfaceError, surface_hash
+from .hashing import HashSurfaceError, file_references
+from .model import issue_rule
+from .version import package_metadata
 
 
 def _package_metadata() -> dict[str, str | None]:
-    from importlib import metadata as importlib_metadata
+    return package_metadata(__file__)
 
-    try:
-        distribution = importlib_metadata.distribution("impacts-protocol")
-    except importlib_metadata.PackageNotFoundError:
-        source_pyproject = Path(__file__).resolve().parents[2] / "pyproject.toml"
-        try:
-            import tomllib
-
-            project = tomllib.loads(source_pyproject.read_text(encoding="utf-8"))["project"]
-            name = project["name"]
-            version = project["version"]
-        except (OSError, KeyError, TypeError, ValueError):
-            return {
-                "name": "impacts-protocol",
-                "version": None,
-                "version_source": "metadata unavailable",
-            }
-        return {
-            "name": name,
-            "version": version if isinstance(version, str) and version else None,
-            "version_source": "source pyproject.toml; source revision unknown",
-        }
-
-    name = distribution.metadata.get("Name") or "impacts-protocol"
-    version = distribution.version
-    return {
-        "name": name,
-        "version": version if isinstance(version, str) and version else None,
-        "version_source": "installed distribution metadata",
-    }
-
-
-def _package_metadata_identity(metadata: dict[str, str | None] | None = None) -> str:
-    metadata = metadata or _package_metadata()
+def _package_metadata_identity() -> str:
+    metadata = _package_metadata()
     name = metadata["name"] or "impacts-protocol"
     version = metadata["version"]
     version_source = metadata["version_source"] or "metadata unavailable"
@@ -58,8 +29,8 @@ def _print_json_report(report: dict) -> None:
     print(json.dumps(report, ensure_ascii=True, allow_nan=False))
 
 
-def _issue_json(code: str, path: str, message: str) -> dict[str, str]:
-    return {"code": code, "path": path, "message": message}
+def _issue_json(code: str, path: str, message: str, rule: str = "") -> dict[str, str]:
+    return {"code": code, "path": path, "message": message, "rule": rule or issue_rule(code)}
 
 
 class _PrintPackageMetadataAction(argparse.Action):
@@ -83,20 +54,19 @@ def build_parser() -> argparse.ArgumentParser:
 
     validate_parser = subparsers.add_parser("validate", help="Validate a workspace")
     validate_parser.add_argument("path")
-    validate_parser.add_argument("--verbose", action="store_true", help="Report package identity")
     validate_parser.add_argument("--json", action="store_true", help="Print a JSON report")
 
-    hash_parser = subparsers.add_parser("hash", help="Hash declared attempt surfaces")
-    hash_parser.add_argument("attempt", help="Attempt folder")
-    hash_parser.add_argument("surface", nargs="+", help="Declared surface relative to the attempt")
+    hash_parser = subparsers.add_parser("hash", help="List per-file SHA-256 references")
+    hash_parser.add_argument("attempt", help="Reference root")
+    hash_parser.add_argument("surface", nargs="+", help="File or directory relative to the root")
     hash_parser.add_argument("--json", action="store_true", help="Print a JSON report")
 
     template_parser = subparsers.add_parser("template", help="Print a working template")
     template_parser.add_argument("kind", choices=CLI_TEMPLATE_KINDS)
     template_parser.add_argument("--language", choices=LANGUAGES, default="en", help="Customer working language (default: en)")
 
-    view_parser = subparsers.add_parser("view", help="Write a read-only HTML view of a workspace, Application or Vorgang")
-    view_parser.add_argument("source", help="Workspace folder, Application folder or vorgaenge/<slug>/CONTEXT.md")
+    view_parser = subparsers.add_parser("view", help="Write a read-only HTML view of a workspace, Hauptprozess or Vorgang")
+    view_parser.add_argument("source", help="Workspace folder, Hauptprozess folder or vorgaenge/<slug>/CONTEXT.md")
     view_parser.add_argument("--out", required=True, help="New folder for the pages; must not exist")
     view_parser.add_argument("--json", action="store_true", help="Also write model.json, an export, never a source")
     view_parser.add_argument("--language", choices=LANGUAGES, help="Page language when the workspace records none")
@@ -130,15 +100,15 @@ def main(argv: list[str] | None = None) -> int:
         if args.json:
             tool = _package_metadata()
             try:
-                digest = surface_hash(Path(args.attempt), args.surface)
+                references = file_references(Path(args.attempt), args.surface)
             except HashSurfaceError as error:
                 _print_json_report(
                     {
-                        "report_version": 1,
+                        "report_version": 3,
                         "command": "hash",
                         "tool": tool,
                         "issues": [_issue_json(error.code, str(error.path), error.message)],
-                        "digest": None,
+                        "references": None,
                         "attempt": args.attempt,
                         "surfaces": args.surface,
                     }
@@ -146,48 +116,63 @@ def main(argv: list[str] | None = None) -> int:
                 return 1
             _print_json_report(
                 {
-                    "report_version": 1,
+                    "report_version": 3,
                     "command": "hash",
                     "tool": tool,
                     "issues": [],
-                    "digest": digest,
+                    "references": references,
                     "attempt": args.attempt,
                     "surfaces": args.surface,
                 }
             )
             return 0
         try:
-            print(surface_hash(Path(args.attempt), args.surface))
+            print(json.dumps(file_references(Path(args.attempt), args.surface), ensure_ascii=True))
         except HashSurfaceError as error:
             print(error, file=sys.stderr)
             return 1
         return 0
-    tool = _package_metadata() if args.verbose or args.json else None
-    if args.verbose:
-        print(
-            f"Package metadata identity: {_package_metadata_identity(tool)}",
-            file=sys.stderr,
-        )
+    tool = _package_metadata() if args.json else None
     from .validator import validate
 
     report = validate(Path(args.path))
     if args.json:
         _print_json_report(
             {
-                "report_version": 1,
+                "report_version": 3,
                 "command": "validate",
                 "tool": tool,
                 "issues": [
-                    _issue_json(issue.code, issue.path, issue.message)
+                    _issue_json(issue.code, issue.path, issue.message, issue.rule)
                     for issue in report.issues
                 ],
+                "not_judged": [{"path": item.path, "protocol": item.protocol,
+                                **({"reason": item.reason} if item.reason else {})} for item in report.not_judged],
+                "not_judged_counts": report.not_judged_counts,
+                "release": report.release,
+                "pin": report.pin,
+                "judged": report.judged,
+                "superseded": list(report.superseded),
+                "external_references": list(report.external_references),
+                "external_references_not_verified": report.external_references_not_verified,
                 "valid": report.valid,
                 "root": args.path,
             }
         )
         return 0 if report.valid else 1
+    counts = report.judged
+    print(f"impacts validate {report.release} against pin {report.pin or 'none'}: "
+          f"{counts['hauptprozess']} Hauptprozesse, {counts['teilprozess']} Teilprozesse, "
+          f"{counts['arbeitsschritt']} Arbeitsschritte, {counts['vorgang']} Vorgänge, "
+          f"{counts['versuch']} Versuche judged; {report.not_judged_counts['vorgang']} Vorgänge not judged; "
+          f"{report.not_judged_counts['definition_tree']} definition trees outside hauptprozesse/"
+          + ("; workspace not judged" if any(item.path == "CONTEXT.md" for item in report.not_judged) else ""))
+    for item in report.not_judged:
+        print(item.message)
+    if report.external_references_not_verified:
+        print(f"{report.external_references_not_verified} references in external stores not verified by Core")
     for issue in report.issues:
-        print(f"{issue.code}: {issue.path}: {issue.message}")
+        print(f"{issue.code}: {issue.path}: {issue.message} ({issue.rule})")
     return 0 if report.valid else 1
 
 

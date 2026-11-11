@@ -44,10 +44,30 @@ def _assert_tool_metadata(tool):
     assert isinstance(tool["version_source"], str) and tool["version_source"]
 
 
-def test_benchmark_yaml_fixtures_validate_and_select_expected_loader(tmp_path):
+def _yaml_fixture(base: Path, syntax: str) -> tuple[Path, Path]:
+    """Hauptprozess with 2000 acceptance items; quoted scalars require the Python loader."""
+    from impacts_protocol import init_workspace
+    from tests.support import write_hauptprozess
+
+    root = init_workspace(base / f"yaml-{syntax}-workspace")
+    path = write_hauptprozess(root / "hauptprozesse" / "video") / "CONTEXT.md"
+    lines = path.read_text(encoding="utf-8").splitlines()
+    if syntax == "plain":
+        extra = [f"  - Acceptance item {index:04} checked" for index in range(2000)]
+    else:
+        extra = [f"  - 'Acceptance item {index:04} checked'" for index in range(2000)]
+    start = lines.index("  abnahme:")
+    end = start + 1
+    while end < len(lines) and lines[end].startswith("  - "):
+        end += 1
+    lines[start:end] = ["  abnahme:", *extra]
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    return root, path
+
+
+def test_yaml_fixtures_validate_and_select_expected_loader(tmp_path):
     from impacts_protocol import validate
     from impacts_protocol import io
-    from tests.benchmark_cli import _yaml_fixture
 
     original_load = io.yaml.load
     for syntax in ("plain", "sensitive"):
@@ -112,11 +132,7 @@ class CliTests(unittest.TestCase):
             output.getvalue(),
         )
 
-    def test_validate_verbose_reports_package_identity_and_default_stays_quiet(self):
-        class Distribution:
-            metadata = {"Name": "metadata-package"}
-            version = "8.7.6"
-
+    def test_validate_default_reports_status(self):
         with TemporaryDirectory() as directory:
             target = Path(directory) / "workspace"
             init_workspace_output = StringIO()
@@ -125,24 +141,15 @@ class CliTests(unittest.TestCase):
 
             default_stdout = StringIO()
             default_stderr = StringIO()
-            verbose_stdout = StringIO()
-            verbose_stderr = StringIO()
-            with patch(
-                "importlib.metadata.distribution",
-                return_value=Distribution(),
-            ):
-                with redirect_stdout(default_stdout), redirect_stderr(default_stderr):
-                    self.assertEqual(0, main(["validate", str(target)]))
-                with redirect_stdout(verbose_stdout), redirect_stderr(verbose_stderr):
-                    self.assertEqual(0, main(["validate", str(target), "--verbose"]))
+            with redirect_stdout(default_stdout), redirect_stderr(default_stderr):
+                self.assertEqual(0, main(["validate", str(target)]))
 
-        self.assertEqual("", default_stdout.getvalue())
-        self.assertEqual("", default_stderr.getvalue())
-        self.assertEqual("", verbose_stdout.getvalue())
         self.assertEqual(
-            "Package metadata identity: metadata-package 8.7.6 (installed distribution metadata)\n",
-            verbose_stderr.getvalue(),
+            "impacts validate v0.4.0 against pin v0.4.0: 0 Hauptprozesse, 0 Teilprozesse, "
+            "0 Arbeitsschritte, 0 Vorgänge, 0 Versuche judged; 0 Vorgänge not judged; 0 definition trees outside hauptprozesse/\n",
+            default_stdout.getvalue(),
         )
+        self.assertEqual("", default_stderr.getvalue())
 
     def test_regular_commands_skip_distribution_metadata_lookup(self):
         output = StringIO()
@@ -288,20 +295,14 @@ def test_validate_json_subprocess_reports_valid_and_invalid_without_text_leaks(t
     assert valid.stderr == ""
     valid_report = _json_stdout(valid)
     assert set(valid_report) == {
-        "report_version", "command", "tool", "issues", "valid", "root"
+        "report_version", "command", "tool", "issues", "valid", "root", "not_judged", "external_references_not_verified", "release", "pin", "judged", "not_judged_counts", "superseded", "external_references"
     }
-    assert valid_report["report_version"] == 1
+    assert valid_report["report_version"] == 3
     assert valid_report["command"] == "validate"
     _assert_tool_metadata(valid_report["tool"])
     assert valid_report["issues"] == []
     assert valid_report["valid"] is True
     assert valid_report["root"] == str(root)
-
-    verbose = _run_cli(tmp_path, "validate", root, "--json", "--verbose")
-    assert verbose.returncode == 0
-    assert verbose.stderr.startswith("Package metadata identity: ")
-    assert "Package metadata identity" not in verbose.stdout
-    assert _json_stdout(verbose)["valid"] is True
 
     (root / "CONTEXT.md").write_text("---\ntype: invalid\n---\n", encoding="utf-8")
     invalid = _run_cli(tmp_path, "validate", root, "--json")
@@ -311,17 +312,17 @@ def test_validate_json_subprocess_reports_valid_and_invalid_without_text_leaks(t
     invalid_report = _json_stdout(invalid)
     assert invalid_report["valid"] is False
     assert any(issue["code"] == "routing.type" for issue in invalid_report["issues"])
-    assert all(set(issue) == {"code", "path", "message"} for issue in invalid_report["issues"])
+    assert all(set(issue) == {"code", "path", "message", "rule"} for issue in invalid_report["issues"])
 
 
 def test_hash_json_subprocess_reports_digest_and_expected_failure(tmp_path):
-    from impacts_protocol import surface_hash
+    from impacts_protocol import file_references
 
     attempt = tmp_path / "attempt"
     (attempt / "input").mkdir(parents=True)
     source = attempt / "input" / "auftrag.md"
     source.write_bytes(b"Synthetic input\n")
-    expected_digest = surface_hash(attempt, ["input/auftrag.md"])
+    expected_digest = file_references(attempt, ["input/auftrag.md"])
 
     success = _run_cli(tmp_path, "hash", attempt, "input/auftrag.md", "--json")
 
@@ -329,13 +330,13 @@ def test_hash_json_subprocess_reports_digest_and_expected_failure(tmp_path):
     assert success.stderr == ""
     report = _json_stdout(success)
     assert set(report) == {
-        "report_version", "command", "tool", "issues", "digest", "attempt", "surfaces"
+        "report_version", "command", "tool", "issues", "references", "attempt", "surfaces"
     }
-    assert report["report_version"] == 1
+    assert report["report_version"] == 3
     assert report["command"] == "hash"
     _assert_tool_metadata(report["tool"])
     assert report["issues"] == []
-    assert report["digest"] == expected_digest
+    assert report["references"] == expected_digest
     assert report["attempt"] == str(attempt)
     assert report["surfaces"] == ["input/auftrag.md"]
 
@@ -344,18 +345,18 @@ def test_hash_json_subprocess_reports_digest_and_expected_failure(tmp_path):
     assert failure.returncode == 1
     assert failure.stderr == ""
     failed_report = _json_stdout(failure)
-    assert failed_report["digest"] is None
+    assert failed_report["references"] is None
     assert failed_report["attempt"] == str(attempt)
     assert failed_report["surfaces"] == ["input/missing.md"]
-    assert failed_report["issues"][0]["code"] == "hash.mismatch"
-    assert set(failed_report["issues"][0]) == {"code", "path", "message"}
+    assert failed_report["issues"][0]["code"] == "binding.reference_missing"
+    assert set(failed_report["issues"][0]) == {"code", "path", "message", "rule"}
 
 
 def test_validate_json_subprocess_reports_tampered_attempt_hash(tmp_path):
     from tests.test_minimal_vorgang import _prepare_workspace
 
     root, vorgang = _prepare_workspace(tmp_path)
-    (vorgang / "start" / "001" / "input" / "auftrag.md").write_text(
+    (vorgang / "start" / "001" / "output" / "ergebnis.md").write_text(
         "Tampered input\n", encoding="utf-8"
     )
 
@@ -366,8 +367,9 @@ def test_validate_json_subprocess_reports_tampered_attempt_hash(tmp_path):
     report = _json_stdout(result)
     assert report["valid"] is False
     assert any(
-        issue["code"] == "hash.mismatch"
-        and issue["path"] == "vorgaenge/video-001/start/001"
+        issue["code"] == "binding.reference_digest"
+        and issue["path"] == "vorgaenge/video-001/CONTEXT.md"
+        and "vorgaenge/video-001/start/001/output/ergebnis.md" in issue["message"]
         for issue in report["issues"]
     )
 
@@ -376,7 +378,7 @@ def test_validate_json_subprocess_escapes_unicode_root_and_issue_paths(tmp_path)
     from impacts_protocol import init_workspace
 
     root = init_workspace(tmp_path / "workspace-ü")
-    (root / "applications" / "café").mkdir()
+    (root / "hauptprozesse" / "café").mkdir()
 
     result = _run_cli(tmp_path, "validate", root, "--json")
 
@@ -397,13 +399,13 @@ def test_validate_json_subprocess_escapes_surrogateescape_root_on_posix(tmp_path
     root = os.fsdecode(root_bytes)
     code = """
 import sys
-from types import SimpleNamespace
+from impacts_protocol.model import ValidationReport
 from unittest.mock import patch
 from impacts_protocol.cli import main
 
 with patch(
     "impacts_protocol.validator.validate",
-    return_value=SimpleNamespace(valid=True, issues=[]),
+    return_value=ValidationReport((), release="v0.4.0"),
 ):
     raise SystemExit(main(["validate", sys.argv[1], "--json"]))
 """

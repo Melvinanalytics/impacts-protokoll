@@ -21,9 +21,26 @@ guard = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(guard)
 
 
-def test_current_source_claims_match_current_tag():
-    version = guard.project_version(ROOT)
-    assert guard.verify_source_claims(ROOT, f"v{version}") == version
+def test_current_source_claims_match_current_tag(tmp_path):
+    paths = {"pyproject.toml", *guard.DOC_PATHS}
+    paths.update(path for pair in guard.PAIRS for path in pair)
+    for relative in paths:
+        path = tmp_path / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes((ROOT / relative).read_bytes())
+    for source, target in guard.PAIRS:
+        path = tmp_path / target
+        path.write_text(guard.MARKER.sub(
+            f"<!-- Translation source: {source}; sha256: {guard.file_sha256(tmp_path / source)} -->",
+            path.read_text(encoding="utf-8"),
+        ), encoding="utf-8")
+    version = guard.project_version(tmp_path)
+    assert guard.verify_source_claims(tmp_path, f"v{version}") == version
+    source, _ = guard.PAIRS[0]
+    with (tmp_path / source).open("a", encoding="utf-8") as handle:
+        handle.write("\nChanged rule.\n")
+    with pytest.raises(guard.ReleaseGuardError, match="Stale translations"):
+        guard.verify_source_claims(tmp_path, f"v{version}")
 
 
 @pytest.mark.parametrize(

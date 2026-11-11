@@ -5,9 +5,8 @@ from pathlib import Path
 import shutil
 from tempfile import mkdtemp
 
-from .workspace_contract import WORKSPACE_FOLDERS
-
-TEMPLATE_KINDS = ("application", "hauptprozess", "teilprozess", "arbeitsschritt", "vorgang")
+WORKSPACE_FOLDERS = ("hauptprozesse", "vorgaenge")
+TEMPLATE_KINDS = ("hauptprozess", "teilprozess", "arbeitsschritt", "vorgang")
 SUPPLEMENTAL_TEMPLATE_KINDS = ("herkunft",)
 CLI_TEMPLATE_KINDS = TEMPLATE_KINDS + SUPPLEMENTAL_TEMPLATE_KINDS
 

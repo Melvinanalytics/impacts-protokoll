@@ -14,11 +14,11 @@ Evidence handling, public summaries and closure follow the [contribution guide](
 
 The primary outcome is adverse actions: distinct errors that could cause a wrong or unauthorized business decision, disclosure, identity merge, loss of a required check, or suppression of a material conflict. Agree on examples and severity with an independent scorer before the run. Cite each event to source and output, count it once, and retain blocked or prevented actions separately from completed actions.
 
-Secondary outcomes are useful result, status navigation, total human effort/time, and review time. Define useful result against the task's predeclared acceptance before assignment. Status navigation asks whether an operator who did not do the capture can find current supported status, source, open issues and next action from retained material. Record elapsed time and active effort separately. Include participant, operator, facilitator, reviewer, repair and coordination effort. Do not omit preparation, withdrawal or rework.
+Secondary measures are useful result, status navigation, total human effort/time, and review time. Define useful result against the task's predeclared acceptance before assignment. Status navigation asks whether an operator who did not do the capture can find current supported status, source, open issues and next action from retained material. Record elapsed time and active effort separately. Include participant, operator, facilitator, reviewer, repair and coordination effort. Do not omit preparation, withdrawal or rework.
 
 Stop further candidate exposure if candidate adverse actions exceed the matched baseline, and stop any benefit or campaign claim. Preserve the failing evidence and route it to the responsible reviewer. Do not offset the excess with time saved, answer completeness or participant preference. Equal counts do not prove non-inferiority. Any unsupported owner, approval or rule authority, or action outside the authorized task boundary, is a hard failure.
 
-Every comparative gate needs a same-scope manual-baseline record or case, prepared independently with the declared current procedure. Do not show the same case or message to one operator in both arms. Score candidate and baseline together under masked labels. If a defensible pair cannot be prepared, leave comparative outcomes and the stop-rule comparison `open`.
+Every comparative gate needs a same-scope manual-baseline record or case, prepared independently with the declared current procedure. Do not show the same case or message to one operator in both arms. Score candidate and baseline together under masked labels. If a defensible pair cannot be prepared, leave comparative results and the stop-rule comparison `open`.
 
 <a id="gate-a"></a>
 ## Gate A — unaccompanied first use and correction
@@ -71,6 +71,6 @@ Closure requires the frozen pass rule.
 
 ## Result record and completion
 
-For each gate, retain the frozen contract commit, owner, operator, scorer and closer; consent; candidate and baseline revisions; assignment; source IDs; anonymized outputs; per-case outcome; adverse-action evidence; all effort and timing; withdrawals; exclusions; disagreements; repairs and remaining gaps. Do not include unnecessary personal data. Report adverse actions before secondary measures.
+For each gate, retain the frozen contract commit, owner, operator, scorer and closer; consent; candidate and baseline revisions; assignment; source IDs; anonymized outputs; per-case result; adverse-action evidence; all effort and timing; withdrawals; exclusions; disagreements; repairs and remaining gaps. Do not include unnecessary personal data. Report adverse actions before secondary measures.
 
 All gates remain `open` until their stated evidence exists and the named closer has checked the bounded claim. A result from one gate does not satisfy another. No unperformed score, pass, benefit or reduction may be inferred from this protocol.

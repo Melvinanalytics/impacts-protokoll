@@ -301,7 +301,7 @@ def release_scope(root: Path, tag: str) -> str:
     path = root / "CONTRIBUTING.md"
     if not path.is_file():
         return ""
-    match = re.search(r"^### " + re.escape(tag) + r" [^\n]*\n(.*?)(?=^#{1,3} |\Z)",
+    match = re.search(r"^### " + re.escape(tag) + r"(?: [^\n]*)?\n(.*?)(?=^#{1,3} |\Z)",
                       path.read_text(encoding="utf-8"), re.M | re.S)
     return "## Changes in " + tag + "\n\n" + match[1].strip() if match else ""
 

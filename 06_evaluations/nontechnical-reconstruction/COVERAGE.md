@@ -1,6 +1,6 @@
 # Coverage and execution record
 
-Read this record only after answering the case in [CONTEXT.md](CONTEXT.md). It records candidate evidence, not protocol authority, customer facts, human approval, user comprehension, production execution or measured business improvement.
+Read this record only after answering the case in [reconstruction case](reconstruction.md). It records candidate evidence, not protocol authority, customer facts, human approval, user comprehension, production execution or measured business improvement.
 
 ## Bound revisions
 

@@ -1,0 +1,5 @@
+item_id,agreement_id,agreement_version,product_id,service_id,quantity,unit
+I-1,A-1,1,P-10,,1,Stück
+I-2,A-1,2,P-10,,2,Stück
+I-3,A-1,2,,S-20,12,Stunde
+I-4,A-2,1,,S-20,8,Stunde

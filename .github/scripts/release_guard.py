@@ -21,7 +21,18 @@ import zipfile
 
 
 REPOSITORY = "Melvinanalytics/impacts-protokoll"
-DOC_PATHS = ("README.md", "02_protocol/translations/de.md")
+DOC_PATHS = ("README.md", "02_protocol/translations/readme.de.md")
+
+
+PAIRS = [(f"02_protocol/templates/{kind}.md", f"02_protocol/templates/de/{kind}.md") for kind in ("hauptprozess", "teilprozess", "arbeitsschritt", "vorgang", "herkunft", "workspace")]
+PAIRS += [("02_protocol/language.md", "02_protocol/translations/language.de.md"),
+          ("README.md", "02_protocol/translations/readme.de.md"),
+          ("FIRST-WIN.md", "02_protocol/translations/first-win.de.md"),
+          ("CONTRIBUTING.md", "02_protocol/translations/contributing.de.md"),
+          ("02_protocol/impacts-architect/templates/ist-prozess.md", "02_protocol/impacts-architect/templates/de/ist-prozess.md"),
+          ("02_protocol/impacts-architect/templates/subject-record.md", "02_protocol/impacts-architect/templates/de/subject-record.md")]
+
+MARKER = re.compile(r"<!-- Translation source: (\S+); sha256: ([0-9a-f]{64}) -->")
 
 
 class ReleaseGuardError(RuntimeError):
@@ -74,6 +85,27 @@ def doc_versions(text: str) -> set[str]:
     )
 
 
+def translation_stale(root: Path, source: str, target: str) -> bool:
+    """Validate one mirror's marker and report whether its source bytes changed."""
+    path = root / target
+    if not path.is_file():
+        raise ReleaseGuardError(f"Missing translation: {target}")
+    text = path.read_text(encoding="utf-8")
+    markers = MARKER.findall(text)
+    if len(markers) != 1 or text.count("<!-- Translation source:") != 1:
+        raise ReleaseGuardError(f"Missing, malformed or repeated translation marker: {target}")
+    named_source, digest = markers[0]
+    if named_source != source:
+        raise ReleaseGuardError(f"Unpaired translation source {named_source}: {target}")
+    return digest != file_sha256(root / source)
+
+
+def verify_translations(root: Path) -> None:
+    stale = [target for source, target in PAIRS if translation_stale(root, source, target)]
+    if stale:
+        raise ReleaseGuardError(f"Stale translations: {', '.join(stale)}")
+
+
 def verify_source_claims(root: Path, tag: str) -> str:
     version = version_from_tag(tag)
     declared = project_version(root)
@@ -87,6 +119,7 @@ def verify_source_claims(root: Path, tag: str) -> str:
             raise ReleaseGuardError(
                 f"{relative} contains release versions {sorted(found)}, expected only {version}"
             )
+    verify_translations(root)
     return version
 
 

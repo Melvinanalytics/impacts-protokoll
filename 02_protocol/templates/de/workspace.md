@@ -1,8 +1,9 @@
 ---
 type: workspace
+protocol: v0.4.0
 ---
 
-<!-- Translation source: 02_protocol/templates/workspace.md; sha256: a6efe3105018ecb37bf3caf273ae4d4374d5e8b62335fc1b399ad8e88abfdd9b -->
+<!-- Translation source: 02_protocol/templates/workspace.md; sha256: 566bef06b73d097a53616e75c28ef313e27d94acfe7881b468135db081e1a5a9 -->
 
 Working language: de
 
@@ -18,28 +19,59 @@ Vor Aufnahme oder Änderung fachlicher Begriffe, Beziehungen und Schlussregeln `
 
 Konfigurierte Fakten hier festhalten und den Betriebsvertrag erhalten. Änderungen an Anweisungen oder Arbeitssprache folgen dem anwendbaren geprüften Revisionsweg unter `02_protocol/impacts-method.md#maintain-agent-instructions`.
 
-- Protokollquelle: `<verwendete vollständige Quelle>`
-- Revision und lokale Änderungen: `<Tag oder Commit und jede lokale Änderung>`
+- Ort der vollständigen Quelle (Herkunft; Release-Pin im Frontmatter): `<Pfad oder URL>`
+- Quell-Commit und lokale Änderungen: `<Commit und jede lokale Änderung>`
 - Architect-Einstieg: `<auflösbarer Pfad von 02_protocol/impacts-architect/SKILL.md>`
 - Harness und Einrichtungsreferenz, wenn Core-Vorgänge ausgeführt werden: `<eingerichtetes Harness und seine Einrichtungsreferenz, oder nicht gewählt>`
 - Fachliche Heimaten: `<Link und Zweck jeder Heimat>`
+
+`Ablage: <name> <Ort oder System>, <Ort der Zugriffsregel>`: jede externe Ablage auf einer eigenen, nicht eingerückten Body-Zeile deklarieren; Agenten erfinden niemals eine Ablage.
 
 Bei Nutzung von Capabilities aus einem Fachrepo oder einer anderen fachlichen Heimat deren frühen zuständigen Router unter „Fachliche Heimaten“ verlinken und `02_protocol/impacts-architect/references/formwahl.md#capability-orientation` aus der benannten Protokollquelle anwenden.
 
 ## Einrichtung
 
-`init` erzeugt diesen Router, `applications/`, `vorgaenge/` und `.gitattributes` (`* -text`, damit ein Checkout gebundene Bytes und ihre Hashes unverändert lässt). Bevor ein Core-Vorgang eine Revision bindet, Git an diesem Root einrichten. Git übernimmt keine leeren Ordner; die Validierung behandelt fehlende Sammlungen `applications/` oder `vorgaenge/` als leer. Vorhandene Sammlungen müssen gültige Inhalte enthalten; keine Platzhalterdateien ergänzen. Fachdateien nach der Formwahl nur für tatsächlichen Inhalt ergänzen. Vor einem Core-Vorgang unter „Quelle, Harness und Heimaten“ das eingerichtete Harness (`02_protocol/capabilities.md#responsibilities`) und seine Einrichtungs-/Abhängigkeitsreferenz benennen; Unterstützung für Operationen, Quellzugriffe, Checks, Übergaben und menschliche Grenzen der gewählten Application feststellen, einschließlich erforderlicher Aufbewahrung und Prüfung der Historie nach diesem Zuständigkeitsvertrag. Zugangsdaten bleiben in dieser Ausführungsumgebung. Ein leerer gültiger Workspace ist noch kein ausführbarer Prozess. Die folgenden Regeln gelten für gewählte Core-Verträge für Applications und Vorgänge gemäß `02_protocol/impacts-architect/references/formwahl.md#tooling-stopp`.
+`init` erzeugt diesen Router, `hauptprozesse/`, `vorgaenge/` und `.gitattributes` (`* -text`, damit ein Checkout gebundene Bytes und ihre Hashes unverändert lässt). Bevor ein Core-Vorgang eine Revision bindet, Git an diesem Root einrichten. Git übernimmt keine leeren Ordner; die Validierung behandelt fehlende Sammlungen `hauptprozesse/` oder `vorgaenge/` als leer. Vorhandene Sammlungen müssen gültige Inhalte enthalten; keine Platzhalterdateien ergänzen. Fachdateien nach der Formwahl nur für tatsächlichen Inhalt ergänzen; `analyse/` entsteht erst, wenn Analyse es benötigt. Für Stufenbefugnis und Kandidatenplatzierung `02_protocol/impacts-architect/references/formwahl.md#data-kinds` verwenden. Vor einem Core-Vorgang unter „Quelle, Harness und Heimaten“ das eingerichtete Harness (`02_protocol/binding.md#history-retention`) und seine Einrichtungs-/Abhängigkeitsreferenz benennen; Unterstützung für Operationen, Quellzugriffe, Checks, Übergaben und menschliche Grenzen des gewählten Hauptprozesses feststellen, einschließlich erforderlicher Aufbewahrung und Prüfung der Historie nach diesem Zuständigkeitsvertrag. Zugangsdaten bleiben in dieser Ausführungsumgebung. Ein leerer gültiger Workspace ist noch kein ausführbarer Prozess. Die folgenden Regeln gelten für gewählte Core-Verträge für Hauptprozesse und Vorgänge gemäß `02_protocol/impacts-architect/references/formwahl.md#tooling-stop`.
+
+Die Hauptprozess- und Vorgang-Bäume stehen in `02_protocol/binding.md#hauptprozess-tree-rules`. `analyse/`, `capabilities/`, `grundlagen/` und `records/` entstehen erst mit Inhalt.
+
+```text
+<workspace>/
+├── CONTEXT.md                         # init: Router und Protokoll-Pin
+├── hauptprozesse/                      # init
+├── vorgaenge/                          # init
+├── analyse/                           # erste Erfassung
+├── capabilities/                      # verdiente wiederverwendbare Operation
+├── grundlagen/                        # Grundlagen ohne einzelnen zuständigen Schritt
+└── records/                           # erster Datensatz
+```
+
+`init` legt `analyse/` nicht an. Records beginnen als eine Datei oder Tabelle pro Art und verdienen sich einen Ordner pro Instanz gemäß `02_protocol/impacts-architect/references/formwahl.md#data-kinds`. `grundlagen/` enthält nur Grundlagen, die kein einzelner Schritt besitzt.
+
+<a id="tree-clearance-and-imports"></a>
+## Tree-Freigaben und Importe
+
+Form der Freigabezeile:
+
+`hauptprozess:<slug> cleared for real work: human:<id>, <YYYY-MM-DD>, git-tree:<oid>, tested by vorgang:<id>[, ...]`
+
+Eine abgelöste Zeile bleibt durchgestrichen erhalten. Agenten schreiben niemals eine Freigabezeile. Die verantwortliche Person schreibt sie in ihrem eigenen Commit oder diktiert und bestätigt sie. Die Zeile authentifiziert niemanden; der Core prüft sie nicht.
+
+Hier steht pro importiertem Tree eine Importzeile neben seinen Freigabezeilen:
+
+`Imported <hauptprozess|capability>:<slug>: source repository <repository>, commit <commit>, tree git-tree:<oid>, source protocol <Fachrepo protocol pin>`
+
+Erstimport oder geprüfte Übernahme folgen `02_protocol/impacts-method.md#scale`. Der Nachweis bleibt außerhalb des importierten Trees; der Core prüft ihn nicht.
 
 ## Betriebsvertrag
 
-1. Für Core-Vorgänge ist der Workspace-Root der Git-Root. Ein Vorgang bindet nur committete Application-Trees, die aus Branch-, Tag- oder Remote-Tracking-Historie oder dem auflösbaren `HEAD`-Commit des aktuellen Worktrees erreichbar sind, einschließlich detached HEAD. Nur durch Stash oder Hilfsrefs erreichbare Trees bleiben ausgeschlossen; flache Historie umfasst nur innerhalb ihrer Grenze erreichbare Commits. Erreichbarkeit belegt weder Freigabe noch Authentizität.
-2. Application entwerfen: `impacts template application --language de` zeigt die Schablone des Baums, `impacts template <art> --language de` liefert jede `CONTEXT.md` (hauptprozess, teilprozess, arbeitsschritt). Ordner tragen fachliche Namen: `applications/<hauptprozess>/<teilprozess>/<arbeitsschritt>/CONTEXT.md`; die Rolle steht im `type`, die ID ist `<type>:<ordnername>`. Der Application-Baum enthält nur `CONTEXT.md`-Dateien. Nach dem Commit liefert `git rev-parse HEAD:applications/<slug>` die Revision. Eine Application aus einem anderen Repository nur nach dem Verfahren in `02_protocol/impacts-method.md#scale` übernehmen; eine Übersetzung erzeugt eine neue Application-Revision.
-3. Vorgang öffnen: Zuerst deklarierte Eingaben und Herkunftsnachweise des Einstiegs aus ihren erklärten Quellen materialisieren und prüfen, einschließlich benötigter Regeln/Vorlagen außerhalb der Application. Dann `vorgaenge/<vorgang>/CONTEXT.md` aus `impacts template vorgang --language de` mit `application_revision: git-tree:<oid>` erstellen. Der erste Laufpfadeintrag ist der Einstieg der Application, Versuch `001`, Status `aktiv`, oder nach Punkt 5 und 6 `wartend`, wenn er erst nach einem erklärten äußeren Auslöser abschließen kann. Eingaben liegen unter `<arbeitsschritt>/001/input/`; `impacts hash <versuchsordner> <jeder eingaben-Pfad>...` liefert `eingabe_hash`. Fehlgeschlagene Vorbereitung öffnet keinen Versuch.
-4. Versuch mit tatsächlichem Prüfnachweis und passendem Ergebnisweg abschließen: Deklarierte Ausgaben unter `output/` schreiben, `impacts hash <versuchsordner> <jeder ausgaben-Pfad>...` liefert `ausgabe_hash`, den `routen`-Schlüssel des tatsächlichen `pruefung`-Ergebnisses als `gewaehlte_route` eintragen, Status `abgeschlossen`. Eine deklarierte Fehlerroute trägt das negative Ergebnis; sie erlaubt keine erfolgreiche Nutzung. Eine Schrittroute erfordert den nächsten Eintrag mit gebundenen Eingaben im selben logischen Übergang; eine Route zu `end:<slug>` beendet den Vorgang.
-5. Human Gate: Die offene Entscheidung ist mit erklärter Fortsetzung nach Punkt 6 `wartend`, ohne Route oder Freigabe, bis die Entscheidung des benannten Menschen ihn nach Punkt 4 abschließt, mit `freigabe` (`by: human:<id>` und `at: "<JJJJ-MM-TT>T<hh:mm:ss>+<hh:mm>"`, in Anführungszeichen, mit Offset) neben `gewaehlte_route` und `ausgabe_hash`. Belegte menschliche Entscheidungen nur nach `02_protocol/capabilities.md#signale-und-human-gate` erfassen.
-6. Warten: Status `wartend` mit `wiedereinstieg` (`ausloeser`, `continuation_ref` und der nächsten Prüfung als `faellig` nach `02_protocol/impacts-architect/references/zuschnitt.md#waits`). Erlaubte Entwürfe im aktuellen Job dürfen unter `output/` entstehen; gebundene Eingaben, Route und Freigabe bleiben dabei unverändert. Der Body des Vorgangs erklärt vorhandene Ergebnisse, Blockade und nächste erlaubte Arbeit anhand des Laufpfads und der Dateien. Die Fortsetzung schließt denselben Versuch über eine Route ab; neue Eingaben bindet der nächste vorgesehene Versuch. Der Core startet keine parallelen Arbeitsschritte.
-7. Für erforderliche Core-Konformität `impacts validate` im gewählten Umfang ausführen. Es prüft nur die Core-Struktur (`02_protocol/ontology.md#enforcement-and-completion`), daher belegt Exit 0 nichts darüber hinaus, auch nicht, dass `gewaehlte_route` zum tatsächlichen `pruefung`-Ergebnis passt; den Rest verantworten der unter „Prüfung“ jedes Schritts benannte Prüfer und das eingerichtete Harness. Ein fehlgeschlagener oder nicht ausgeführter erforderlicher Check beschränkt die davon abhängige Aussage oder Handlung.
-8. Der Core führt keinen Arbeitsschritt aus. Der gebundene Arbeitsschritt-Body liefert den Prompt und benennt Werkzeugoperationen, Versionen, Parameter, erlaubte Wirkungen und Checks. Das eingerichtete Harness lädt deklarierte Eingaben, führt erlaubte Arbeit aus und hält tatsächliche Ergebnisnachweise fest. Es folgt `02_protocol/impacts-method.md#compose-an-arbeitsschritt` und `02_protocol/capabilities.md`.
+1. Für Core-Vorgänge ist der Workspace-Root der Git-Root.
+2. Hauptprozess an der durch `02_protocol/impacts-architect/references/formwahl.md#data-kinds` gewählten Heimat entwerfen: `02_protocol/binding.md#hauptprozess-tree-rules` liefert Schablone und Regeln des Baums, `impacts template <art> --language de` liefert jede `CONTEXT.md` (hauptprozess, teilprozess, arbeitsschritt). Nach dem Commit liefert `git rev-parse HEAD:hauptprozesse/<slug>` die Revision. Einen Hauptprozess aus einem anderen Repository nur nach dem Verfahren in `02_protocol/impacts-method.md#scale` übernehmen; eine Übersetzung erzeugt eine neue Hauptprozess-Revision.
+3. Vor einem echten Vorgang unten eine Freigabezeile für den aktuellen Hauptprozess-Tree finden. Fehlt sie, den verantwortlichen Kunden fragen und nichts öffnen. Einen synthetischen Testgegenstand als "synthetischer Testfall" markieren.
+4. Vorgänge nach `02_protocol/binding.md#execution` des gepinnten Releases ausführen.
+
+5. Für erforderliche Core-Konformität `impacts validate` im gewählten Umfang ausführen. Die Core-Grenze anwenden (`02_protocol/ontology.md#enforcement-and-completion`).
+6. Unter der Core-Grenze aus Punkt 5 liefert der gebundene Arbeitsschritt-Body den Prompt und benennt Werkzeugoperationen, Versionen, Parameter, erlaubte Eingriffe und Checks. Das eingerichtete Harness lädt deklarierte Eingaben, führt erlaubte Arbeit aus und hält tatsächliche Ergebnisnachweise fest. Es folgt `02_protocol/impacts-method.md#compose-an-arbeitsschritt` und `02_protocol/binding.md`.
 
 ## Arbeitssprache
 

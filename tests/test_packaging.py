@@ -1,3 +1,4 @@
+import json
 import os
 from pathlib import Path
 import shutil
@@ -31,7 +32,7 @@ def installed_environment(tmp_path_factory) -> dict[str, str]:
     shutil.copytree(
         ROOT,
         source,
-        ignore=shutil.ignore_patterns(".git", "build", "*.egg-info", "__pycache__"),
+        ignore=shutil.ignore_patterns(".git", ".venv", ".pytest_cache", ".hypothesis", "build", "*.egg-info", "__pycache__"),
     )
     build = subprocess.run(
         [
@@ -129,7 +130,7 @@ def test_non_editable_install_exposes_template_and_hash_from_unrelated_cwd(
     assert template.stdout.startswith("---\ntype: arbeitsschritt\n")
     assert heading in template.stdout
     assert digest.returncode == 0, digest.stderr
-    assert digest.stdout.startswith("sha256:") and len(digest.stdout.strip()) == 71
+    assert json.loads(digest.stdout) == [{"pfad": "input/auftrag.md", "sha256": "sha256:" + __import__("hashlib").sha256((attempt / "input/auftrag.md").read_bytes()).hexdigest()}]
 
 
 @pytest.mark.parametrize("language", ["en", "de"])
@@ -170,7 +171,7 @@ def test_non_editable_install_contains_only_five_schemas_and_minimal_api(
                 "from importlib import metadata, resources; "
                 "files=resources.files('impacts_protocol.schemas'); "
                 "names=sorted(p.name for p in files.iterdir() if p.name.endswith('.json')); "
-                "assert set(impacts_protocol.__all__)=={'HashSurfaceError','Issue','ValidationReport','init_workspace','surface_hash','validate'}; "
+                "assert set(impacts_protocol.__all__)=={'HashSurfaceError','Issue','ValidationReport','init_workspace','file_references','validate'}; "
                 f"assert metadata.version('impacts-protocol')=={VERSION!r}; "
                 "assert 'referencing>=0.28.4' in metadata.requires('impacts-protocol'); "
                 "assert names==['arbeitsschritt.schema.json','hauptprozess.schema.json','leistung.schema.json','teilprozess.schema.json','vorgang.schema.json'], names"

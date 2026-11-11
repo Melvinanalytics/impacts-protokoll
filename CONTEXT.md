@@ -5,7 +5,7 @@ For an existing definition, follow [Use](02_protocol/ontology.md#use); for missi
 | Intent | Authority pointers |
 |---|---|
 | First use, source version, installed package or an unresolved entry point | Resolve [version and entry points](README.md#version-and-entry-points); for a first bounded contribution, use [FIRST-WIN.md](FIRST-WIN.md) |
-| `AGENTS.md`, `CONTEXT.md`, workstep prompt, prompt fragment or instruction-debt correction | [Maintain agent instructions](02_protocol/impacts-method.md#maintain-agent-instructions) |
+| `AGENTS.md`, `CONTEXT.md`, Arbeitsschritt prompt, prompt fragment or instruction-debt correction | [Maintain agent instructions](02_protocol/impacts-method.md#maintain-agent-instructions) |
 | Protocol meaning, work design, source binding or a business question | [Protocol task routes](02_protocol/CONTEXT.md#task-routes) |
 | Evaluations and structural limits | [Evaluation routes](06_evaluations/CONTEXT.md) |
 | Initialization, templates, hashing, validation or the read-only view | Start with [optional technical use](README.md#optional-technical-use), then inspect the [CLI implementation](src/impacts_protocol/) only when implementation detail is needed |

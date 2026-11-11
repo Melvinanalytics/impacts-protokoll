@@ -22,39 +22,39 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
 
-from impacts_protocol import surface_hash
-from tests.c_owner_support import committed_workspace, make_attempt, write_vorgang
-from tests.support import git, read_context, replace_context
+from tests.support import (
+    committed_workspace, fixture_path, fixture_references, git, make_attempt, read_context, replace_context, write_vorgang,
+)
 
 
 def source_identity() -> dict[str, str]:
     paths = [*sorted((ROOT / "src/impacts_protocol").glob("*.py")),
              *sorted((ROOT / "02_protocol/schemas").glob("*.json")),
              ROOT / "pyproject.toml", Path(__file__).resolve(),
-             ROOT / "tests/support.py", ROOT / "tests/c_owner_support.py"]
+             ROOT / "tests/support.py"]
     return {path.relative_to(ROOT).as_posix(): hashlib.sha256(path.read_bytes()).hexdigest()
             for path in paths}
 
 
 def measure(base: Path, count: int, repetitions: int) -> dict:
     root, _ = committed_workspace(base)
-    step = root / "applications/video/produktion/start/CONTEXT.md"
+    step = root / "hauptprozesse/video/produktion/start/CONTEXT.md"
     definition = read_context(step)
     definition["eingaben"] = ["input/items"]
     replace_context(step, definition)
-    git(root, "add", "applications")
-    git(root, "commit", "-qm", "declare aggregate input")
-    revision = git(root, "rev-parse", "HEAD:applications/video")
+    git(root, "add", "hauptprozesse")
+    git(root, "commit", "-qm", "declare source files")
+    revision = git(root, "rev-parse", "HEAD:hauptprozesse/video")
     vorgang = root / "vorgaenge/video-001"
     attempt = make_attempt(vorgang, "start", 1)
-    (attempt / "input/items").mkdir()
+    (fixture_path(attempt, "input/items")).mkdir()
     payload = b"synthetic scale input\n"
     for index in range(count):
-        (attempt / "input/items" / f"item-{index:06}.txt").write_bytes(payload)
-    digest = surface_hash(attempt, ["input/items"])
+        (fixture_path(attempt, "input/items") / f"item-{index:06}.txt").write_bytes(payload)
+    references = fixture_references(attempt, ["input/items"])
     write_vorgang(root, "video-001", revision, [{
-        "arbeitsschritt_ref": "arbeitsschritt:start", "versuch": 1,
-        "status": "aktiv", "eingabe_hash": digest,
+        "arbeitsschritt_ref": "arbeitsschritt:start", "nummer": 1,
+        "status": "aktiv", "gelesen": references,
     }])
     environment = {**os.environ, "PYTHONPATH": str(ROOT / "src"),
                    "PYTHONDONTWRITEBYTECODE": "1"}
@@ -70,8 +70,8 @@ def measure(base: Path, count: int, repetitions: int) -> dict:
             raise RuntimeError(f"Validation changed: {result.returncode}: {result.stdout} {result.stderr}")
         observations.append(elapsed)
     return {"input_files": count, "input_bytes": count * len(payload),
-            "application_files": 4, "runs": 1, "attempts": 1,
-            "surface_digest": digest, "seconds": observations,
+            "hauptprozess_files": 4, "runs": 1, "attempts": 1,
+            "references": references, "seconds": observations,
             "median_seconds": statistics.median(observations)}
 
 
@@ -100,7 +100,7 @@ def main() -> None:
               "dependencies": {name: version(name) for name in ("PyYAML", "jsonschema", "referencing")},
               "python": platform.python_version(), "os": platform.system(),
               "machine": platform.machine(), "repetitions": args.repetitions,
-              "workload": "one active run; fixed Application; aggregate raw-byte input hashing",
+              "workload": "one active Vorgang; fixed Hauptprozess; per-file source reference validation",
               "cache": "fresh interpreter; OS file cache retained",
               "claim_limit": "descriptive scale only; no before/after or concurrent-writer guarantee",
               "results": results}

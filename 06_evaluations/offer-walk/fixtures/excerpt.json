@@ -1,0 +1,9 @@
+{
+  "customer_id": "C-1",
+  "as_of": "2026-09-10",
+  "agreement": {"agreement_id": "A-1", "version": 2},
+  "items": [
+    {"item_id": "I-2", "product_id": "P-10", "quantity": 2, "unit": "Stück"},
+    {"item_id": "I-3", "service_id": "S-20", "quantity": 12, "unit": "Stunde"}
+  ]
+}

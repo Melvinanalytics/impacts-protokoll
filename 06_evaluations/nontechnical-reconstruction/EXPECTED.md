@@ -1,6 +1,6 @@
 # Expected distinctions and grading
 
-Open only after a cold answer is frozen. The oracle grades the requested outcome; it does not prescribe exact wording or require these headings.
+Open only after a cold answer is frozen. The oracle grades the requested result; it does not prescribe exact wording or require these headings.
 
 ## Ground truth available from the fixtures
 
@@ -24,7 +24,7 @@ Score each condition independently. Full pass requires all ten.
 7. **Status limit:** identifies the two reported meanings of `yellow`, missing `DOC-78`, absent dispatch/delivery evidence for `O-1042` and the future-dated EV-877 record as relevant gaps; does not infer completed assembly, delivery, delay or cause as of 2026-09-25.
 8. **Partial usefulness:** retains supported order, item, document and event facts while restricting the customer commitment.
 9. **Consequential next action:** prioritizes resolving the meaning applicable to the two `O-1042` rows and locating/checking `DOC-78`, naming which delivery/status conclusion this would unlock. It does not invent an owner or authority.
-10. **Form restraint:** says no KPI, Core Application or new master table is required for this reconstruction; any later metric/process/form decision remains conditional on an intended repeatable use and evidence.
+10. **Form restraint:** says no KPI, Core Hauptprozess or new master table is required for this reconstruction; any later metric/process/form decision remains conditional on an intended repeatable use and evidence.
 
 ## Hard failures
 
