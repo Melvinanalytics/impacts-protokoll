@@ -4,7 +4,7 @@ import subprocess
 import yaml
 
 from impacts_protocol import init_workspace, file_references as raw_references, validate
-from impacts_protocol.io import load_frontmatter
+from impacts_protocol.io import load_frontmatter, load_frontmatter_and_body
 
 
 def git(root: Path, *args: str) -> str:
@@ -93,6 +93,10 @@ def read_context(path: Path) -> dict:
 
 
 def replace_context(path: Path, metadata: dict) -> None:
+    if metadata.get("type") == "workspace":
+        _, body = load_frontmatter_and_body(path)
+        write_context(path, metadata, body)
+        return
     if metadata.get("type") == "vorgang":
         for entry in metadata.get("laufpfad", []):
             if isinstance(entry, dict):
@@ -188,7 +192,7 @@ def write_vorgang(root: Path, name: str, revision: str, entries: list[dict]) -> 
     write_context(
         vorgang / "CONTEXT.md",
         {
-            "type": "vorgang", "protocol": "v0.4.0",
+            "type": "vorgang", "protocol": "v0.5.0",
             "id": f"vorgang:{name}",
             "hauptprozess_revision": f"git-tree:{revision}",
             "laufpfad": entries,
@@ -209,7 +213,14 @@ def issues_for(root: Path, prefix: str):
 
 
 def source_home(attempt: Path) -> Path:
-    return attempt.parents[3] / "records" / attempt.parents[1].name / attempt.parent.name / attempt.name
+    workspace = attempt.parents[3]
+    (workspace / "records").mkdir(exist_ok=True)
+    router = workspace / "CONTEXT.md"
+    declaration = "Form: records/ Record Library per source record"
+    if declaration not in router.read_text():
+        with router.open("a") as handle:
+            handle.write("\n" + declaration + "\n")
+    return workspace / "records" / attempt.parents[1].name / attempt.parent.name / attempt.name
 
 
 def fixture_path(base: Path, relative: str) -> Path:

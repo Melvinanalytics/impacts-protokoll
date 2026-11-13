@@ -12,7 +12,10 @@ def test_equals_the_exported_model_without_language(tmp_path):
     workspace = _vorgang(tmp_path, AT_PRUEFEN).parents[2]
     ist = workspace / "analyse"
     ist.mkdir(parents=True)
+    with (workspace / "CONTEXT.md").open("a") as router:
+        router.write("\nForm: analyse/ Context Map per capture\n")
     (ist / "angebot.md").write_text("---\ntype: ist-prozess\nname: Angebot\ndate: 2026-10-23\n---\n\n# Angebot\n", encoding="utf-8")
+    (ist / "CONTEXT.md").write_text("[Capture](angebot.md)\n", encoding="utf-8")
     out = tmp_path / "out"
     assert main(["view", str(workspace), "--out", str(out), "--json"]) == 0
     exported = json.loads((out / "model.json").read_text(encoding="utf-8"))

@@ -82,18 +82,19 @@ def test_step_queues_keep_revision_status_and_unopened_successor(tmp_path):
 def test_funnel_counts_record_addresses_not_runs_or_execution(tmp_path):
     root, base = projections(tmp_path)
     path = root / 'vorgaenge/video-001/CONTEXT.md'
-    record = root / 'records/lot.md'
+    record = root / 'records/lot/subject.md'
+    record.parent.mkdir()
     record.write_text('Stage: submitted\n')
-    write_context(path, read_context(path), '## Subject\n\n[Lot](../../records/lot.md)\n')
+    write_context(path, read_context(path), '## Subject\n\n[Lot](../../records/lot/subject.md)\n')
     model = selection.single_vorgang(path)
-    assert model['subject'] == {'record': 'records/lot.md', 'stage': 'submitted'}
+    assert model['subject'] == {'record': 'records/lot/subject.md', 'stage': 'submitted'}
     ended = deepcopy(model)
     ended['view']['status'] = 'beendet'
     second = deepcopy(model)
-    second['subject'] = {'record': 'records/lot.md#second', 'stage': 'lost'}
+    second['subject'] = {'record': 'records/lot/subject.md#second', 'stage': 'lost'}
     rows = project.funnel({'first': model, 'same': ended, 'second': second, 'unlinked': base})
-    assert rows == [{'stage': 'lost', 'count': 1, 'records': ['records/lot.md#second']},
-                    {'stage': 'submitted', 'count': 1, 'records': ['records/lot.md']}]
+    assert rows == [{'stage': 'lost', 'count': 1, 'records': ['records/lot/subject.md#second']},
+                    {'stage': 'submitted', 'count': 1, 'records': ['records/lot/subject.md']}]
     # A stage conflict is a gap; execution success never resolves it.
     ended['subject']['stage'] = 'awarded'
     assert project.funnel({'first': model, 'same': ended})[0]['stage'] == 'open'

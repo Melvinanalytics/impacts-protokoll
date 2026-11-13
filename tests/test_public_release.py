@@ -149,7 +149,7 @@ def test_candidate_public_contract_and_scope():
     contributing = (ROOT / "CONTRIBUTING.md").read_text()
     first_win = (ROOT / "FIRST-WIN.md").read_text()
 
-    assert version == "0.4.1"
+    assert version == "0.5.0"
     for content in (readme, german):
         assert "report_version: 3" in content
         assert ("message" in content and "diagnostic" in content.lower()) or "Diagnosehilfen" in content

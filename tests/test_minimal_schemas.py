@@ -110,7 +110,7 @@ def test_workstep_paths_must_be_normalized_and_stay_in_their_surface():
 
 def test_vorgang_uses_only_revision_and_laufpfad_for_process_state():
     document = {
-        "type": "vorgang", "protocol": "v0.4.0",
+        "type": "vorgang", "protocol": "v0.5.0",
         "id": "vorgang:video-001",
         "hauptprozess_revision": "git-tree:" + "a" * 40,
         "laufpfad": [
@@ -142,7 +142,7 @@ def test_vorgang_uses_only_revision_and_laufpfad_for_process_state():
 def test_freigabe_at_requires_declared_lexical_shape(at, expected):
     """Calendar validity is the validator's job; the schema owns the lexical shape."""
     document = {
-        "type": "vorgang", "protocol": "v0.4.0",
+        "type": "vorgang", "protocol": "v0.5.0",
         "id": "vorgang:x",
         "hauptprozess_revision": "git-tree:" + "a" * 40,
         "laufpfad": [{

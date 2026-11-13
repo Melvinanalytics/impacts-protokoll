@@ -152,6 +152,7 @@ def main(argv: list[str] | None = None) -> int:
                 "release": report.release,
                 "pin": report.pin,
                 "judged": report.judged,
+                "held": list(report.held),
                 "superseded": list(report.superseded),
                 "external_references": list(report.external_references),
                 "external_references_not_verified": report.external_references_not_verified,
@@ -171,6 +172,10 @@ def main(argv: list[str] | None = None) -> int:
         print(item.message)
     if report.external_references_not_verified:
         print(f"{report.external_references_not_verified} references in external stores not verified by Core")
+    if report.held:
+        print(f"{len(report.held)} folders held without form")
+        for row in report.held:
+            print(f"held: {row['path']} ({row['reason']}; decided by {row['decided_by']})")
     for issue in report.issues:
         print(f"{issue.code}: {issue.path}: {issue.message} ({issue.rule})")
     return 0 if report.valid else 1

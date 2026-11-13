@@ -25,12 +25,14 @@ def test_init_creates_only_minimal_workspace():
 
         assert sorted(path.name for path in root.iterdir()) == [
             ".gitattributes",
+            ".gitignore",
             "CONTEXT.md",
             "hauptprozesse",
             "vorgaenge",
         ]
         assert (root / ".gitattributes").read_bytes() == b"* -text\n"
-        assert load_frontmatter(root / "CONTEXT.md") == {"type": "workspace", "protocol": "v0.4.1"}
+        assert (root / ".gitignore").read_text().split() == ["Thumbs.db", "desktop.ini", "~$*"]
+        assert load_frontmatter(root / "CONTEXT.md") == {"type": "workspace", "protocol": "v0.5.0"}
 
 
 def test_cli_init_needs_no_customer_argument():
@@ -80,3 +82,12 @@ def test_execution_procedure_names_the_hash_command_where_outputs_are_recorded()
 def test_vorgang_template_names_the_revision_command_where_it_is_filled():
     template = ROOT / "02_protocol" / "templates" / "vorgang.md"
     assert "git rev-parse HEAD:hauptprozesse/" in template.read_text(encoding="utf-8")
+
+
+def test_init_never_touches_an_existing_gitignore(tmp_path):
+    target = tmp_path / "workspace"
+    target.mkdir()
+    (target / ".gitignore").write_text("mine\n")
+    with pytest.raises(FileExistsError):
+        _init_workspace(target)
+    assert (target / ".gitignore").read_text() == "mine\n"

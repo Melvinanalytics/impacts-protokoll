@@ -100,10 +100,11 @@ def test_completed_input_slot_coverage_rejects_gaps(tmp_path, fault):
     ('Stage: submitted\nStage: awarded\n', 'open'), ('Outcome: awarded\n', 'open')])
 def test_view_reads_subject_stage_without_inference(tmp_path, body, expected):
     root, case, _ = prepared(tmp_path)
-    record = root / 'records/lot.md'
+    record = root / 'records/lot/subject.md'
+    record.parent.mkdir()
     record.write_text('Identity: lot-A\n' + body)
     meta = read_context(case / 'CONTEXT.md')
-    write_context(case / 'CONTEXT.md', meta, '## Subject\n\n[Lot](../../records/lot.md)\n')
+    write_context(case / 'CONTEXT.md', meta, '## Subject\n\n[Lot](../../records/lot/subject.md)\n')
     model = selection.single_vorgang(case / 'CONTEXT.md')
     assert model['stand']['stufe'] == expected
     assert model['view']['status'] == 'zwischen'
@@ -111,8 +112,9 @@ def test_view_reads_subject_stage_without_inference(tmp_path, body, expected):
 
 def test_table_row_is_a_subject_record(tmp_path):
     root, case, _ = prepared(tmp_path)
-    (root / 'records/lots.md').write_text('| Identity | Stage | Decisions |\n|---|---|---|\n| <a id="A"></a>lot-A | short-listed | selection-11 |\n')
-    write_context(case / 'CONTEXT.md', read_context(case / 'CONTEXT.md'), '## Subject\n\n[Lot](../../records/lots.md#A)\n')
+    (root / 'records/lots').mkdir()
+    (root / 'records/lots/table.md').write_text('| Identity | Stage | Decisions |\n|---|---|---|\n| <a id="A"></a>lot-A | short-listed | selection-11 |\n')
+    write_context(case / 'CONTEXT.md', read_context(case / 'CONTEXT.md'), '## Subject\n\n[Lot](../../records/lots/table.md#A)\n')
     assert selection.single_vorgang(case / 'CONTEXT.md')['stand']['stufe'] == 'short-listed'
 
 
@@ -139,7 +141,7 @@ def test_one_subject_crosses_offer_and_study_without_an_award_gate(tmp_path):
     record = root / 'records/lots/A/CONTEXT.md'
     record.parent.mkdir(parents=True)
     record.write_text('Identity: lot-A\nStage: awarded\nVorgänge: offer-A, study-A\nCommitments: study order citing award.md\nDecisions: [selection-11](../../decisions/selection-11.md)\nOutcome: award.md, received 2026-11-11, synthetic\n')
-    (root / 'records/lots/kind.md').write_text('Identity rule: issuer and lot ID. Stage words: short-listed, offered, awarded, studied.\n')
+    (root / 'records/lots/CONTEXT.md').write_text('Identity rule: issuer and lot ID. Stage words: short-listed, offered, awarded, studied.\n')
     decision = root / 'records/decisions/selection-11.md'
     decision.parent.mkdir(parents=True)
     decision.write_text('Synthetic selection-11. Customer, 2026-11-10: yes for lots A and B, no for C. Cites round-11 line A.\n')
@@ -150,11 +152,16 @@ def test_one_subject_crosses_offer_and_study_without_an_award_gate(tmp_path):
     assert not (root / 'records/lots/D').exists()
     round_record = root / 'records/rounds/round-11.md'
     round_record.parent.mkdir(parents=True)
-    preferences = root / 'records/preferences.md'
+    preferences = root / 'grundlagen/preferences.md'
+    preferences.parent.mkdir()
     preferences.write_text('Synthetic selection rule.\n')
     import hashlib
     round_record.write_text('Synthetic code run, 2026-11-10. Candidates A, B, C and rejected D. Sent lines: A, B, C.\n'
-                            'Input: records/preferences.md; sha256:' + hashlib.sha256(preferences.read_bytes()).hexdigest() + '\n')
+                            'Input: grundlagen/preferences.md; sha256:' + hashlib.sha256(preferences.read_bytes()).hexdigest() + '\n')
+    with (root / 'CONTEXT.md').open('a') as router:
+        router.write('\nForm: records/ Record Library per record kind\nForm: grundlagen/ Knowledge Bundle per topic\n')
+    (root / 'grundlagen/CONTEXT.md').write_text('[Preferences](preferences.md)\n')
+    (root / 'records/CONTEXT.md').write_text('Form: lots/ Record Library per lot\nForm: decisions/ Record Library per decision\nForm: rounds/ Record Library per round\n')
     award = root / 'records/lots/A/award.md'
     award.write_text('Synthetic received award from outside buyer for lot A, 2026-11-11.\n')
     for name, slots in [('offer', ['records/rounds/round-11.md', 'records/decisions/selection-11.md']),

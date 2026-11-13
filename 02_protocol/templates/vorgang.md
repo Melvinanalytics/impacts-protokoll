@@ -1,6 +1,6 @@
 ---
 type: vorgang
-protocol: v0.4.1
+protocol: v0.5.0
 id: vorgang:prueffall-001
 hauptprozess_revision: git-tree:0000000000000000000000000000000000000000
 # vorgaenger: vorgaenge/prueffall-alt/CONTEXT.md

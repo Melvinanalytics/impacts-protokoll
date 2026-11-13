@@ -1,6 +1,6 @@
 ---
 type: workspace
-protocol: v0.4.1
+protocol: v0.5.0
 ---
 
 Working language: en
@@ -28,11 +28,13 @@ Record configured facts here and preserve the operating contract. Changes to ins
 
 `Ablage: <name> <location or system>, <access rule home>`: declare each external store on its own unindented body line; agents never invent a store.
 
+`Form: <folder>/ <form> per <unit>`: one unindented body line per top-level folder (forms: `02_protocol/impacts-architect/references/formwahl.md#folder-structure-by-form`).
+
 When using Capabilities from a Fachrepo or another domain home, link their early responsible router under Domain homes and apply `02_protocol/impacts-architect/references/formwahl.md#capability-orientation` from the recorded protocol source.
 
 ## Setup
 
-`init` creates this router, `hauptprozesse/`, `vorgaenge/` and `.gitattributes` (`* -text`, so a checkout keeps bound bytes and their hashes unchanged). Git omits empty directories; validation treats absent `hauptprozesse/` or `vorgaenge/` collections as empty. Use `02_protocol/impacts-architect/references/formwahl.md#data-kinds` for stage authority and candidate placement. An empty valid workspace is not an executable process. The following rules apply to selected Core Hauptprozess/Vorgang contracts under `02_protocol/impacts-architect/references/formwahl.md#tooling-stop`.
+`init` creates this router, `hauptprozesse/`, `vorgaenge/`, `.gitattributes` (`* -text`, so a checkout keeps bound bytes and their hashes unchanged) and a `.gitignore` for system and office leftovers (`Thumbs.db`, `desktop.ini`, `~$*`), which the level check skips. Git omits empty directories; validation treats absent `hauptprozesse/` or `vorgaenge/` collections as empty. Use `02_protocol/impacts-architect/references/formwahl.md#data-kinds` for stage authority and candidate placement. An empty valid workspace is not an executable process. The following rules apply to selected Core Hauptprozess/Vorgang contracts under `02_protocol/impacts-architect/references/formwahl.md#tooling-stop`.
 
 Hauptprozess and Vorgang layouts live in `02_protocol/binding.md#hauptprozess-tree-rules`. `analyse/`, `capabilities/`, `grundlagen/` and `records/` appear only with content.
 
@@ -47,7 +49,7 @@ Hauptprozess and Vorgang layouts live in `02_protocol/binding.md#hauptprozess-tr
 └── records/                           # first record
 ```
 
-`analyse/` appears with the first capture; `init` does not create it. Records start as one file or table per kind and earn a folder per instance under `02_protocol/impacts-architect/references/formwahl.md#data-kinds`. Use `grundlagen/` only for foundations no single step owns.
+`analyse/` appears with the first capture; `init` does not create it. Each record kind has its own folder under `records/` and starts as one table; once a subject earns its own folder, the table moves into the kind's `CONTEXT.md`; a workspace with one record kind may keep its table directly in `records/` (`02_protocol/impacts-architect/references/formwahl.md#folder-structure-by-form`). Use `grundlagen/` only for foundations no single step owns.
 
 ## Tree clearance and imports
 

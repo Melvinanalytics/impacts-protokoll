@@ -45,7 +45,7 @@ def _vorgang(tmp_path: Path, entries: list, erreicht: list | None = None) -> Pat
             (attempt / "output" / "ergebnis.md").write_text("fertig", encoding="utf-8")
             entry |= {"gewaehlte_route": route, "geschrieben": fixture_references(attempt, ["output/ergebnis.md"])}
         laufpfad.append(entry)
-    write_context(folder / "CONTEXT.md", {"type": "vorgang", "protocol": "v0.4.0", "id": "vorgang:video-001",
+    write_context(folder / "CONTEXT.md", {"type": "vorgang", "protocol": "v0.5.0", "id": "vorgang:video-001",
                                           "hauptprozess_revision": f"git-tree:{revision}", "laufpfad": laufpfad}, "# Video 001")
     return folder / "CONTEXT.md"
 

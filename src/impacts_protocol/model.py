@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 
 
 RULES = {
+    "topology": "02_protocol/impacts-architect/references/formwahl.md#folder-structure-by-form",
     "format": "02_protocol/binding.md#validation-issue-codes",
     "schema": "02_protocol/binding.md#validation-issue-codes",
     "routing": "02_protocol/binding.md#hauptprozess-tree-rules",
@@ -66,6 +67,8 @@ class ValidationReport:
     release: str | None = None
     pin: str | None = None
     judged: dict[str, int] = field(default_factory=judged_counts)
+
+    held: tuple[dict, ...] = ()
 
     @property
     def not_judged_counts(self) -> dict[str, int]:

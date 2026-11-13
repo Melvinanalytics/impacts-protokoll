@@ -54,11 +54,16 @@ def template_text(kind: str, *, language: str = "en") -> str:
     return _template_file(kind, language)
 
 
+# System and office leftovers; the level check skips what Git ignores.
+GITIGNORE = "Thumbs.db\ndesktop.ini\n~$*\n"
+
+
 def _write_workspace(target: Path, language: str) -> None:
     for folder in WORKSPACE_FOLDERS:
         (target / folder).mkdir()
 
     (target / ".gitattributes").write_text("* -text\n", encoding="utf-8")
+    (target / ".gitignore").write_text(GITIGNORE, encoding="utf-8")
     (target / "CONTEXT.md").write_text(
         _template_file("workspace", language),
         encoding="utf-8",

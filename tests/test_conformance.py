@@ -74,7 +74,7 @@ if command == "validate":
     report["not_judged"] = []
     report["not_judged_counts"] = {{"vorgang": 0, "definition_tree": 0}}
     report["external_references_not_verified"] = 0
-    report.update(release="v0.4.0", pin="v0.4.0", judged={{"hauptprozess": 1, "teilprozess": 1, "arbeitsschritt": 2, "vorgang": 0, "versuch": 0}}, superseded=[], external_references=[])
+    report.update(release="v0.4.0", pin="v0.4.0", judged={{"hauptprozess": 1, "teilprozess": 1, "arbeitsschritt": 2, "vorgang": 0, "versuch": 0}}, superseded=[], external_references=[], held=[])
 else:
     report["attempt"] = sys.argv[2]
     report["surfaces"] = sys.argv[3:-1]
@@ -122,7 +122,7 @@ report = {
     "root": sys.argv[2],
     "valid": True,
     "not_judged": [], "not_judged_counts": {"vorgang": 0, "definition_tree": 0}, "external_references_not_verified": 0, "release": "v0.4.0", "pin": "v0.4.0",
-        "judged": {"hauptprozess": 1, "teilprozess": 1, "arbeitsschritt": 2, "vorgang": 0, "versuch": 0}, "superseded": [], "external_references": [],
+        "judged": {"hauptprozess": 1, "teilprozess": 1, "arbeitsschritt": 2, "vorgang": 0, "versuch": 0}, "held": [], "superseded": [], "external_references": [],
     "issues": [],
 }
 print(json.dumps(report, separators=(",", ":")))
@@ -210,7 +210,7 @@ def test_unicode_equivalent_folder_spellings_keep_distinct_issue_occurrences(tmp
         "root": str(root),
         "valid": False,
         "not_judged": [], "not_judged_counts": {"vorgang": 0, "definition_tree": 0}, "external_references_not_verified": 0, "release": "v0.4.0", "pin": "v0.4.0",
-        "judged": {"hauptprozess": 1, "teilprozess": 1, "arbeitsschritt": 2, "vorgang": 0, "versuch": 0}, "superseded": [], "external_references": [],
+        "judged": {"hauptprozess": 1, "teilprozess": 1, "arbeitsschritt": 2, "vorgang": 0, "versuch": 0}, "held": [], "superseded": [], "external_references": [],
         "issues": [
             {
                 "code": "structure.level",
@@ -489,7 +489,7 @@ def test_runner_checks_frozen_issue_explanations():
     report = {"report_version": 3, "command": "validate", "tool": {
         "name": "synthetic", "version": None, "version_source": "test"},
         "root": "/synthetic", "valid": False, "not_judged": [], "not_judged_counts": {"vorgang": 0, "definition_tree": 0}, "external_references_not_verified": 0, "release": "v0.4.0", "pin": "v0.4.0",
-        "judged": {"hauptprozess": 1, "teilprozess": 1, "arbeitsschritt": 2, "vorgang": 0, "versuch": 0}, "superseded": [], "external_references": [], "issues": [{
+        "judged": {"hauptprozess": 1, "teilprozess": 1, "arbeitsschritt": 2, "vorgang": 0, "versuch": 0}, "held": [], "superseded": [], "external_references": [], "issues": [{
             "code": "structure.level", "path": "24-x",
             "message": "misleading numeric prefix diagnostic", "rule": "binding.md#hauptprozess-tree-rules"}]}
     with pytest.raises(runner.ConformanceError, match="frozen explanations"):

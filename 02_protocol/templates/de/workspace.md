@@ -1,9 +1,9 @@
 ---
 type: workspace
-protocol: v0.4.1
+protocol: v0.5.0
 ---
 
-<!-- Translation source: 02_protocol/templates/workspace.md; sha256: a9366a112efd6473fde2e89e4d31e9c129ae434a4ede6aadcd43464dda3d7471 -->
+<!-- Translation source: 02_protocol/templates/workspace.md; sha256: 00d22ee58015d44aa25478553a57f211b0f20614b9188b216c470fbb2c83175e -->
 
 Working language: de
 
@@ -28,11 +28,13 @@ Konfigurierte Fakten hier festhalten und den Betriebsvertrag erhalten. Änderung
 
 `Ablage: <name> <Ort oder System>, <Ort der Zugriffsregel>`: jede externe Ablage auf einer eigenen, nicht eingerückten Body-Zeile deklarieren; Agenten erfinden niemals eine Ablage.
 
+`Form: <folder>/ <form> per <unit>`: eine nicht eingerückte Body-Zeile je Top-Level-Ordner (Formen: `02_protocol/impacts-architect/references/formwahl.md#folder-structure-by-form`).
+
 Bei Nutzung von Capabilities aus einem Fachrepo oder einer anderen fachlichen Heimat deren frühen zuständigen Router unter „Fachliche Heimaten“ verlinken und `02_protocol/impacts-architect/references/formwahl.md#capability-orientation` aus der benannten Protokollquelle anwenden.
 
 ## Einrichtung
 
-`init` erzeugt diesen Router, `hauptprozesse/`, `vorgaenge/` und `.gitattributes` (`* -text`, damit ein Checkout gebundene Bytes und ihre Hashes unverändert lässt). Bevor ein Core-Vorgang eine Revision bindet, Git an diesem Root einrichten. Git übernimmt keine leeren Ordner; die Validierung behandelt fehlende Sammlungen `hauptprozesse/` oder `vorgaenge/` als leer. Vorhandene Sammlungen müssen gültige Inhalte enthalten; keine Platzhalterdateien ergänzen. Fachdateien nach der Formwahl nur für tatsächlichen Inhalt ergänzen; `analyse/` entsteht erst, wenn Analyse es benötigt. Für Stufenbefugnis und Kandidatenplatzierung `02_protocol/impacts-architect/references/formwahl.md#data-kinds` verwenden. Vor einem Core-Vorgang unter „Quelle, Harness und Heimaten“ das eingerichtete Harness (`02_protocol/binding.md#history-retention`) und seine Einrichtungs-/Abhängigkeitsreferenz benennen; Unterstützung für Operationen, Quellzugriffe, Checks, Übergaben und menschliche Grenzen des gewählten Hauptprozesses feststellen, einschließlich erforderlicher Aufbewahrung und Prüfung der Historie nach diesem Zuständigkeitsvertrag. Zugangsdaten bleiben in dieser Ausführungsumgebung. Ein leerer gültiger Workspace ist noch kein ausführbarer Prozess. Die folgenden Regeln gelten für gewählte Core-Verträge für Hauptprozesse und Vorgänge gemäß `02_protocol/impacts-architect/references/formwahl.md#tooling-stop`.
+`init` erzeugt diesen Router, `hauptprozesse/`, `vorgaenge/`, `.gitattributes` (`* -text`, damit ein Checkout gebundene Bytes und ihre Hashes unverändert lässt) und eine `.gitignore` für System- und Office-Reste (`Thumbs.db`, `desktop.ini`, `~$*`), die die Ebenenprüfung überspringt. Bevor ein Core-Vorgang eine Revision bindet, Git an diesem Root einrichten. Git übernimmt keine leeren Ordner; die Validierung behandelt fehlende Sammlungen `hauptprozesse/` oder `vorgaenge/` als leer. Vorhandene Sammlungen müssen gültige Inhalte enthalten; keine Platzhalterdateien ergänzen. Fachdateien nach der Formwahl nur für tatsächlichen Inhalt ergänzen; `analyse/` entsteht erst, wenn Analyse es benötigt. Für Stufenbefugnis und Kandidatenplatzierung `02_protocol/impacts-architect/references/formwahl.md#data-kinds` verwenden. Vor einem Core-Vorgang unter „Quelle, Harness und Heimaten“ das eingerichtete Harness (`02_protocol/binding.md#history-retention`) und seine Einrichtungs-/Abhängigkeitsreferenz benennen; Unterstützung für Operationen, Quellzugriffe, Checks, Übergaben und menschliche Grenzen des gewählten Hauptprozesses feststellen, einschließlich erforderlicher Aufbewahrung und Prüfung der Historie nach diesem Zuständigkeitsvertrag. Zugangsdaten bleiben in dieser Ausführungsumgebung. Ein leerer gültiger Workspace ist noch kein ausführbarer Prozess. Die folgenden Regeln gelten für gewählte Core-Verträge für Hauptprozesse und Vorgänge gemäß `02_protocol/impacts-architect/references/formwahl.md#tooling-stop`.
 
 Die Hauptprozess- und Vorgang-Bäume stehen in `02_protocol/binding.md#hauptprozess-tree-rules`. `analyse/`, `capabilities/`, `grundlagen/` und `records/` entstehen erst mit Inhalt.
 
@@ -47,7 +49,7 @@ Die Hauptprozess- und Vorgang-Bäume stehen in `02_protocol/binding.md#hauptproz
 └── records/                           # erster Datensatz
 ```
 
-`init` legt `analyse/` nicht an. Records beginnen als eine Datei oder Tabelle pro Art und verdienen sich einen Ordner pro Instanz gemäß `02_protocol/impacts-architect/references/formwahl.md#data-kinds`. `grundlagen/` enthält nur Grundlagen, die kein einzelner Schritt besitzt.
+`init` legt `analyse/` nicht an. Jede Record-Art hat ihren eigenen Ordner unter `records/` und beginnt als eine Tabelle; sobald eine Instanz einen eigenen Ordner verdient, wandert die Tabelle in die `CONTEXT.md` der Art; ein Workspace mit nur einer Record-Art darf seine Tabelle direkt in `records/` führen (`02_protocol/impacts-architect/references/formwahl.md#folder-structure-by-form`). `grundlagen/` enthält nur Grundlagen, die kein einzelner Schritt besitzt.
 
 <a id="tree-clearance-and-imports"></a>
 ## Tree-Freigaben und Importe

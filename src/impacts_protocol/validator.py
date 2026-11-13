@@ -20,6 +20,7 @@ from referencing import Registry, Resource
 
 from .hashing import HashSurfaceError, _has_symlink_component, file_references, file_sha256
 from .io import load_frontmatter_and_body, load_yaml_strict
+from .topology import body_lines, check_topology
 from .model import Issue, NotJudged, ValidationReport, derive_progress, judged_counts
 from .version import protocol_line, protocol_release
 from .generator import WORKSPACE_FOLDERS
@@ -123,6 +124,7 @@ def validate(root: Path, *, release: str | None = None) -> ValidationReport:
     external_references: list[dict] = []
     judged = judged_counts()
     pin = None
+    held: tuple[dict, ...] = ()
     superseded: tuple[str, ...] = ()
     root = Path(root)
     issues: list[Issue] = []
@@ -158,7 +160,10 @@ def validate(root: Path, *, release: str | None = None) -> ValidationReport:
                 return ValidationReport((), tuple(not_judged), release=release, pin=pin)
             if issues:
                 return ValidationReport(_ordered(issues), release=release, pin=pin)
-            superseded = _validate_workspace(root, issues, not_judged, release, metadata["protocol"], external_references, judged)
+            topology_issues, held, forms = check_topology(
+                root, SCHEMA_REGISTRY.schemas()["vorgang"]["$defs"]["freigabe"]["properties"]["by"]["pattern"])
+            issues.extend(topology_issues)
+            superseded = _validate_workspace(root, issues, not_judged, release, metadata["protocol"], external_references, judged, forms)
         elif root_type == "hauptprozess":
             _validate_hauptprozess(root, issues, judged=judged)
         elif metadata is not None:
@@ -167,29 +172,16 @@ def validate(root: Path, *, release: str | None = None) -> ValidationReport:
         _add(issues, "structure.level", root, root, f"Core tree cannot be read: {error}; restore read access to the workspace and its regular files")
     return ValidationReport(_ordered(issues), tuple(not_judged), superseded, len(external_references),
                             tuple({"vorgang": ref["vorgang"], "pointer": ref["pointer"]} for ref in external_references),
-                            release, pin, judged)
+                            release, pin, judged, held)
 
 
 def _declared_stores(body: str) -> set[str]:
     """Read column-zero Ablage declarations outside Markdown code fences."""
-    names: set[str] = set()
-    fence = None
-    for line in body.splitlines():
-        marker = re.match(r" {0,3}(`{3,}|~{3,})(.*)$", line)
-        if fence:
-            if marker and marker[1][0] == fence[0] and len(marker[1]) >= len(fence) and not marker[2].strip():
-                fence = None
-            continue
-        if marker:
-            fence = marker[1]
-            continue
-        declaration = re.match(r"Ablage:[ \t]+(\S+)", line)
-        if declaration:
-            names.add(declaration[1])
-    return names
+    return {match[1] for line in body_lines(body)
+            if (match := re.match(r"Ablage:[ \t]+(\S+)", line))}
 
 
-def _validate_workspace(root: Path, issues: list[Issue], not_judged: list[NotJudged], release: str, workspace_pin: str, external_references: list[dict], judged: dict[str, int]) -> tuple[str, ...]:
+def _validate_workspace(root: Path, issues: list[Issue], not_judged: list[NotJudged], release: str, workspace_pin: str, external_references: list[dict], judged: dict[str, int], forms: dict[Path, str]) -> tuple[str, ...]:
     for folder in WORKSPACE_FOLDERS:
         path = root / folder
         if path.is_symlink():
@@ -220,22 +212,31 @@ def _validate_workspace(root: Path, issues: list[Issue], not_judged: list[NotJud
                 ]
             else:
                 _add(issues, "structure.level", path, root, "hauptprozesse/ contains a non-directory")
-    # Only canonical definitions are bindable; report other definition homes.
+    # Retain the historical depth-one not-judged inventory; topology scans all depths.
     for child in sorted(root.iterdir()):
-        if child.name in {"hauptprozesse", "vorgaenge"} or child.is_symlink() or not child.is_dir():
+        if forms.get(child) == "none" or child.name.startswith(".") or child.name in {"hauptprozesse", "vorgaenge"}:
             continue
-        for candidate in sorted(child.iterdir()):
-            context = candidate / "CONTEXT.md"
-            if candidate.is_symlink() or not candidate.is_dir() or context.is_symlink() or not context.is_file():
+        try:
+            if child.is_symlink() or not child.is_dir():
                 continue
+            candidates = sorted(child.iterdir())
+        except (OSError, ValueError) as error:
+            _add(issues, "topology.shape", child, root, f"{child.relative_to(root).as_posix()} cannot be read: {error}; restore read access")
+            continue
+        for candidate in candidates:
             try:
+                context = candidate / "CONTEXT.md"
+                if candidate.name.startswith(".") or candidate.is_symlink() or not candidate.is_dir() or context.is_symlink() or not context.is_file():
+                    continue
                 document, _ = load_frontmatter_and_body(context, root)
-            except (OSError, ValueError, YAMLError):
+                if isinstance(document, dict) and document.get("type") == "hauptprozess":
+                    not_judged.append(NotJudged(context.relative_to(root).as_posix(),
+                                               document.get("protocol") if isinstance(document.get("protocol"), str) else None, release,
+                                               "definition tree outside hauptprozesse/, not bindable"))
+            except (ValueError, YAMLError):
                 continue
-            if document.get("type") == "hauptprozess":
-                not_judged.append(NotJudged(context.relative_to(root).as_posix(),
-                                           document.get("protocol") if isinstance(document.get("protocol"), str) else None, release,
-                                           "definition tree outside hauptprozesse/, not bindable"))
+            except OSError as error:
+                _add(issues, "topology.shape", candidate, root, f"{candidate.relative_to(root).as_posix()} cannot be read: {error}; restore read access")
     vorgaenge = root / "vorgaenge"
     # Definitions are immutable; Vorgang files and Git refs are rechecked on every call.
     definitions: dict[str, Hauptprozess | str] = {}

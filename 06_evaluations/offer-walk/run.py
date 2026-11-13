@@ -131,6 +131,10 @@ def open_offer(target: Path, values: dict, language: str) -> Path:
         path = root / "grundlagen" / name
         path.parent.mkdir(exist_ok=True)
         path.write_text(text)
+    with (root / "CONTEXT.md").open("a") as router:
+        router.write("\nForm: grundlagen/ Knowledge Bundle per topic\n")
+    (root / "grundlagen/CONTEXT.md").write_text(
+        "# Synthetic offer sources\n\n" + "\n".join(f"[{name}]({name})" for name in sources) + "\n")
     result = "Menschlich freigegebener interner Angebotsentwurf" if de else "Human-approved internal offer draft"
     scope = f"Ziel: {result}. Versand ist nicht erlaubt." if de else f"Target: {result}. Sending is not permitted."
     acceptance = [
@@ -201,7 +205,7 @@ def open_offer(target: Path, values: dict, language: str) -> Path:
     (input_file(attempt, "material/herkunft.json")).write_text(encode(provenance))
     (attempt / "output").mkdir(parents=True, exist_ok=True)
     entry = {"arbeitsschritt_ref": "arbeitsschritt:entwerfen", "nummer": 1, "status": "aktiv", "gelesen": file_references(attempt, inputs)}
-    write_context(root / VORGANG / "CONTEXT.md", {"type": "vorgang", "protocol": "v0.4.0", "id": "vorgang:angebot-001", "hauptprozess_revision": "git-tree:" + git(root, "rev-parse", f"HEAD:{APP}"), "laufpfad": [entry]},
+    write_context(root / VORGANG / "CONTEXT.md", {"type": "vorgang", "protocol": "v0.5.0", "id": "vorgang:angebot-001", "hauptprozess_revision": "git-tree:" + git(root, "rev-parse", f"HEAD:{APP}"), "laufpfad": [entry]},
                   "Entwurf in Bearbeitung; Freigabe und Versand stehen aus." if de else "Draft in progress; approval and sending remain pending.")
     return root
 
@@ -353,6 +357,8 @@ def main() -> int:
             note, scenarios = discovery_case(args.language)
             (root / "grundlagen/discovery.md").write_text(note, encoding="utf-8")
             (root / "grundlagen/capacity.json").write_text(encode(scenarios), encoding="utf-8")
+            with (root / "grundlagen/CONTEXT.md").open("a") as router:
+                router.write("\n[Discovery](discovery.md) · [Capacity](capacity.json)\n")
             with (root / "CONTEXT.md").open("a", encoding="utf-8") as router:
                 router.write("\n[" + ("Synthetische Kapazitätsentscheidung" if args.language == "de" else "Synthetic capacity decision") + "](grundlagen/discovery.md) · [" + ("Berechnete Szenarien" if args.language == "de" else "Calculated scenarios") + "](grundlagen/capacity.json)\n")
             print(note)

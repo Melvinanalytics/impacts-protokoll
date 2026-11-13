@@ -377,7 +377,7 @@ def _workspace(base: Path, hauptprozesse=("video",), vorgaenge=(("video-001", "v
                 (attempt / "output" / "ergebnis.md").write_text("fertig", encoding="utf-8")
                 entry |= {"gewaehlte_route": "weiter", "geschrieben": fixture_references(attempt, ["output/ergebnis.md"])}
             entries.append(entry)
-        write_context(vorgang / "CONTEXT.md", {"type": "vorgang", "protocol": "v0.4.0", "id": f"vorgang:{slug}",
+        write_context(vorgang / "CONTEXT.md", {"type": "vorgang", "protocol": "v0.5.0", "id": f"vorgang:{slug}",
                                            "hauptprozess_revision": f"git-tree:{revision}", "laufpfad": entries}, f"# {slug}")
     return root
 
@@ -991,10 +991,10 @@ def test_stand_has_one_case_per_kind():
 
 def test_vorgang_summary_copies_the_wait_verbatim(tmp_path):
     root = _workspace(tmp_path)
-    (root / "records/video.md").write_text("Synthetic request sent; waiting for approval.\n", encoding="utf-8")
+    (root / "records/video-001/wait.md").write_text("Synthetic request sent; waiting for approval.\n", encoding="utf-8")
     vorgang = root / "vorgaenge" / "video-001" / "CONTEXT.md"
     vorgang.write_text(vorgang.read_text(encoding="utf-8").replace("status: aktiv", "status: wartend\n  wiedereinstieg:\n"
-                   "    ausloeser: Freigabe liegt vor\n    continuation_ref: records/video.md"), encoding="utf-8")
+                   "    ausloeser: Freigabe liegt vor\n    continuation_ref: records/video-001/wait.md"), encoding="utf-8")
     overview = selection.workspace_site(root)["index.html"]
     summary = overview["hauptprozesse"][0]["vorgaenge"][0]
     assert summary["issues"] == [], summary["issues"]
@@ -1391,12 +1391,15 @@ def test_english_workspace_renders_english_words_and_model(tmp_path):
                     "- Agent: Draft\n- Human: Decide\n\n## Source quotation\n"
                     "German source: unverändert `open` `hypothesis` `reported` `verified` `entfaellt`\n",
                     encoding="utf-8")
+    with (root / "CONTEXT.md").open("a") as router:
+        router.write("\nForm: analyse/ Context Map per capture\n")
     folder = root / "analyse"
     folder.mkdir(parents=True)
     (folder / "request.md").write_text(TEMPLATE_EN.read_text(encoding="utf-8"), encoding="utf-8")
     (folder / "note.txt").write_text("Do not read", encoding="utf-8")
     (folder / "no-type.md").write_text("# No type", encoding="utf-8")
     (folder / "wrong-type.md").write_text("---\ntype: workspace\n---\n", encoding="utf-8")
+    (folder / "CONTEXT.md").write_text("[Request](request.md) · [Note](note.txt) · [Untyped](no-type.md) · [Other](wrong-type.md)\n", encoding="utf-8")
     git(root, "init", "-b", "main")
     out = tmp_path / "english-view"
     assert run_cli(root, "--out", out) == 0
@@ -1448,17 +1451,17 @@ def test_template_subtitles_match_the_heading_language(language):
 
 def test_english_waiting_history_preserves_status_token(tmp_path):
     root = _workspace(tmp_path)
-    (root / "records/video.md").write_text("Synthetic request sent; waiting for approval.\n", encoding="utf-8")
+    (root / "records/video-001/wait.md").write_text("Synthetic request sent; waiting for approval.\n", encoding="utf-8")
     path = root / "vorgaenge" / "video-001" / "CONTEXT.md"
     path.write_text(path.read_text(encoding="utf-8").replace(
         "status: aktiv", "status: wartend\n  wiedereinstieg:\n"
-        "    ausloeser: Freigabe liegt vor\n    continuation_ref: records/video.md"), encoding="utf-8")
+        "    ausloeser: Freigabe liegt vor\n    continuation_ref: records/video-001/wait.md"), encoding="utf-8")
     model = selection.workspace_site(root)["v-video-001.html"]
     model["language"] = "en"
     result = render_page(tmp_path, write.page_html(model), "#vorgang:video-001")
     assert model["vorgang"]["meta"]["laufpfad"][-1]["status"] == "wartend"
     assert "Continue when: Freigabe liegt vor" in words(result["sheet"])
-    assert "Continue in: records/video.md" in words(result["sheet"])
+    assert "Continue in: records/video-001/wait.md" in words(result["sheet"])
     assert "waiting" in words(result["sheet"])
 
 

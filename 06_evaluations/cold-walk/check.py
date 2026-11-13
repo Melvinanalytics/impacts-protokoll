@@ -384,7 +384,7 @@ class Harness:
 
     def _preflight_vorgang(self, entries: list[dict]) -> None:
         metadata = {
-            "type": "vorgang", "protocol": "v0.4.1",
+            "type": "vorgang", "protocol": "v0.5.0",
             "id": f"vorgang:{VORGANG}",
             "hauptprozess_revision": f"git-tree:{self.revision}",
             "laufpfad": entries,
@@ -481,7 +481,7 @@ class Harness:
         if not self.laufpfad or self.laufpfad[-1] is not entry or entry.get("status") not in {"aktiv", "wartend"}:
             raise ProofError("Transition requires the current unresolved entry")
         persisted = load_frontmatter(self.vorgang_root / "CONTEXT.md")
-        binding = {"type": "vorgang", "protocol": "v0.4.1", "id": f"vorgang:{VORGANG}", "hauptprozess_revision": f"git-tree:{self.revision}"}
+        binding = {"type": "vorgang", "protocol": "v0.5.0", "id": f"vorgang:{VORGANG}", "hauptprozess_revision": f"git-tree:{self.revision}"}
         if any(persisted.get(key) != value for key, value in binding.items()):
             raise ProofError("Vorgang binding differs from the current harness binding")
         if persisted.get("laufpfad") != self.laufpfad:
@@ -521,7 +521,7 @@ class Harness:
 
     def _write(self) -> None:
         metadata = {
-            "type": "vorgang", "protocol": "v0.4.1",
+            "type": "vorgang", "protocol": "v0.5.0",
             "id": f"vorgang:{VORGANG}",
             "hauptprozess_revision": f"git-tree:{self.revision}",
             "laufpfad": self.laufpfad,
@@ -851,9 +851,9 @@ def walk(base: Path, *, decision_path: Path | None = None) -> WalkResult:
     _write_files(root, {response_ref: second_record})
     external = root.parent / "outside-response.md"
     external.write_text(second_record, encoding="utf-8")
-    escape_link = root / "records/response-link.md"
+    escape_link = root / "records/antrag-001/response-link.md"
     escape_link.symlink_to(external)
-    unsafe_paths = (str(external), "../outside-response.md", "records/response-link.md")
+    unsafe_paths = (str(external), "../outside-response.md", "records/antrag-001/response-link.md")
     refused = []
     try:
         for unsafe in unsafe_paths:
@@ -1052,6 +1052,8 @@ def _prepare_workspace(base: Path) -> tuple[Path, str, str, str, str]:
     shutil.copytree(BEISPIEL, root / "hauptprozesse" / HAUPTPROZESS)
     shutil.copytree(CAPABILITY, root / "capabilities" / "vollstaendigkeitsgrad")
     shutil.copytree(GRUNDLAGEN, root / "grundlagen")
+    with (root / "CONTEXT.md").open("a") as router:
+        router.write("\nForm: capabilities/ Capability\nForm: grundlagen/ Knowledge Bundle per topic\n")
     _git(root, "init", "-q", "-b", "main")
     _git(root, "config", "user.email", "cold-walk@example.invalid")
     _git(root, "config", "user.name", "Cold Walk")
@@ -1482,6 +1484,8 @@ def _import_into_second_repository(
     capability_root = Path(call.path).parent
     target_capability = kunde / capability_root
     target_capability.mkdir(parents=True)
+    with (kunde / "CONTEXT.md").open("a") as router:
+        router.write("\nForm: capabilities/ Capability\n")
     with _source_bytes_readable(source_commit, capability_root.as_posix()):
         capability_archive = _git_archive(
             source, f"{source_commit}:{capability_root.as_posix()}"
@@ -1670,6 +1674,11 @@ def _preflight_files(attempt: Path, files: dict[str, str]) -> None:
 def _record_inputs(root: Path, path: str, payload: str) -> dict[str, str]:
     """Supply an external synthetic receipt, then capture its actual bytes and source."""
     _write_files(root, {path: payload})
+    router = root / "CONTEXT.md"
+    declaration = "Form: records/ Record Library per source record"
+    if declaration not in router.read_text():
+        with router.open("a") as handle:
+            handle.write("\n" + declaration + "\n")
     received = (root / path).read_bytes()
     return {
         "material/antrag.md": received.decode("utf-8"),

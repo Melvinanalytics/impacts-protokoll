@@ -37,13 +37,13 @@ def test_status_counts_header_and_external_pointer(tmp_path, capsys, reference_i
     assert report.judged == expected
     assert main(["validate", str(root)]) == 0
     assert capsys.readouterr().out.splitlines()[0] == (
-        "impacts validate v0.4.1 against pin v0.4.1: 1 Hauptprozesse, 1 Teilprozesse, "
+        "impacts validate v0.5.0 against pin v0.5.0: 1 Hauptprozesse, 1 Teilprozesse, "
         "2 Arbeitsschritte, 1 Vorgänge, 2 Versuche judged; 0 Vorgänge not judged; 0 definition trees outside hauptprozesse/"
     )
     assert main(["validate", str(root), "--json"]) == 0
     data = json.loads(capsys.readouterr().out)
     assert data["judged"] == expected
-    assert data["release"] == data["pin"] == "v0.4.1"
+    assert data["release"] == data["pin"] == "v0.5.0"
     assert data["superseded"] == []
     assert data["external_references"] == [{"vorgang": "vorgaenge/test/CONTEXT.md", "pointer": f"/laufpfad/0/gelesen/{reference_index}"}]
     assert data["external_references_not_verified"] == 1
@@ -56,15 +56,25 @@ def test_excluded_definition_trees_are_reported_without_judging_or_following_lin
         # Invalid definition content must remain outside judgment.
         (root / home / "video/produktion/start/CONTEXT.md").write_text("broken")
     write_context(root / "notes/ordinary/CONTEXT.md", {"type": "teilprozess"})
-    (root / "linked").symlink_to(root / "analyse", target_is_directory=True)
+    for home, entry in (("analyse", "video"), ("applications", "video"), ("other", "video"), ("notes", "ordinary")):
+        with (root / "CONTEXT.md").open("a") as router:
+            form = {"analyse": "Context Map per candidate", "applications": "Pipeline per job",
+                    "other": "Pipeline per job", "notes": "Record Library per note"}[home]
+            router.write(f"\nForm: {home}/ {form}\n")
+        (root / home / "CONTEXT.md").write_text(f"[Definition]({entry}/)\n")
+    (root / ".linked").symlink_to(root / "analyse", target_is_directory=True)
     report = validate(root)
-    assert report.valid, report.issues
+    assert [(issue.code, issue.path) for issue in report.issues] == [
+        ("topology.shape", "applications/video/CONTEXT.md"),
+        ("topology.shape", "other/video/CONTEXT.md"),
+    ]
+    assert all("report it to the owner" in issue.message for issue in report.issues)
     assert len(report.not_judged) == 3
     assert report.judged == {"hauptprozess": 1, "teilprozess": 1, "arbeitsschritt": 2, "vorgang": 0, "versuch": 0}
-    assert main(["validate", str(root), "--json"]) == 0
+    assert main(["validate", str(root), "--json"]) == 1
     data = json.loads(capsys.readouterr().out)
     assert data["not_judged_counts"] == {"vorgang": 0, "definition_tree": 3}
-    assert main(["validate", str(root)]) == 0
+    assert main(["validate", str(root)]) == 1
     assert "0 Vorgänge not judged; 3 definition trees outside hauptprozesse/" in capsys.readouterr().out.splitlines()[0]
     assert data["not_judged"] == [
         {"path": f"{home}/video/CONTEXT.md", "protocol": None,
@@ -128,7 +138,7 @@ def test_missing_pin_names_the_fix_and_rule(tmp_path, capsys):
     lines = capsys.readouterr().out.splitlines()
     assert "against pin none" in lines[0]
     assert lines[1] == (
-        "schema.invalid: CONTEXT.md: protocol pin missing; add protocol: v0.4.1 to the frontmatter "
+        "schema.invalid: CONTEXT.md: protocol pin missing; add protocol: v0.5.0 to the frontmatter "
         "(02_protocol/binding.md#validation-issue-codes)"
     )
 
@@ -182,7 +192,7 @@ def test_all_emitted_rule_anchors_resolve_in_protocol_docs():
 @pytest.mark.parametrize("field", ["gelesen", "geschrieben"])
 def test_external_store_requires_exact_root_body_declaration(tmp_path, declaration, valid, field):
     root, case, first, second = pair(tmp_path)
-    write_context(root / "CONTEXT.md", {"type": "workspace", "protocol": "v0.4.0"}, declaration)
+    write_context(root / "CONTEXT.md", {"type": "workspace", "protocol": "v0.5.0"}, declaration + "\nForm: records/ Record Library per source record\n")
     pointer = {"ablage": "synthetic-store", "schluessel": "unavailable-object", "sha256": "sha256:" + "a" * 64}
     if field == "gelesen":
         first[field] = [dict(pointer, eingabe="input/auftrag.md")]
@@ -218,7 +228,7 @@ def test_process_rules_select_specific_anchor_or_family_fallback(code, anchor):
 
 def test_undeclared_store_issue_names_each_reference_position(tmp_path):
     root, case, first, second = pair(tmp_path)
-    write_context(root / "CONTEXT.md", {"type": "workspace", "protocol": "v0.4.0"}, "")
+    write_context(root / "CONTEXT.md", {"type": "workspace", "protocol": "v0.5.0"}, "")
     pointer = {"ablage": "synthetic-store", "schluessel": "unavailable-object", "sha256": "sha256:" + "a" * 64}
     first["gelesen"] = [dict(pointer, eingabe="input/auftrag.md"), dict(pointer, eingabe="input/auftrag.md", schluessel="other")]
     replace_context(case / "CONTEXT.md", dict(read_context(case / "CONTEXT.md"), laufpfad=[first, second]))
