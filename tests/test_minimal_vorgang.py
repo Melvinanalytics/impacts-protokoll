@@ -136,7 +136,7 @@ def _prepare_workspace(base: Path) -> tuple[Path, Path]:
         source = fixture_path(vorgang / slug / "001", "input/auftrag.md")
         source.parent.mkdir(parents=True, exist_ok=True)
         source.write_text(f"Eingabe {index}", encoding="utf-8")
-    git(root, "add", "records")
+    git(root, "add", "records", "CONTEXT.md")
     git(root, "commit", "--amend", "--no-edit")
     entries = []
     for index, (slug, route) in enumerate(
@@ -168,7 +168,7 @@ def _prepare_workspace(base: Path) -> tuple[Path, Path]:
     write_context(
         vorgang / "CONTEXT.md",
         {
-            "type": "vorgang", "protocol": "v0.4.0",
+            "type": "vorgang", "protocol": "v0.5.0",
             "id": "vorgang:video-001",
             "hauptprozess_revision": f"git-tree:{revision}",
             "laufpfad": entries,
@@ -420,13 +420,14 @@ def test_git_process_count_is_bounded_independently_of_commits(tmp_path, monkeyp
     original = subprocess.Popen
     def tracked(args, *positionals, **keywords):
         if args[0] == "git":
-            commands[args[4]] += 1
+            commands[args[args.index("-C") + 2]] += 1
         return original(args, *positionals, **keywords)
     monkeypatch.setattr(validator.subprocess, "Popen", tracked)
     report = validate(root)
     assert report.valid, report.issues
     assert commands["rev-list"] == 1
-    assert sum(commands.values()) <= 14, commands
+    assert commands["ls-files"] == 1  # X4 adds one ignored-entry census per validation.
+    assert sum(commands.values()) - commands["ls-files"] <= 14, commands
 
 
 @pytest.mark.parametrize("blobs", [1, 81])
@@ -442,7 +443,7 @@ def test_materialization_batches_blobs_independent_of_blob_count(tmp_path, monke
     original = subprocess.Popen
     def tracked(args, *positionals, **keywords):
         if args[0] == "git":
-            commands[args[4]] += 1
+            commands[args[args.index("-C") + 2]] += 1
         return original(args, *positionals, **keywords)
     monkeypatch.setattr(validator.subprocess, "Popen", tracked)
     target = tmp_path / "materialized"
@@ -473,15 +474,17 @@ def test_distinct_historical_revisions_share_one_reachability_scan(tmp_path, mon
     original = subprocess.Popen
     def tracked(args, *positionals, **keywords):
         if args[0] == "git":
-            commands[args[4]] += 1
+            commands[args[args.index("-C") + 2]] += 1
         return original(args, *positionals, **keywords)
     monkeypatch.setattr(validator.subprocess, "Popen", tracked)
     first = validate(root)
     assert first.valid, first.issues
     assert commands["rev-list"] == 1
-    assert sum(commands.values()) <= 104, commands
+    assert commands["ls-files"] == 1
+    assert sum(commands.values()) - commands["ls-files"] <= 104, commands
     assert validate(root) == first
     assert commands["rev-list"] == 2
+    assert commands["ls-files"] == 2
 
 
 @pytest.mark.parametrize("response,exit_code,expected", [
@@ -1662,7 +1665,7 @@ def test_writeback_to_continuing_record_preserves_vorgang_evidence(tmp_path):
     assert validate(root).valid
     before = read_context(vorgang / "CONTEXT.md")
 
-    record = root / "records" / "kunde.md"
+    record = root / "records" / "kunde" / "status.md"
     record.parent.mkdir(parents=True, exist_ok=True)
     output = (vorgang / "pruefen/001/output/ergebnis.md").read_text(encoding="utf-8")
     record.write_text(
@@ -1719,7 +1722,7 @@ def _build_vorgang_in(root: Path) -> tuple[str, Path]:
     revision = git(root, "rev-parse", "HEAD:hauptprozesse/video")
     vorgang = _completed_vorgang(root, revision)
     # Vorgaenge are evidence: commit them so clone/transport preserves old attempts.
-    git(root, "add", "vorgaenge")
+    git(root, "add", "vorgaenge", "CONTEXT.md")
     git(root, "commit", "-m", "record run evidence")
     return revision, vorgang
 

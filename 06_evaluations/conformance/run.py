@@ -215,7 +215,7 @@ def _validate_expected(case: dict[str, Any]) -> None:
     if codes != sorted(codes):
         raise ConformanceError(f"{case_id}: issue_codes must be sorted")
     if case["command"] == "validate":
-        if set(expected) - {"external_references_not_verified"} != {"exit_code", "valid", "issue_codes", "not_judged"}:
+        if set(expected) - {"external_references_not_verified", "held"} != {"exit_code", "valid", "issue_codes", "not_judged"}:
             raise ConformanceError(f"{case_id}: malformed validate expectation")
         count = expected.get("external_references_not_verified", 0)
         if type(count) is not int or count < 0:
@@ -552,7 +552,7 @@ def _check_report(report: dict[str, Any], case: dict[str, Any], root: Path, retu
     expected = case["expected"]
     command = case["command"]
     if command == "validate":
-        required = {"report_version", "command", "tool", "root", "valid", "issues", "not_judged", "external_references_not_verified", "release", "pin", "judged", "not_judged_counts", "superseded", "external_references"}
+        required = {"report_version", "command", "tool", "root", "valid", "issues", "not_judged", "external_references_not_verified", "release", "pin", "judged", "not_judged_counts", "superseded", "external_references", "held"}
     else:
         required = {"report_version", "command", "tool", "attempt", "surfaces", "references", "issues"}
     if set(report) != required:
@@ -615,6 +615,8 @@ def _check_report(report: dict[str, Any], case: dict[str, Any], root: Path, retu
     if returncode != expected["exit_code"]:
         raise ConformanceError(f"process exit {returncode}; expected {expected['exit_code']}")
     if command == "validate":
+        if not isinstance(report["held"], list) or report["held"] != expected.get("held", []):
+            raise ConformanceError("held rows differ from the frozen expectation")
         if not isinstance(report["release"], str) or not report["release"]:
             raise ConformanceError("release must be a non-empty string")
         if report["pin"] is not None and not isinstance(report["pin"], str):

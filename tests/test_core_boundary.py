@@ -117,11 +117,14 @@ def test_workspace_root_symlink_fails_closed():
         assert "structure.symlink" in {issue.code for issue in validate(alias).issues}
 
 
-def test_customer_owned_extra_folder_is_outside_core_validation():
+def test_customer_owned_context_map_contents_are_outside_core_validation():
     with TemporaryDirectory() as directory:
         root = init_workspace(Path(directory) / "workspace")
-        (root / "customer-notes").mkdir()
-        (root / "customer-notes" / "note.md").write_text("frei", encoding="utf-8")
+        (root / "analyse").mkdir()
+        (root / "analyse" / "note.md").write_text("frei", encoding="utf-8")
+        (root / "analyse" / "CONTEXT.md").write_text("[Note](note.md)\n", encoding="utf-8")
+        with (root / "CONTEXT.md").open("a") as router:
+            router.write("\nForm: analyse/ Context Map per capture\n")
 
         assert validate(root).valid
 

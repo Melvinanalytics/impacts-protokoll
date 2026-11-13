@@ -354,7 +354,7 @@ For referenced Capabilities, follow [Transport](capabilities.md#transport). The 
 
 ## Reviewed correction
 
-For every form, retain a demonstrated defect or consequential repeated friction with its actual observation and source revision in the existing Vorgang, record or review. A one-off without a demonstrated defect is noise; a demonstrated defect or consequential repeated friction is signal.
+For every form, retain a demonstrated defect or consequential repeated friction with its actual observation and source revision in the existing Vorgang, record or review. A one-off without a demonstrated defect is noise; a demonstrated defect or consequential repeated friction is signal. A hand correction of a result is a demonstrated defect unless it sets a case value or an exceptional preference: record it in that Vorgang or record with the rule or check it overrode, and take it to its home in the table below, not only into the result. A second one against the same home and rule is consequential repeated friction.
 
 For each execution, ask: did the work run cleanly, or did friction push the agent off the protocol? Measure both runtimes: the technical runtime covers tokens, runs and duration; the business runtime covers throughput, lead time and the result metric. Keep measurements and bottleneck findings in the [Ist-Prozess analysis](impacts-architect/templates/ist-prozess.md#throughput-and-lead-time), linked to execution evidence; thresholds and acceptance limits stay in the definition. Both runtimes feed this correction path.
 
@@ -418,7 +418,7 @@ The change is complete when the affected behavior has one authoritative clause, 
 
 ## Necessity
 
-Apply [Minimize](#minimize) to this repository and to every repository built on it. A component is any folder, file, section, field, level, name, check, test, tool or rule. A name also passes the checks in step 3 of [Author or change](ontology.md#author-or-change). Existence, a test that pins it or an earlier plan does not keep a component.
+Apply [Minimize](#minimize) to this repository and to every repository built on it. A component is any folder, file, section, field, level, name, check, test, tool or rule. A file is an instruction (router, Hauptprozess definition, other Foundations), something that runs instructions (tool, Capability, harness configuration, check) or state (a Vorgang and every [data kind](impacts-architect/references/formwahl.md#data-kinds) except Foundations); question first a file that is none of these. A name also passes the checks in step 3 of [Author or change](ontology.md#author-or-change). Existence, a test that pins it or an earlier plan does not keep a component.
 
 For each component you add or touch, answer five questions with evidence (a path, a search or a run) with its [evidence label](ontology.md#evidence-and-obligations); an inference not yet checked is `hypothesis`:
 

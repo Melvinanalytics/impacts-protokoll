@@ -665,7 +665,7 @@
         "not_judged": [
           {
             "path": "vorgaenge/approval-001/CONTEXT.md",
-            "protocol": "v0.5.0"
+            "protocol": "v0.6.0"
           }
         ]
       }
@@ -1156,6 +1156,63 @@
         "exit_code": 0,
         "valid": true,
         "issue_codes": [],
+        "not_judged": []
+      }
+    },
+    {
+      "id": "topology-record-file-beside-instances",
+      "command": "validate",
+      "fixture": "fixtures/cases/topology-record-file-beside-instances",
+      "expected": {
+        "exit_code": 1,
+        "valid": false,
+        "issue_codes": [
+          "topology.shape"
+        ],
+        "not_judged": []
+      }
+    },
+    {
+      "id": "topology-held",
+      "command": "validate",
+      "fixture": "fixtures/cases/topology-held",
+      "expected": {
+        "exit_code": 0,
+        "valid": true,
+        "issue_codes": [],
+        "not_judged": [],
+        "held": [
+          {
+            "path": "archive/",
+            "reason": "synthetic retained fixture",
+            "decided_by": "human:fixture-reviewer"
+          }
+        ]
+      }
+    },
+    {
+      "id": "topology-missing",
+      "command": "validate",
+      "fixture": "fixtures/cases/topology-missing",
+      "expected": {
+        "exit_code": 1,
+        "valid": false,
+        "issue_codes": [
+          "topology.form_missing"
+        ],
+        "not_judged": []
+      }
+    },
+    {
+      "id": "topology-invalid",
+      "command": "validate",
+      "fixture": "fixtures/cases/topology-invalid",
+      "expected": {
+        "exit_code": 1,
+        "valid": false,
+        "issue_codes": [
+          "topology.form_invalid"
+        ],
         "not_judged": []
       }
     }

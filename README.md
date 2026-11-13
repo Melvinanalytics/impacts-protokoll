@@ -45,7 +45,7 @@ This diagram is orientation. The [ontology](02_protocol/ontology.md) owns eviden
 
 ## Get the protocol
 
-Edition v0.4.1. Once published, use the published immutable Release [v0.4.1](https://github.com/Melvinanalytics/impacts-protokoll/releases/tag/v0.4.1) for new work. Download the wheel, complete source archive and `SHA256SUMS`; verify every listed checksum before installing or using the source archive.
+Edition v0.5.0. Once published, use the published immutable Release [v0.5.0](https://github.com/Melvinanalytics/impacts-protokoll/releases/tag/v0.5.0) for new work. Download the wheel, complete source archive and `SHA256SUMS`; verify every listed checksum before installing or using the source archive.
 
 Keep the complete source together: method, Architect, references, templates and examples. Reading the archive needs no installation. A copied Architect folder is incomplete even when its `references/` folder is present: it also depends on parent protocol files and root guidance. The wheel contains the CLI, static Viewer HTML resource, schemas and templates; it does not contain the method, Architect, evaluations, tests or complete source guidance. Wheel users who need the source-provenance form can run `impacts template herkunft` (or add `--language de`). That template has nine evidence fields. Its field count describes this template; it is not a universal line-count rule.
 
@@ -123,8 +123,8 @@ source .venv/bin/activate
 
 Choose one installation source:
 
-- **Complete checkout:** once published, use the source tree extracted from the published immutable v0.4.1 Release after every listed `SHA256SUMS` entry passes. From the verified tree's root, run `python -m pip install -e .`.
-- **Release wheel:** once published, download the wheel, complete source archive and `SHA256SUMS` from the published immutable Release [v0.4.1](https://github.com/Melvinanalytics/impacts-protokoll/releases/tag/v0.4.1) into one folder. Verify every listed asset with `shasum -a 256 -c SHA256SUMS` (macOS/Linux), then install with `python -m pip install ./impacts_protocol-0.4.1-py3-none-any.whl`.
+- **Complete checkout:** once published, use the source tree extracted from the published immutable v0.5.0 Release after every listed `SHA256SUMS` entry passes. From the verified tree's root, run `python -m pip install -e .`.
+- **Release wheel:** once published, download the wheel, complete source archive and `SHA256SUMS` from the published immutable Release [v0.5.0](https://github.com/Melvinanalytics/impacts-protokoll/releases/tag/v0.5.0) into one folder. Verify every listed asset with `shasum -a 256 -c SHA256SUMS` (macOS/Linux), then install with `python -m pip install ./impacts_protocol-0.5.0-py3-none-any.whl`.
 
 Follow [Version and entry points](#version-and-entry-points) to identify the installed package and obtain its complete source. Then, outside the intended new customer folder:
 
@@ -135,7 +135,7 @@ impacts template arbeitsschritt
 impacts template herkunft
 ```
 
-`init` creates an empty Core workspace (`.gitattributes`, `CONTEXT.md`, `hauptprozesse/`, `vorgaenge/`), writes exactly `* -text` plus a newline to `.gitattributes`, refuses an existing target and creates no Git repository or runnable process. Existing workspaces need the same line before their first bound Vorgang. Keep the customer workspace separate from the protocol source. Add `--language de` to `init` or `template` for German. Initialize Git at the Core root before committing a Hauptprozess for Vorgang binding.
+`init` creates an empty Core workspace (`.gitattributes`, `.gitignore`, `CONTEXT.md`, `hauptprozesse/`, `vorgaenge/`), writes exactly `* -text` plus a newline to `.gitattributes` and three system and office leftover patterns to `.gitignore`, refuses an existing target and creates no Git repository or runnable process. Existing workspaces need the same line before their first bound Vorgang. Keep the customer workspace separate from the protocol source. Add `--language de` to `init` or `template` for German. Initialize Git at the Core root before committing a Hauptprozess for Vorgang binding.
 
 Explore the [Hauptprozess template](02_protocol/templates/hauptprozess.md), [schemas](02_protocol/schemas/), [Capabilities](02_protocol/capabilities.md) and [Architect skill](02_protocol/impacts-architect/SKILL.md). The programmed [offer walk](06_evaluations/offer-walk/CONTEXT.md) retains checked synthetic preparation at a pending human gate; the [cold walk](06_evaluations/cold-walk/CONTEXT.md) exercises loops, waits, synthetic gates and transport.
 
@@ -152,7 +152,7 @@ Explore the [Hauptprozess template](02_protocol/templates/hauptprozess.md), [sch
 
 `impacts validate <path>` starts with a status line and prints issue code, path, message and rule link on failure. `impacts hash <root> <file-or-directory>...` prints per-file references as JSON on success; operational errors go to stderr. Human-readable message wording is diagnostic, not a stable parsing interface.
 
-For agents and CI, add `--json` to `validate` or `hash`. A completed check writes one JSON object to stdout with `report_version: 3`, `command`, `tool` metadata and an `issues` list of `code`, `path`, diagnostic `message` and protocol heading link `rule`. Validation adds `root`, `valid`, `release` (the validator's), `pin` (the workspace's, or null), `judged` (counts of `hauptprozess`, `teilprozess`, `arbeitsschritt`, `vorgang` and `versuch`), `not_judged`, `not_judged_counts` (separate `vorgang` and `definition_tree` counts), `superseded` (Vorgang routers replaced by a successor), `external_references` (each a `vorgang` router path and a `pointer` such as `/laufpfad/0/gelesen/1`) and `external_references_not_verified` (their count); hashing adds `attempt`, `surfaces` and `references` (null on failure). Unknown metadata version is null. Argument errors occur before dispatch and retain stderr diagnostics with exit `2`; they do not produce a JSON report. `not_judged` contains each skipped router path and its recorded `protocol` value or null, with `reason` for excluded definition trees; skipped items are not issues. The report version identifies this output format, independently of the package edition and the customer's bound source revision.
+For agents and CI, add `--json` to `validate` or `hash`. A completed check writes one JSON object to stdout with `report_version: 3`, `command`, `tool` metadata and an `issues` list of `code`, `path`, diagnostic `message` and protocol heading link `rule`. Validation adds `root`, `valid`, `release` (the validator's), `pin` (the workspace's, or null), `judged` (counts of `hauptprozess`, `teilprozess`, `arbeitsschritt`, `vorgang` and `versuch`), `not_judged`, `not_judged_counts` (separate `vorgang` and `definition_tree` counts), `superseded` (Vorgang routers replaced by a successor), `held` (folders held without form, with `path`, `reason` and `decided_by`), `external_references` (each a `vorgang` router path and a `pointer` such as `/laufpfad/0/gelesen/1`) and `external_references_not_verified` (their count); hashing adds `attempt`, `surfaces` and `references` (null on failure). Unknown metadata version is null. Argument errors occur before dispatch and retain stderr diagnostics with exit `2`; they do not produce a JSON report. `not_judged` contains each skipped router path and its recorded `protocol` value or null, with `reason` for excluded definition trees; skipped items are not issues. The report version identifies this output format, independently of the package edition and the customer's bound source revision.
 
 `report_version: 3` protects the JSON report shape. Human-readable `message` values are diagnostic and may change. The frozen `cases.json` corpus defines the issue codes and results required for each listed case, within that corpus's structural scope; it is not an exhaustive list for every possible input. When a documented parsing or routing prerequisite fails, checks that depend on the unread definition may be suppressed, while independent defects remain reportable. Changing the report shape requires a `report_version` change and corresponding consumer and runner updates. Changing a required result for a frozen case requires a reviewed change to its fixture or expected result and fresh report evidence. No separate protocol-specification version is introduced for these case expectations.
 
@@ -160,6 +160,12 @@ For agents and CI, add `--json` to `validate` or `hash`. A completed check write
 impacts validate ../impacts-demo --json
 impacts hash ../impacts-demo/vorgaenge/example/check/001 input --json
 ```
+
+| Issue codes | Check and next action |
+|---|---|
+| `topology.form_missing` | Add the folder's `Form:` line to the root router. |
+| `topology.form_invalid` | Correct the line's form, unit, path, duplicate or held attribution. |
+| `topology.shape` | Make the level match its declared form. |
 
 | Exit code | Meaning |
 |---|---|

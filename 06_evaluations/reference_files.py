@@ -9,7 +9,14 @@ from impacts_protocol.io import load_frontmatter
 
 
 def source_home(attempt: Path) -> Path:
-    return attempt.parents[3] / 'records' / attempt.parents[1].name / attempt.parent.name / attempt.name
+    workspace = attempt.parents[3]
+    (workspace / "records").mkdir(exist_ok=True)
+    router = workspace / "CONTEXT.md"
+    declaration = "Form: records/ Record Library per source record"
+    if declaration not in router.read_text():
+        with router.open("a") as handle:
+            handle.write("\n" + declaration + "\n")
+    return workspace / "records" / attempt.parents[1].name / attempt.parent.name / attempt.name
 
 
 def input_file(attempt: Path, relative: str | Path) -> Path:

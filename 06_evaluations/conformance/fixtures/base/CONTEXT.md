@@ -1,6 +1,6 @@
 ---
 type: workspace
-protocol: v0.4.0
+protocol: v0.5.0
 ---
 
 # Synthetic conformance workspace
