@@ -119,6 +119,7 @@ def test_patch_pins_still_reject_undeclared_domain_folder(tmp_path, pin):
     root = impacts_protocol.init_workspace(tmp_path / "workspace")
     router = root / "CONTEXT.md"
     router.write_text(router.read_text().replace("protocol: v0.5.1", f"protocol: {pin}"))
+    assert load_frontmatter(router)["protocol"] == pin
     (root / "plans").mkdir()
     (root / "plans" / "item.md").write_text("Synthetic unclassified content\n")
     report = validate(root)
