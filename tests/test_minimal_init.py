@@ -26,13 +26,14 @@ def test_init_creates_only_minimal_workspace():
         assert sorted(path.name for path in root.iterdir()) == [
             ".gitattributes",
             ".gitignore",
+            "AGENTS.md",
             "CONTEXT.md",
             "hauptprozesse",
             "vorgaenge",
         ]
         assert (root / ".gitattributes").read_bytes() == b"* -text\n"
         assert (root / ".gitignore").read_text().split() == ["Thumbs.db", "desktop.ini", "~$*"]
-        assert load_frontmatter(root / "CONTEXT.md") == {"type": "workspace", "protocol": "v0.5.0"}
+        assert load_frontmatter(root / "CONTEXT.md") == {"type": "workspace", "protocol": "v0.5.1"}
 
 
 def test_cli_init_needs_no_customer_argument():
@@ -91,3 +92,35 @@ def test_init_never_touches_an_existing_gitignore(tmp_path):
     with pytest.raises(FileExistsError):
         _init_workspace(target)
     assert (target / ".gitignore").read_text() == "mine\n"
+
+
+@pytest.mark.parametrize("language", ["en", "de"])
+def test_generated_agent_entry_routes_to_workspace_authorities(tmp_path, language):
+    root = impacts_protocol.init_workspace(tmp_path / "workspace", language=language)
+    entry = (root / "AGENTS.md").read_text(encoding="utf-8")
+    assert "[CONTEXT.md](CONTEXT.md)" in entry
+    router = (root / "CONTEXT.md").read_text(encoding="utf-8")
+    for target in (
+        "02_protocol/impacts-architect/references/formwahl.md#folder-structure-by-form",
+        "02_protocol/impacts-architect/references/zuschnitt.md#naming",
+        "02_protocol/binding.md#hauptprozess-tree-rules",
+        "02_protocol/impacts-method.md#maintain-agent-instructions",
+    ):
+        assert target in router
+        path, heading = target.split("#")
+        source = (ROOT / path).read_text(encoding="utf-8")
+        headings = [line.lstrip("# ").lower().replace(" ", "-") for line in source.splitlines() if line.startswith("#")]
+        assert heading in headings
+
+
+@pytest.mark.parametrize("pin", ["v0.5.0", "v0.5.1"])
+def test_patch_pins_still_reject_undeclared_domain_folder(tmp_path, pin):
+    from impacts_protocol import validate
+    root = impacts_protocol.init_workspace(tmp_path / "workspace")
+    router = root / "CONTEXT.md"
+    router.write_text(router.read_text().replace("protocol: v0.5.1", f"protocol: {pin}"))
+    (root / "plans").mkdir()
+    (root / "plans" / "item.md").write_text("Synthetic unclassified content\n")
+    report = validate(root)
+    assert not report.valid
+    assert "topology.form_missing" in {issue.code for issue in report.issues}

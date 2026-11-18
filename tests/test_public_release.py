@@ -74,6 +74,11 @@ def link_issues(files):
                 issues.append((name, target, 'nonportable reference'))
                 continue
             resolved = posixpath.normpath(posixpath.join(posixpath.dirname(name), unquote(url.path))) if url.path else name
+            # Agent templates are installed at the generated workspace root.
+            # Resolve their runtime router link to its actual packaged source;
+            # init/installed-wheel tests also exercise that delivered link.
+            if name in {"02_protocol/templates/agents.md", "02_protocol/templates/de/agents.md"} and url.path == "CONTEXT.md":
+                resolved = str(PurePosixPath(name).with_name("workspace.md"))
             if resolved not in files and resolved not in directories:
                 issues.append((name, target, 'target outside export'))
             elif url.fragment and resolved.endswith('.md') and unquote(url.fragment) not in anchors(files[resolved]):
@@ -149,7 +154,7 @@ def test_candidate_public_contract_and_scope():
     contributing = (ROOT / "CONTRIBUTING.md").read_text()
     first_win = (ROOT / "FIRST-WIN.md").read_text()
 
-    assert version == "0.5.0"
+    assert version == "0.5.1"
     for content in (readme, german):
         assert "report_version: 3" in content
         assert ("message" in content and "diagnostic" in content.lower()) or "Diagnosehilfen" in content
