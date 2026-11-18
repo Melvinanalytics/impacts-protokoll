@@ -1,6 +1,6 @@
 ---
 type: workspace
-protocol: v0.5.0
+protocol: v0.5.1
 ---
 
 Working language: en
@@ -9,15 +9,15 @@ Customer work uses this working language under `02_protocol/language.md`.
 
 # IMPACTS Workspace
 
-Before business capture, follow the complete protocol source's root `README.md`, “Version and entry points”, to record its actual source, revision and resolvable Architect entry (`02_protocol/impacts-architect/SKILL.md`) under Source, harness and homes. If that source is missing after `init`, identify the generating package with `python -m pip show impacts-protocol` in its Python environment and obtain the corresponding complete source from [releases](https://github.com/Melvinanalytics/impacts-protokoll/releases). The package version alone does not identify an exact source revision. On resumption, follow the source/revision and working language already recorded here.
+Before applying a protocol route, follow the complete protocol source's root `README.md`, “Version and entry points”, to record its actual source, revision and resolvable Architect entry (`02_protocol/impacts-architect/SKILL.md`) under Source, harness and homes. If that source is missing after `init`, identify the generating package with `python -m pip show impacts-protocol` in its Python environment and obtain the corresponding complete source from [releases](https://github.com/Melvinanalytics/impacts-protokoll/releases). The package version alone does not identify an exact source revision. On resumption, follow the source/revision and working language already recorded here.
 
-Every `02_protocol/` path in this workspace resolves against that recorded source/revision, not the generated customer tree. Its form selection identifies the smallest suitable domain home. Link those homes with their purpose under Domain homes; keep facts at their source. Given products/services, use `02_protocol/impacts-method.md#reverse-engineer-a-product-or-service` before assuming a Pipeline.
+Every `02_protocol/` path in this workspace resolves against that recorded source/revision, not the generated customer tree. The protocol's form selection identifies the smallest suitable domain home. Link those homes with their purpose under Domain homes; keep facts at their source. Given products/services, use `02_protocol/impacts-method.md#reverse-engineer-a-product-or-service` before assuming a Pipeline.
 
 To capture or change domain meaning, use `02_protocol/ontology.md#author-or-change`; to apply it, use `02_protocol/ontology.md#use`.
 
 ## Source, harness and homes
 
-Record configured facts here and preserve the operating contract. Changes to instructions or working language follow the applicable reviewed revision path under `02_protocol/impacts-method.md#maintain-agent-instructions`.
+Record configured facts here and preserve the operating contract. Changes to instructions or working language follow the applicable reviewed revision path under `02_protocol/impacts-method.md#maintain-agent-instructions`, including its completion checks.
 
 - Complete source location (provenance; release pin is in frontmatter): `<path or URL>`
 - Source commit and local changes: `<commit and each local change>`
@@ -34,12 +34,15 @@ When using Capabilities from a Fachrepo or another domain home, link their early
 
 ## Setup
 
-`init` creates this router, `hauptprozesse/`, `vorgaenge/`, `.gitattributes` (`* -text`, so a checkout keeps bound bytes and their hashes unchanged) and a `.gitignore` for system and office leftovers (`Thumbs.db`, `desktop.ini`, `~$*`), which the level check skips. Git omits empty directories; validation treats absent `hauptprozesse/` or `vorgaenge/` collections as empty. Use `02_protocol/impacts-architect/references/formwahl.md#data-kinds` for stage authority and candidate placement. An empty valid workspace is not an executable process. The following rules apply to selected Core Hauptprozess/Vorgang contracts under `02_protocol/impacts-architect/references/formwahl.md#tooling-stop`.
+`init` creates the agent entry `AGENTS.md`, this router, `hauptprozesse/`, `vorgaenge/`, `.gitattributes` (`* -text`, so a checkout keeps bound bytes and their hashes unchanged) and a `.gitignore` for system and office leftovers (`Thumbs.db`, `desktop.ini`, `~$*`), which the level check skips. Git omits empty directories; validation treats absent `hauptprozesse/` or `vorgaenge/` collections as empty. Use `02_protocol/impacts-architect/references/formwahl.md#data-kinds` for stage authority and candidate placement. An empty valid workspace is not an executable process.
 
-Hauptprozess and Vorgang layouts live in `02_protocol/binding.md#hauptprozess-tree-rules`. `analyse/`, `capabilities/`, `grundlagen/` and `records/` appear only with content.
+For selected Core Hauptprozess/Vorgang contracts (`02_protocol/impacts-architect/references/formwahl.md#tooling-stop`), layouts live in `02_protocol/binding.md#hauptprozess-tree-rules`. `analyse/`, `capabilities/`, `grundlagen/` and `records/` appear only with content.
+
+For new or moved files and folders, select their form and home through `02_protocol/impacts-architect/references/formwahl.md#folder-structure-by-form`. Name domain folders through `02_protocol/impacts-architect/references/zuschnitt.md#naming`; for naming Core slugs and identities, use `02_protocol/binding.md#hauptprozess-tree-rules`.
 
 ```text
 <workspace>/
+├── AGENTS.md                          # init: agent entry
 ├── CONTEXT.md                         # init: router and protocol pin
 ├── hauptprozesse/                      # init
 ├── vorgaenge/                          # init

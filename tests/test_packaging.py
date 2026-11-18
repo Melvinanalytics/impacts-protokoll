@@ -99,6 +99,7 @@ def test_non_editable_install_exposes_minimal_cli_from_unrelated_cwd(
     )
 
     assert initialized.returncode == 0, initialized.stderr
+    assert "[CONTEXT.md](CONTEXT.md)" in (workspace / "AGENTS.md").read_text()
     assert checked.returncode == 0, checked.stdout + checked.stderr
     assert f"Working language: {language}" in (workspace / "CONTEXT.md").read_text()
 

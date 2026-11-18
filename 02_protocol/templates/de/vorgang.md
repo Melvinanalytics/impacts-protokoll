@@ -1,6 +1,6 @@
 ---
 type: vorgang
-protocol: v0.5.0
+protocol: v0.5.1
 id: vorgang:prueffall-001
 hauptprozess_revision: git-tree:0000000000000000000000000000000000000000
 # vorgaenger: vorgaenge/prueffall-alt/CONTEXT.md
@@ -35,7 +35,7 @@ laufpfad:
       faellig: "2026-01-07T17:00:00+01:00"
 ---
 
-<!-- Translation source: 02_protocol/templates/vorgang.md; sha256: b058b12acbd8ca2f181f25590d64bb5b48b4822ad5a63c672f395cf8b9fda28a -->
+<!-- Translation source: 02_protocol/templates/vorgang.md; sha256: 18ac6760ffdc4a8a8be7c15552de3280112059b24ef3330c4cbc9002a93d377f -->
 
 # Prüffall 001
 

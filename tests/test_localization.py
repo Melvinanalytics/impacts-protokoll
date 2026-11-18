@@ -24,7 +24,7 @@ PAIRS = guard.PAIRS
 def test_translation_inventory_has_one_mirror_per_source_and_no_unpaired_files():
     sources, targets = zip(*PAIRS)
     assert {source for source in sources if source.startswith("02_protocol/templates/")} == {
-        f"02_protocol/templates/{kind}.md" for kind in (*CLI_TEMPLATE_KINDS, "workspace")
+        f"02_protocol/templates/{kind}.md" for kind in (*CLI_TEMPLATE_KINDS, "workspace", "agents")
     }
     assert {target for target in targets if target.startswith("02_protocol/translations/")} == {
         f"02_protocol/translations/{guide}.de.md"
@@ -104,7 +104,7 @@ def test_cli_language_selection_persists_and_prints_matching_template(tmp_path, 
     root = tmp_path / language
     assert main(["init", str(root), "--language", language]) == 0
     data, body = load_frontmatter_and_body(root / "CONTEXT.md")
-    assert data == {"type": "workspace", "protocol": "v0.5.0"} and validate(root).valid
+    assert data == {"type": "workspace", "protocol": "v0.5.1"} and validate(root).valid
     assert f"Working language: {language}" in body
     init_output = capsys.readouterr().out
     assert "impacts validate" in init_output

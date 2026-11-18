@@ -68,3 +68,7 @@ def _write_workspace(target: Path, language: str) -> None:
         _template_file("workspace", language),
         encoding="utf-8",
     )
+    (target / "AGENTS.md").write_text(
+        _template_file("agents", language),
+        encoding="utf-8",
+    )

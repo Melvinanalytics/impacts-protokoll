@@ -24,7 +24,7 @@ REPOSITORY = "Melvinanalytics/impacts-protokoll"
 DOC_PATHS = ("README.md", "02_protocol/translations/readme.de.md")
 
 
-PAIRS = [(f"02_protocol/templates/{kind}.md", f"02_protocol/templates/de/{kind}.md") for kind in ("hauptprozess", "teilprozess", "arbeitsschritt", "vorgang", "herkunft", "workspace")]
+PAIRS = [(f"02_protocol/templates/{kind}.md", f"02_protocol/templates/de/{kind}.md") for kind in ("hauptprozess", "teilprozess", "arbeitsschritt", "vorgang", "herkunft", "workspace", "agents")]
 PAIRS += [("02_protocol/language.md", "02_protocol/translations/language.de.md"),
           ("README.md", "02_protocol/translations/readme.de.md"),
           ("FIRST-WIN.md", "02_protocol/translations/first-win.de.md"),
