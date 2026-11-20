@@ -1,11 +1,11 @@
 ---
 name: impacts-architect
-description: Use when guiding an interview about a business, offering or recurring job, customer initialization or knowledge topology needs a file home, deriving or materially redesigning work from an intended result, restructuring existing customer folders or linked repositories, moving shared meanings or skills, or importing an approved Hauptprozess from a Fachrepo.
+description: Use when guiding an interview about a business, offering or recurring job, selecting a file home during customer initialization or topology design, deriving or materially redesigning work from an intended result, restructuring existing customer folders or linked repositories, moving shared meanings or skills, importing an approved Hauptprozess from a Fachrepo, or repairing an existing workspace after a demonstrated defect or consequential repeated friction.
 ---
 
 # IMPACTS Architect
 
-Owns: the invariants list, mode selection, the topology path, build routing, restructuring, import, the walk test and guardrails. Reader: author. Does not own: form selection, see [ICM form selection](references/formwahl.md).
+Owns: the invariants list, mode selection, the topology path, build routing, restructuring, import, workspace repair routing, the walk test and guardrails. Reader: author. Does not own: form selection, see [ICM form selection](references/formwahl.md).
 
 For first use or unresolved source identity or links, follow [Version and entry points](../../README.md#version-and-entry-points). Use the complete corresponding protocol source; this skill folder alone lacks required parent protocol files and root guidance. If that README is missing, recover the original source/revision from the copy's provenance: obtain a published revision from [releases](https://github.com/Melvinanalytics/impacts-protokoll/releases), or an unreleased revision from its recorded original repository or file snapshot. If provenance is unknown, keep the revision open and resolve the source before applying missing rules; do not select the latest release as a substitute.
 
@@ -28,7 +28,7 @@ Hauptprozess/Vorgang-specific invariants apply to selected Core contracts, as th
 5. `gate: human` follows the [reserved-decision criterion](references/zuschnitt.md#arbeitsschritt).
 6. Apply [Hauptprozess and Vorgang separation](../../AGENTS.md).
 7. Every claim carries its source and the evidence label defined in the [ontology](../ontology.md#evidence-and-obligations); a confirmed document does not confirm every interpretation of it.
-8. `impacts validate .` checks the selected Core Hauptprozesse and Vorgänge, not non-process knowledge topology or arbitrary domain meaning. Apply it for the needed condition, as the [Tooling stop](references/formwahl.md#tooling-stop) bounds it.
+8. `impacts validate` checks selected Core Hauptprozesse and Vorgänge and, at a workspace root pinned to the current minor, the workspace [folder-form rules](references/formwahl.md#folder-structure-by-form). It checks neither an entry's kind nor domain meaning. Run it only when that condition is needed, under [Tooling stop](references/formwahl.md#tooling-stop).
 
 ## Form selection
 
@@ -41,6 +41,7 @@ For work being set up or materially redesigned, first derive the intended result
 - A newly described Record Library, Knowledge Bundle, Context Map, Umbrella or System Map: Topology path.
 - An existing customer folder, repository or vault, or a declared set of repositories: Restructure mode, then route each found form through its selected path.
 - An approved Hauptprozess in a Fachrepo: Import mode.
+- An existing workspace where ordinary work shows a demonstrated defect or consequential repeated friction in a route, job contract, folder or name: follow [Reviewed correction](../impacts-method.md#reviewed-correction) at the affected home, then run the applicable [walk branch](#walk-test). A failed check or walk, an output written to the wrong place, or a hand-corrected result (except a case value or exceptional preference) counts immediately. A search outside the route, missing routed context, or unneeded loaded context counts once it recurs or changes the result. Enter Restructure mode only when files move or a consumer's source changes. Do not start a full workspace audit.
 
 ## Topology path
 

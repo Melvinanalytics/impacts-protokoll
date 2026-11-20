@@ -1,6 +1,6 @@
 ---
 type: workspace
-protocol: v0.5.1
+protocol: v0.5.2
 ---
 
 Working language: en
@@ -77,3 +77,5 @@ Apply `02_protocol/impacts-method.md#scale` for first import or reviewed takeove
 
 5. For required Core conformance, run `impacts validate` on the selected scope. Apply the Core boundary (`02_protocol/ontology.md#enforcement-and-completion`).
 6. Under the Core boundary in item 5, the bound Arbeitsschritt body supplies the prompt and names tool operations, versions, parameters, permitted effects and checks. The configured harness loads declared inputs, executes permitted work and retains actual output evidence under `02_protocol/impacts-method.md#compose-an-arbeitsschritt` and `02_protocol/binding.md`.
+7. Write this router's rows under `02_protocol/impacts-method.md#load-context-locally-first`, and keep each recurring job without a Core Arbeitsschritt in one section of its owning file under `02_protocol/impacts-method.md#maintain-agent-instructions`.
+8. When ordinary work shows a demonstrated defect or consequential repeated friction in this workspace, open the recorded Architect entry (`Choose a mode`) and apply `02_protocol/impacts-method.md#reviewed-correction`.

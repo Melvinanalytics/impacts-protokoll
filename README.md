@@ -25,6 +25,7 @@ IMPACTS is not a personal mega-folder for everything. Customer work remains in e
 | An offer to clarify | [First contribution](FIRST-WIN.md) | Internal draft, source links, explicit gaps and next action |
 | Notes or an undocumented business | [Form selection](02_protocol/impacts-architect/references/formwahl.md) | Smallest suitable existing home for facts and open questions |
 | Existing repositories or a shared source change | [Architect Restructure mode](02_protocol/impacts-architect/SKILL.md#restructure-mode) | Owners, revisions, consumers, migration and recovery made explicit |
+| An existing workspace with a defect or recurring routing friction | [Reviewed correction](02_protocol/impacts-method.md#reviewed-correction) via [Architect mode selection](02_protocol/impacts-architect/SKILL.md#choose-a-mode) | Smallest fix at the affected home and a passing walk |
 | A bounded result whose steps can be declared | [Form selection, then Build mode](02_protocol/impacts-architect/SKILL.md#form-selection) | Candidate definition with result, inputs, checks and routes |
 | An existing bound Vorgang | Its `vorgaenge/<vorgang>/CONTEXT.md` and linked inputs | Next permitted action or a specific blocker under the bound revision |
 | Several cases or Vorgänge to survey: pending work, resource use, capacity or ordering | [Cross-case route](02_protocol/CONTEXT.md#task-routes) | Derived overview with sources, coverage and open points; permitted next work kept apart from actual execution |
@@ -45,7 +46,7 @@ This diagram is orientation. The [ontology](02_protocol/ontology.md) owns eviden
 
 ## Get the protocol
 
-Edition v0.5.1. Once published, use the published immutable Release [v0.5.1](https://github.com/Melvinanalytics/impacts-protokoll/releases/tag/v0.5.1) for new work. Download the wheel, complete source archive and `SHA256SUMS`; verify every listed checksum before installing or using the source archive.
+Edition v0.5.2. Once published, use the published immutable Release [v0.5.2](https://github.com/Melvinanalytics/impacts-protokoll/releases/tag/v0.5.2) for new work. Download the wheel, complete source archive and `SHA256SUMS`; verify every listed checksum before installing or using the source archive.
 
 Keep the complete source together: method, Architect, references, templates and examples. Reading the archive needs no installation. A copied Architect folder is incomplete even when its `references/` folder is present: it also depends on parent protocol files and root guidance. The wheel contains the CLI, static Viewer HTML resource, schemas and templates; it does not contain the method, Architect, evaluations, tests or complete source guidance. Wheel users who need the source-provenance form can run `impacts template herkunft` (or add `--language de`). That template has nine evidence fields. Its field count describes this template; it is not a universal line-count rule.
 
@@ -123,8 +124,8 @@ source .venv/bin/activate
 
 Choose one installation source:
 
-- **Complete checkout:** once published, use the source tree extracted from the published immutable v0.5.1 Release after every listed `SHA256SUMS` entry passes. From the verified tree's root, run `python -m pip install -e .`.
-- **Release wheel:** once published, download the wheel, complete source archive and `SHA256SUMS` from the published immutable Release [v0.5.1](https://github.com/Melvinanalytics/impacts-protokoll/releases/tag/v0.5.1) into one folder. Verify every listed asset with `shasum -a 256 -c SHA256SUMS` (macOS/Linux), then install with `python -m pip install ./impacts_protocol-0.5.1-py3-none-any.whl`.
+- **Complete checkout:** once published, use the source tree extracted from the published immutable v0.5.2 Release after every listed `SHA256SUMS` entry passes. From the verified tree's root, run `python -m pip install -e .`.
+- **Release wheel:** once published, download the wheel, complete source archive and `SHA256SUMS` from the published immutable Release [v0.5.2](https://github.com/Melvinanalytics/impacts-protokoll/releases/tag/v0.5.2) into one folder. Verify every listed asset with `shasum -a 256 -c SHA256SUMS` (macOS/Linux), then install with `python -m pip install ./impacts_protocol-0.5.2-py3-none-any.whl`.
 
 Follow [Version and entry points](#version-and-entry-points) to identify the installed package and obtain its complete source. Then, outside the intended new customer folder:
 

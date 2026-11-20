@@ -239,7 +239,7 @@ A right to decide, permit or bind belongs to its holder: whoever the applicable 
 
 | Boundary | Actual check | Limit |
 |---|---|---|
-| Core structure | `impacts validate` checks only that files, IDs and references resolve and match their digest under the implemented schemas, process paths and bound Vorgang surfaces. | Core causes no effect and makes no business judgement. |
+| Core structure | `impacts validate` checks only that files, IDs and references resolve and match their digest under the implemented schemas, process paths and bound Vorgang surfaces, and checks a workspace root against [folder-form rules](impacts-architect/references/formwahl.md#folder-structure-by-form). | Core causes no effect and makes no business judgement. |
 | Domain use | Arbeitsschritt's named checker executes required identity, relationship, validity, unit and calculation checks. | Does not establish untested conditions or source truth. |
 | Action | Executing harness checks required results and applicable authority before the dependent transition/effect. | A label, document hash or agent consensus does not authenticate a decision. |
 
