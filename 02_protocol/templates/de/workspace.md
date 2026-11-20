@@ -1,9 +1,9 @@
 ---
 type: workspace
-protocol: v0.5.1
+protocol: v0.5.2
 ---
 
-<!-- Translation source: 02_protocol/templates/workspace.md; sha256: 020e66a7a12ab3d6298ab18dc18d7dde5eba78755e8da3b20a2773f44f31931f -->
+<!-- Translation source: 02_protocol/templates/workspace.md; sha256: 782c4a133ecab1ff936b671986e21a35526a9ff97a94ba4bebd72ee733059a0c -->
 
 Working language: de
 
@@ -11,7 +11,7 @@ Working language: de
 
 Vor Anwendung eines Protokollpfads gemäß Root-`README.md` der vollständigen Protokollquelle, Abschnitt „Version and entry points“, unter „Quelle, Harness und Heimaten“ die tatsächliche Quelle, Revision und den auflösbaren Architect-Einstieg (`02_protocol/impacts-architect/SKILL.md`) benennen. Fehlt diese Quelle nach `init`, das erzeugende Paket mit `python -m pip show impacts-protocol` in seiner Python-Umgebung identifizieren und die zugehörige vollständige Quelle von den [Releases](https://github.com/Melvinanalytics/impacts-protokoll/releases) beziehen. Die Paketversion allein identifiziert keine genaue Quellenrevision. Bei Fortsetzung die hier bereits benannte Quelle/Revision und Arbeitssprache verwenden.
 
-Jeder `02_protocol/`-Pfad in diesem Workspace bezieht sich auf diese Quelle/Revision, nicht auf den erzeugten Kundenbaum. Dessen Formwahl bestimmt die kleinste passende fachliche Heimat. Diese Heimaten mit ihrem Zweck unter „Fachliche Heimaten“ verlinken; Fakten bleiben an ihrer Quelle. Bei vorliegenden Produkten oder Services zuerst `02_protocol/impacts-method.md#reverse-engineer-a-product-or-service` anwenden, bevor eine Pipeline angenommen wird.
+Jeder `02_protocol/`-Pfad in diesem Arbeitsbereich bezieht sich auf diese Quelle/Revision, nicht auf den erzeugten Kundenbaum. Dessen Formwahl bestimmt die kleinste passende fachliche Heimat. Diese Heimaten mit ihrem Zweck unter „Fachliche Heimaten“ verlinken; Fakten bleiben an ihrer Quelle. Bei vorliegenden Produkten oder Services zuerst `02_protocol/impacts-method.md#reverse-engineer-a-product-or-service` anwenden, bevor eine Pipeline angenommen wird.
 
 Vor Aufnahme oder Änderung fachlicher Begriffe, Beziehungen und Schlussregeln `02_protocol/ontology.md#author-or-change` anwenden, vor ihrer Verwendung `02_protocol/ontology.md#use`. Die tatsächliche Fachdefinition an ihrer bestehenden Heimat verlinken.
 
@@ -34,7 +34,7 @@ Bei Nutzung von Capabilities aus einem Fachrepo oder einer anderen fachlichen He
 
 ## Einrichtung
 
-`init` erzeugt den Agenteneinstieg `AGENTS.md`, diesen Router, `hauptprozesse/`, `vorgaenge/`, `.gitattributes` (`* -text`, damit ein Checkout gebundene Bytes und ihre Hashes unverändert lässt) und eine `.gitignore` für System- und Office-Reste (`Thumbs.db`, `desktop.ini`, `~$*`), die die Ebenenprüfung überspringt. Bevor ein Core-Vorgang eine Revision bindet, Git an diesem Root einrichten. Git übernimmt keine leeren Ordner; die Validierung behandelt fehlende Sammlungen `hauptprozesse/` oder `vorgaenge/` als leer. Vorhandene Sammlungen müssen gültige Inhalte enthalten; keine Platzhalterdateien ergänzen. Fachdateien nach der Formwahl nur für tatsächlichen Inhalt ergänzen; `analyse/` entsteht erst, wenn Analyse es benötigt. Für Stufenbefugnis und Kandidatenplatzierung `02_protocol/impacts-architect/references/formwahl.md#data-kinds` verwenden. Vor einem Core-Vorgang unter „Quelle, Harness und Heimaten“ das eingerichtete Harness (`02_protocol/binding.md#history-retention`) und seine Einrichtungs-/Abhängigkeitsreferenz benennen; Unterstützung für Operationen, Quellzugriffe, Checks, Übergaben und menschliche Grenzen des gewählten Hauptprozesses feststellen, einschließlich erforderlicher Aufbewahrung und Prüfung der Historie nach diesem Zuständigkeitsvertrag. Zugangsdaten bleiben in dieser Ausführungsumgebung. Ein leerer gültiger Workspace ist noch kein ausführbarer Prozess.
+`init` erzeugt den Agenteneinstieg `AGENTS.md`, diesen Router, `hauptprozesse/`, `vorgaenge/`, `.gitattributes` (`* -text`, damit ein Checkout gebundene Bytes und ihre Hashes unverändert lässt) und eine `.gitignore` für System- und Office-Reste (`Thumbs.db`, `desktop.ini`, `~$*`), die die Ebenenprüfung überspringt. Bevor ein Core-Vorgang eine Revision bindet, Git an diesem Root einrichten. Git übernimmt keine leeren Ordner; die Validierung behandelt fehlende Sammlungen `hauptprozesse/` oder `vorgaenge/` als leer. Vorhandene Sammlungen müssen gültige Inhalte enthalten; keine Platzhalterdateien ergänzen. Fachdateien nach der Formwahl nur für tatsächlichen Inhalt ergänzen; `analyse/` entsteht erst, wenn Analyse es benötigt. Für Stufenbefugnis und Kandidatenplatzierung `02_protocol/impacts-architect/references/formwahl.md#data-kinds` verwenden. Vor einem Core-Vorgang unter „Quelle, Harness und Heimaten“ das eingerichtete Harness (`02_protocol/binding.md#history-retention`) und seine Einrichtungs-/Abhängigkeitsreferenz benennen; Unterstützung für Operationen, Quellzugriffe, Checks, Übergaben und menschliche Grenzen des gewählten Hauptprozesses feststellen, einschließlich erforderlicher Aufbewahrung und Prüfung der Historie nach diesem Zuständigkeitsvertrag. Zugangsdaten bleiben in dieser Ausführungsumgebung. Ein leerer gültiger Arbeitsbereich ist noch kein ausführbarer Prozess.
 
 Für gewählte Core-Verträge für Hauptprozesse und Vorgänge (`02_protocol/impacts-architect/references/formwahl.md#tooling-stop`) stehen die Bäume in `02_protocol/binding.md#hauptprozess-tree-rules`. `analyse/`, `capabilities/`, `grundlagen/` und `records/` entstehen erst mit Inhalt.
 
@@ -52,7 +52,7 @@ Für neue oder verschobene Dateien und Ordner Form und Heimat über `02_protocol
 └── records/                           # erster Datensatz
 ```
 
-`init` legt `analyse/` nicht an. Jede Record-Art hat ihren eigenen Ordner unter `records/` und beginnt als eine Tabelle; sobald eine Instanz einen eigenen Ordner verdient, wandert die Tabelle in die `CONTEXT.md` der Art; ein Workspace mit nur einer Record-Art darf seine Tabelle direkt in `records/` führen (`02_protocol/impacts-architect/references/formwahl.md#folder-structure-by-form`). `grundlagen/` enthält nur Grundlagen, die kein einzelner Schritt besitzt.
+`init` legt `analyse/` nicht an. Jede Record-Art hat ihren eigenen Ordner unter `records/` und beginnt als eine Tabelle; sobald eine Instanz einen eigenen Ordner verdient, wandert die Tabelle in die `CONTEXT.md` der Art; ein Arbeitsbereich mit nur einer Record-Art darf seine Tabelle direkt in `records/` führen (`02_protocol/impacts-architect/references/formwahl.md#folder-structure-by-form`). `grundlagen/` enthält nur Grundlagen, die kein einzelner Schritt besitzt.
 
 <a id="tree-clearance-and-imports"></a>
 ## Tree-Freigaben und Importe
@@ -71,13 +71,15 @@ Erstimport oder geprüfte Übernahme folgen `02_protocol/impacts-method.md#scale
 
 ## Betriebsvertrag
 
-1. Für Core-Vorgänge ist der Workspace-Root der Git-Root.
+1. Für Core-Vorgänge ist der Arbeitsbereichs-Root der Git-Root.
 2. Hauptprozess an der durch `02_protocol/impacts-architect/references/formwahl.md#data-kinds` gewählten Heimat entwerfen: `02_protocol/binding.md#hauptprozess-tree-rules` liefert Schablone und Regeln des Baums, `impacts template <art> --language de` liefert jede `CONTEXT.md` (hauptprozess, teilprozess, arbeitsschritt). Nach dem Commit liefert `git rev-parse HEAD:hauptprozesse/<slug>` die Revision. Einen Hauptprozess aus einem anderen Repository nur nach dem Verfahren in `02_protocol/impacts-method.md#scale` übernehmen; eine Übersetzung erzeugt eine neue Hauptprozess-Revision.
 3. Vor einem echten Vorgang unten eine Freigabezeile für den aktuellen Hauptprozess-Tree finden. Fehlt sie, den verantwortlichen Kunden fragen und nichts öffnen. Einen synthetischen Testgegenstand als "synthetischer Testfall" markieren.
 4. Vorgänge nach `02_protocol/binding.md#execution` des gepinnten Releases ausführen.
 
 5. Für erforderliche Core-Konformität `impacts validate` im gewählten Umfang ausführen. Die Core-Grenze anwenden (`02_protocol/ontology.md#enforcement-and-completion`).
 6. Unter der Core-Grenze aus Punkt 5 liefert der gebundene Arbeitsschritt-Body den Prompt und benennt Werkzeugoperationen, Versionen, Parameter, erlaubte Eingriffe und Checks. Das eingerichtete Harness lädt deklarierte Eingaben, führt erlaubte Arbeit aus und hält tatsächliche Ergebnisnachweise fest. Es folgt `02_protocol/impacts-method.md#compose-an-arbeitsschritt` und `02_protocol/binding.md`.
+7. Die Zeilen dieses Routers nach `02_protocol/impacts-method.md#load-context-locally-first` schreiben. Jeden wiederkehrenden Job ohne Core-Arbeitsschritt in einem Abschnitt seiner zuständigen Datei nach `02_protocol/impacts-method.md#maintain-agent-instructions` festhalten.
+8. Zeigt laufende Arbeit einen nachgewiesenen Mangel oder folgenreiche wiederholte Reibung in diesem Arbeitsbereich, den eingetragenen Architect-Einstieg (`Choose a mode`) öffnen und `02_protocol/impacts-method.md#reviewed-correction` anwenden.
 
 ## Arbeitssprache
 

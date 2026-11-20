@@ -1,8 +1,19 @@
-<!-- Translation source: CONTRIBUTING.md; sha256: f186175a4e1cdbfdb2963d8ff6ead6a956686bf4a7f9516dc75e97a639d81439 -->
+<!-- Translation source: CONTRIBUTING.md; sha256: 99bd5313865d65fcc631c9d0a47f801ec272e1e9d15dc8e7209d945a7491bd88 -->
 
 # Mitwirken
 
 Änderungen gelangen über einen geprüften Pull Request nach `main`. Kundenmaterial bleibt im Kunden-Repository. Revision, erwartetes und beobachtetes Verhalten, synthetische Evidenz und nicht ausgeführte Prüfungen angeben.
+
+Ausgabe v0.5.2 ändert nur Protokolltext und Vorlagen. Schemas, Pflichtfelder, Issue-Codes, CLI-Befehle und Konformitätsfälle bleiben unverändert; Pins auf `v0.5.0` und `v0.5.1` werden weiter beurteilt.
+
+- **Einstieg zur Korrektur bestehender Arbeitsbereiche:** Der Architect-Skill leitet einen nachgewiesenen Mangel oder folgenreiche wiederholte Reibung in einem bestehenden Arbeitsbereich zu Reviewed correction an der betroffenen Heimat und danach zum passenden Walk, ohne Umbau-Inventur.
+- **Regel für Schreibrouten:** Eine Route für Arbeit, die eine Datei oder einen Datensatz erzeugt oder ändert, nennt diese Ausgabe und ihren Ablageort (oder verlinkt den Job-Abschnitt, der sie nennt). Das Ziel zu lesen, schließt nur eine reine Lesefrage ab, nie eine Schreibaufgabe.
+- **Job-Abschnitt ohne Core-Arbeitsschritt:** Ein wiederkehrender Job ohne Core-Arbeitsschritt hält Eingaben, Werkzeuge, Ausgabe, Ablageort, prüfbaren Check, Haltebedingung und ausgeschlossene Nachbararbeit in einem Abschnitt seiner zuständigen Datei. Router verlinken diesen Abschnitt, ohne Schritte oder Checks zu wiederholen.
+- **Messung im Testlauf:** Bei einer geänderten Route oder Anweisung stammen geöffnete Dateien sowie ausgeführte oder versuchte Schreibaufrufe aus dem Ausführungsprotokoll des Konsumenten, nicht aus dessen eigenem Bericht. Ein reparierter Link braucht nur seine Auflösungsprüfung, keinen Vergleichslauf.
+- **Korrektur der Validatorgrenze:** Architect-Invariante 8 und die Core-Grenze nennen jetzt, dass `impacts validate` die Ordnerform-Regeln eines Arbeitsbereichs prüft (eingeführt in `v0.5.0`).
+- **Betriebsvertrag:** Neue Arbeitsbereiche führen diese Schreib- und Korrekturregeln in den Punkten 7 und 8. Bestehende Arbeitsbereiche übernehmen sie über ihre eigene geprüfte Router-Revision.
+
+Grenzen: Ein installierter Architect-Skill behält seinen bestehenden Auslöser, bis er auf die Quelle dieser Ausgabe zeigt. Skill- und Routertext steuern die Auswahl und setzen nichts durch; erforderliche Checks brauchen weiterhin ein ausführendes Harness.
 
 Ausgabe v0.5.1 ergänzt eine lokalisierte `AGENTS.md` für neue Arbeitsbereiche. Sie führt zum Root-Router, der die vorhandenen Regeln für Ablage, Benennung und Anweisungspflege auswählt. Die Methode trennt stets geltende Anweisungen, bedingtes Routing und typisierte Verträge; Aussagen behalten ihre Einschränkungen auch in ausgelieferten Auszügen und Projektionen. Core-Felder, CLI-Befehle und bestehende Workspace-Dateien bleiben unverändert. `init` verweigert weiterhin vorhandene Ziele. Für einen bestehenden Arbeitsbereich einen temporären Workspace derselben Sprache außerhalb dieses Arbeitsbereichs erzeugen. Fehlt `AGENTS.md`, den erzeugten Einstieg kopieren; andernfalls nur dessen fehlenden Pfad in den bestehenden Einstieg aufnehmen. Fehlende Ablage- und Benennungspfade in der bestehenden `CONTEXT.md` ergänzen. Zur Übernahme dieser Ausgabe ihre geprüfte Quelle/Revision und den Pin v0.5.1 über den bestehenden geprüften Übernahmeweg eintragen; Kundenregeln und bereits gebundene Historien erhalten. Bestehende Dateien nicht überschreiben. Den temporären Workspace nach dem Pfadvergleich entfernen. Das Wheel enthält jetzt 14 Vorlagen: sieben englische und sieben deutsche. Dieser Patch ändert keine Validatorregeln; Pins auf v0.5.0 und v0.5.1 unterliegen weiterhin den Topologieprüfungen. Diese Ausgabe behauptet keine gemessene Verbesserung des Viewer- oder Modellverhaltens.
 

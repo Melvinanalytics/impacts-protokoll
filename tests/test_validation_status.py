@@ -37,13 +37,13 @@ def test_status_counts_header_and_external_pointer(tmp_path, capsys, reference_i
     assert report.judged == expected
     assert main(["validate", str(root)]) == 0
     assert capsys.readouterr().out.splitlines()[0] == (
-        "impacts validate v0.5.1 against pin v0.5.1: 1 Hauptprozesse, 1 Teilprozesse, "
+        "impacts validate v0.5.2 against pin v0.5.2: 1 Hauptprozesse, 1 Teilprozesse, "
         "2 Arbeitsschritte, 1 Vorgänge, 2 Versuche judged; 0 Vorgänge not judged; 0 definition trees outside hauptprozesse/"
     )
     assert main(["validate", str(root), "--json"]) == 0
     data = json.loads(capsys.readouterr().out)
     assert data["judged"] == expected
-    assert data["release"] == data["pin"] == "v0.5.1"
+    assert data["release"] == data["pin"] == "v0.5.2"
     assert data["superseded"] == []
     assert data["external_references"] == [{"vorgang": "vorgaenge/test/CONTEXT.md", "pointer": f"/laufpfad/0/gelesen/{reference_index}"}]
     assert data["external_references_not_verified"] == 1
@@ -138,7 +138,7 @@ def test_missing_pin_names_the_fix_and_rule(tmp_path, capsys):
     lines = capsys.readouterr().out.splitlines()
     assert "against pin none" in lines[0]
     assert lines[1] == (
-        "schema.invalid: CONTEXT.md: protocol pin missing; add protocol: v0.5.1 to the frontmatter "
+        "schema.invalid: CONTEXT.md: protocol pin missing; add protocol: v0.5.2 to the frontmatter "
         "(02_protocol/binding.md#validation-issue-codes)"
     )
 
@@ -192,7 +192,7 @@ def test_all_emitted_rule_anchors_resolve_in_protocol_docs():
 @pytest.mark.parametrize("field", ["gelesen", "geschrieben"])
 def test_external_store_requires_exact_root_body_declaration(tmp_path, declaration, valid, field):
     root, case, first, second = pair(tmp_path)
-    write_context(root / "CONTEXT.md", {"type": "workspace", "protocol": "v0.5.1"}, declaration + "\nForm: records/ Record Library per source record\n")
+    write_context(root / "CONTEXT.md", {"type": "workspace", "protocol": "v0.5.2"}, declaration + "\nForm: records/ Record Library per source record\n")
     pointer = {"ablage": "synthetic-store", "schluessel": "unavailable-object", "sha256": "sha256:" + "a" * 64}
     if field == "gelesen":
         first[field] = [dict(pointer, eingabe="input/auftrag.md")]
@@ -228,7 +228,7 @@ def test_process_rules_select_specific_anchor_or_family_fallback(code, anchor):
 
 def test_undeclared_store_issue_names_each_reference_position(tmp_path):
     root, case, first, second = pair(tmp_path)
-    write_context(root / "CONTEXT.md", {"type": "workspace", "protocol": "v0.5.1"}, "")
+    write_context(root / "CONTEXT.md", {"type": "workspace", "protocol": "v0.5.2"}, "")
     pointer = {"ablage": "synthetic-store", "schluessel": "unavailable-object", "sha256": "sha256:" + "a" * 64}
     first["gelesen"] = [dict(pointer, eingabe="input/auftrag.md"), dict(pointer, eingabe="input/auftrag.md", schluessel="other")]
     replace_context(case / "CONTEXT.md", dict(read_context(case / "CONTEXT.md"), laufpfad=[first, second]))

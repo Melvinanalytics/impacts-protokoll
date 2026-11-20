@@ -2,6 +2,19 @@
 
 Changes enter `main` through a reviewed pull request. Keep customer material in its customer repository. Report the revision, expected and observed behavior, synthetic evidence, and checks not run.
 
+### v0.5.2
+
+Protocol text and templates only. Schemas, required fields, issue codes, CLI commands and conformance cases are unchanged; `v0.5.0` and `v0.5.1` pins remain judged.
+
+- **Workspace repair entry:** The Architect skill now routes a demonstrated defect or consequential repeated friction in an existing workspace to `Reviewed correction` at the affected home and then to the applicable walk, without a restructure inventory.
+- **Write-route rule:** A route for work that creates or modifies a file or record names that output and its target location (or links the job section that names them). Reading the target completes a read-only question, never a write task.
+- **Non-Core job contract:** A recurring job without a Core Arbeitsschritt keeps its inputs, tools, output, target location, observable check, stop condition and excluded neighboring work in one section of its owning file; routers link that section without copying its steps or checks.
+- **Observed-run measurement:** When testing a changed route or instruction, take opened files and executed or attempted write calls from the consumer's execution trace, not its own report. A repaired link needs only a resolution check, not a comparison run.
+- **Validator boundary correction:** Architect invariant 8 and the Core boundary now state that `impacts validate` checks workspace folder-form rules (introduced in `v0.5.0`).
+- **Workspace operating contract:** New workspaces include these authoring and repair rules in items 7 and 8. Existing workspaces adopt them via their own reviewed router update.
+
+Limits: An installed Architect skill keeps its existing trigger until repointed to this edition's source. Skill and router text guide selection and enforce nothing; required checks still require an executing harness.
+
 ### v0.5.1
 
 New workspaces include a localized `AGENTS.md` that selects their root router. The router points to existing placement, naming and instruction-maintenance authorities. The method distinguishes always-applicable instructions, conditional routing and typed contracts, and requires claims to retain their qualifiers in delivered excerpts and projections. Core fields, CLI commands and existing workspace files are unchanged; `init` still refuses an existing target. For an existing workspace, initialize a temporary workspace outside it in the same language. If no `AGENTS.md` exists, copy the generated entry; otherwise merge only its missing route into the existing entry. Merge missing placement and naming routes into the existing `CONTEXT.md`. To adopt this edition, record its verified source/revision and v0.5.1 pin through the existing reviewed takeover path; preserve customer rules and earlier bound histories. Do not overwrite existing files. Remove the temporary workspace after comparing the routes. The wheel now includes 14 templates: seven English and seven German. This patch does not change validator rules; both v0.5.0 and v0.5.1 pins remain subject to the topology checks. This release makes no claim of measured improvement to Viewer or model behavior.
