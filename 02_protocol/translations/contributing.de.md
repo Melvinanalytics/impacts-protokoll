@@ -1,8 +1,17 @@
-<!-- Translation source: CONTRIBUTING.md; sha256: 36ef4e881538f92a6da8ecf0b2e636424d139a1360f7a4bf27ee0d7a6888a659 -->
+<!-- Translation source: CONTRIBUTING.md; sha256: 04c3ec08e06ba73119517c6cfeb88c9c8e0caea0ccaf2c06d018d1b1e2f58d9b -->
 
 # Mitwirken
 
 Änderungen gelangen über einen geprüften Pull Request nach `main`. Kundenmaterial bleibt im Kunden-Repository. Revision, erwartetes und beobachtetes Verhalten, synthetische Evidenz und nicht ausgeführte Prüfungen angeben.
+
+Ausgabe v0.6.1 ändert nur Protokolltext und eine Architect-Vorlage. Schemas, Pflichtfelder, Issue-Codes, Validatorregeln, CLI-Befehle und die 14 CLI-Vorlagen bleiben unverändert; Pins auf `v0.6.0` werden weiter beurteilt.
+
+- **Kaufmännischer Zuschnitt:** `zuschnitt.md` hält vier kaufmännische Zuständigkeiten auseinander, bevor ein Baum entsteht: das Angebot mit seiner `Leistungsstückliste`, Nachfrage, Lieferung sowie Beschaffung oder Kapazität über einen Entkopplungspunkt als Record. Preisregeln und Durchführungsform stehen neben der `Leistungsstückliste`, nicht in ihr. Ein Angebot muss nicht zu einer Pipeline führen. Die synthetische Lieferkette erhält eine Beschaffungsspalte.
+- **Anbieter- und Kundenarbeitsraum:** Bei Arbeit für Kunden bleiben Angebot und interne Preisbildung im Anbieterarbeitsraum; Kundenfakten, Angebotsentwurf und Vereinbarung liegen im Kundenarbeitsraum und sind über ausdrückliche Verweise verbunden.
+- **Brückenvorlage:** `02_protocol/impacts-architect/templates/bridge.md` und ihre deutsche Fassung halten eine einseitige Herleitung fest, bevor ein stabiler Ablauf besteht: Ergebnisgrenze mit Schutzgröße, `Leistungsstückliste`, rückwärtige Voraussetzungsspur mit Heimat und Arbeitsraum, Realitäts-Überlagerung mit Gegenerklärung und die Heimatentscheidung. Sie ist eine Architect-Vorlage neben `ist-prozess.md`, keine CLI-Vorlage.
+- **Methode und Routen:** `impacts-method.md`, der Architect-Skill und die Aufgabenrouten des Protokolls verlinken Zuschnitt und Vorlage. Arbeit ohne Core-Pipeline darf einen leichten Durchgang aus Identify, Minimize und Augment machen und vor Construct anhalten.
+
+Grenzen: Die Vorlage wurde an einem Dienstleistungsfall über zwei Arbeitsräume erprobt; die Beschaffungszeile des Zuschnitts stützt sich auf ein synthetisches Beispiel. Nichts davon prüft `impacts validate`.
 
 Ausgabe v0.6.0 verschärft die deterministische Prüfung von Arbeitsbereichs-Routern ohne neue JSON-Schemas, CLI-Befehle oder Ordnerformen. Arbeitsbereiche mit Pin auf `v0.5.x` werden als nicht beurteilt (`not_judged`) gemeldet, bis ihr Pin auf `protocol: v0.6.0` angehoben wird. Den Wechsel an einer Kopie proben, da die verschärften Topologieprüfungen erst auf der neuen Minor-Linie greifen.
 
