@@ -19,6 +19,7 @@ from .model import Issue
 LEVEL_FORMS = ("Record Library", "Knowledge Bundle", "Context Map")
 CODE_FORMS = ("Capability", "Tool", "Check")
 IMPLICIT = {"hauptprozesse", "vorgaenge", "__pycache__"}
+ROOT_STANDARD_DOCS = frozenset({"agents.md", "claude.md", "context.md", "readme.md", "contributing.md", "changelog.md", "license.md"})
 DATED = re.compile(r"\d{4}-\d{2}-\d{2}")
 SCHEME = re.compile(r"[a-z][a-z0-9+.-]*:", re.IGNORECASE)
 ROUTER = "CONTEXT.md"
@@ -58,6 +59,7 @@ class Topology:
     has_file: dict[Path, bool] = field(default_factory=dict)
     attempted: set[Path] = field(default_factory=set)
     listings: dict[Path, tuple[dict[str, Path], dict[str, Path]]] = field(default_factory=dict)
+    anchors: dict[Path, set[str]] = field(default_factory=dict)
     ignored: set[str] = field(default_factory=set)
 
     def skip(self, path: Path) -> bool:
@@ -84,12 +86,16 @@ def check_topology(root: Path, human_pattern: str) -> tuple[list[Issue], tuple[d
         pass
     body, children = _read_level(state, root)
     _check_links(state, root, body, may_leave=True)
-    for folder in _entries(state, root):
+    root_targets = _resolved_targets(state, root, body)
+    for entry in _entries(state, root):
         try:
-            if folder.is_dir() and folder.name not in IMPLICIT and folder not in state.attempted:
-                state.add("topology.form_missing", folder, f"{folder.name}/ has no Form line; add `Form: {folder.name}/ <form> per <unit>` as a plain unindented line in the root CONTEXT.md; if it has no form, move its content to the case, record or Vorgang it serves or leave it to Git history; only a person may hold it")
+            if entry.is_dir() and entry.name not in IMPLICIT and entry not in state.attempted:
+                state.add("topology.form_missing", entry, f"{entry.name}/ has no Form line; add `Form: {entry.name}/ <form> per <unit>` as a plain unindented line in the root CONTEXT.md; if it has no form, move its content to the case, record or Vorgang it serves or leave it to Git history; only a person may hold it")
+            elif entry.is_file() and not entry.is_symlink() and entry.suffix.lower() == ".md" and entry.name.lower() not in ROOT_STANDARD_DOCS:
+                if _nfc(str(entry.resolve())) not in root_targets:
+                    state.add("topology.shape", entry, f"{entry.name} sits unlinked at the workspace root; move it into its declared form (records/, grundlagen/, analyse/) or link it from {ROUTER}")
         except (OSError, ValueError) as error:
-            _unreadable(state, folder, error)
+            _unreadable(state, entry, error)
     for child in sorted(children):
         if not state.opaque(child):
             _visit(state, child)
@@ -474,8 +480,53 @@ def _links(body: str) -> list[str]:
     return [match[1] for match in re.finditer(pattern, visible)]
 
 
+def _split_link(link: str) -> tuple[str, str]:
+    cleaned = re.sub(r"\\([()])", r"\1", link.strip("<>"))
+    raw_target, _, raw_fragment = cleaned.partition("#")
+    return unquote(raw_target, errors="strict"), unquote(raw_fragment, errors="strict")
+
+
 def _link_target(link: str) -> str:
-    return unquote(re.sub(r"\\([()])", r"\1", link.strip("<>").split("#", 1)[0]), errors="strict")
+    return _split_link(link)[0]
+
+
+def _resolved_targets(state: Topology, folder: Path, body: str) -> set[str]:
+    targets: set[str] = set()
+    for link in _links(body):
+        try:
+            target = _link_target(link)
+            if target and not SCHEME.match(target) and not target.startswith("/"):
+                located = _locate(folder, target, state)
+                if located is not None and _nfc(str(located)) == _nfc(os.path.normpath(folder / target)):
+                    targets.add(_nfc(str(located.resolve())))
+        except (OSError, ValueError, RuntimeError):
+            continue
+    return targets
+
+
+def _prose(text: str) -> str:
+    stripped = re.sub(r"<!--.*?(?:-->|$)", "", text, flags=re.DOTALL)
+    return re.sub(r"^(`{3,}|~{3,})[^\n]*\n.*?^\1[ \t]*$", "", stripped, flags=re.M | re.S)
+
+
+def _markdown_anchors(text: str) -> set[str]:
+    prose = _prose(text)
+    found = set(re.findall(r'<a\s+(?:id|name)=["\']([^"\']+)', prose))
+    counts: dict[str, int] = {}
+    for title in re.findall(r"^#{1,6}[ \t]+(.+?)[ \t]*#*$", prose, re.M):
+        title = re.sub(r"\[([^\]]+)\]\([^)]*\)", r"\1", title).replace("`", "").lower()
+        slug = re.sub(r"[^\w\- ]", "", title).replace(" ", "-")
+        count = counts.get(slug, 0)
+        counts[slug] = count + 1
+        found.add(slug + (f"-{count}" if count else ""))
+    return found
+
+
+def _file_anchors(state: Topology, path: Path) -> set[str]:
+    resolved = path.resolve()
+    if resolved not in state.anchors:
+        state.anchors[resolved] = _markdown_anchors(path.read_text(encoding="utf-8-sig", errors="replace"))
+    return state.anchors[resolved]
 
 
 def _check_links(state: Topology, folder: Path, body: str, *, may_leave: bool = False) -> None:
@@ -483,8 +534,13 @@ def _check_links(state: Topology, folder: Path, body: str, *, may_leave: bool = 
     for link in _links(body):
         target = link
         try:
-            target = _link_target(link)
-            if not target or SCHEME.match(target):
+            target, fragment = _split_link(link)
+            if not target:
+                if fragment and context.is_file() and context.suffix.lower() == ".md":
+                    if fragment not in _file_anchors(state, context):
+                        state.add("topology.shape", context, f"Anchor '#{fragment}' does not resolve in {state.name(context)}; correct or remove it")
+                continue
+            if SCHEME.match(target):
                 continue
             if target.startswith("/"):
                 if not may_leave:
@@ -499,9 +555,14 @@ def _check_links(state: Topology, folder: Path, body: str, *, may_leave: bool = 
                 state.add("topology.shape", context, f"Link {target!r} leaves the workspace; name the source by release and revision instead")
             elif located is None:
                 state.add("topology.shape", context, f"Link {target!r} does not resolve; correct or remove it")
-            elif _locate(folder, target, state, aliases_ok=False) is None and not (
-                    state.forms.get(folder) in {"Knowledge Bundle", "Context Map"} and (located.parent == folder or located.parent.parent == folder and located.name == ROUTER)):
-                # A misspelt link to an entry of this level is reported once, on the entry.
-                state.add("topology.shape", context, f"Link {target!r} differs from the on-disk spelling {state.name(located)!r}; use the on-disk spelling")
+            else:
+                if _locate(folder, target, state, aliases_ok=False) is None and not (
+                        state.forms.get(folder) in {"Knowledge Bundle", "Context Map"}
+                        and (located.parent == folder or located.parent.parent == folder and located.name == ROUTER)):
+                    # A misspelt link to an entry of this level is reported once, on the entry.
+                    state.add("topology.shape", context, f"Link {target!r} differs from the on-disk spelling {state.name(located)!r}; use the on-disk spelling")
+                if fragment and located.is_file() and located.suffix.lower() == ".md":
+                    if fragment not in _file_anchors(state, located):
+                        state.add("topology.shape", context, f"Link '{target}#{fragment}' has unresolved anchor '#{fragment}' in {state.name(located)}; correct or remove it")
         except (OSError, ValueError, RuntimeError):
             state.add("topology.shape", context, f"Link {target!r} does not resolve; correct or remove it")

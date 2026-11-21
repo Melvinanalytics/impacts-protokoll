@@ -2,6 +2,14 @@
 
 Changes enter `main` through a reviewed pull request. Keep customer material in its customer repository. Report the revision, expected and observed behavior, synthetic evidence, and checks not run.
 
+### v0.6.0
+
+This minor edition tightens deterministic workspace-router validation without adding JSON schemas, CLI commands or new folder forms. Workspaces still pinned to `v0.5.x` are reported as `not_judged` until they lift their `protocol: v0.6.0` pin; rehearse the lift on a copy because the tightened topology checks activate only on the new minor line.
+
+- **Markdown `#anchor` validation:** Relative links with `#fragment` targets inside the workspace are now resolved against the target Markdown file's headings (including duplicate `-1` suffixes) and `<a id>`/`<a name>` anchors, including same-file `#anchor` links. Unresolved anchors fail with `topology.shape`. Fragments on non-Markdown files (such as `spec.pdf#page=2`) are not checked as Markdown anchors. Limits: checks linked sections only, not section names quoted in plain prose.
+- **Root loose `.md` file check:** Non-standard `.md` files sitting unlinked at the workspace root (outside `AGENTS.md`, `CLAUDE.md`, `CONTEXT.md`, `README.md`, `CONTRIBUTING.md`, `CHANGELOG.md`, `LICENSE.md`) now fail with `topology.shape` until moved into their declared form or linked from root `CONTEXT.md`.
+- **Split workspace router starter & issue-code docs:** New workspaces initialized with `impacts init` include a split Work vs. Read-only `Routing` starter section, and `02_protocol/binding.md#validation-issue-codes` now documents `topology.*`. Schemas, CLI template kinds (14 templates: seven English and seven German) and folder forms are unchanged.
+
 ### v0.5.2
 
 Protocol text and templates only. Schemas, required fields, issue codes, CLI commands and conformance cases are unchanged; `v0.5.0` and `v0.5.1` pins remain judged.

@@ -1,6 +1,6 @@
 ---
 type: workspace
-protocol: v0.5.2
+protocol: v0.6.0
 ---
 
 Working language: en
@@ -31,6 +31,25 @@ Record configured facts here and preserve the operating contract. Changes to ins
 `Form: <folder>/ <form> per <unit>`: one unindented body line per top-level folder (forms: `02_protocol/impacts-architect/references/formwahl.md#folder-structure-by-form`).
 
 When using Capabilities from a Fachrepo or another domain home, link their early responsible router under Domain homes and apply `02_protocol/impacts-architect/references/formwahl.md#capability-orientation` from the recorded protocol source.
+
+## Routing
+
+Separate intents that create or change output from read-only questions (`02_protocol/impacts-method.md#load-context-locally-first`). Replace placeholder rows only with populated links; keep unpopulated areas out of the tables.
+
+### Work (creates or changes output)
+
+| Intent | Open | Output and target | Check |
+|---|---|---|---|
+| `<recurring job without Core Arbeitsschritt>` | `<link to owning file#job-section>` | `<artifact and target path>` | `<observable check>` |
+| `<selected Core Pipeline>` | `<link to hauptprozesse/<slug>/CONTEXT.md>` | `<Vorgang output>` | `impacts validate` |
+
+### Read-only questions
+
+| Question about | Open | Stop condition |
+|---|---|---|
+| `<foundations, rules, offerings>` | `<link to grundlagen/CONTEXT.md>` | `<cited rule and evidence status>` |
+| `<cases, commitments, subjects>` | `<link to records/CONTEXT.md>` | `<cited record and as-of time>` |
+| `<captures, candidates>` | `<link to analyse/CONTEXT.md>` | `<cited analysis and open gaps>` |
 
 ## Setup
 
@@ -77,5 +96,5 @@ Apply `02_protocol/impacts-method.md#scale` for first import or reviewed takeove
 
 5. For required Core conformance, run `impacts validate` on the selected scope. Apply the Core boundary (`02_protocol/ontology.md#enforcement-and-completion`).
 6. Under the Core boundary in item 5, the bound Arbeitsschritt body supplies the prompt and names tool operations, versions, parameters, permitted effects and checks. The configured harness loads declared inputs, executes permitted work and retains actual output evidence under `02_protocol/impacts-method.md#compose-an-arbeitsschritt` and `02_protocol/binding.md`.
-7. Write this router's rows under `02_protocol/impacts-method.md#load-context-locally-first`, and keep each recurring job without a Core Arbeitsschritt in one section of its owning file under `02_protocol/impacts-method.md#maintain-agent-instructions`.
+7. Write this router's rows under `02_protocol/impacts-method.md#load-context-locally-first`, separating work from read-only questions, and keep each recurring job without a Core Arbeitsschritt in one section of its owning file under `02_protocol/impacts-method.md#maintain-agent-instructions`.
 8. When ordinary work shows a demonstrated defect or consequential repeated friction in this workspace, open the recorded Architect entry (`Choose a mode`) and apply `02_protocol/impacts-method.md#reviewed-correction`.

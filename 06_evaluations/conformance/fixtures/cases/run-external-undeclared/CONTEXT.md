@@ -1,6 +1,6 @@
 ---
 type: workspace
-protocol: v0.5.0
+protocol: v0.6.0
 ---
 
 # Synthetic run-external-undeclared

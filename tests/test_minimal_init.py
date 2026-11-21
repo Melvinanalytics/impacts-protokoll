@@ -33,7 +33,7 @@ def test_init_creates_only_minimal_workspace():
         ]
         assert (root / ".gitattributes").read_bytes() == b"* -text\n"
         assert (root / ".gitignore").read_text().split() == ["Thumbs.db", "desktop.ini", "~$*"]
-        assert load_frontmatter(root / "CONTEXT.md") == {"type": "workspace", "protocol": "v0.5.2"}
+        assert load_frontmatter(root / "CONTEXT.md") == {"type": "workspace", "protocol": "v0.6.0"}
 
 
 def test_cli_init_needs_no_customer_argument():
@@ -113,12 +113,12 @@ def test_generated_agent_entry_routes_to_workspace_authorities(tmp_path, languag
         assert heading in headings
 
 
-@pytest.mark.parametrize("pin", ["v0.5.0", "v0.5.1", "v0.5.2"])
+@pytest.mark.parametrize("pin", ["v0.6.0", "v0.6.1", "v0.6.2"])
 def test_patch_pins_still_reject_undeclared_domain_folder(tmp_path, pin):
     from impacts_protocol import validate
     root = impacts_protocol.init_workspace(tmp_path / "workspace")
     router = root / "CONTEXT.md"
-    router.write_text(router.read_text().replace("protocol: v0.5.2", f"protocol: {pin}"))
+    router.write_text(router.read_text().replace("protocol: v0.6.0", f"protocol: {pin}"))
     assert load_frontmatter(router)["protocol"] == pin
     (root / "plans").mkdir()
     (root / "plans" / "item.md").write_text("Synthetic unclassified content\n")
