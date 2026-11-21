@@ -30,7 +30,8 @@ PAIRS += [("02_protocol/language.md", "02_protocol/translations/language.de.md")
           ("FIRST-WIN.md", "02_protocol/translations/first-win.de.md"),
           ("CONTRIBUTING.md", "02_protocol/translations/contributing.de.md"),
           ("02_protocol/impacts-architect/templates/ist-prozess.md", "02_protocol/impacts-architect/templates/de/ist-prozess.md"),
-          ("02_protocol/impacts-architect/templates/subject-record.md", "02_protocol/impacts-architect/templates/de/subject-record.md")]
+          ("02_protocol/impacts-architect/templates/subject-record.md", "02_protocol/impacts-architect/templates/de/subject-record.md"),
+          ("02_protocol/impacts-architect/templates/bridge.md", "02_protocol/impacts-architect/templates/de/bridge.md")]
 
 MARKER = re.compile(r"<!-- Translation source: (\S+); sha256: ([0-9a-f]{64}) -->")
 

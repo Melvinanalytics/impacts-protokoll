@@ -2,6 +2,17 @@
 
 Changes enter `main` through a reviewed pull request. Keep customer material in its customer repository. Report the revision, expected and observed behavior, synthetic evidence, and checks not run.
 
+### v0.6.1
+
+Protocol text and one Architect template only. Schemas, required fields, issue codes, validator rules, CLI commands and the 14 CLI templates are unchanged; `v0.6.0` pins remain judged.
+
+- **Commercial boundary cut:** `zuschnitt.md` keeps four commercial responsibilities apart before a tree is drawn: the Offering with its `Leistungsstückliste`, Demand, Delivery, and Supply or capacity across a decoupling point record. Pricing rules and delivery format sit beside the `Leistungsstückliste`, not inside it. An Offering need not lead to a Pipeline. The synthetic supply chain gains a supply column.
+- **Provider and customer workspaces:** in provider-to-customer work the Offering and internal pricing stay in the provider workspace; customer facts, the offer draft and the commitment live in the customer workspace, connected by explicit references.
+- **Bridge template:** `02_protocol/impacts-architect/templates/bridge.md` and its German counterpart hold a one-page derivation before a stable process exists: result boundary with guardrail, `Leistungsstückliste`, backward prerequisite trace with home and workspace, reality overlay with counter-explanation, and the home decision. It is an Architect template beside `ist-prozess.md`, not a CLI template.
+- **Method and routes:** `impacts-method.md`, the Architect skill and the protocol task routes link the cut and the template. Work without a Core Pipeline may run a lightweight Identify, Minimize and Augment pass and stop before Construct.
+
+Limits: the template was exercised on one two-workspace service case; the supply row of the cut rests on a synthetic example. Nothing here is checked by `impacts validate`.
+
 ### v0.6.0
 
 This minor edition tightens deterministic workspace-router validation without adding JSON schemas, CLI commands or new folder forms. Workspaces still pinned to `v0.5.x` are reported as `not_judged` until they lift their `protocol: v0.6.0` pin; rehearse the lift on a copy because the tightened topology checks activate only on the new minor line.

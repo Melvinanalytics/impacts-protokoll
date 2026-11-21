@@ -39,6 +39,21 @@ Ask three questions when cutting, and again before a repository moves its protoc
 - Per wait on an outside party: does `abnahme` name the awaited decision, or can it return work to this Vorgang? If neither, the Vorgang ended earlier.
 - Per Auslöser line: is the Leistung owed the moment this event occurs?
 
+### Commercial boundary cut
+
+Keep four commercial responsibilities distinct before drawing any tree:
+
+| Responsibility | Home / form | Trigger (`Auslöser`) | Output / decoupling point |
+|---|---|---|---|
+| **Offering & Leistungsstückliste** | `grundlagen/` (Knowledge Bundle) | Owner's commercial decision (new revision) | Stable promise, scope and shared `Leistungsstückliste`, with pricing rules and delivery format beside it, not as components inside it; never a Pipeline |
+| **Demand pipeline** (`angebot`) | `hauptprozesse/`, or its existing home or job section until a Pipeline is earned | Enquiry or holder's decision to bid | Submitted offer and, on award, a **Commitment** record in `records/` (or negative end) |
+| **Delivery pipeline** (`auftrag`) | `hauptprozesse/`, or its existing home or job section for single-pass work | Signed Commitment or call-off | Fulfilled `Leistung` against the Commitment; reads shared capacity/inventory across the decoupling point |
+| **Supply / capacity pipeline** (`beschaffung`) | Separate `hauptprozesse/`, or its existing home or job section, on the supply side of the **decoupling point** | Forecast, stock/capacity threshold or supply schedule (never one customer order unless made-to-order) | Updated shared **Subject / Inventory / Capacity record** in `records/` that Delivery reads |
+
+In provider-to-customer work these responsibilities span two workspaces: the Offering and internal commercial pricing stay in the provider workspace, while customer facts, the offer draft and the commitment live in the customer workspace. Connect the two by explicit references and joints, and carry neither customer facts into the provider workspace nor internal pricing into customer text. An Offering need not lead to a Pipeline: training or advisory work can be delivered from the Offering through an existing home.
+
+A **decoupling point** is the shared record (`records/`) where forecast- or threshold-triggered supply meets order-triggered delivery. Supply writes to that record via permitted [writeback](../../binding.md#record-writeback); Delivery reads it as a declared input without routing back into Supply. Made-to-order work with no shared buffer has no decoupling record between Supply and Delivery, so procurement stays inside or directly triggered by the Delivery order under rule 1.
+
 ## Teilprozess
 
 Group Arbeitsschritte under the [protocol meaning](../../ontology.md#protocol-vocabulary). Test: a person can describe its `ergebnis` without describing the other Teilprozesse. Cut by result; a department or person boundary signals a possible handoff but does not cut by itself. On its positive route, the grouped Arbeitsschritte produce or complete one required component of the [Leistungsstückliste](../../impacts-method.md#leistungsstückliste) with its joints, or establish an evidenced prerequisite for the remaining path; the commitment that creates the Leistung's obligation is its Auslöser, never such a prerequisite. Its `ergebnis` names that contribution. A prerequisite alone does not justify a separate Teilprozess. Completing includes reaching required component states such as checked or released. A negative end does not claim successful completion of the Teilprozess; preserve evidence of components already produced, completed or delivered and effects already caused. Other work stays inside the Teilprozess it serves.
@@ -90,15 +105,15 @@ Synthetic decision `entscheidung:planung-11` records the planning holder, 2026-1
 
 `hypothesis`: design example, not observed execution evidence. One Vorgang per obligation; each end lands at the subject record, and only a declared Auslöser line opens the next Vorgang.
 
-| Link | `angebot` Hauptprozess | `auftrag` Hauptprozess |
-|---|---|---|
-| Owed for | One enquiry `anfrage-007`, to the enquiring client | One order for that enquiry, to the same client |
-| Auslöser | The holder's decision to bid on `anfrage-007`; checking the enquiry before it is its own obligation, owed to that holder from their request to check, and ends at that decision, because nothing is owed at a public enquiry's receipt | The written award: "Order for offer `anfrage-007`, carries the agreed scope; opens on the client's signed award; requires the offer in its submitted revision" |
-| Inputs | The enquiry as received source at `records/anfrage-007/` | The order record `records/auftraege/auftrag-007.md`, through which the award `records/anfrage-007/zuschlag.pdf` and the submitted offer, bound by revision, are reached; a direct order has neither |
-| Waits inside | For the client's questions, an invitation to the next procedure stage and the award: each can return work or is named by `abnahme` | For the recipient's acceptance of the delivered result |
-| Ends | `end:zuschlag`, `end:absage`, `end:rueckzug` | `end:abgenommen`, `end:abgebrochen` |
+| Link | `angebot` (Demand) | `auftrag` (Delivery) | `beschaffung` (Supply / capacity) |
+|---|---|---|---|
+| Owed for | One enquiry `anfrage-007`, to the enquiring client | One order for that enquiry, to the same client | One replenishment batch or capacity block, to operations |
+| Auslöser | The holder's decision to bid on `anfrage-007`; checking the enquiry before it is its own obligation, owed to that holder from their request to check, and ends at that decision, because nothing is owed at a public enquiry's receipt | The written award: "Order for offer `anfrage-007`, carries the agreed scope; opens on the client's signed award; requires the offer in its submitted revision" | Forecast threshold or reorder point crossed on shared inventory/capacity record `records/kapazitaet/pool.md` (decoupling point) |
+| Inputs | The enquiry as received source at `records/anfrage-007/` | The order record `records/auftraege/auftrag-007.md` (reaching award `records/anfrage-007/zuschlag.pdf` and submitted offer) plus shared capacity/inventory state at `records/kapazitaet/pool.md` | Current state of `records/kapazitaet/pool.md`, supplier terms in `grundlagen/` and forecast snapshot |
+| Waits inside | For the client's questions, an invitation to the next procedure stage and the award: each can return work or is named by `abnahme` | For the recipient's acceptance of the delivered result | For supplier confirmation and goods/capacity receipt |
+| Ends | `end:zuschlag`, `end:absage`, `end:rueckzug` | `end:abgenommen`, `end:abgebrochen` | `end:verfuegbar` (writes back to `records/kapazitaet/pool.md`), `end:storniert` |
 
-The award ends the `angebot` Vorgang, because it creates a new obligation with its own acceptance; the record shows the owed opening until the `auftrag` entry opens. A direct order without an enquiry is a second Auslöser line of the `auftrag` entry; an order covering several awarded enquiries is one subject, whose entry binds its order record, through which each submitted offer is reached. When the client calls off phases one by one, each call-off after the previous Vorgang's end opens another `auftrag` Vorgang, linked at the order record. An accepted order also writes a reference record that the next `angebot` binds, so the chain feeds back without a route. A later defect notice arrives at `records/auftraege/auftrag-007.md` and is the Auslöser of the remedy; rule 3 decides whether `auftrag` can represent it.
+The award ends the `angebot` Vorgang, because it creates a new obligation with its own acceptance; the record shows the owed opening until the `auftrag` entry opens. On the supply side, `beschaffung` ends by updating the decoupling record `records/kapazitaet/pool.md`; `auftrag` reads that record as a declared input without calling or routing into `beschaffung`. A direct order without an enquiry is a second Auslöser line of the `auftrag` entry; an order covering several awarded enquiries is one subject, whose entry binds its order record, through which each submitted offer is reached. When the client calls off phases one by one, each call-off after the previous Vorgang's end opens another `auftrag` Vorgang, linked at the order record. An accepted order also writes a reference record that the next `angebot` binds, so the chain feeds back without a route. A later defect notice arrives at `records/auftraege/auftrag-007.md` and is the Auslöser of the remedy; rule 3 decides whether `auftrag` can represent it.
 
 ## Loops
 
