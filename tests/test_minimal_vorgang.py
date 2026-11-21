@@ -168,7 +168,7 @@ def _prepare_workspace(base: Path) -> tuple[Path, Path]:
     write_context(
         vorgang / "CONTEXT.md",
         {
-            "type": "vorgang", "protocol": "v0.5.0",
+            "type": "vorgang", "protocol": "v0.6.0",
             "id": "vorgang:video-001",
             "hauptprozess_revision": f"git-tree:{revision}",
             "laufpfad": entries,
@@ -1296,7 +1296,7 @@ def test_unrelated_extra_content_changes_no_binding(tmp_path):
     assert validate(root).valid
 
     # Content outside attempts changes no recorded binding.
-    _write(root / "notes.md", "nicht deklariert")
+    _write(root / "README.md", "nicht deklariert")
 
     report = validate(root)
     assert report.valid, report.issues

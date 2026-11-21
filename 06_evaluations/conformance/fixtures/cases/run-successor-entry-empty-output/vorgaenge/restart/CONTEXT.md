@@ -1,6 +1,6 @@
 ---
 type: vorgang
-protocol: v0.5.0
+protocol: v0.6.0
 id: vorgang:restart
 hauptprozess_revision: git-tree:@HAUPTPROZESS_REVISION@
 vorgaenger: vorgaenge/approval-001/CONTEXT.md

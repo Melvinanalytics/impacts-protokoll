@@ -205,7 +205,7 @@ def open_offer(target: Path, values: dict, language: str) -> Path:
     (input_file(attempt, "material/herkunft.json")).write_text(encode(provenance))
     (attempt / "output").mkdir(parents=True, exist_ok=True)
     entry = {"arbeitsschritt_ref": "arbeitsschritt:entwerfen", "nummer": 1, "status": "aktiv", "gelesen": file_references(attempt, inputs)}
-    write_context(root / VORGANG / "CONTEXT.md", {"type": "vorgang", "protocol": "v0.5.0", "id": "vorgang:angebot-001", "hauptprozess_revision": "git-tree:" + git(root, "rev-parse", f"HEAD:{APP}"), "laufpfad": [entry]},
+    write_context(root / VORGANG / "CONTEXT.md", {"type": "vorgang", "protocol": "v0.6.0", "id": "vorgang:angebot-001", "hauptprozess_revision": "git-tree:" + git(root, "rev-parse", f"HEAD:{APP}"), "laufpfad": [entry]},
                   "Entwurf in Bearbeitung; Freigabe und Versand stehen aus." if de else "Draft in progress; approval and sending remain pending.")
     return root
 

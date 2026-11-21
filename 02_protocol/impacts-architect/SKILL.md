@@ -28,7 +28,7 @@ Hauptprozess/Vorgang-specific invariants apply to selected Core contracts, as th
 5. `gate: human` follows the [reserved-decision criterion](references/zuschnitt.md#arbeitsschritt).
 6. Apply [Hauptprozess and Vorgang separation](../../AGENTS.md).
 7. Every claim carries its source and the evidence label defined in the [ontology](../ontology.md#evidence-and-obligations); a confirmed document does not confirm every interpretation of it.
-8. `impacts validate` checks selected Core Hauptprozesse and Vorgänge and, at a workspace root pinned to the current minor, the workspace [folder-form rules](references/formwahl.md#folder-structure-by-form). It checks neither an entry's kind nor domain meaning. Run it only when that condition is needed, under [Tooling stop](references/formwahl.md#tooling-stop).
+8. `impacts validate` checks selected Core Hauptprozesse and Vorgänge and, at a workspace root pinned to the current minor, the workspace [folder-form rules](references/formwahl.md#folder-structure-by-form), including Markdown `#anchor` resolution and unlinked root `.md` files. It checks neither an entry's kind nor domain meaning. Run it only when that condition is needed, under [Tooling stop](references/formwahl.md#tooling-stop).
 
 ## Form selection
 

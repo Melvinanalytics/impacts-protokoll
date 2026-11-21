@@ -192,7 +192,7 @@ def write_vorgang(root: Path, name: str, revision: str, entries: list[dict]) -> 
     write_context(
         vorgang / "CONTEXT.md",
         {
-            "type": "vorgang", "protocol": "v0.5.0",
+            "type": "vorgang", "protocol": "v0.6.0",
             "id": f"vorgang:{name}",
             "hauptprozess_revision": f"git-tree:{revision}",
             "laufpfad": entries,

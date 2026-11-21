@@ -178,8 +178,8 @@ def test_knowledge_bundle_missing_router(tmp_path):
 def test_anchor_and_topic_context_links(tmp_path):
     root = workspace(tmp_path, "Form: grundlagen/ Knowledge Bundle per topic")
     router(root / "grundlagen", "[rule](./rule.md#anchor)\n[topic](topic/CONTEXT.md#anchor)")
-    (root / "grundlagen/rule.md").touch()
-    router(root / "grundlagen/topic", "Form: Knowledge Bundle per subtopic")
+    (root / "grundlagen/rule.md").write_text("# Rule\n\n## Anchor\n")
+    router(root / "grundlagen/topic", "Form: Knowledge Bundle per subtopic\n\n## Anchor\n")
     assert validate(root).valid
 
 
@@ -1182,3 +1182,45 @@ def test_table_beside_instance_folders_moves_into_the_router(tmp_path):
     (root / "records/table.md").touch()
     issue, = validate(root).issues
     assert issue.message == "table.md is a file among the instance folders of records/; if it is the kind's table, move it into records/CONTEXT.md; otherwise move it to the instance or record kind it belongs to"
+
+
+def test_markdown_anchor_validation_cross_file_same_file_and_html_id(tmp_path):
+    root = workspace(tmp_path, "Form: grundlagen/ Knowledge Bundle per topic")
+    (root / "grundlagen/rule.md").write_text(
+        '# Rule\n\n<a id="custom-id"></a>\n\n## Section\n\n## Section\n'
+    )
+    router(
+        root / "grundlagen",
+        "[first](rule.md#section)\n[second](rule.md#section-1)\n[html](rule.md#custom-id)\n[self](#local)\n\n## Local\n",
+    )
+    assert validate(root).valid
+
+    router(root / "grundlagen", "[bad-cross](rule.md#missing)\n[bad-self](#no-such-heading)\n")
+    messages = [issue.message for issue in validate(root).issues]
+    assert any("unresolved anchor '#missing'" in m for m in messages)
+    assert any("Anchor '#no-such-heading' does not resolve" in m for m in messages)
+
+
+def test_non_markdown_fragment_is_not_checked_as_markdown_anchor(tmp_path):
+    root = workspace(tmp_path, "Form: grundlagen/ Knowledge Bundle per topic")
+    (root / "grundlagen/spec.pdf").write_bytes(b"%PDF-1.4\n")
+    router(root / "grundlagen", "[spec](spec.pdf#page=2)")
+    assert validate(root).valid
+
+
+def test_unlinked_root_markdown_file_fails_while_linked_and_standard_docs_pass(tmp_path):
+    root = workspace(tmp_path)
+    (root / "README.md").write_text("# Workspace README\n")
+    (root / "CLAUDE.md").write_text("@AGENTS.md\n")
+    (root / "pyproject.toml").write_text("[project]\nname = 'x'\n")
+    assert validate(root).valid
+
+    (root / "stray-notes.md").write_text("# Stray\n")
+    issue, = validate(root).issues
+    assert issue.code == "topology.shape"
+    assert issue.path == "stray-notes.md"
+    assert "sits unlinked at the workspace root" in issue.message
+
+    with (root / "CONTEXT.md").open("a") as handle:
+        handle.write("\n[Notes](stray-notes.md)\n")
+    assert validate(root).valid

@@ -1,8 +1,14 @@
-<!-- Translation source: CONTRIBUTING.md; sha256: 99bd5313865d65fcc631c9d0a47f801ec272e1e9d15dc8e7209d945a7491bd88 -->
+<!-- Translation source: CONTRIBUTING.md; sha256: 36ef4e881538f92a6da8ecf0b2e636424d139a1360f7a4bf27ee0d7a6888a659 -->
 
 # Mitwirken
 
 Änderungen gelangen über einen geprüften Pull Request nach `main`. Kundenmaterial bleibt im Kunden-Repository. Revision, erwartetes und beobachtetes Verhalten, synthetische Evidenz und nicht ausgeführte Prüfungen angeben.
+
+Ausgabe v0.6.0 verschärft die deterministische Prüfung von Arbeitsbereichs-Routern ohne neue JSON-Schemas, CLI-Befehle oder Ordnerformen. Arbeitsbereiche mit Pin auf `v0.5.x` werden als nicht beurteilt (`not_judged`) gemeldet, bis ihr Pin auf `protocol: v0.6.0` angehoben wird. Den Wechsel an einer Kopie proben, da die verschärften Topologieprüfungen erst auf der neuen Minor-Linie greifen.
+
+- **Markdown-`#anchor`-Prüfung:** Relative Links mit `#fragment`-Ziel innerhalb des Arbeitsbereichs werden jetzt gegen Überschriften (einschließlich doppelter `-1`-Endungen) und `<a id>`/`<a name>`-Anker der Zieldatei geprüft, einschließlich Links in derselben Datei. Nicht auflösbare Anker scheitern mit `topology.shape`. Fragmente auf Nicht-Markdown-Dateien (wie `spec.pdf#page=2`) werden nicht als Markdown-Anker geprüft. Grenze: Geprüft werden nur verlinkte Abschnitte, keine im Fließtext zitierten Abschnittsnamen.
+- **Prüfung loser `.md`-Dateien am Root:** Nicht-Standard-`.md`-Dateien ohne Link am Arbeitsbereichs-Root (außer `AGENTS.md`, `CLAUDE.md`, `CONTEXT.md`, `README.md`, `CONTRIBUTING.md`, `CHANGELOG.md`, `LICENSE.md`) scheitern jetzt mit `topology.shape`, bis sie in ihre deklarierte Form verschoben oder aus der Root-`CONTEXT.md` verlinkt werden.
+- **Getrennter Workspace-Router und Issue-Code-Dokumentation:** Neu mit `impacts init` erzeugte Arbeitsbereiche enthalten einen nach Arbeit und reinen Lese-Fragen getrennten Routing-Abschnitt. `02_protocol/binding.md#validation-issue-codes` nennt jetzt `topology.*`. Schemas, CLI-Vorlagen (14 Vorlagen: sieben englische und sieben deutsche) und Ordnerformen bleiben unverändert.
 
 Ausgabe v0.5.2 ändert nur Protokolltext und Vorlagen. Schemas, Pflichtfelder, Issue-Codes, CLI-Befehle und Konformitätsfälle bleiben unverändert; Pins auf `v0.5.0` und `v0.5.1` werden weiter beurteilt.
 

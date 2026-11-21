@@ -1,9 +1,9 @@
 ---
 type: workspace
-protocol: v0.5.2
+protocol: v0.6.0
 ---
 
-<!-- Translation source: 02_protocol/templates/workspace.md; sha256: 782c4a133ecab1ff936b671986e21a35526a9ff97a94ba4bebd72ee733059a0c -->
+<!-- Translation source: 02_protocol/templates/workspace.md; sha256: f3e49e8a667e6f0e8194d66ee0e4c7ade5913b23381410c7420ecb049f07607a -->
 
 Working language: de
 
@@ -31,6 +31,25 @@ Konfigurierte Fakten hier festhalten und den Betriebsvertrag erhalten. Änderung
 `Form: <folder>/ <form> per <unit>`: eine nicht eingerückte Body-Zeile je Top-Level-Ordner (Formen: `02_protocol/impacts-architect/references/formwahl.md#folder-structure-by-form`).
 
 Bei Nutzung von Capabilities aus einem Fachrepo oder einer anderen fachlichen Heimat deren frühen zuständigen Router unter „Fachliche Heimaten“ verlinken und `02_protocol/impacts-architect/references/formwahl.md#capability-orientation` aus der benannten Protokollquelle anwenden.
+
+## Routing
+
+Aufgaben, die Ausgaben erzeugen oder ändern, von reinen Lese-Fragen trennen (`02_protocol/impacts-method.md#load-context-locally-first`). Platzhalterzeilen nur durch befüllte Links ersetzen; unbefüllte Bereiche bleiben aus den Tabellen draußen.
+
+### Arbeit (erzeugt oder ändert Ausgabe)
+
+| Anliegen | Öffnen | Ausgabe und Ziel | Prüfung |
+|---|---|---|---|
+| `<wiederkehrender Job ohne Core-Arbeitsschritt>` | `<Link auf zuständige Datei#Job-Abschnitt>` | `<Artefakt und Zielpfad>` | `<beobachtbare Prüfung>` |
+| `<gewählte Core-Pipeline>` | `<Link auf hauptprozesse/<slug>/CONTEXT.md>` | `<Vorgangsausgabe>` | `impacts validate` |
+
+### Reine Lese-Fragen
+
+| Frage zu | Öffnen | Stoppbedingung |
+|---|---|---|
+| `<Grundlagen, Regeln, Angebote>` | `<Link auf grundlagen/CONTEXT.md>` | `<zitierte Regel und Evidenzstatus>` |
+| `<Fälle, Vereinbarungen, Gegenstände>` | `<Link auf records/CONTEXT.md>` | `<zitierter Datensatz und Standzeit>` |
+| `<Erfassungen, Kandidaten>` | `<Link auf analyse/CONTEXT.md>` | `<zitierte Analyse und offene Lücken>` |
 
 ## Einrichtung
 
@@ -78,7 +97,7 @@ Erstimport oder geprüfte Übernahme folgen `02_protocol/impacts-method.md#scale
 
 5. Für erforderliche Core-Konformität `impacts validate` im gewählten Umfang ausführen. Die Core-Grenze anwenden (`02_protocol/ontology.md#enforcement-and-completion`).
 6. Unter der Core-Grenze aus Punkt 5 liefert der gebundene Arbeitsschritt-Body den Prompt und benennt Werkzeugoperationen, Versionen, Parameter, erlaubte Eingriffe und Checks. Das eingerichtete Harness lädt deklarierte Eingaben, führt erlaubte Arbeit aus und hält tatsächliche Ergebnisnachweise fest. Es folgt `02_protocol/impacts-method.md#compose-an-arbeitsschritt` und `02_protocol/binding.md`.
-7. Die Zeilen dieses Routers nach `02_protocol/impacts-method.md#load-context-locally-first` schreiben. Jeden wiederkehrenden Job ohne Core-Arbeitsschritt in einem Abschnitt seiner zuständigen Datei nach `02_protocol/impacts-method.md#maintain-agent-instructions` festhalten.
+7. Die Zeilen dieses Routers nach `02_protocol/impacts-method.md#load-context-locally-first` schreiben und Arbeit von reinen Lese-Fragen trennen. Jeden wiederkehrenden Job ohne Core-Arbeitsschritt in einem Abschnitt seiner zuständigen Datei nach `02_protocol/impacts-method.md#maintain-agent-instructions` festhalten.
 8. Zeigt laufende Arbeit einen nachgewiesenen Mangel oder folgenreiche wiederholte Reibung in diesem Arbeitsbereich, den eingetragenen Architect-Einstieg (`Choose a mode`) öffnen und `02_protocol/impacts-method.md#reviewed-correction` anwenden.
 
 ## Arbeitssprache

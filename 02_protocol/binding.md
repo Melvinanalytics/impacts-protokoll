@@ -244,6 +244,7 @@ Apply the [Core boundary](ontology.md#enforcement-and-completion). A synthetic w
 | `binding.*` | Restore the declared revision or referenced evidence without rewriting bound history. |
 | `execution.*` | Correct the named attempt or Laufpfad condition while preserving completed history. |
 | `trust.*` | Obtain the responsible human's evidenced decision and correct its serialization without inventing approval. |
+| `topology.*` | Declare the folder's form or repair the reported level shape, link, `#anchor` or unlinked root `.md` file. |
 
 ## Retention and deletion
 
