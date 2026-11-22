@@ -41,7 +41,7 @@ For work being set up or materially redesigned, first derive the intended result
 - A newly described Record Library, Knowledge Bundle, Context Map, Umbrella or System Map: Topology path.
 - An existing customer folder, repository or vault, or a declared set of repositories: Restructure mode, then route each found form through its selected path.
 - An approved Hauptprozess in a Fachrepo: Import mode.
-- An existing workspace where ordinary work shows a demonstrated defect or consequential repeated friction in a route, job contract, folder or name: follow [Reviewed correction](../impacts-method.md#reviewed-correction) at the affected home, then run the applicable [walk branch](#walk-test). A failed check or walk, an output written to the wrong place, or a hand-corrected result (except a case value or exceptional preference) counts immediately. A search outside the route, missing routed context, or unneeded loaded context counts once it recurs or changes the result. Enter Restructure mode only when files move or a consumer's source changes. Do not start a full workspace audit.
+- An existing workspace where ordinary work shows a demonstrated defect or consequential repeated friction in a route, job contract, folder or name: follow [Reviewed correction](../impacts-method.md#reviewed-correction) at the affected home, then run the applicable [walk branch](#walk-test). That section owns what counts as signal. Enter Restructure mode only when files move or a consumer's source changes. Do not start a full workspace audit.
 
 ## Topology path
 

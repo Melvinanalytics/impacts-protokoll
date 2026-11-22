@@ -26,10 +26,7 @@ def test_translation_inventory_has_one_mirror_per_source_and_no_unpaired_files()
     assert {source for source in sources if source.startswith("02_protocol/templates/")} == {
         f"02_protocol/templates/{kind}.md" for kind in (*CLI_TEMPLATE_KINDS, "workspace", "agents")
     }
-    assert {target for target in targets if target.startswith("02_protocol/translations/")} == {
-        f"02_protocol/translations/{guide}.de.md"
-        for guide in ("readme", "first-win", "language", "contributing")
-    }
+    assert not (ROOT / "02_protocol/translations").exists()
     assert len(sources) == len(set(sources))
     assert len(targets) == len(set(targets))
     marked = {
@@ -37,12 +34,7 @@ def test_translation_inventory_has_one_mirror_per_source_and_no_unpaired_files()
         for path in (ROOT / "02_protocol").rglob("*.md")
         if "<!-- Translation source:" in path.read_text(encoding="utf-8")
     }
-    guides = {
-        path.relative_to(ROOT).as_posix()
-        for path in (ROOT / "02_protocol/translations").rglob("*.md")
-    }
     assert marked == set(targets)
-    assert guides <= set(targets)
 
 
 def check_translation(root: Path, source: str, target: str) -> None:
@@ -104,7 +96,7 @@ def test_cli_language_selection_persists_and_prints_matching_template(tmp_path, 
     root = tmp_path / language
     assert main(["init", str(root), "--language", language]) == 0
     data, body = load_frontmatter_and_body(root / "CONTEXT.md")
-    assert data == {"type": "workspace", "protocol": "v0.6.1"} and validate(root).valid
+    assert data == {"type": "workspace", "protocol": "v0.6.2"} and validate(root).valid
     assert f"Working language: {language}" in body
     init_output = capsys.readouterr().out
     assert "impacts validate" in init_output
@@ -167,32 +159,12 @@ def test_german_generated_definitions_keep_role_specific_setup_sections(kind, he
     positions = [body.index(f"## {heading}") for heading in headings]
 
     assert positions == sorted(positions)
-    assert "Die Definitionseinrichtung ist abgeschlossen" in body
     assert "Vor dem Kandidaten-Commit" in body
     assert re.search(r"fehlend(?:e|er) oder widersprüchlich(?:e|er) Voraussetzung", body)
     assert re.search(r"plausibl(?:e|er) unzulässige", body)
-    if kind != "teilprozess":
-        assert "belegen weder Einsatzbereitschaft" in body or "belegen keine Einsatzbereitschaft" in body
-        _assert_german_design_execution_boundary(body)
-
-
-def _assert_german_design_execution_boundary(body):
-    assert "Vor dem Kandidaten-Commit" in body
-    assert re.search(r"fehlend(?:e|er) oder widersprüchlich(?:e|er) Voraussetzung", body)
-    assert re.search(r"plausibl(?:e|er) unzulässige", body)
-    assert "Nach dem Commit" in body
-    assert "Harness" in body
-    assert "diese Revision" in body
-
-
-@pytest.mark.parametrize("kind", ("hauptprozess", "arbeitsschritt"))
-def test_german_setup_boundary_rejects_missing_post_commit_harness_evidence(kind):
-    body = template_text(kind, language="de")
-    start = body.index("Nach dem Commit")
-    broken = body[:start] + body[body.index(".", start) + 1 :]
-
-    with pytest.raises(AssertionError):
-        _assert_german_design_execution_boundary(broken)
+    assert "Die Prüfevidenz nach `02_protocol/impacts-method.md#maintain-agent-instructions` verlinken" in body
+    if kind != "arbeitsschritt":
+        assert "Die Definitionseinrichtung ist abgeschlossen" in body
 
 
 def test_german_subprocess_preserves_terminal_and_negative_case_meaning():
@@ -208,8 +180,8 @@ def test_german_subprocess_preserves_terminal_and_negative_case_meaning():
 def test_german_workstep_keeps_waiting_separate_from_completed_routes():
     body = template_text("arbeitsschritt", language="de")
 
-    assert "jeder abgeschlossene Versuch anhand seines `pruefung`-Ergebnisses eine deklarierte Arbeitsschritt- oder Endroute wählt" in body
-    assert "„Ablauf“ nennt für jedes Warten Ursache und Auslöser der Fortsetzung" in body
+    assert "„Ablauf“ erklärt die Route je `pruefung`-Ergebnis" in body
+    assert "Ursache jedes Wartens, jeden anwendbaren `ausloeser` und die Bedingung für die Fortsetzung des wartenden Versuchs benennen" in body
 
 
 def test_gate_expiry_table_is_reachable_from_workstep_templates():

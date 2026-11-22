@@ -5,12 +5,14 @@ This table serves translators: it inventories finite labels parsed from readable
 | Meaning | EN | DE | Reader (file:function) |
 |---|---|---|---|
 | External store declaration | `Ablage:` | — | `src/impacts_protocol/validator.py:_declared_stores`; first router body line label read by the validator (root router only) |
+| Folder form declaration | `Form:` | — | `src/impacts_protocol/topology.py:_read_level`, `src/impacts_protocol/topology.py:_declares_itself` |
+| Working language setting | `Working language:` | — | `src/impacts_protocol/view/__init__.py:working_language` |
 | Flow headings | `flow` | `ablauf` | `src/impacts_protocol/view/page.html:headingText`, `src/impacts_protocol/view/project.py:annotate`, `src/impacts_protocol/view/project.py:sheet_parts`, `src/impacts_protocol/view/project.py:step_refs` |
 | Authority headings | `authority` | `befugnis` | `src/impacts_protocol/view/page.html:headingText`, `src/impacts_protocol/view/project.py:annotate`, `src/impacts_protocol/view/project.py:sheet_parts`, `src/impacts_protocol/view/project.py:step_refs` |
 | Job headings | `one job` | `ein job` | `src/impacts_protocol/view/page.html:headingText`, `src/impacts_protocol/view/project.py:annotate`, `src/impacts_protocol/view/project.py:sheet_parts`, `src/impacts_protocol/view/project.py:step_refs` |
 | Input headings | `inputs` | `eingaben` | `src/impacts_protocol/view/page.html:headingText`, `src/impacts_protocol/view/project.py:sheet_parts` |
 | Output headings | `outputs` | `ausgaben` | `src/impacts_protocol/view/page.html:headingText`, `src/impacts_protocol/view/project.py:sheet_parts` |
-| Output and effect headings | `outputs and effects` | `ausgaben und wirkungen` | EN: `src/impacts_protocol/view/page.html:headingText`, `src/impacts_protocol/view/project.py:sheet_parts`; DE: `src/impacts_protocol/view/project.py:sheet_parts` |
+| Output and effect headings | `outputs and effects` | `ausgaben und eingriffe`, `ausgaben und wirkungen` | EN: `src/impacts_protocol/view/page.html:headingText`, `src/impacts_protocol/view/project.py:sheet_parts`; DE: `src/impacts_protocol/view/project.py:sheet_parts` |
 | Processing headings | `processing` | `verarbeitung` | `src/impacts_protocol/view/page.html:headingText`, `src/impacts_protocol/view/project.py:sheet_parts`, `src/impacts_protocol/view/project.py:step_refs` |
 | Handgrip headings | `handgrips` | `handgriffe` | EN: `src/impacts_protocol/view/page.html:headingText`, `src/impacts_protocol/view/project.py:sheet_parts`; DE: `src/impacts_protocol/view/project.py:sheet_parts` |
 | Check headings | `check` | `prüfung` | `src/impacts_protocol/view/page.html:headingText`, `src/impacts_protocol/view/project.py:sheet_parts` |

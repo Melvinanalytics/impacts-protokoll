@@ -1,29 +1,39 @@
 # Prepare a useful offer draft from ordinary files
 
-The contribution is an internal draft with supported scope, source references, missing information and a next action. Work in an ordinary folder using a text editor or a file-capable agent with permission to read the sources and write the draft. No Git, Python, installer or YAML is needed.
+Produce an internal offer draft with cited scope, explicit gaps and a named next action. Use any folder, text editor or file-capable agent. No Git, Python, installer or YAML is needed.
 
-**Flexible in how it thinks. Uncompromising in what counts.** Interpretation and drafting may be fallible; checked calculations require actual deterministic checks, and human decisions remain human.
+**Flexible in how it thinks. Uncompromising in what counts.** Drafting may be fallible; calculations require deterministic checks, and human decisions remain human.
 
 ## Give the work a home
 
-For real work, use your existing inquiry, source material and document blank. Save the preparation at that case's existing home with its source references, open questions and next action.
+For real work, save the draft in that case's existing folder with its sources, open questions and next action.
 
-The four Markdown files below are a synthetic exercise for practicing those relationships. Create them in a separate exercise folder. They reuse the catalog, customer, inquiry and offer-blank roles from the [synthetic company example](02_protocol/impacts-architect/references/datenbezug.md#from-catalog-through-pipeline-to-a-filled-offer). P-10, S-20, C-1 and O-1 are synthetic identifiers. This exercise deliberately supplies no applicable price or delivery date; it changes no historical agreement or Vorgang.
+To practice, create these five synthetic Markdown files in a separate folder. They reuse the catalog, customer, inquiry and offer-blank roles from the [synthetic company example](02_protocol/impacts-architect/references/datenbezug.md#from-catalog-through-pipeline-to-a-filled-offer). P-10, S-20, C-1 and O-1 are synthetic; no price, delivery date or approval is supplied.
 
-`CONTEXT.md` is the entry point:
+`CONTEXT.md` (its `Form:` lines declare both folders so `impacts validate` accepts the layout later):
 
 ```markdown
 # Offer preparation exercise
 Working language: en
 
+Form: grundlagen/ Knowledge Bundle per foundation
+Form: records/ Record Library per offer
+
 Synthetic training material; no real customer commitment.
-- [Catalog](grundlagen/catalog.md): product/service kinds and source limits.
-- [Offer blank](grundlagen/angebotsvorlage.md): reusable internal document.
+- [Foundations](grundlagen/CONTEXT.md): catalog and offer blank.
 - [Inquiry AN-1](records/offer-o1/inquiry.md): requested scope for C-1.
 
 Prepare Offer O-1 / Version 1 in records/offer-o1/draft.md.
 Use only linked sources. Keep missing facts open. Do not send or approve.
 When the draft exists, add a direct link here so a fresh session can continue.
+```
+
+`grundlagen/CONTEXT.md`:
+
+```markdown
+# Foundations
+- [Catalog](catalog.md): product/service kinds and source limits.
+- [Offer blank](angebotsvorlage.md): reusable internal document.
 ```
 
 `grundlagen/catalog.md`:
@@ -34,8 +44,7 @@ When the draft exists, add a direct link here so a fresh session can continue.
 - S-20 is a service kind.
 Source: synthetic company example, “From catalog through pipeline to a filled offer”.
 Evidence: reported fixture descriptions; no real-world verification.
-No applicable price or availability source is supplied here.
-Catalog kinds establish neither delivery nor service coverage of a specific item.
+No price or availability source is supplied. Catalog kinds establish neither delivery nor service coverage.
 ```
 
 `records/offer-o1/inquiry.md`:
@@ -69,32 +78,32 @@ Use: internal draft; sending and acceptance are not confirmed.
 
 Give your agent this task, or follow it yourself:
 
-> Read CONTEXT.md and its three linked files. Fill a copy of the offer blank at records/offer-o1/draft.md. Preserve the requested identities, quantities and units. Cite the source file for each claim. Leave price, total and delivery date open. Name the question, responsible decision-maker and next action beside the draft. Add a draft link to CONTEXT.md. Do not calculate unsupported amounts, claim a performed check, approve, send or invent delivery evidence.
+> Read CONTEXT.md and its linked files. Fill a copy of the offer blank at records/offer-o1/draft.md. Preserve identities, quantities and units. Cite the source file for each claim. Leave price, total and delivery date open. Name the question, responsible decision-maker and next action beside the draft. Add a draft link to CONTEXT.md. Do not calculate unsupported amounts, claim a performed check, approve, send or invent delivery evidence.
 
-The useful draft should say that C-1 requests P-10, 2 pieces, and S-20, 12 hours, citing `inquiry.md`; these are catalog kinds, citing `catalog.md`. Price and total stay `open`: obtain an applicable price source and sanctioned calculation rule, then perform the actual deterministic calculation/check before claiming a checked amount. Delivery date stays `open`: ask the responsible owner to decide after checking availability. Sending and acceptance remain unconfirmed.
+The draft should state that C-1 requests P-10 (2 pieces) and S-20 (12 hours), citing `inquiry.md`, and that both are catalog kinds, citing `catalog.md`. Keep price and total `open` until a price source and sanctioned rule exist and a deterministic check runs. Keep delivery date `open` until the responsible owner decides. Sending and acceptance remain unconfirmed.
 
-Record this handoff in the draft, using the actual progress:
+Record this handoff in the draft:
 
-> Draft ready for internal review — price and delivery date are still open, so no priced delivery promise is established. Next: obtain applicable price/rule evidence and the owner's delivery decision; retain their sources beside this draft. Sending requires its own permission.
+> Draft ready for internal review: price and delivery date remain open, so no priced delivery promise is established. Next: obtain price/rule evidence and the owner's delivery decision; retain their sources beside this draft. Sending requires separate permission.
 
-This is an expected output, not a claim that an agent has already produced or checked it. Reading source statements supports a draft; it does not verify the business facts.
+Reading sources supports a draft; it does not verify business facts.
 
 ## Continue in a fresh session
 
 Close the conversation. Give a fresh agent only the folder and this task:
 
-> Start at CONTEXT.md. Find the draft and the sources supporting its requested scope. State what is still open and the exact next action. Continue permitted preparation without inventing a price, date, check result, approval or sent offer.
+> Start at CONTEXT.md. Find the draft and its sources. State what is still open and the next action. Continue permitted preparation without inventing a price, date, check result, approval or sent offer.
 
-The existing router and draft should make the work recoverable. If the draft link or a source is missing, repair that path at its existing home. No second summary or state engine is needed. A consumer check must observe this recovery; the programmed technical examples do not prove it.
+The router and draft make work recoverable without a separate summary or state engine. If a link or source is missing, repair it at its home.
 
-Keep this first use file based and optional-tool free. For a later, reproducible technical example with declared synthetic inputs and an executed deterministic delivery calculation, use the [delivery replay](06_evaluations/delivery-replay/CONTEXT.md). It is an optional next proof, not a prerequisite for preparing this draft; it simulates no customer action, approval or business effect.
+Keep this first use file based and optional-tool free. For a reproducible technical example with a deterministic delivery calculation, see the [delivery replay](06_evaluations/delivery-replay/CONTEXT.md), an optional next proof, not a prerequisite.
 
-## If the requested Git binding cannot be checked
+## When Git binding cannot be checked
 
-Suppose the owner now asks to prepare a Git-bound Vorgang and validate its historical binding, but Git is unavailable. Keep the draft, sources, questions and any candidate definition at their existing homes. Record beside the preparation:
+If an owner requests a Git-bound Vorgang but Git is unavailable, keep the draft, sources and open questions in place and record:
 
-> Preparation retained. Git-bound Vorgang validation was not performed because Git is unavailable. This preparation is unbound; it is not a validated Vorgang. Next: on a machine with Git and the Python CLI, complete the Hauptprozess contract and required design cases, commit that Hauptprozess at the Core workspace root, bind the Vorgang to its actual committed tree using the Vorgang template, and run `impacts validate` on that workspace. Retain the actual result and correct any reported failure before claiming validated binding.
+> Preparation retained; unbound. Git-bound Vorgang validation did not run because Git is unavailable. Next: on a machine with Git and the CLI, commit the Hauptprozess at the Core workspace root, bind the Vorgang using the Vorgang template, run `impacts validate`, and retain the actual result.
 
-Follow [Construct](02_protocol/impacts-method.md#construct) and the [Vorgang template](02_protocol/templates/vorgang.md) for those steps. Do not invent a tree ID, hash, execution entry or approval. Resume from the preserved draft when tooling becomes available. Structural validation alone proves neither executed work nor a checked business result; required domain checks and human decisions still need their own evidence.
+Follow [Construct](02_protocol/impacts-method.md#construct) and the [Vorgang template](02_protocol/templates/vorgang.md). Never invent a tree ID, hash or approval. Structural validation proves neither executed work nor checked business facts.
 
-The [optional technical use](README.md#optional-technical-use) links the installer and existing programmed evaluations. [Tooling stop](02_protocol/impacts-architect/references/formwahl.md#tooling-stop) owns the ordinary-files and machine-validation boundary. [Deutsch](02_protocol/translations/first-win.de.md) explains the same entry path in German.
+See [optional technical use](README.md#optional-technical-use) for the CLI and [Tooling stop](02_protocol/impacts-architect/references/formwahl.md#tooling-stop) for the ordinary-files boundary.

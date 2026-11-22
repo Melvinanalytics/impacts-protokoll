@@ -34,8 +34,20 @@ HUMAN_ATTRIBUTION = re.compile(r"human:[^:\s][^\s]*\Z")
 RELEASE_TAG = re.compile(r"v(?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)\Z")
 
 
+def _root_dirs() -> list[str]:
+    git_meta = REPO / ".git"
+    if git_meta.exists() or git_meta.is_symlink():
+        listing = subprocess.check_output(
+            ["git", "-C", str(REPO), "ls-files", "-z", "--cached", "--others", "--exclude-standard"],
+            text=True,
+            stderr=subprocess.STDOUT,
+        )
+        return sorted({path.split("/", 1)[0] for path in listing.split("\0") if "/" in path})
+    return [p.name for p in REPO.iterdir() if p.is_dir()]
+
+
 def measure() -> dict:
-    roots = [p.name for p in REPO.iterdir() if p.is_dir()]
+    roots = _root_dirs()
     schemas = sorted((REPO / "02_protocol" / "schemas").glob("*.json"))
     counts = {p.name: _required_count(json.loads(p.read_text(encoding="utf-8"))) for p in schemas}
     return _measurement(roots, counts)

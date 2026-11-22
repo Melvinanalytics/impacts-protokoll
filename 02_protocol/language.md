@@ -14,7 +14,7 @@ The Architect resolves this setting before customer work. If an existing workspa
 
 Machine keys, enum values, ID prefixes, file references, commands and [parser-consumed labels](impacts-architect/references/parser-labels.md) remain stable. Translate headings, prose and descriptive values; preserve references, identities, quantities, units and evidence. A translated source excerpt is a derived view with its source revision and translation provenance, not a replacement source or independently confirmed fact.
 
-Use the [protocol vocabulary](ontology.md#protocol-vocabulary). `leistung` is not a commercial product/service offering; translate an offering according to its domain definition. Preserve source terms beside their translation when ambiguity matters. The German [entry guide](translations/readme.de.md) explains the usable path and fixed machine terms.
+Use the [protocol vocabulary](ontology.md#protocol-vocabulary). `leistung` is not a commercial product/service offering; translate an offering according to its domain definition. Preserve source terms beside their translation when ambiguity matters.
 
 ## Enforce at use boundaries
 
@@ -28,6 +28,6 @@ An explicit customer-authorized language change applies to a new definition/outp
 
 ## Maintain translations
 
-English templates live in `templates/`; German counterparts in `templates/de/`. They are two presentations of the same contracts. Each German file records its English source path and SHA-256 in a comment. Translation tests reject missing mirrors, missing or malformed markers and altered machine contracts, warn when a marker’s SHA-256 differs from its English source, and the release guard rejects every stale mirror. A hash establishes which source was translated, not translation quality: review changed meaning and run paired valid/failure cases before adoption.
+English templates live in `templates/` and `impacts-architect/templates/`; German counterparts live in their `de/` subfolders. They are two presentations of the same contracts. Each German template records its English source path and SHA-256 in a comment. Translation tests reject missing mirrors, missing or malformed markers and altered machine contracts, warn when a marker’s SHA-256 differs from its English source, and the release guard rejects every stale mirror. A hash establishes which source was translated, not translation quality: review changed meaning and run paired valid/failure cases before adoption.
 
-The retained German operator guides are [entry](translations/readme.de.md), [first contribution](translations/first-win.de.md), [working language](translations/language.de.md) and [contributing](translations/contributing.de.md), each with one source marker; protocol rules remain at their English homes. The same rule applies to the capture sheet. Translate the active public path; preserve historical research, audit evidence and synthetic German customer fixtures as such. No duplicate language-specific schemas, evidence labels, roles or execution engine are introduced.
+Protocol rules, method and contributor guides stay English only; German mirrors cover customer-facing templates only. No duplicate language-specific schemas, evidence labels, roles or execution engine are introduced.

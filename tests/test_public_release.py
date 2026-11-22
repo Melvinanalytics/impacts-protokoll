@@ -149,26 +149,22 @@ def test_public_docs_contain_no_workstation_paths():
 def test_candidate_public_contract_and_scope():
     version = tomllib.loads((ROOT / "pyproject.toml").read_text())["project"]["version"]
     readme = (ROOT / "README.md").read_text()
-    german = (ROOT / "02_protocol/translations/readme.de.md").read_text()
     conformance = (ROOT / "06_evaluations/conformance/CONTEXT.md").read_text()
     contributing = (ROOT / "CONTRIBUTING.md").read_text()
     first_win = (ROOT / "FIRST-WIN.md").read_text()
 
-    assert version == "0.6.1"
-    for content in (readme, german):
-        assert "report_version: 3" in content
-        assert ("message" in content and "diagnostic" in content.lower()) or "Diagnosehilfen" in content
-        assert "does not authenticate people" in content or "authentifiziert keine Menschen" in content
-        assert "coordinated rewrite" in content or "koordinierte Änderung" in content
-        assert "permission" in content or "Rechte" in content
+    assert version == "0.6.2"
+    assert "report_version: 3" in readme
+    assert "message" in readme and "diagnostic" in readme.lower()
+    assert "does not authenticate people" in readme
+    assert "coordinated rewrite" in readme
+    assert "permission" in readme
     assert "not a universal line-count rule" in readme
-    assert "keine allgemeine Zeilenzahlregel" in german
-    assert "impacts template herkunft" in readme and "neun Evidenzfelder" in german
+    assert "impacts template herkunft" in readme
     boundary = (ROOT / "02_protocol/ontology.md").read_text().split(
         "## Enforcement and completion\n", 1
     )[1].split("\n## ", 1)[0]
     assert "[Core boundary](02_protocol/ontology.md#enforcement-and-completion)" in readme
-    assert "[Core-Grenze](../ontology.md#enforcement-and-completion)" in german
     assert "checks only that files, IDs and references resolve and match their digest" in boundary
     assert "Core causes no effect and makes no business judgement." in boundary
     assert "Executing harness checks required results and applicable authority before the dependent transition/effect." in boundary
@@ -200,15 +196,6 @@ def test_candidate_public_contract_and_scope():
         "Matched business comparison",
     ):
         assert gate in contributing
-    for gate in (
-        "unbegleiteter Erstgebrauch und Korrektur",
-        "zweite Betreiberperson nach 168 verstrichenen Stunden",
-        "unabhängige Implementierung",
-        "begrenzte Fachprüfung",
-        "Listening-Intake in autorisiertem Langdock",
-        "abgeglichener Geschäftsvergleich",
-    ):
-        assert gate in (ROOT / "02_protocol/translations/contributing.de.md").read_text()
 
 
 def test_public_issue_forms_request_scoped_evidence():
@@ -356,7 +343,7 @@ def test_export_excludes_all_private_documentation_and_handovers():
     assert set(PUBLIC_PATHS) == {'.gitignore', '.gitattributes', '.github/', 'AGENTS.md', 'CONTEXT.md', 'CONTRIBUTING.md', 'LICENSE', 'README.md', 'FIRST-WIN.md', 'pyproject.toml', '02_protocol/', '06_evaluations/', 'src/', 'tests/'}
 
 
-@pytest.mark.parametrize("path", ["README.md", "02_protocol/translations/readme.de.md"])
+@pytest.mark.parametrize("path", ["README.md"])
 def test_current_entry_instructions_match_distribution_version(path):
     version = tomllib.loads((ROOT / "pyproject.toml").read_text())["project"]["version"]
     text = (ROOT / path).read_text()
@@ -383,16 +370,10 @@ def test_current_entry_instructions_match_distribution_version(path):
         for section in text.split("\n\n")
         if "shasum -a 256 -c sha256sums" in section.lower()
     )
-    if path == "README.md":
-        intro_publication = "published immutable release"
-        recipe_publication = "published immutable release"
-        release_link = f"v{version} release"
-        stale_terms = (f"candidate v{version}", f"v{version} candidate", "candidate wheel")
-    else:
-        intro_publication = "veröffentlichte unveränderliche release"
-        recipe_publication = "veröffentlichten unveränderlichen release"
-        release_link = f"v{version} release"
-        stale_terms = (f"kandidaten-release v{version}", "kandidaten-wheel")
+    intro_publication = "published immutable release"
+    recipe_publication = "published immutable release"
+    release_link = f"v{version} release"
+    stale_terms = (f"candidate v{version}", f"v{version} candidate", "candidate wheel")
     release_intro = next(
         section.lower()
         for section in text.split("\n\n")
@@ -416,7 +397,6 @@ def test_current_entry_instructions_match_distribution_version(path):
     ("path", "required_terms"),
     [
         ("README.md", ("wheel", "complete source archive", "`SHA256SUMS`")),
-        ("02_protocol/translations/readme.de.md", ("Wheel", "vollständiges Quellarchiv", "`SHA256SUMS`")),
     ],
 )
 def test_checksum_recipe_downloads_every_listed_release_asset(path, required_terms):
@@ -424,7 +404,7 @@ def test_checksum_recipe_downloads_every_listed_release_asset(path, required_ter
     paragraph = next(section for section in text.split("\n\n") if "shasum -a 256 -c SHA256SUMS" in section)
 
     assert all(term in paragraph for term in required_terms)
-    assert "every listed asset" in paragraph or "jedes aufgeführte Artefakt" in paragraph
+    assert "every listed asset" in paragraph
 
 
 def test_tag_workflow_separates_read_only_build_from_publication():
