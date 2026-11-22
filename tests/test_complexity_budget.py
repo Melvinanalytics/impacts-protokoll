@@ -146,3 +146,14 @@ def test_joint_budget_and_fallback_increase_cannot_bypass_release_tag():
 
     assert exit_code == 1
     assert "Budget increase" in output.getvalue()
+
+
+def test_root_dirs_count_tracked_folders_once_including_non_ascii_paths(tmp_path, monkeypatch):
+    module = _check_module()
+    subprocess.run(["git", "init", "-q", str(tmp_path)], check=True)
+    for rel in ("alpha/über.md", "alpha/plain.md", "beta/x.md", "ignored/y.md", "top.md"):
+        (tmp_path / rel).parent.mkdir(parents=True, exist_ok=True)
+        (tmp_path / rel).write_text("x\n", encoding="utf-8")
+    (tmp_path / ".gitignore").write_text("ignored/\n", encoding="utf-8")
+    monkeypatch.setattr(module, "REPO", tmp_path)
+    assert module._root_dirs() == ["alpha", "beta"]

@@ -2,6 +2,16 @@
 
 Changes enter `main` through a reviewed pull request. Keep customer material in its customer repository. Report the revision, expected and observed behavior, synthetic evidence, and checks not run.
 
+### v0.6.2
+
+Front-door tightening, German template parity, a Viewer heading fix and `FIRST-WIN.md` validator alignment. Schemas, required fields, issue codes, validator rules and CLI commands are unchanged; `v0.6.0` and `v0.6.1` pins remain judged.
+
+- **German Viewer fix:** `src/impacts_protocol/view/project.py` now maps the German heading `Ausgaben und Eingriffe` to the `outputs` area and matches the updated German `Nicht laden` template subtitle.
+- **`FIRST-WIN.md` passes `impacts validate`:** the exercise now declares `Form:` lines and `grundlagen/CONTEXT.md`, covered by a regression test.
+- **Shorter front door and routers:** `README.md` (-79%), `02_protocol/CONTEXT.md` (-26%, plus outgoing-message routing to `record-writeback`), and the `workspace.md` / `de/workspace.md` init templates (-30% / -41%) cut prose without dropping load-bearing routes.
+- **German templates aligned, maintainer guide mirrors removed:** `02_protocol/templates/de/arbeitsschritt.md` and `de/hauptprozess.md` were retranslated cleanly from their English sources, and the four `02_protocol/translations/` maintainer guide mirrors were deleted; German mirrors now cover customer-facing templates only.
+- **Consistency fixes:** `impacts-method.md` now cites all eight data kinds, owns the single `Reviewed correction` signal threshold (`SKILL.md` links it), `parser-labels.md` adds `Form:` and `Working language:`, and `complexity-budget/check.py` uses `git ls-files -z` so git-ignored local folders and non-ASCII paths are handled cleanly.
+
 ### v0.6.1
 
 Protocol text and one Architect template only. Schemas, required fields, issue codes, validator rules, CLI commands and the 14 CLI templates are unchanged; `v0.6.0` pins remain judged.
@@ -128,14 +138,14 @@ Production use outside the declared inspected public repository scope is unknown
 
 ## Publish an edition
 
-An edition claim spans source text and public delivery. `pyproject.toml`, the annotated Git tag, GitHub Release, release assets, README URLs and filenames, the German guide, and installed package metadata must name the same version. A green documentation test establishes only the source-tree part.
+An edition claim spans source text and public delivery. `pyproject.toml`, the annotated Git tag, GitHub Release, release assets, README URLs and filenames, and installed package metadata must name the same version. A green documentation test establishes only the source-tree part. For descriptive file-count scale checks, run [benchmark_scale.py](tests/benchmark_scale.py).
 
 Run the complete repository checks in the clean public candidate tree. A source checkout with additional private directories is not that release surface; prepare the complete allowlisted export first rather than raising the budget or suppressing failures. Retain the candidate tree identity and check the actual predecessor selected by the complexity gate against the intended prior release. An uncommitted tree check does not establish the later release commit or its ancestry.
 
 Use this order:
 
 1. Create `release/vX.Y.Z` from current public `main`.
-2. Change `[project].version` plus all release URLs, clone commands, wheel filenames and edition wording in `README.md` and `02_protocol/translations/readme.de.md`. Regenerate affected translation hashes.
+2. Change `[project].version` plus all release URLs, clone commands, wheel filenames and edition wording in `README.md`. Regenerate affected template translation hashes.
 3. Run the complete repository checks. Open and review the release pull request. Do not create a public Release from an unmerged branch.
 4. Merge the reviewed release commit. Create an **annotated** `vX.Y.Z` tag on that exact public `main` commit and push the tag once.
 5. The tag workflow uses a read-only build job to check the tag, source claims and full test suite on Python 3.11 and 3.14; build the wheel and complete source archive on Python 3.11; and write `SHA256SUMS`. A separate publish job downloads those checked bytes without installing or running package code, uploads exactly the three artifacts to a hidden draft Release, verifies their remote names and SHA-256 digests, and attaches compact test evidence to the draft body before publication by numeric ID. Evidence must match the source and workflow run, with both interpreters from the same build attempt. Retrying only publication may reuse that successful earlier build attempt. The publicly readable body labels JUnit counts including subtests as workflow evidence, not independent verification or attestation.

@@ -1827,3 +1827,10 @@ def test_heading_import_preserves_localization_and_exact_reader_subsets(tmp_path
     assert json.loads(result.stdout) == ["Check", "fung", "Nicht laden", "Handgriffe", "Human check", "One job › Check"]
     assert project.SHEET["nicht laden"] == "excluded" and "nicht laden" not in project.PAGE_HEADINGS
     assert project.SHEET["handgriffe"] == "handgrips" and "handgriffe" not in project.PAGE_HEADINGS
+
+
+def test_german_template_output_heading_lands_in_the_outputs_area():
+    template = (REPO / "02_protocol/templates/de/arbeitsschritt.md").read_text(encoding="utf-8")
+    _, _, sections = blocks.document(template.split("---\n", 2)[2], 1)
+    areas = {part["heading"]: part["area"] for part in project.sheet_parts({"sections": sections})}
+    assert areas["Ausgaben und Eingriffe"] == "outputs"

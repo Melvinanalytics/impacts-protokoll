@@ -49,6 +49,8 @@ def inventory():
     # Literal labels in regexes or small loops; test below checks their owning code.
     groups = [
         ("src/impacts_protocol/validator.py", "_declared_stores", ["Ablage:"]),
+        ("src/impacts_protocol/topology.py", "_read_level", ["Form:"]),
+        ("src/impacts_protocol/topology.py", "_declares_itself", ["Form:"]),
         (PROJECT, 'source_kinds', ['Quell-Eingabe', 'Datenart']),
         ('src/impacts_protocol/view/selection.py', 'record_stages', ['Stage']),
         (COLD, '_hauptprozess_call', ['Aufruf-ID', 'Capability-Pfad', 'Capability-Revision', 'Operation']),
@@ -68,6 +70,11 @@ def inventory():
         for name in names:
             assert name in source, (path, function, name)
         add(names, path, function)
+    # The working-language setting is a module-level pattern read by working_language().
+    from impacts_protocol import view as view_package
+    assert view_package.SETTING.pattern.startswith('^Working language: ')
+    assert 'SETTING' in ast.get_source_segment((ROOT / 'src/impacts_protocol/view/__init__.py').read_text(), next(n for n in ast.walk(ast.parse((ROOT / 'src/impacts_protocol/view/__init__.py').read_text())) if isinstance(n, ast.FunctionDef) and n.name == 'working_language'))
+    add(['Working language:'], 'src/impacts_protocol/view/__init__.py', 'working_language')
     # The page also recognizes source headings/executors and optional capture metadata.
     page_path = 'src/impacts_protocol/view/page.html'
     page = (ROOT / page_path).read_text()
@@ -88,7 +95,7 @@ def inventory():
 
 def spellings():
     """Preserve exact spelling for case-sensitive interfaces, including data-kind values."""
-    names = ['Ablage:', 'Quell-Eingabe', 'Datenart', 'Subject', 'Gegenstand', 'Stage', 'Aufruf-ID',
+    names = ['Ablage:', 'Form:', 'Working language:', 'Quell-Eingabe', 'Datenart', 'Subject', 'Gegenstand', 'Stage', 'Aufruf-ID',
              'Capability-Pfad', 'Capability-Revision', 'Operation', 'Herkunft', 'Ursprung',
              'Stand', 'Erforderliche Kontrolle', 'Loop bound', 'Bei Route', 'Befund: fehlt',
              'Pflichtfelder']
