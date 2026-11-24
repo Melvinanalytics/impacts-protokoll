@@ -19,7 +19,7 @@ IMPACTS is a folder-directed, plain-file method for people and file-capable agen
 
 ## Version and entry points
 
-Edition v0.6.2. Use the published immutable Release [v0.6.2 release](https://github.com/Melvinanalytics/impacts-protokoll/releases/tag/v0.6.2) for new work. Check `[project].version` in [pyproject.toml](pyproject.toml), `impacts --version` or `python -m pip show impacts-protocol`. Keep the complete source archive together: the wheel ships only the CLI, static viewer HTML, schemas and templates (including `impacts template herkunft` with nine fields, which is a template layout and not a universal line-count rule); method, Architect, references and evaluations live in the complete source. A copied Architect folder is incomplete: it depends on parent protocol files and root guidance.
+Edition v0.7.0. Use the published immutable Release [v0.7.0 release](https://github.com/Melvinanalytics/impacts-protokoll/releases/tag/v0.7.0) for new work. Check `[project].version` in [pyproject.toml](pyproject.toml), `impacts --version` or `python -m pip show impacts-protocol`. Keep the complete source archive together: the wheel ships only the CLI, static viewer HTML, schemas and templates (including `impacts template herkunft` with nine fields, which is a template layout and not a universal line-count rule, and `impacts template ebene` for level routers); method, Architect, references and evaluations live in the complete source. A copied Architect folder is incomplete: it depends on parent protocol files and root guidance.
 
 Record the actual protocol source, commit (`git rev-parse HEAD` and `git status --short`, or verified archive identity) and Architect entry in each workspace's root `CONTEXT.md`. English owns the protocol; German customer work uses `Working language: de` and German templates under [language.md](02_protocol/language.md).
 
@@ -41,7 +41,7 @@ IMPACTS defines file contracts and authority boundaries; the configured harness 
 
 The CLI requires Python 3.11+. Create a virtual environment (`python3 -m venv .venv && source .venv/bin/activate`), then install from one verified source:
 
-From the published immutable Release [v0.6.2](https://github.com/Melvinanalytics/impacts-protokoll/releases/tag/v0.6.2), download the wheel, complete source archive and `SHA256SUMS` into one folder, verify every listed asset with `shasum -a 256 -c SHA256SUMS`, then run `python -m pip install ./impacts_protocol-0.6.2-py3-none-any.whl` (or extract the verified source archive and run `python -m pip install -e .`).
+From the published immutable Release [v0.7.0](https://github.com/Melvinanalytics/impacts-protokoll/releases/tag/v0.7.0), download the wheel, complete source archive and `SHA256SUMS` into one folder, verify every listed asset with `shasum -a 256 -c SHA256SUMS`, then run `python -m pip install ./impacts_protocol-0.7.0-py3-none-any.whl` (or extract the verified source archive and run `python -m pip install -e .`).
 
 ```bash
 impacts init ../impacts-demo             # add --language de for German

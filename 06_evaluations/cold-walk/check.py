@@ -384,7 +384,7 @@ class Harness:
 
     def _preflight_vorgang(self, entries: list[dict]) -> None:
         metadata = {
-            "type": "vorgang", "protocol": "v0.6.0",
+            "type": "vorgang", "protocol": "v0.7.0",
             "id": f"vorgang:{VORGANG}",
             "hauptprozess_revision": f"git-tree:{self.revision}",
             "laufpfad": entries,
@@ -481,7 +481,7 @@ class Harness:
         if not self.laufpfad or self.laufpfad[-1] is not entry or entry.get("status") not in {"aktiv", "wartend"}:
             raise ProofError("Transition requires the current unresolved entry")
         persisted = load_frontmatter(self.vorgang_root / "CONTEXT.md")
-        binding = {"type": "vorgang", "protocol": "v0.6.0", "id": f"vorgang:{VORGANG}", "hauptprozess_revision": f"git-tree:{self.revision}"}
+        binding = {"type": "vorgang", "protocol": "v0.7.0", "id": f"vorgang:{VORGANG}", "hauptprozess_revision": f"git-tree:{self.revision}"}
         if any(persisted.get(key) != value for key, value in binding.items()):
             raise ProofError("Vorgang binding differs from the current harness binding")
         if persisted.get("laufpfad") != self.laufpfad:
@@ -521,7 +521,7 @@ class Harness:
 
     def _write(self) -> None:
         metadata = {
-            "type": "vorgang", "protocol": "v0.6.0",
+            "type": "vorgang", "protocol": "v0.7.0",
             "id": f"vorgang:{VORGANG}",
             "hauptprozess_revision": f"git-tree:{self.revision}",
             "laufpfad": self.laufpfad,
@@ -1053,7 +1053,7 @@ def _prepare_workspace(base: Path) -> tuple[Path, str, str, str, str]:
     shutil.copytree(CAPABILITY, root / "capabilities" / "vollstaendigkeitsgrad")
     shutil.copytree(GRUNDLAGEN, root / "grundlagen")
     with (root / "CONTEXT.md").open("a") as router:
-        router.write("\nForm: capabilities/ Capability\nForm: grundlagen/ Knowledge Bundle per topic\n")
+        router.write("\nForm: capabilities/ Capability\nForm: grundlagen/ Knowledge Bundle per topic\n[Grundlagen](grundlagen/CONTEXT.md)\n")
     _git(root, "init", "-q", "-b", "main")
     _git(root, "config", "user.email", "cold-walk@example.invalid")
     _git(root, "config", "user.name", "Cold Walk")
@@ -1675,10 +1675,15 @@ def _record_inputs(root: Path, path: str, payload: str) -> dict[str, str]:
     """Supply an external synthetic receipt, then capture its actual bytes and source."""
     _write_files(root, {path: payload})
     router = root / "CONTEXT.md"
-    declaration = "Form: records/ Record Library per source record"
-    if declaration not in router.read_text():
-        with router.open("a") as handle:
-            handle.write("\n" + declaration + "\n")
+    for line in ("Form: records/ Record Library per source record", "[Records](records/CONTEXT.md)"):
+        if line not in router.read_text():
+            with router.open("a") as handle:
+                handle.write("\n" + line + "\n")
+    records = root / "records" / "CONTEXT.md"
+    link = f"- [{Path(path).parts[1]}]({Path(path).parts[1]}/)\n"
+    body = records.read_text(encoding="utf-8") if records.is_file() else "# Records\n\n"
+    if link not in body:
+        records.write_text(body + link, encoding="utf-8")
     received = (root / path).read_bytes()
     return {
         "material/antrag.md": received.decode("utf-8"),

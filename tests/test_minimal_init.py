@@ -33,7 +33,7 @@ def test_init_creates_only_minimal_workspace():
         ]
         assert (root / ".gitattributes").read_bytes() == b"* -text\n"
         assert (root / ".gitignore").read_text().split() == ["Thumbs.db", "desktop.ini", "~$*"]
-        assert load_frontmatter(root / "CONTEXT.md") == {"type": "workspace", "protocol": "v0.6.2"}
+        assert load_frontmatter(root / "CONTEXT.md") == {"type": "workspace", "protocol": "v0.7.0"}
 
 
 def test_cli_init_needs_no_customer_argument():
@@ -122,7 +122,7 @@ def test_first_win_exercise_validates_cleanly_when_pinned(tmp_path):
     version = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))["project"]["version"]
     text = (ROOT / "FIRST-WIN.md").read_text(encoding="utf-8")
     blocks = re.findall(r"`([^`\n]+\.md)`[^\n]*:\n\n```markdown\n(.*?)\n```", text, flags=re.S)
-    assert len(blocks) == 5, [name for name, _ in blocks]
+    assert len(blocks) == 6, [name for name, _ in blocks]
     for rel, content in blocks:
         dest = tmp_path / rel
         dest.parent.mkdir(parents=True, exist_ok=True)
@@ -133,12 +133,12 @@ def test_first_win_exercise_validates_cleanly_when_pinned(tmp_path):
     assert report.valid, [(i.code, i.path, i.message) for i in report.issues]
 
 
-@pytest.mark.parametrize("pin", ["v0.6.0", "v0.6.1", "v0.6.2"])
+@pytest.mark.parametrize("pin", ["v0.7.0", "v0.7.1", "v0.7.99"])
 def test_patch_pins_still_reject_undeclared_domain_folder(tmp_path, pin):
     from impacts_protocol import validate
     root = impacts_protocol.init_workspace(tmp_path / "workspace")
     router = root / "CONTEXT.md"
-    router.write_text(router.read_text().replace("protocol: v0.6.2", f"protocol: {pin}"))
+    router.write_text(router.read_text().replace("protocol: v0.7.0", f"protocol: {pin}"))
     assert load_frontmatter(router)["protocol"] == pin
     (root / "plans").mkdir()
     (root / "plans" / "item.md").write_text("Synthetic unclassified content\n")

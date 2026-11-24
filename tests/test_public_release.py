@@ -1,6 +1,7 @@
 """Check the existing release allowlist; this neither exports nor approves a release."""
 from pathlib import Path, PurePosixPath
 import importlib.util
+import json
 import os
 import posixpath
 import re
@@ -58,9 +59,23 @@ def anchors(text):
     return found
 
 
+CONFORMANCE = '06_evaluations/conformance/'
+CONFORMANCE_CASE = re.compile(r'06_evaluations/conformance/fixtures/cases/[^/]+/')
+
+
+def conformance_layers(files):
+    """Map each case fixture to the layers run.py copies beneath it, as cases.json declares them."""
+    manifest = json.loads(files.get(CONFORMANCE + 'cases.json', '{"cases": []}'))
+    base = CONFORMANCE + manifest.get('base_fixture', 'fixtures/base').rstrip('/') + '/'
+    return {CONFORMANCE + case['fixture'].rstrip('/') + '/':
+            ((CONFORMANCE + 'fixtures/common-run-assets/',) if case.get('git_binding') else ()) + (base,)
+            for case in manifest['cases'] if case.get('fixture')}
+
+
 def link_issues(files):
     """Check Markdown links and root-relative rule pointers inside the selected artifact."""
     directories = {str(parent) for name in files for parent in PurePosixPath(name).parents}
+    layers = conformance_layers(files)
     issues = []
     for name, text in files.items():
         if not name.endswith('.md'):
@@ -79,6 +94,11 @@ def link_issues(files):
             # init/installed-wheel tests also exercise that delivered link.
             if name in {"02_protocol/templates/agents.md", "02_protocol/templates/de/agents.md"} and url.path == "CONTEXT.md":
                 resolved = str(PurePosixPath(name).with_name("workspace.md"))
+            # A conformance case overlays its own files on the base and common run fixtures.
+            case = CONFORMANCE_CASE.match(resolved)
+            if case and name.startswith(case.group()) and resolved not in files and resolved not in directories:
+                resolved = next((layer + resolved[case.end():] for layer in layers.get(case.group(), ())
+                                 if layer + resolved[case.end():] in files or layer + resolved[case.end():] in directories), resolved)
             if resolved not in files and resolved not in directories:
                 issues.append((name, target, 'target outside export'))
             elif url.fragment and resolved.endswith('.md') and unquote(url.fragment) not in anchors(files[resolved]):
@@ -153,7 +173,7 @@ def test_candidate_public_contract_and_scope():
     contributing = (ROOT / "CONTRIBUTING.md").read_text()
     first_win = (ROOT / "FIRST-WIN.md").read_text()
 
-    assert version == "0.6.2"
+    assert version == "0.7.0"
     assert "report_version: 3" in readme
     assert "message" in readme and "diagnostic" in readme.lower()
     assert "does not authenticate people" in readme
@@ -304,6 +324,21 @@ def test_contribution_dispositions_keep_published_and_external_scope_separate():
 def test_an_omitted_or_nonportable_target_or_missing_anchor_blocks_reference_closure(target):
     files = {'docs/README.md': f'[reference]({target})', 'docs/included.md': '# Present\n'}
     assert len(link_issues(files)) == 1
+
+
+def test_conformance_case_links_resolve_through_its_fixture_layers_only():
+    case = '06_evaluations/conformance/fixtures/cases/synthetic/CONTEXT.md'
+    plain = '06_evaluations/conformance/fixtures/cases/plain/CONTEXT.md'
+    files = {case: '[layered](records/CONTEXT.md) [absent](records/missing.md)',
+             plain: '[run assets are not copied](records/CONTEXT.md) [base](base.md)',
+             '06_evaluations/conformance/cases.json': json.dumps({'base_fixture': 'fixtures/base', 'cases': [
+                 {'fixture': 'fixtures/cases/synthetic', 'git_binding': True}, {'fixture': 'fixtures/cases/plain'}]}),
+             '06_evaluations/conformance/fixtures/base/base.md': '# Base\n',
+             '06_evaluations/conformance/fixtures/common-run-assets/records/CONTEXT.md': '# Records\n',
+             'docs/README.md': '[other case](../06_evaluations/conformance/fixtures/cases/synthetic/records/CONTEXT.md)'}
+    assert link_issues(files) == [(case, 'records/missing.md', 'target outside export'),
+                                  (plain, 'records/CONTEXT.md', 'target outside export'),
+                                  ('docs/README.md', '../06_evaluations/conformance/fixtures/cases/synthetic/records/CONTEXT.md', 'target outside export')]
 
 
 def test_export_links_support_relative_paths_unicode_aliases_and_duplicate_headings():

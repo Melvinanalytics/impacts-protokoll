@@ -246,12 +246,12 @@
         "kind": "unicode-distinct"
       },
       "bad_folders": [
-        "caf\u00e9",
-        "cafe\u0301"
+        "café",
+        "café"
       ],
       "expected_issue_paths": [
-        "hauptprozesse/approval/caf\u00e9",
-        "hauptprozesse/approval/cafe\u0301"
+        "hauptprozesse/approval/café",
+        "hauptprozesse/approval/café"
       ],
       "expected": {
         "exit_code": 1,
@@ -310,7 +310,7 @@
             "sha256": "sha256:0263829989b6fd954f72baaf2fc64bc2e2f01d692d4de72986ea808f6e99813f"
           },
           {
-            "pfad": "input/\u00e4.txt",
+            "pfad": "input/ä.txt",
             "sha256": "sha256:eefeabce9a2687ecae740bf791ad4e768b642ec837cc05e9677b25de098e2547"
           }
         ]
@@ -665,7 +665,7 @@
         "not_judged": [
           {
             "path": "vorgaenge/approval-001/CONTEXT.md",
-            "protocol": "v0.7.0"
+            "protocol": "v0.8.0"
           }
         ]
       }
@@ -678,7 +678,9 @@
       "expected": {
         "exit_code": 1,
         "valid": false,
-        "issue_codes": ["binding.reference_missing"],
+        "issue_codes": [
+          "binding.reference_missing"
+        ],
         "not_judged": []
       }
     },
@@ -1215,6 +1217,101 @@
         ],
         "not_judged": []
       }
+    },
+    {
+      "id": "topology-root-unlinked-level",
+      "command": "validate",
+      "fixture": "fixtures/cases/topology-root-unlinked-level",
+      "expected": {
+        "exit_code": 1,
+        "valid": false,
+        "issue_codes": [
+          "topology.shape"
+        ],
+        "not_judged": []
+      },
+      "expected_issue_paths": [
+        "records"
+      ],
+      "expected_issue_messages": [
+        "records/ is not linked from the root CONTEXT.md"
+      ]
+    },
+    {
+      "id": "topology-record-router-missing",
+      "command": "validate",
+      "fixture": "fixtures/cases/topology-record-router-missing",
+      "expected": {
+        "exit_code": 1,
+        "valid": false,
+        "issue_codes": [
+          "topology.shape"
+        ],
+        "not_judged": []
+      },
+      "expected_issue_paths": [
+        "records"
+      ],
+      "expected_issue_messages": [
+        "records/ has no CONTEXT.md"
+      ]
+    },
+    {
+      "id": "topology-record-instance-unlinked",
+      "command": "validate",
+      "fixture": "fixtures/cases/topology-record-instance-unlinked",
+      "expected": {
+        "exit_code": 1,
+        "valid": false,
+        "issue_codes": [
+          "topology.shape"
+        ],
+        "not_judged": []
+      },
+      "expected_issue_paths": [
+        "records/two"
+      ],
+      "expected_issue_messages": [
+        "two is not linked from records/CONTEXT.md"
+      ]
+    },
+    {
+      "id": "topology-record-file-router-incomplete",
+      "command": "validate",
+      "fixture": "fixtures/cases/topology-record-file-router-incomplete",
+      "expected": {
+        "exit_code": 1,
+        "valid": false,
+        "issue_codes": [
+          "topology.shape"
+        ],
+        "not_judged": []
+      },
+      "expected_issue_paths": [
+        "records/second.md"
+      ],
+      "expected_issue_messages": [
+        "second.md is not linked from records/CONTEXT.md"
+      ]
+    },
+    {
+      "id": "topology-pipeline-home-unlinked",
+      "command": "validate",
+      "fixture": "fixtures/cases/topology-pipeline-home-unlinked",
+      "expected": {
+        "exit_code": 1,
+        "valid": false,
+        "issue_codes": [
+          "topology.shape"
+        ],
+        "not_judged": []
+      },
+      "expected_issue_paths": [
+        "ablauf"
+      ],
+      "expected_issue_messages": [
+        "ablauf/ is not linked from the root CONTEXT.md"
+      ]
     }
   ]
 }

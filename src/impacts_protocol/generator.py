@@ -7,7 +7,7 @@ from tempfile import mkdtemp
 
 WORKSPACE_FOLDERS = ("hauptprozesse", "vorgaenge")
 TEMPLATE_KINDS = ("hauptprozess", "teilprozess", "arbeitsschritt", "vorgang")
-SUPPLEMENTAL_TEMPLATE_KINDS = ("herkunft",)
+SUPPLEMENTAL_TEMPLATE_KINDS = ("herkunft", "ebene")
 CLI_TEMPLATE_KINDS = TEMPLATE_KINDS + SUPPLEMENTAL_TEMPLATE_KINDS
 
 

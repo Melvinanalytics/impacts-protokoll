@@ -168,7 +168,7 @@ def _prepare_workspace(base: Path) -> tuple[Path, Path]:
     write_context(
         vorgang / "CONTEXT.md",
         {
-            "type": "vorgang", "protocol": "v0.6.0",
+            "type": "vorgang", "protocol": "v0.7.0",
             "id": "vorgang:video-001",
             "hauptprozess_revision": f"git-tree:{revision}",
             "laufpfad": entries,
@@ -1667,6 +1667,8 @@ def test_writeback_to_continuing_record_preserves_vorgang_evidence(tmp_path):
 
     record = root / "records" / "kunde" / "status.md"
     record.parent.mkdir(parents=True, exist_ok=True)
+    with (root / "records" / "CONTEXT.md").open("a") as router:
+        router.write("- [kunde](kunde/)\n")
     output = (vorgang / "pruefen/001/output/ergebnis.md").read_text(encoding="utf-8")
     record.write_text(
         f"# Kunde\n\nLetztes Prüfergebnis (aus vorgang:video-001):\n{output}",
@@ -1722,7 +1724,7 @@ def _build_vorgang_in(root: Path) -> tuple[str, Path]:
     revision = git(root, "rev-parse", "HEAD:hauptprozesse/video")
     vorgang = _completed_vorgang(root, revision)
     # Vorgaenge are evidence: commit them so clone/transport preserves old attempts.
-    git(root, "add", "vorgaenge", "CONTEXT.md")
+    git(root, "add", "vorgaenge", "records/CONTEXT.md", "CONTEXT.md")
     git(root, "commit", "-m", "record run evidence")
     return revision, vorgang
 

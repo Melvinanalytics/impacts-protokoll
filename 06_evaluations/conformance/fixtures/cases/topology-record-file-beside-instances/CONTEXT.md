@@ -1,6 +1,6 @@
 ---
 type: workspace
-protocol: v0.6.0
+protocol: v0.7.0
 ---
 
 # Synthetic conformance workspace: topology-record-file-beside-instances
@@ -10,3 +10,5 @@ Ablage: another-synthetic-store Synthetic inaccessible system
 Ablage: synthetic-fixture Synthetic inaccessible system
 
 Form: records/ Record Library per source record
+
+[Records](records/CONTEXT.md)

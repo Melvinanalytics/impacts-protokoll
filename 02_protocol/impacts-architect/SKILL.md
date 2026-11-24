@@ -28,7 +28,7 @@ Hauptprozess/Vorgang-specific invariants apply to selected Core contracts, as th
 5. `gate: human` follows the [reserved-decision criterion](references/zuschnitt.md#arbeitsschritt).
 6. Apply [Hauptprozess and Vorgang separation](../../AGENTS.md).
 7. Every claim carries its source and the evidence label defined in the [ontology](../ontology.md#evidence-and-obligations); a confirmed document does not confirm every interpretation of it.
-8. `impacts validate` checks selected Core Hauptprozesse and Vorgänge and, at a workspace root pinned to the current minor, the workspace [folder-form rules](references/formwahl.md#folder-structure-by-form), including Markdown `#anchor` resolution and unlinked root `.md` files. It checks neither an entry's kind nor domain meaning. Run it only when that condition is needed, under [Tooling stop](references/formwahl.md#tooling-stop).
+8. `impacts validate` checks selected Core Hauptprozesse and Vorgänge and, at a workspace root pinned to the current minor, the workspace [folder-form rules](references/formwahl.md#folder-structure-by-form), including Markdown `#anchor` resolution, unlinked root `.md` files and the link chain from the root router to every level router. It checks neither an entry's kind nor domain meaning. Run it only when that condition is needed, under [Tooling stop](references/formwahl.md#tooling-stop).
 
 ## Form selection
 
@@ -87,7 +87,7 @@ Choose the branch established by form selection. For a selected Core Pipeline/Ha
 
 1. Open the root `CONTEXT.md`. Can it say where it is and how to advance a Vorgang from this one file?
 2. Validate the selected workspace or Hauptprozess directory with `impacts validate`. Record the target and protocol revision; a different repository root is not automatically a Core workspace.
-3. Open `vorgaenge/<vorgang>/CONTEXT.md`. Derive its current Arbeitsschritt or reached end under [Progress](../binding.md#vorgang-progress). Open the last entry's Arbeitsschritt `CONTEXT.md`: inputs, outputs, `pruefung`, routes and applicable human check are all named. For a Hauptprozess with no Vorgang yet, inspect its declared entry and mark Vorgang evidence as not yet demonstrated.
+3. Open `vorgaenge/<vorgang>/CONTEXT.md`. Derive its current Arbeitsschritt or reached end under [Progress](../binding.md#vorgang-progress). Open the last entry's Arbeitsschritt `CONTEXT.md`: inputs, outputs, `pruefung`, routes and applicable human check are all named. Each input resolves to an exact path or declared external source, as [setup completion](../impacts-method.md#maintain-agent-instructions) requires; a business name alone leaves it open. For a Hauptprozess with no Vorgang yet, inspect its declared entry and mark Vorgang evidence as not yet demonstrated.
    Use `impacts hash` on declared attempt surfaces to check recorded hashes; this reads files and does not execute the Arbeitsschritt.
 4. Every Hauptprozess body section holds the customer's facts, each labelled `verified`, `reported`, `hypothesis` or `open`. Read each Setup completion section and review its substantive case coverage, premises, expected results and recorded review results; record missing, bare or unsupported cases and remaining review gaps as open. Expected text alone does not establish a successful review or observed execution.
 5. Report the loaded router, Arbeitsschritt and input paths. Aim for at most 8k tokens of actual task payload, not a minimum size. If the payload tokenizer is unavailable, report bytes/words and that limitation instead of an exact token-PASS.
