@@ -8,7 +8,7 @@ Produce an internal offer draft with cited scope, explicit gaps and a named next
 
 For real work, save the draft in that case's existing folder with its sources, open questions and next action.
 
-To practice, create these five synthetic Markdown files in a separate folder. They reuse the catalog, customer, inquiry and offer-blank roles from the [synthetic company example](02_protocol/impacts-architect/references/datenbezug.md#from-catalog-through-pipeline-to-a-filled-offer). P-10, S-20, C-1 and O-1 are synthetic; no price, delivery date or approval is supplied.
+To practice, create these six synthetic Markdown files in a separate folder. They reuse the catalog, customer, inquiry and offer-blank roles from the [synthetic company example](02_protocol/impacts-architect/references/datenbezug.md#from-catalog-through-pipeline-to-a-filled-offer). P-10, S-20, C-1 and O-1 are synthetic; no price, delivery date or approval is supplied.
 
 `CONTEXT.md` (its `Form:` lines declare both folders so `impacts validate` accepts the layout later):
 
@@ -21,6 +21,7 @@ Form: records/ Record Library per offer
 
 Synthetic training material; no real customer commitment.
 - [Foundations](grundlagen/CONTEXT.md): catalog and offer blank.
+- [Offers](records/CONTEXT.md): one folder per offer.
 - [Inquiry AN-1](records/offer-o1/inquiry.md): requested scope for C-1.
 
 Prepare Offer O-1 / Version 1 in records/offer-o1/draft.md.
@@ -45,6 +46,13 @@ When the draft exists, add a direct link here so a fresh session can continue.
 Source: synthetic company example, “From catalog through pipeline to a filled offer”.
 Evidence: reported fixture descriptions; no real-world verification.
 No price or availability source is supplied. Catalog kinds establish neither delivery nor service coverage.
+```
+
+`records/CONTEXT.md`:
+
+```markdown
+# Offers
+- [Offer O-1](offer-o1/): inquiry, and later the draft.
 ```
 
 `records/offer-o1/inquiry.md`:

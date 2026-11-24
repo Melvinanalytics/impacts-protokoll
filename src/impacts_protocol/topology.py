@@ -105,6 +105,10 @@ def check_topology(root: Path, human_pattern: str) -> tuple[list[Issue], tuple[d
         except (OSError, ValueError) as error:
             _unreadable(state, folder, error)
     _scan_definitions(state, root)
+    for folder, form in sorted(state.forms.items()):
+        if folder.parent == root and form in LEVEL_FORMS + ("Pipeline",) and not state.skip(folder) and folder.is_dir() and not folder.is_symlink() and _has_file(state, folder):
+            if not {_nfc(str(folder.resolve())), _nfc(str((folder / ROUTER).resolve()))} & root_targets:
+                state.add("topology.shape", folder, f"{folder.name}/ is not linked from the root {ROUTER}; link the folder or its {ROUTER} from the route that serves its readers")
     top = {path: form for path, form in state.forms.items() if path.parent == root}
     return state.issues, tuple(state.held), top
 
@@ -385,6 +389,10 @@ def _record_library(state: Topology, folder: Path, body: str, entries: list[Path
         action = f"if it is the kind's table, move it into {level}{ROUTER}; otherwise move it to the instance or record kind it belongs to" if kind == "file" else "split folders and files into separate record kinds, each with one shape"
         for entry in odd:
             state.add("topology.shape", entry, f"{entry.name} is a {kind} among the instance {shape} of {level}; {action}")
+    # Instance folders and sub-levels need a router; a file kind's router, once present, links each file.
+    linked = sublevels or (folders if folders and len(files) <= len(folders) else files)
+    if linked and (linked is not files or (folder / ROUTER).exists()):
+        _linked_entries(state, folder, body, linked)
     single_table = not folders and len(files) == 1
     for entry in ([] if single_table else others):
         key = _normal(entry.name if entry in folders else entry.name.split(".", 1)[0])
@@ -443,6 +451,8 @@ def _linked_entries(state: Topology, folder: Path, body: str, entries: list[Path
                 alias = spellings.get(_normal(str(entry.absolute())))
                 if alias is None and entry.is_dir():
                     alias = spellings.get(_normal(str((entry / ROUTER).absolute())))
+                if alias is not None and state.forms.get(folder) == "Record Library":
+                    continue  # _check_links reports the spelling of every Record Library link
                 message = f"{entry.name} is linked as {alias!r}; use the on-disk spelling" if alias is not None else f"{entry.name} is not linked from {level}{ROUTER}; link it"
                 if entry.is_dir():
                     message += "; link the entry itself, not a file inside it"
@@ -496,8 +506,9 @@ def _resolved_targets(state: Topology, folder: Path, body: str) -> set[str]:
         try:
             target = _link_target(link)
             if target and not SCHEME.match(target) and not target.startswith("/"):
+                # A misspelt link still reaches its target; _check_links reports the spelling once.
                 located = _locate(folder, target, state)
-                if located is not None and _nfc(str(located)) == _nfc(os.path.normpath(folder / target)):
+                if located is not None:
                     targets.add(_nfc(str(located.resolve())))
         except (OSError, ValueError, RuntimeError):
             continue

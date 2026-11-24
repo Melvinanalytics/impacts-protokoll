@@ -1,9 +1,9 @@
 ---
 type: workspace
-protocol: v0.6.2
+protocol: v0.7.0
 ---
 
-<!-- Translation source: 02_protocol/templates/workspace.md; sha256: af8781fec571f832d12fa6ed8fc403bdea8f2072bc8af3f7e484c19b5baf895e -->
+<!-- Translation source: 02_protocol/templates/workspace.md; sha256: 935d4d9163773769dd88e375a5bc3a408891ec90823a848d39834f792562484a -->
 
 Working language: de
 
@@ -34,10 +34,12 @@ Arbeit von reinen Lese-Fragen trennen (`02_protocol/impacts-method.md#load-conte
 
 ### Arbeit (erzeugt oder ändert Ausgabe)
 
-| Anliegen | Öffnen | Ausgabe und Ziel | Prüfung |
-|---|---|---|---|
-| `<wiederkehrender Job ohne Core-Arbeitsschritt>` | `<Link auf zuständige Datei#Job-Abschnitt>` | `<Artefakt und Zielpfad>` | `<beobachtbare Prüfung>` |
-| `<gewählte Core-Pipeline>` | `<Link auf hauptprozesse/<slug>/CONTEXT.md>` | `<Vorgangsausgabe>` | `impacts validate` |
+| Anliegen | Öffnen | Zusätzlich, nur bei Anlass | Ausgabe und Ziel | Prüfung |
+|---|---|---|---|---|
+| `<wiederkehrender Job ohne Core-Arbeitsschritt>` | `<Link auf zuständige Datei#Job-Abschnitt>` | `<wenn <beobachtbarer Auslöser>: <Link auf die dann nötige Quelle>>` | `<Artefakt und Zielpfad>` | `<beobachtbare Prüfung>` |
+| `<gewählte Core-Pipeline>` | `<Link auf hauptprozesse/<slug>/CONTEXT.md>` | — | `<Vorgangsausgabe>` | `impacts validate` |
+
+Der Standardfall liest nur „Öffnen“; „Zusätzlich“ nennt einen Auslöser und die dann nötige Quelle, so weiß der Bearbeiter des Standardfalls, was er überspringt. Jeder Ebenen-Router folgt `impacts template ebene --language de`.
 
 ### Reine Lese-Fragen
 

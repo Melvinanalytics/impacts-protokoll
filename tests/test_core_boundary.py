@@ -124,7 +124,7 @@ def test_customer_owned_context_map_contents_are_outside_core_validation():
         (root / "analyse" / "note.md").write_text("frei", encoding="utf-8")
         (root / "analyse" / "CONTEXT.md").write_text("[Note](note.md)\n", encoding="utf-8")
         with (root / "CONTEXT.md").open("a") as router:
-            router.write("\nForm: analyse/ Context Map per capture\n")
+            router.write("\nForm: analyse/ Context Map per capture\n[Analyse](analyse/CONTEXT.md)\n")
 
         assert validate(root).valid
 

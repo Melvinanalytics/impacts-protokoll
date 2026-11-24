@@ -184,7 +184,7 @@ def test_external_store_key_cannot_name_a_working_tree_file(tmp_path, source):
         (root / key).parent.mkdir(parents=True, exist_ok=True)
         (root / key).write_text('Synthetic uncommitted source')
         with (root / 'CONTEXT.md').open('a') as router:
-            router.write('\nForm: grundlagen/ Knowledge Bundle per topic\n')
+            router.write('\nForm: grundlagen/ Knowledge Bundle per topic\n[Grundlagen](grundlagen/CONTEXT.md)\n')
         (root / 'grundlagen/CONTEXT.md').write_text('[Source](uncommitted.md)\n')
     if source == 'normalized':
         key = 'grundlagen/../' + key
@@ -248,8 +248,11 @@ def test_versioned_source_unicode_name_is_read_as_raw_git_path(tmp_path, directo
     path.write_bytes(b'immutable\0binary')
     if directory == 'grundlagen':
         with (root / 'CONTEXT.md').open('a') as router:
-            router.write('\nForm: grundlagen/ Knowledge Bundle per topic\n')
+            router.write('\nForm: grundlagen/ Knowledge Bundle per topic\n[Grundlagen](grundlagen/CONTEXT.md)\n')
         (root / 'grundlagen/CONTEXT.md').write_text('[Source](quelle-ä.md)\n')
+    else:
+        with (root / 'records/CONTEXT.md').open('a') as router:
+            router.write('- [unicode](unicode/)\n')
     git(root, 'add', directory)
     git(root, 'commit', '-qm', 'Synthetic Unicode source')
     a['gelesen'] = [{**file_references(root, [relative])[0], 'eingabe': 'input/auftrag.md', 'revision': 'git-commit:' + git(root, 'rev-parse', 'HEAD')}]

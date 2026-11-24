@@ -1,5 +1,6 @@
 """Synthetic mutations of the declared workspace form and its shape."""
 import json
+import re
 from pathlib import Path
 
 import pytest
@@ -9,20 +10,44 @@ from impacts_protocol.cli import main
 from .support import write_context, write_hauptprozess
 
 
-def workspace(tmp_path, declaration="Form: records/ Record Library per subject"):
+def workspace(tmp_path, declaration="Form: records/ Record Library per subject", *, linked=True):
+    """Declare the given levels; linked=False leaves out the root links the route rule demands."""
     root = init_workspace(tmp_path / "workspace")
     (root / "records").mkdir()
     for name in ("grundlagen", "legacy", "tools", "library"):
         if f"Form: {name}/" in declaration:
             (root / name).mkdir()
+    links = [f"[{name}](<{name}/>)" for name in re.findall(r"^Form: ([^/\s]+)/ (?:Record Library|Knowledge Bundle|Context Map|Pipeline) per", declaration, re.M)] if linked else []
     router = root / "CONTEXT.md"
-    router.write_text(router.read_text() + "\n" + declaration + "\n")
+    router.write_text(router.read_text() + "\n" + "\n".join([declaration, *links]) + "\n")
     return root
 
 
 def router(folder, body):
     folder.mkdir(parents=True, exist_ok=True)
     (folder / "CONTEXT.md").write_text(body + "\n")
+    root_link(folder)
+
+
+def root_link(folder):
+    """A top-level level router is reachable from the root CONTEXT.md."""
+    root = folder.parent / "CONTEXT.md"
+    link = f"[{folder.name}](<{folder.name}/>)"
+    if root.is_file() and "type: workspace" in root.read_text() and link not in root.read_text():
+        with root.open("a") as handle:
+            handle.write(f"\n{link}\n")
+
+
+def link_entries(folder):
+    """A Record Library level's CONTEXT.md links each of its entries."""
+    context = folder / "CONTEXT.md"
+    body = context.read_text() if context.is_file() else "# Records\n"
+    for entry in sorted(path for path in folder.iterdir() if path.name != "CONTEXT.md"):
+        link = f"[{entry.name}](<{entry.name}{'/' if entry.is_dir() else ''}>)"
+        if link not in body:
+            body += f"\n{link}\n"
+    context.write_text(body)
+    root_link(folder)
 
 
 def assert_code(root, code):
@@ -92,13 +117,13 @@ def test_duplicate_own_and_parent_declaration(tmp_path):
 
 
 def test_declared_missing_folder(tmp_path):
-    root = workspace(tmp_path)
+    root = workspace(tmp_path, linked=False)
     (root / "records").rmdir()
     assert_code(root, "topology.form_invalid")
 
 
 def test_declared_file_instead_of_folder(tmp_path):
-    root = workspace(tmp_path)
+    root = workspace(tmp_path, linked=False)
     (root / "records").rmdir()
     (root / "records").touch()
     assert_code(root, "topology.form_invalid")
@@ -124,13 +149,14 @@ def test_removed_held_row_requires_form(tmp_path):
 def test_file_beside_instance_folders(tmp_path):
     root = workspace(tmp_path)
     router(root / "records/one", "# Instance")
+    link_entries(root / "records")
     (root / "records/table.csv").touch()
     assert_code(root, "topology.shape")
 
 
 def test_file_beside_declared_sublevels(tmp_path):
     root = workspace(tmp_path)
-    router(root / "records", "Form: people/ Record Library per person")
+    router(root / "records", "Form: people/ Record Library per person\n[people](people/)")
     router(root / "records/people", "# Kind")
     (root / "records/table.csv").touch()
     [issue] = validate(root).issues
@@ -140,7 +166,7 @@ def test_file_beside_declared_sublevels(tmp_path):
 
 def test_undeclared_folder_beside_declared_sublevel(tmp_path):
     root = workspace(tmp_path)
-    router(root / "records", "Form: people/ Record Library per person")
+    router(root / "records", "Form: people/ Record Library per person\n[people](people/)")
     router(root / "records/people", "# Kind")
     router(root / "records/other", "# Instance")
     assert_code(root, "topology.shape")
@@ -224,8 +250,9 @@ def test_fenced_and_indented_form_lines_are_ignored(tmp_path):
 
 def test_own_sublevel_declaration(tmp_path):
     root = workspace(tmp_path)
-    router(root / "records/people", "Form: Record Library per person")
+    router(root / "records/people", "Form: Record Library per person\n[one](one/)")
     (root / "records/people/one").mkdir()
+    link_entries(root / "records")
     assert validate(root).valid
 
 
@@ -264,6 +291,7 @@ def test_definition_outside_hauptprozesse_is_a_finding_unless_candidate(tmp_path
     write_hauptprozess(root / ("grundlagen" if finding else "analyse") / "video")
     router_file = root / ("grundlagen" if finding else "analyse") / "CONTEXT.md"
     router_file.write_text("[video](video/)\n")
+    root_link(router_file.parent)
     report = validate(root)
     assert ("topology.shape" in [issue.code for issue in report.issues]) is finding
     assert any(item.reason == "definition tree outside hauptprozesse/, not bindable" for item in report.not_judged)
@@ -275,12 +303,15 @@ def bundle_beside_cases(tmp_path, entry_router="Form: Knowledge Bundle per topic
     router(root / "grundlagen", "[rule](rule.md)\n[alpha](fall-alpha/)")
     (root / "grundlagen/rule.md").touch()
     router(root / "grundlagen/fall-alpha", entry_router)
+    link_entries(root / "records")
     return root
 
 
 def test_undeclared_folder_in_bundle_is_a_finding(tmp_path):
     root = bundle_beside_cases(tmp_path, "# Case material")
     (root / "records/fall-alpha").rename(root / "records/another-case")
+    (root / "records/CONTEXT.md").unlink()
+    link_entries(root / "records")
     messages = [issue.message for issue in validate(root).issues if issue.code == "topology.shape"]
     assert any("fall-alpha/ is not a declared sub-level" in message for message in messages)
 
@@ -331,6 +362,7 @@ def test_capture_folder_named_like_a_record_is_valid(tmp_path):
     router(root / "records/fall-alpha", "# Case")
     router(root / "analyse/fall-alpha", "# Capture")
     router(root / "analyse", "[capture](fall-alpha/)")
+    link_entries(root / "records")
     assert validate(root).valid
 
 
@@ -347,6 +379,7 @@ def test_bundle_file_with_the_record_name_is_a_finding(tmp_path):
     router(root / "records/fall-alpha", "# Case")
     router(root / "grundlagen", "[alpha](fall-alpha.md)")
     (root / "grundlagen/fall-alpha.md").touch()
+    link_entries(root / "records")
     assert_code(root, "topology.shape")
 
 
@@ -430,8 +463,10 @@ def test_definition_in_held_folder_is_not_read(tmp_path):
 @pytest.mark.parametrize(("form", "finding"), [("Record Library per kind", True), ("Context Map per capture", False)])
 def test_definition_in_a_deeper_level_is_found(tmp_path, form, finding):
     root = workspace(tmp_path, f"Form: {'records' if finding else 'analyse'}/ {form}")
-    router(root / ("records" if finding else "analyse"), "Form: kind/ Record Library per item" if form.startswith("Record") else "[kind](kind/)")
+    router(root / ("records" if finding else "analyse"), "Form: kind/ Record Library per item\n[kind](kind/)" if form.startswith("Record") else "[kind](kind/)")
     write_hauptprozess(root / ("records" if finding else "analyse") / "kind" / "video")
+    if finding:
+        router(root / "records/kind", "[video](video/)")
     codes = [issue.code for issue in validate(root).issues]
     assert ("topology.shape" in codes) is finding
 
@@ -449,6 +484,7 @@ def test_equal_names_only_no_hyphen_prefix(tmp_path):
     router(root / "records/angebot-2026-001", "# Offer")
     router(root / "grundlagen", "[offer](angebot/)")
     router(root / "grundlagen/angebot", "Form: Knowledge Bundle per topic")
+    link_entries(root / "records")
     assert validate(root).issues == ()
 
 
@@ -458,6 +494,7 @@ def test_unit_equality_normalises_nfkc_and_zero_width(tmp_path, name):
     router(root / "records/fall", "# Case")
     router(root / "grundlagen", f"[case]({name}.md)")
     (root / "grundlagen" / (name + ".md")).touch()
+    link_entries(root / "records")
     issue, = validate(root).issues
     assert issue.code == "topology.shape"
     assert "has the name of record records/fall; if it holds that record's material, move it there; otherwise rename it" in issue.message
@@ -465,14 +502,15 @@ def test_unit_equality_normalises_nfkc_and_zero_width(tmp_path, name):
 
 def test_record_kind_names_are_not_units(tmp_path):
     root = bundle_beside_cases(tmp_path)
-    router(root / "records", "Form: fall-alpha/ Record Library per item")
+    router(root / "records", "Form: fall-alpha/ Record Library per item\n[fall-alpha](fall-alpha/)")
     assert validate(root).issues == ()
 
 
 def test_record_match_prefers_folder_and_counts_other_matches(tmp_path):
     root = workspace(tmp_path, "Form: records/ Record Library per kind\nForm: grundlagen/ Knowledge Bundle per topic")
-    router(root / "records", "Form: a/ Record Library per case\nForm: b/ Record Library per case")
+    router(root / "records", "Form: a/ Record Library per case\nForm: b/ Record Library per case\n[a](a/)\n[b](b/)")
     router(root / "records/a/fall", "# Case")
+    router(root / "records/a", "[fall](fall/)")
     (root / "records/b").mkdir()
     for name in ("fall.md", "other.md"):
         (root / "records/b" / name).touch()
@@ -515,6 +553,7 @@ def test_bundle_entry_emits_only_most_specific_finding(tmp_path, record, name, m
         router(root / "records" / name, "# Case")
     router(root / "grundlagen", "# Rules")
     router(root / "grundlagen" / name, "# Material")
+    link_entries(root / "records")
     issue, = validate(root).issues
     assert issue.code == "topology.shape"
     assert message in issue.message
@@ -614,7 +653,7 @@ def test_form_paths_support_spaces(tmp_path):
 
 @pytest.mark.parametrize("declared", ["KUNDEN", "Ｋｕｎｄｅｎ", "kun\u200bden"])
 def test_form_path_normalisation_reports_both_spellings_once(tmp_path, declared):
-    root = workspace(tmp_path, f"Form: {declared}/ Record Library per customer")
+    root = workspace(tmp_path, f"Form: {declared}/ Record Library per customer", linked=False)
     router(root / "kunden", "# Customers")
     issue, = validate(root).issues
     assert issue.code == "topology.form_invalid"
@@ -625,6 +664,7 @@ def test_form_path_normalisation_reports_both_spellings_once(tmp_path, declared)
 def test_prose_form_line_in_record_router_is_ignored(tmp_path):
     root = workspace(tmp_path)
     router(root / "records/customer", "Form: schriftlich (§ 126 BGB)")
+    link_entries(root / "records")
     assert validate(root).issues == ()
 
 
@@ -679,6 +719,8 @@ def test_definitions_found_at_depth_three_even_in_code_and_pipeline(tmp_path, ho
     root = workspace(tmp_path, f"Form: {top}/ {form}")
     router(root / home, "# Instance")
     write_hauptprozess(root / home / "hidden")
+    if top == "records":
+        link_entries(root / "records")
     issue, = validate(root).issues
     assert (issue.code, issue.path) == ("topology.shape", home + "/hidden/CONTEXT.md")
     assert issue.message == "Hauptprozess definition outside hauptprozesse/; report it to the owner, whose confirming commit moves it into hauptprozesse/; a candidate goes under analyse/"
@@ -762,7 +804,7 @@ def test_way_one_table_in_kind_router_beside_earned_folders(tmp_path):
 
 
 def test_normalised_form_alias_does_not_add_duplicate_or_missing(tmp_path):
-    root = workspace(tmp_path, "Form: kunden/ Record Library per customer\nForm: KUNDEN/ Record Library per customer")
+    root = workspace(tmp_path, "Form: kunden/ Record Library per customer\nForm: KUNDEN/ Record Library per customer", linked=False)
     router(root / "kunden", "# Customers")
     issue, = validate(root).issues
     assert issue.code == "topology.form_invalid"
@@ -789,6 +831,7 @@ def test_readme_named_record_folder_still_registers_a_unit(tmp_path):
     router(root / "records/readme", "# Case")
     router(root / "grundlagen", "[Rule](readme.md)")
     (root / "grundlagen/readme.md").touch()
+    link_entries(root / "records")
     issue, = validate(root).issues
     assert issue.code == "topology.shape"
     assert "has the name of record records/readme;" in issue.message
@@ -807,6 +850,7 @@ def test_context_map_entry_with_a_record_name_is_valid(tmp_path):
     root = workspace(tmp_path, "Form: records/ Record Library per subject\nForm: akten/ Record Library per case\nForm: analyse/ Context Map per capture")
     (root / "akten/fall-alpha").mkdir(parents=True)
     (root / "akten/fall-alpha/akte.md").touch()
+    link_entries(root / "akten")
     router(root / "analyse", "[alpha](fall-alpha.md)")
     (root / "analyse/fall-alpha.md").touch()
     assert validate(root).valid
@@ -871,8 +915,8 @@ def test_x1_reference_definitions_do_not_link_entries(tmp_path, definition):
 
 def test_x2_record_kind_is_not_a_unit_but_instances_are(tmp_path):
     root = workspace(tmp_path, "Form: records/ Record Library per kind\nForm: grundlagen/ Knowledge Bundle per topic")
-    router(root / "records", "Form: articles/ Record Library per article")
-    router(root / "records/articles", "# Articles")
+    router(root / "records", "Form: articles/ Record Library per article\n[articles](articles/)")
+    router(root / "records/articles", "[A-1002](A-1002.md)\n[A-1003](A-1003.md)")
     for name in ("A-1002.md", "A-1003.md"):
         (root / "records/articles" / name).touch()
     router(root / "grundlagen", "[kind](articles.md)\n[instance](A-1002.md)")
@@ -1054,6 +1098,7 @@ def test_x15_first_dot_ends_file_unit_name(tmp_path, record_file):
         router(root / "records" / record, "# Case")
     router(root / "grundlagen", "[case](A-1002.tar.gz)")
     (root / "grundlagen/A-1002.tar.gz").touch()
+    link_entries(root / "records")
     issue, = validate(root).issues
     assert (issue.code, issue.message) == ("topology.shape", f"grundlagen/A-1002.tar.gz has the name of record records/{record}; if it holds that record's material, move it there; otherwise rename it")
 
@@ -1160,6 +1205,7 @@ def test_e5_unreadable_router_is_one_finding(tmp_path):
     root = workspace(tmp_path, "Form: records/ Record Library per subject\nForm: grundlagen/ Knowledge Bundle per topic")
     (root / "grundlagen").mkdir(exist_ok=True)
     (root / "grundlagen/CONTEXT.md").write_bytes(b"---\ntype: \xff\n---\n")
+    root_link(root / "grundlagen")
     assert len([issue for issue in validate(root).issues if "cannot be read" in issue.message]) == 1
 
 
@@ -1180,6 +1226,7 @@ def test_table_beside_instance_folders_moves_into_the_router(tmp_path):
     (root / "records/two").mkdir()
     (root / "records/two/akte.md").touch()
     (root / "records/table.md").touch()
+    link_entries(root / "records")
     issue, = validate(root).issues
     assert issue.message == "table.md is a file among the instance folders of records/; if it is the kind's table, move it into records/CONTEXT.md; otherwise move it to the instance or record kind it belongs to"
 
@@ -1224,3 +1271,128 @@ def test_unlinked_root_markdown_file_fails_while_linked_and_standard_docs_pass(t
     with (root / "CONTEXT.md").open("a") as handle:
         handle.write("\n[Notes](stray-notes.md)\n")
     assert validate(root).valid
+
+
+@pytest.mark.parametrize(("link", "reached"), [
+    ("grundlagen/rule.md", False), (None, False), ("grundlagen/", True), ("grundlagen/CONTEXT.md", True),
+], ids=["file_inside", "form_line_only", "folder", "router"])
+def test_root_must_link_each_level_router(tmp_path, link, reached):
+    root = workspace(tmp_path, "Form: records/ Record Library per subject\nForm: grundlagen/ Knowledge Bundle per topic", linked=False)
+    (root / "grundlagen/CONTEXT.md").write_text("[rule](rule.md)\n")
+    (root / "grundlagen/rule.md").touch()
+    if link:
+        with (root / "CONTEXT.md").open("a") as handle:
+            handle.write(f"\n[Foundations]({link})\n")
+    issues = [(issue.code, issue.path, issue.message) for issue in validate(root).issues]
+    assert issues == ([] if reached else [("topology.shape", "grundlagen", "grundlagen/ is not linked from the root CONTEXT.md; link the folder or its CONTEXT.md from the route that serves its readers")])
+
+
+def test_record_library_router_must_link_its_sublevels_not_files_inside_them(tmp_path):
+    root = workspace(tmp_path)
+    router(root / "records", "Form: people/ Record Library per person\n[one](people/one.md)")
+    (root / "records/people").mkdir()
+    for name in ("one.md", "two.md"):
+        (root / "records/people" / name).touch()
+    issue, = validate(root).issues
+    assert (issue.code, issue.path) == ("topology.shape", "records/people")
+    assert issue.message.startswith("people is not linked from records/CONTEXT.md; link it")
+    router(root / "records", "Form: people/ Record Library per person\n[people](people/)")
+    assert validate(root).valid
+
+
+def test_record_kind_with_instance_folders_needs_a_router(tmp_path):
+    root = workspace(tmp_path)
+    router(root / "records", "Form: people/ Record Library per person\n[people](people/)")
+    for name in ("one", "two"):
+        (root / "records/people" / name).mkdir(parents=True)
+        (root / "records/people" / name / "card.md").touch()
+    issue, = validate(root).issues
+    assert (issue.code, issue.path, issue.message) == ("topology.shape", "records/people", "records/people/ has no CONTEXT.md; add one that links every entry")
+    router(root / "records/people", "[one](one/)\n[two](two/CONTEXT.md)")
+    (root / "records/people/two/CONTEXT.md").write_text("# Two\n")
+    assert validate(root).valid
+
+
+def test_file_per_entry_record_kind_needs_no_router(tmp_path):
+    root = workspace(tmp_path)
+    router(root / "records", "Form: people/ Record Library per person\n[people](people/)")
+    (root / "records/people").mkdir()
+    for name in ("one.md", "two.md"):
+        (root / "records/people" / name).touch()
+    assert validate(root).valid
+
+
+def test_misspelt_link_to_a_record_instance_is_reported_once(tmp_path):
+    root = workspace(tmp_path)
+    router(root / "records", "Form: people/ Record Library per person\n[people](people/)")
+    router(root / "records/people", "[One](ONE/)\n[two](two/)")
+    for name in ("one", "two"):
+        (root / "records/people" / name).mkdir()
+        (root / "records/people" / name / "card.md").touch()
+    issue, = validate(root).issues
+    assert issue.message.startswith("Link 'ONE/' differs from the on-disk spelling 'records/people/one'")
+
+
+@pytest.mark.parametrize("body, entry", [
+    ("Form: people/ Record Library per person\n[people](people/)\n[T](TABLE.csv)", "table.csv"),
+    ("[a](a.md)\n[b](b.md)\n[X](ODD/)", "odd/x.md"),
+], ids=["file_beside_sublevels", "minority_folder"])
+def test_misspelt_link_to_a_misplaced_record_entry_is_still_reported(tmp_path, body, entry):
+    root = workspace(tmp_path)
+    router(root / "records", body)
+    for name in ("people/CONTEXT.md", "a.md", "b.md") if "people" in body else ("a.md", "b.md"):
+        (root / "records" / name).parent.mkdir(parents=True, exist_ok=True)
+        (root / "records" / name).touch()
+    (root / "records" / entry).parent.mkdir(parents=True, exist_ok=True)
+    (root / "records" / entry).touch()
+    assert any("differs from the on-disk spelling" in issue.message for issue in validate(root).issues)
+
+
+def test_misspelt_root_link_to_a_level_is_reported_once(tmp_path):
+    root = workspace(tmp_path, "Form: records/ Record Library per subject\nForm: grundlagen/ Knowledge Bundle per topic", linked=False)
+    (root / "grundlagen/CONTEXT.md").write_text("[rule](rule.md)\n")
+    (root / "grundlagen/rule.md").touch()
+    with (root / "CONTEXT.md").open("a") as handle:
+        handle.write("\n[Foundations](GRUNDLAGEN/)\n")
+    issue, = validate(root).issues
+    assert "differs from the on-disk spelling" in issue.message
+
+
+def test_stray_file_does_not_lift_the_router_duty_of_instance_folders(tmp_path):
+    root = workspace(tmp_path)
+    for name in ("one", "two", "three"):
+        (root / "records" / name).mkdir()
+        (root / "records" / name / "card.md").touch()
+    (root / "records/stray.md").touch()
+    messages = sorted(issue.message for issue in validate(root).issues)
+    assert messages[0] == "records/ has no CONTEXT.md; add one that links every entry"
+    assert len(messages) == 2 and messages[1].startswith("stray.md is a file among the instance folders")
+
+
+def test_existing_router_of_a_file_kind_links_each_file(tmp_path):
+    root = workspace(tmp_path)
+    router(root / "records", "Form: people/ Record Library per person\n[people](people/)")
+    router(root / "records/people", "[one](one.md)")
+    for name in ("one.md", "two.md"):
+        (root / "records/people" / name).touch()
+    issue, = validate(root).issues
+    assert (issue.path, issue.message) == ("records/people/two.md", "two.md is not linked from records/people/CONTEXT.md; link it")
+
+
+@pytest.mark.parametrize("declaration, folder, content", [
+    ("Form: records/ Record Library per subject", "records", "data.csv"),
+    ("Form: records/ Record Library per subject\nForm: ablauf/ Pipeline per run", "ablauf", "erster/CONTEXT.md"),
+], ids=["record_library_without_router", "pipeline_home"])
+def test_root_links_every_declared_level_even_without_router(tmp_path, declaration, folder, content):
+    root = workspace(tmp_path, declaration, linked=False)
+    if folder == "ablauf":
+        (root / "records/data.csv").touch()
+        with (root / "CONTEXT.md").open("a") as handle:
+            handle.write("\n[records](records/)\n")
+    target = root / folder / content
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text("# Step\n")
+    if folder == "ablauf":
+        (root / folder / "CONTEXT.md").write_text("[erster](erster/)\n")
+    issue, = validate(root).issues
+    assert (issue.path, issue.message) == (folder, f"{folder}/ is not linked from the root CONTEXT.md; link the folder or its CONTEXT.md from the route that serves its readers")

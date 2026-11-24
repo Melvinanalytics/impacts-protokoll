@@ -60,7 +60,7 @@ SECTIONS = {
 
 def test_template_kinds_are_the_four_core_routers():
     assert TEMPLATE_KINDS == ("hauptprozess", "teilprozess", "arbeitsschritt", "vorgang")
-    assert CLI_TEMPLATE_KINDS == TEMPLATE_KINDS + ("herkunft",)
+    assert CLI_TEMPLATE_KINDS == TEMPLATE_KINDS + ("herkunft", "ebene")
 
 
 @pytest.mark.parametrize("kind", SCHEMA_KINDS)
@@ -431,3 +431,36 @@ def test_vorgang_templates_write_every_path_workspace_relative():
         assert paths, name
         for path in paths:
             assert path.startswith(("vorgaenge/", "records/", "grundlagen/")), (name, path)
+
+
+@pytest.mark.parametrize("language,heading,overview", [("en", "## What to load", "## Overview"), ("de", "## Was laden", "## Übersicht")])
+def test_cli_level_template_prints_exact_localized_bytes(language, heading, overview):
+    output = StringIO()
+    with redirect_stdout(output):
+        assert main(["template", "ebene", "--language", language]) == 0
+    expected = (TEMPLATES / ("de/" if language == "de" else "") / "ebene.md").read_text(encoding="utf-8")
+    assert output.getvalue() == expected == template_text("ebene", language=language)
+    assert heading in expected and overview in expected
+
+
+@pytest.mark.parametrize("language", ["en", "de"])
+def test_level_template_overview_is_checked_by_the_existing_link_rule(tmp_path, language):
+    from impacts_protocol import init_workspace, validate
+    root = init_workspace(tmp_path / "workspace", language=language)
+    with (root / "CONTEXT.md").open("a", encoding="utf-8") as handle:
+        handle.write("\nForm: records/ Record Library per subject\n\n[records](records/CONTEXT.md)\n")
+    for name in ("one", "two"):
+        (root / "records" / name).mkdir(parents=True)
+        (root / "records" / name / "akte.md").write_text("# Akte\n", encoding="utf-8")
+    router = root / "records/CONTEXT.md"
+    template = template_text("ebene", language=language)
+    router.write_text(template, encoding="utf-8")
+    verbatim = validate(root).issues
+    assert {issue.code for issue in verbatim} == {"topology.shape"}
+    assert sorted(issue.path for issue in verbatim) == ["records/one", "records/two"]
+    overview = template.index("## " + ("Übersicht" if language == "de" else "Overview"))
+    placeholder = "`<relativer Link auf <eintrag>/ oder <eintrag>/CONTEXT.md>`" if language == "de" else "`<relative link to <entry>/ or <entry>/CONTEXT.md>`"
+    router.write_text(template[:overview] + template[overview:].replace(placeholder, "[one/](one/)", 1), encoding="utf-8")
+    assert [issue.path for issue in validate(root).issues] == ["records/two"]
+    router.write_text(router.read_text(encoding="utf-8") + "\n| [two/](two/) | second | tool | verified |\n", encoding="utf-8")
+    assert validate(root).valid

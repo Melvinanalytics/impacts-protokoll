@@ -1,6 +1,6 @@
 ---
 type: workspace
-protocol: v0.6.2
+protocol: v0.7.0
 ---
 
 Working language: en
@@ -32,10 +32,12 @@ Separate work from read-only questions (`02_protocol/impacts-method.md#load-cont
 
 ### Work (creates or changes output)
 
-| Intent | Open | Output and target | Check |
-|---|---|---|---|
-| `<recurring job without Core Arbeitsschritt>` | `<link to owning file#job-section>` | `<artifact and target path>` | `<observable check>` |
-| `<selected Core Pipeline>` | `<link to hauptprozesse/<slug>/CONTEXT.md>` | `<Vorgang output>` | `impacts validate` |
+| Intent | Open | Additional, only when triggered | Output and target | Check |
+|---|---|---|---|---|
+| `<recurring job without Core Arbeitsschritt>` | `<link to owning file#job-section>` | `<when <observable trigger>: <link to the source then needed>>` | `<artifact and target path>` | `<observable check>` |
+| `<selected Core Pipeline>` | `<link to hauptprozesse/<slug>/CONTEXT.md>` | — | `<Vorgang output>` | `impacts validate` |
+
+The standard case reads only Open; "Additional" names a trigger and the source it then needs, so whoever works the standard case knows what to skip. Each level router follows `impacts template ebene`.
 
 ### Read-only questions
 

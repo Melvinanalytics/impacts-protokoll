@@ -12,11 +12,16 @@ def source_home(attempt: Path) -> Path:
     workspace = attempt.parents[3]
     (workspace / "records").mkdir(exist_ok=True)
     router = workspace / "CONTEXT.md"
-    declaration = "Form: records/ Record Library per source record"
-    if declaration not in router.read_text():
-        with router.open("a") as handle:
-            handle.write("\n" + declaration + "\n")
-    return workspace / "records" / attempt.parents[1].name / attempt.parent.name / attempt.name
+    for line in ("Form: records/ Record Library per source record", "[Records](records/CONTEXT.md)"):
+        if line not in router.read_text():
+            with router.open("a") as handle:
+                handle.write("\n" + line + "\n")
+    case = attempt.parents[1].name
+    records = workspace / "records" / "CONTEXT.md"
+    body = records.read_text() if records.is_file() else "# Records\n\n"
+    if f"- [{case}]({case}/)\n" not in body:
+        records.write_text(body + f"- [{case}]({case}/)\n")
+    return workspace / "records" / case / attempt.parent.name / attempt.name
 
 
 def input_file(attempt: Path, relative: str | Path) -> Path:

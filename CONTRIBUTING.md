@@ -2,6 +2,22 @@
 
 Changes enter `main` through a reviewed pull request. Keep customer material in its customer repository. Report the revision, expected and observed behavior, synthetic evidence, and checks not run.
 
+### v0.7.0
+
+This minor edition closes the link chain from the root router to every level router. Workspaces pinned to `v0.6.x` are reported as `not_judged` until they lift their pin to `v0.7.0`; rehearse the lift on a copy, since the new findings appear only on the new line. Schemas, required fields, CLI commands and folder forms are unchanged; `impacts template` gains the kind `ebene`, and both rules report under the existing `topology.shape` code.
+
+- **Root links each level:** the root `CONTEXT.md` links every declared top-level Record Library, Knowledge Bundle, Context Map or Pipeline home that holds a file, by its folder or its router. A Form line, or a link to one file inside the level, no longer counts as a route: a reader who follows the task table to one file never learns what else the level holds.
+- **Record Library routers:** a Record Library level that holds record-kind sub-levels, or only instance folders, has a `CONTEXT.md` that links each of them itself. `formwahl.md` already placed the table of an instance-folder kind in that router; `impacts validate` now checks it. A kind with a file per entry still needs no router; once it has one, that router links each file, so an optional router cannot drift out of date. An attempt's `output/` needs none. A level's own `CONTEXT.md` is its table, not a forbidden stored index.
+- **Inputs name paths:** the Architect Process Walk now checks that each Arbeitsschritt input resolves to an exact workspace path or a declared external source. A business name alone leaves the input open. The walk enforces this, not the validator.
+
+- **Level router template:** `impacts template ebene` (and `--language de`) prints a level router after the CONTEXT.md anatomy of the ICM Workspace Blueprint: what lies here, what to load with a do-not-load column, an overview linking each entry, if-then rules, tools with their trigger, and a do-not list of observed errors only. 25 to 80 lines is a guide. The work table of the root template gains "Additional, only when triggered". No heading is checked and no new finding exists; `v0.8.0` may require the overview and what-to-load sections after a fresh-session test in a customer workspace.
+
+Grounding: ICM (arXiv 2603.16021, section 3.2) routes each task from Layer 1 and has each stage's Inputs table name exact files; reference collections may carry their own routers. These rules make the router chain checkable and leave per-file navigation to the declared inputs.
+
+- **Fixes:** a misspelt link to a Record Library entry or to a level from the root is reported once, at its spelling; a stray file among instance folders no longer lifts the router duty. Five conformance cases freeze the new rules.
+
+Migration: link each level from the root route that serves its readers; give each Record Library level with sub-levels or instance folders a `CONTEXT.md` that links them; complete partial routers of file kinds; tools that create instance folders write their router row in the same change. Limits: the check proves that links exist, not that a route sends a given task to the right level. Its effect on missed context is a hypothesis drawn from one observed miss in a customer workspace.
+
 ### v0.6.2
 
 Front-door tightening, German template parity, a Viewer heading fix and `FIRST-WIN.md` validator alignment. Schemas, required fields, issue codes, validator rules and CLI commands are unchanged; `v0.6.0` and `v0.6.1` pins remain judged.

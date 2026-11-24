@@ -377,7 +377,7 @@ def _workspace(base: Path, hauptprozesse=("video",), vorgaenge=(("video-001", "v
                 (attempt / "output" / "ergebnis.md").write_text("fertig", encoding="utf-8")
                 entry |= {"gewaehlte_route": "weiter", "geschrieben": fixture_references(attempt, ["output/ergebnis.md"])}
             entries.append(entry)
-        write_context(vorgang / "CONTEXT.md", {"type": "vorgang", "protocol": "v0.6.0", "id": f"vorgang:{slug}",
+        write_context(vorgang / "CONTEXT.md", {"type": "vorgang", "protocol": "v0.7.0", "id": f"vorgang:{slug}",
                                            "hauptprozess_revision": f"git-tree:{revision}", "laufpfad": entries}, f"# {slug}")
     return root
 
@@ -1392,7 +1392,7 @@ def test_english_workspace_renders_english_words_and_model(tmp_path):
                     "German source: unverändert `open` `hypothesis` `reported` `verified` `entfaellt`\n",
                     encoding="utf-8")
     with (root / "CONTEXT.md").open("a") as router:
-        router.write("\nForm: analyse/ Context Map per capture\n")
+        router.write("\nForm: analyse/ Context Map per capture\n[Analyse](analyse/CONTEXT.md)\n")
     folder = root / "analyse"
     folder.mkdir(parents=True)
     (folder / "request.md").write_text(TEMPLATE_EN.read_text(encoding="utf-8"), encoding="utf-8")

@@ -85,6 +85,8 @@ def test_funnel_counts_record_addresses_not_runs_or_execution(tmp_path):
     record = root / 'records/lot/subject.md'
     record.parent.mkdir()
     record.write_text('Stage: submitted\n')
+    with (root / 'records/CONTEXT.md').open('a') as router:
+        router.write('- [lot](lot/)\n')
     write_context(path, read_context(path), '## Subject\n\n[Lot](../../records/lot/subject.md)\n')
     model = selection.single_vorgang(path)
     assert model['subject'] == {'record': 'records/lot/subject.md', 'stage': 'submitted'}
