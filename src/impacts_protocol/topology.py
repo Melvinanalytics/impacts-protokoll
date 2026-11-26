@@ -13,6 +13,7 @@ from urllib.parse import unquote
 
 from yaml import YAMLError
 
+from .generator import WORKSPACE_FOLDERS
 from .io import load_frontmatter_and_body
 from .model import Issue
 
@@ -23,28 +24,93 @@ ROOT_STANDARD_DOCS = frozenset({"agents.md", "claude.md", "context.md", "readme.
 DATED = re.compile(r"\d{4}-\d{2}-\d{2}")
 SCHEME = re.compile(r"[a-z][a-z0-9+.-]*:", re.IGNORECASE)
 ROUTER = "CONTEXT.md"
+# Navigation and router-shape findings concern routes between files and the shape of a
+# router; Core still reads and checks every Vorgang and Hauptprozess, so they never refuse
+# a page. Structure findings may mean a level or definition was not read where it belongs.
+NAVIGATION = frozenset({"topology.link_missing", "topology.link_broken", "topology.link_unindexed",
+                        "topology.router_sections", "topology.router_size", "topology.table_contract"})
+SECTIONS = (("Overview", "Übersicht"), ("What to load", "Was laden"))
+ROUTER_BYTES = 24_000  # three quarters of the 8,000-token Knowledge Walk budget at about 4 bytes per token
+HEADING = re.compile(r" {0,3}(#{1,6})[ \t]+(.*?)(?:[ \t]+#+)?[ \t]*$")
+CONTRACT = re.compile(r"<!--[ \t]*impacts:table-contract\b(.*?)-->", re.DOTALL)
+CONTRACT_FIELD = re.compile(r'\s+(heading|columns)="([^"\n]+)"')
 
 
 def body_lines(body: str) -> Iterable[str]:
     """Yield visible Markdown outside comments and code, preserving indentation."""
-    body = re.sub(r"<!--.*?(?:-->|$)", "", body, flags=re.DOTALL)
-    fence = None
-    visible = []
-    for line in re.split(r"\r\n|\r|\n", body):
-        marker = re.match(r" {0,3}(`{3,}|~{3,})(.*)$", line)
-        if fence:
-            if marker and marker[1][0] == fence[0] and len(marker[1]) >= len(fence) and not marker[2].strip():
-                fence = None
-            continue
-        if marker:
-            fence = marker[1]
-            continue
-        visible.append(line)
-    # Inline spans can cross lines; replacing their bytes preserves column-zero rules.
-    text = "\n".join(visible)
-    text = re.sub(r"(?<!`)(`+)(?!`).*?(?<!`)\1(?!`)",
-                  lambda match: re.sub(r"[^\n]", " ", match[0]), text, flags=re.DOTALL)
-    yield from text.split("\n")
+    return _visible(body, mask_code=True).split("\n")
+
+
+def _visible(body: str, *, mask_code: bool) -> str:
+    """Text outside fences and comments; inline code is masked with spaces or kept as written.
+    Masking keeps column-zero rules; a comment keeps only its line breaks."""
+    parts = []
+    for kind, text in _segments(body):
+        if kind == "text" or kind == "code" and not mask_code:
+            parts.append(text)
+        elif kind == "code":
+            parts.append(re.sub(r"[^\n]", " ", text))
+        elif kind == "comment":
+            parts.append("\n" * text.count("\n"))
+    return "".join(parts)
+
+
+FENCE = re.compile(r" {0,3}(`{3,}|~{3,})(.*)")
+SPECIAL = re.compile(r"`+|<!--|\n")
+# A code span stays in its paragraph: a blank line, a fence or a heading line ends it.
+PARAGRAPH_END = re.compile(r"\n(?=[ \t]*(?:\n|\Z)| {0,3}(?:`{3,}|~{3,}|#{1,6}(?:[ \t]|\n|\Z)))")
+
+
+def _segments(body: str) -> list[tuple[str, str]]:
+    """Split Markdown in one document-order pass into text, inline code, comment and fence
+    segments. Whatever opens first wins: a `<!--` inside a fence or a code span (also one that
+    crosses lines) opens no comment, and a fence inside a comment opens no fence. A code span
+    closes within its paragraph or not at all."""
+    body = re.sub(r"\r\n?", "\n", body)
+    segments: list[tuple[str, str]] = []
+    index, size = 0, len(body)
+    while index < size:
+        if index == 0 or body[index - 1] == "\n":
+            line_end = body.find("\n", index)
+            line_end = size if line_end < 0 else line_end + 1
+            opener = FENCE.match(body, index, line_end)
+            if opener:
+                fence, close = opener[1], line_end
+                while close < size:
+                    end = body.find("\n", close)
+                    end = size if end < 0 else end + 1
+                    marker = FENCE.match(body, close, end)
+                    close = end
+                    if marker and marker[1][0] == fence[0] and len(marker[1]) >= len(fence) and not marker[2].strip():
+                        break
+                segments.append(("fence", body[index:close]))
+                index = close
+                continue
+        special = SPECIAL.search(body, index)
+        if special is None:
+            segments.append(("text", body[index:]))
+            break
+        if special.start() > index:
+            segments.append(("text", body[index:special.start()]))
+        token = special[0]
+        if token == "\n":
+            segments.append(("text", "\n"))
+            index = special.end()
+        elif token == "<!--":
+            end = body.find("-->", special.end())
+            end = size if end < 0 else end + 3
+            segments.append(("comment", body[special.start():end]))
+            index = end
+        else:
+            end = PARAGRAPH_END.search(body, special.end())
+            close = re.compile(r"(?<!`)" + token + r"(?!`)").search(body, special.end(), end.start() if end else size)
+            if close is None:
+                segments.append(("text", token))
+                index = special.end()
+            else:
+                segments.append(("code", body[special.start():close.end()]))
+                index = close.end()
+    return segments
 
 
 @dataclass
@@ -54,16 +120,19 @@ class Topology:
     issues: list[Issue] = field(default_factory=list)
     forms: dict[Path, str] = field(default_factory=dict)
     held: list[dict] = field(default_factory=list)
-    record_units: dict[str, list[Path]] = field(default_factory=dict)
-    bundles: list[tuple[Path, str, list[Path]]] = field(default_factory=list)
     has_file: dict[Path, bool] = field(default_factory=dict)
     attempted: set[Path] = field(default_factory=set)
     listings: dict[Path, tuple[dict[str, Path], dict[str, Path]]] = field(default_factory=dict)
     anchors: dict[Path, set[str]] = field(default_factory=dict)
     ignored: set[str] = field(default_factory=set)
+    # Folder links wait for the walk to end, so every declared level is known when judged.
+    folder_links: list[tuple[Path, Path, Path, str]] = field(default_factory=list)
 
     def skip(self, path: Path) -> bool:
-        name = path.relative_to(self.root).as_posix()
+        if not path.is_relative_to(self.root):
+            return False
+        # Git lists names precomposed (NFC) on macOS; the disk may hold them decomposed.
+        name = _nfc(path.relative_to(self.root).as_posix())
         return name in self.ignored or any(parent.as_posix() + "/" in self.ignored for parent in Path(name).parents if str(parent) != ".") or name + "/" in self.ignored
 
     def add(self, code: str, path: Path, message: str) -> None:
@@ -76,16 +145,26 @@ class Topology:
         return self.forms.get(path) in CODE_FORMS + ("none",)
 
 
-def check_topology(root: Path, human_pattern: str) -> tuple[list[Issue], tuple[dict, ...], dict[Path, str]]:
-    """Return topology issues, held rows and the top-level forms of a workspace."""
+def blocks_vorgaenge(issue: Issue) -> bool:
+    """A finding outside the two Core folders that is not navigation: Core may not have
+    checked any Vorgang, so no Vorgang page is shown and no superseded relation is exported."""
+    return not issue.path.startswith(tuple(folder + "/" for folder in WORKSPACE_FOLDERS)) and issue.code not in NAVIGATION
+
+
+def check_topology(root: Path, human_pattern: str) -> tuple[list[Issue], tuple[dict, ...], dict[str, str]]:
+    """Return topology issues, held rows and the top-level forms by folder name, which
+    stays the same however the caller spells the root."""
+    # One spelling of the root, so `zz/../ws` and `ws` compare paths alike.
+    root = Path(os.path.abspath(root))
     state = Topology(root, human_pattern)
     try:
         result = subprocess.run(["git", "-C", str(root), "ls-files", "--others", "--ignored", "--exclude-standard", "--directory", "-z"], capture_output=True, check=True)
-        state.ignored = set(result.stdout.decode("utf-8", errors="surrogateescape").rstrip("\0").split("\0"))
+        state.ignored = {_nfc(name) for name in result.stdout.decode("utf-8", errors="surrogateescape").rstrip("\0").split("\0")}
     except (OSError, subprocess.CalledProcessError):
         pass
     body, children = _read_level(state, root)
-    _check_links(state, root, body, may_leave=True)
+    _check_links(state, root, body, may_leave=True, unindexed=True)
+    _check_router_file(state, root / ROUTER)
     root_targets = _resolved_targets(state, root, body)
     for entry in _entries(state, root):
         try:
@@ -93,23 +172,29 @@ def check_topology(root: Path, human_pattern: str) -> tuple[list[Issue], tuple[d
                 state.add("topology.form_missing", entry, f"{entry.name}/ has no Form line; add `Form: {entry.name}/ <form> per <unit>` as a plain unindented line in the root CONTEXT.md; if it has no form, move its content to the case, record or Vorgang it serves or leave it to Git history; only a person may hold it")
             elif entry.is_file() and not entry.is_symlink() and entry.suffix.lower() == ".md" and entry.name.lower() not in ROOT_STANDARD_DOCS:
                 if _nfc(str(entry.resolve())) not in root_targets:
-                    state.add("topology.shape", entry, f"{entry.name} sits unlinked at the workspace root; move it into its declared form (records/, grundlagen/, analyse/) or link it from {ROUTER}")
+                    state.add("topology.link_missing", entry, f"{entry.name} sits unlinked at the workspace root; move it into its declared form (records/, grundlagen/, analyse/) or link it from {ROUTER}")
         except (OSError, ValueError) as error:
             _unreadable(state, entry, error)
     for child in sorted(children):
         if not state.opaque(child):
             _visit(state, child)
-    for folder, body, entries in state.bundles:
-        try:
-            _linked_entries(state, folder, body, entries, knowledge=True)
-        except (OSError, ValueError) as error:
-            _unreadable(state, folder, error)
     _scan_definitions(state, root)
+    _check_definitions(state, root / "hauptprozesse")
+    for folder, form in sorted(state.forms.items()):
+        if folder.parent == root and form in CODE_FORMS:
+            _check_code_routers(state, folder)
     for folder, form in sorted(state.forms.items()):
         if folder.parent == root and form in LEVEL_FORMS + ("Pipeline",) and not state.skip(folder) and folder.is_dir() and not folder.is_symlink() and _has_file(state, folder):
             if not {_nfc(str(folder.resolve())), _nfc(str((folder / ROUTER).resolve()))} & root_targets:
-                state.add("topology.shape", folder, f"{folder.name}/ is not linked from the root {ROUTER}; link the folder or its {ROUTER} from the route that serves its readers")
-    top = {path: form for path, form in state.forms.items() if path.parent == root}
+                state.add("topology.link_missing", folder, f"{folder.name}/ is not linked from the root {ROUTER}; link the folder or its {ROUTER} from the route that serves its readers")
+    for context, folder, located, target in state.folder_links:
+        try:
+            unindexed = _unindexed(state, folder, located)
+        except (OSError, ValueError):
+            continue  # An unreadable target is reported where the walk reads it.
+        if unindexed:
+            state.add("topology.link_unindexed", context, f"Link {target!r} points to {state.name(located)}/, a folder outside this router's own entries with neither {ROUTER} nor README.md; link a file inside it or an entry of this level, or give the folder a {ROUTER}")
+    top = {path.name: form for path, form in state.forms.items() if path.parent == root}
     return state.issues, tuple(state.held), top
 
 
@@ -137,7 +222,8 @@ def _locate(folder: Path, relative: str, state: Topology | None = None, *, alias
             continue
         try:
             if current not in listings:
-                children = list(current.iterdir())
+                # A path Git ignores is absent, as in a clean clone.
+                children = [child for child in current.iterdir() if state is None or not state.skip(child)]
                 listings[current] = ({_nfc(child.name): child for child in children}, {_normal(child.name): child for child in children})
             exact, aliases = listings[current]
             current = exact.get(_nfc(part)) or (aliases[_normal(part)] if aliases_ok else exact[_nfc(part)])
@@ -206,7 +292,7 @@ def _scan_definitions(state: Topology, folder: Path) -> None:
                 continue
             if state.forms.get(child) in {"none", "Context Map"}:
                 continue
-            if child.parent == state.root and child.name in {"hauptprozesse", "vorgaenge"}:
+            if child.parent == state.root and child.name in WORKSPACE_FOLDERS:
                 continue
             context = child / ROUTER
             if not state.skip(context) and context.is_file() and not context.is_symlink():
@@ -334,7 +420,7 @@ def _token(state: Topology, value: str):
 
 def _visit(state: Topology, folder: Path) -> None:
     try:
-        if (folder / ROUTER).is_symlink() or (folder / ROUTER).exists() or _has_file(state, folder):
+        if not state.skip(folder / ROUTER) and ((folder / ROUTER).is_symlink() or (folder / ROUTER).exists()) or _has_file(state, folder):
             _visit_readable(state, folder)
     except (OSError, ValueError) as error:
         _unreadable(state, folder, error)
@@ -349,8 +435,13 @@ def _visit_readable(state: Topology, folder: Path) -> None:
         if not state.opaque(child):
             _visit(state, child)
     token = state.forms.get(folder)
-    if (folder / ROUTER).is_file():
-        _check_links(state, folder, body)
+    if not state.skip(folder / ROUTER) and (folder / ROUTER).is_file():
+        level = token in LEVEL_FORMS and not (folder / ROUTER).is_symlink()
+        _check_links(state, folder, body, unindexed=level)
+        if level:
+            _check_sections(state, folder, body)
+        # A Record Library router links every instance, so it grows with the library.
+        _check_router_file(state, folder / ROUTER, advice=SIZE_ADVICE.get(token) if level else None)
     SHAPES.get(token or "", lambda *_: None)(state, folder, body, entries)
 
 
@@ -376,6 +467,8 @@ def _record_library(state: Topology, folder: Path, body: str, entries: list[Path
         if entry in state.attempted and entry not in state.forms:
             continue
         try:
+            if entry.name == "README.md" and entry.is_file() and not entry.is_symlink():
+                continue  # A level's README describes the level; it is no record entry.
             (folders if entry.is_dir() else files).append(entry)
         except (OSError, ValueError) as error:
             _unreadable(state, entry, error)
@@ -391,13 +484,8 @@ def _record_library(state: Topology, folder: Path, body: str, entries: list[Path
             state.add("topology.shape", entry, f"{entry.name} is a {kind} among the instance {shape} of {level}; {action}")
     # Instance folders and sub-levels need a router; a file kind's router, once present, links each file.
     linked = sublevels or (folders if folders and len(files) <= len(folders) else files)
-    if linked and (linked is not files or (folder / ROUTER).exists()):
+    if linked and (linked is not files or (folder / ROUTER).exists() and not state.skip(folder / ROUTER)):
         _linked_entries(state, folder, body, linked)
-    single_table = not folders and len(files) == 1
-    for entry in ([] if single_table else others):
-        key = _normal(entry.name if entry in folders else entry.name.split(".", 1)[0])
-        if entry in folders or key not in {"readme", "context"}:
-            state.record_units.setdefault(key, []).append(entry)
 
 
 def _dated(name: str) -> bool:
@@ -416,8 +504,10 @@ def _linked_entries(state: Topology, folder: Path, body: str, entries: list[Path
     context = folder / ROUTER
     has_router = not state.skip(context) and context.is_file() and not context.is_symlink()
     if not has_router:
-        if not context.is_symlink() and not context.exists():
-            state.add("topology.shape", folder, f"{level} has no {ROUTER}; add one that links every entry")
+        if state.skip(context):
+            state.add("topology.link_missing", folder, f"{level}{ROUTER} is ignored by Git, so a clean clone lacks it; stop ignoring it")
+        elif not context.is_symlink() and not context.exists():
+            state.add("topology.link_missing", folder, f"{level} has no {ROUTER}; add one that links every entry")
         return
     targets, spellings = set(), {}
     for link in _links(body):
@@ -427,24 +517,19 @@ def _linked_entries(state: Topology, folder: Path, body: str, entries: list[Path
                 located = _locate(folder, target, state)
                 spellings.setdefault(_normal(os.path.abspath(folder / target)), target)
                 if located is not None and _nfc(str(located)) == _nfc(os.path.normpath(folder / target)):
-                    targets.add(_nfc(str(located.resolve())))
+                    # The entry's own path: a link to a symlink's target does not link the symlink.
+                    targets.add(_nfc(str(located)))
         except (OSError, ValueError, RuntimeError):
             continue
     for entry in entries:
         try:
-            key = _normal(entry.name if entry.is_dir() else entry.name.split(".", 1)[0])
-            matches = state.record_units.get(key, []) if knowledge else []
-            if matches:
-                matches = sorted(matches, key=lambda path: (not path.is_dir(), state.name(path)))
-                record = state.name(matches[0]) + (f" and {len(matches) - 1} more" if len(matches) > 1 else "")
-                state.add("topology.shape", entry, f"{state.name(entry)} has the name of record {record}; if it holds that record's material, move it there; otherwise rename it")
-            elif knowledge and _dated(_normal(entry.name)):
+            if knowledge and _dated(_normal(entry.name)):
                 state.add("topology.shape", entry, f"{entry.name} is dated work; move it to its case, its Vorgang or Git history; a rule's validity date goes inside the file or after its name")
             elif entry in state.attempted and entry not in state.forms:
                 continue
             elif knowledge and entry.is_dir() and entry not in state.forms:
                 state.add("topology.shape", entry, f"{entry.name}/ is not a declared sub-level of {level}; if it holds foundations, declare it as a Knowledge Bundle with its own router; otherwise move it to its case or record")
-            elif _nfc(str(entry.resolve())) not in targets and (not entry.is_dir() or _nfc(str((entry / ROUTER).resolve())) not in targets):
+            elif _nfc(str(entry)) not in targets and (not entry.is_dir() or _nfc(str(entry / ROUTER)) not in targets):
                 if entry.is_symlink() and not entry.exists():
                     state.add("topology.shape", entry, f"{entry.name} is a broken symlink; remove it or restore its target")
                     continue
@@ -453,10 +538,11 @@ def _linked_entries(state: Topology, folder: Path, body: str, entries: list[Path
                     alias = spellings.get(_normal(str((entry / ROUTER).absolute())))
                 if alias is not None and state.forms.get(folder) == "Record Library":
                     continue  # _check_links reports the spelling of every Record Library link
-                message = f"{entry.name} is linked as {alias!r}; use the on-disk spelling" if alias is not None else f"{entry.name} is not linked from {level}{ROUTER}; link it"
-                if entry.is_dir():
-                    message += "; link the entry itself, not a file inside it"
-                state.add("topology.shape", entry, message)
+                suffix = "; link the entry itself, not a file inside it" if entry.is_dir() else ""
+                if alias is not None:
+                    state.add("topology.link_broken", entry, f"{entry.name} is linked as {alias!r}; use the on-disk spelling{suffix}")
+                else:
+                    state.add("topology.link_missing", entry, f"{entry.name} is not linked from {level}{ROUTER}; link it{suffix}")
         except (OSError, ValueError) as error:
             _unreadable(state, entry, error)
 
@@ -467,15 +553,17 @@ def _pipeline(state: Topology, folder: Path, body: str, entries: list[Path]) -> 
         try:
             if not entry.is_dir():
                 state.add("topology.shape", entry, f"{entry.name} is loose in process home {level}; move it into its process folder or out of the process home")
-            elif not (entry / ROUTER).is_file():
+            elif state.skip(entry / ROUTER) or not (entry / ROUTER).is_file():
                 state.add("topology.shape", entry, f"Process folder {entry.name}/ has no {ROUTER}; add its router")
+            else:
+                _check_router_file(state, entry / ROUTER, advice=None)
         except (OSError, ValueError) as error:
             _unreadable(state, entry, error)
 
 
 SHAPES: dict[str, Callable[[Topology, Path, str, list[Path]], None]] = {
     "Record Library": _record_library,
-    "Knowledge Bundle": lambda state, folder, body, entries: state.bundles.append((folder, body, entries)),
+    "Knowledge Bundle": lambda state, folder, body, entries: _linked_entries(state, folder, body, entries, knowledge=True),
     "Pipeline": _pipeline,
     "Context Map": _linked_entries,
 }
@@ -516,17 +604,27 @@ def _resolved_targets(state: Topology, folder: Path, body: str) -> set[str]:
 
 
 def _prose(text: str) -> str:
-    stripped = re.sub(r"<!--.*?(?:-->|$)", "", text, flags=re.DOTALL)
-    return re.sub(r"^(`{3,}|~{3,})[^\n]*\n.*?^\1[ \t]*$", "", stripped, flags=re.M | re.S)
+    return _visible(text, mask_code=False)
+
+
+def _title(text: str) -> str:
+    """A heading's text as sections, contracts and anchors compare it: link text kept,
+    backticks dropped."""
+    return _nfc(re.sub(r"\[([^\]]+)\]\([^)]*\)", r"\1", text).replace("`", "").strip())
+
+
+def _heading(line: str) -> tuple[int, str] | None:
+    """Level and title of an ATX heading line of visible text, or None."""
+    match = HEADING.match(line)
+    return (len(match[1]), _title(match[2])) if match else None
 
 
 def _markdown_anchors(text: str) -> set[str]:
     prose = _prose(text)
-    found = set(re.findall(r'<a\s+(?:id|name)=["\']([^"\']+)', prose))
+    found = {_nfc(anchor) for anchor in re.findall(r'<a\s+(?:id|name)=["\']([^"\']+)', prose)}
     counts: dict[str, int] = {}
-    for title in re.findall(r"^#{1,6}[ \t]+(.+?)[ \t]*#*$", prose, re.M):
-        title = re.sub(r"\[([^\]]+)\]\([^)]*\)", r"\1", title).replace("`", "").lower()
-        slug = re.sub(r"[^\w\- ]", "", title).replace(" ", "-")
+    for heading in filter(None, map(_heading, prose.split("\n"))):
+        slug = _nfc(re.sub(r"[^\w\- ]", "", heading[1].lower()).replace(" ", "-"))
         count = counts.get(slug, 0)
         counts[slug] = count + 1
         found.add(slug + (f"-{count}" if count else ""))
@@ -540,7 +638,7 @@ def _file_anchors(state: Topology, path: Path) -> set[str]:
     return state.anchors[resolved]
 
 
-def _check_links(state: Topology, folder: Path, body: str, *, may_leave: bool = False) -> None:
+def _check_links(state: Topology, folder: Path, body: str, *, may_leave: bool = False, unindexed: bool = False) -> None:
     context = folder / ROUTER
     for link in _links(body):
         target = link
@@ -548,14 +646,14 @@ def _check_links(state: Topology, folder: Path, body: str, *, may_leave: bool = 
             target, fragment = _split_link(link)
             if not target:
                 if fragment and context.is_file() and context.suffix.lower() == ".md":
-                    if fragment not in _file_anchors(state, context):
-                        state.add("topology.shape", context, f"Anchor '#{fragment}' does not resolve in {state.name(context)}; correct or remove it")
+                    if _nfc(fragment) not in _file_anchors(state, context):
+                        state.add("topology.link_broken", context, f"Anchor '#{fragment}' does not resolve in {state.name(context)}; correct or remove it")
                 continue
             if SCHEME.match(target):
                 continue
             if target.startswith("/"):
                 if not may_leave:
-                    state.add("topology.shape", context, f"Link {target!r} is absolute; use a path relative to this CONTEXT.md")
+                    state.add("topology.link_broken", context, f"Link {target!r} is absolute; use a path relative to this CONTEXT.md")
                 continue
             located = _locate(folder, target, state)
             resolved = (located or folder / target).resolve()
@@ -563,17 +661,162 @@ def _check_links(state: Topology, folder: Path, body: str, *, may_leave: bool = 
             if may_leave and not inside:
                 continue
             if not inside:
-                state.add("topology.shape", context, f"Link {target!r} leaves the workspace; name the source by release and revision instead")
+                state.add("topology.link_broken", context, f"Link {target!r} leaves the workspace; name the source by release and revision instead")
             elif located is None:
-                state.add("topology.shape", context, f"Link {target!r} does not resolve; correct or remove it")
+                ignored = state.skip(Path(os.path.normpath(folder / target))) and (folder / target).exists()
+                reason = "points to a path Git ignores, which a clean clone lacks; link a committed file or stop ignoring it" if ignored else "does not resolve; correct or remove it"
+                state.add("topology.link_broken", context, f"Link {target!r} {reason}")
             else:
                 if _locate(folder, target, state, aliases_ok=False) is None and not (
                         state.forms.get(folder) in {"Knowledge Bundle", "Context Map"}
                         and (located.parent == folder or located.parent.parent == folder and located.name == ROUTER)):
                     # A misspelt link to an entry of this level is reported once, on the entry.
-                    state.add("topology.shape", context, f"Link {target!r} differs from the on-disk spelling {state.name(located)!r}; use the on-disk spelling")
+                    state.add("topology.link_broken", context, f"Link {target!r} differs from the on-disk spelling {state.name(located)!r}; use the on-disk spelling")
                 if fragment and located.is_file() and located.suffix.lower() == ".md":
-                    if fragment not in _file_anchors(state, located):
-                        state.add("topology.shape", context, f"Link '{target}#{fragment}' has unresolved anchor '#{fragment}' in {state.name(located)}; correct or remove it")
+                    if _nfc(fragment) not in _file_anchors(state, located):
+                        state.add("topology.link_broken", context, f"Link '{target}#{fragment}' has unresolved anchor '#{fragment}' in {state.name(located)}; correct or remove it")
+                if unindexed:
+                    state.folder_links.append((context, folder, located, target))
         except (OSError, ValueError, RuntimeError):
-            state.add("topology.shape", context, f"Link {target!r} does not resolve; correct or remove it")
+            state.add("topology.link_broken", context, f"Link {target!r} does not resolve; correct or remove it")
+
+
+def _check_sections(state: Topology, folder: Path, body: str) -> None:
+    titles = {heading[1].casefold() for heading in map(_heading, _prose(body).split("\n")) if heading}
+    missing = [english for english, german in SECTIONS if english.casefold() not in titles and german.casefold() not in titles]
+    if missing:
+        names = " and ".join(f"'{name}'" for name in missing)
+        noun, pronoun = ("sections", "them") if len(missing) > 1 else ("section", "it")
+        state.add("topology.router_sections", folder / ROUTER, f"{state.name(folder / ROUTER)} lacks the {noun} {names}; add {pronoun} as `impacts template ebene` lays them out (German: 'Übersicht', 'Was laden')")
+
+
+SPLIT = "move detail into linked sibling files and keep the router to routes"
+# A router that must link every entry cannot shed links, so the advice depends on the form.
+# Record Library and Context Map routers have no size advice: they are not measured, since
+# a Context Map cannot have sub-levels and a Record Library kind splits by period instead.
+SIZE_ADVICE = {"Knowledge Bundle": "split it into declared Knowledge Bundle sub-levels, each with its own router that links its entries"}
+
+
+def _check_router_file(state: Topology, context: Path, *, advice: str | None = SPLIT) -> None:
+    """Size, when `advice` says how to shrink it, and table contracts of one router."""
+    try:
+        if state.skip(context) or context.is_symlink() or not context.is_file():
+            return
+        size = context.stat().st_size
+        if advice and size > ROUTER_BYTES:
+            state.add("topology.router_size", context, f"{state.name(context)} has {size:,} bytes, above the {ROUTER_BYTES:,}-byte router budget; {advice}")
+        _, body = load_frontmatter_and_body(context, state.root)
+    except (OSError, ValueError, YAMLError, RecursionError):
+        return  # Unreadable routers are reported where they are read.
+    _check_table_contracts(state, context, body)
+
+
+def _check_table_contracts(state: Topology, context: Path, body: str) -> None:
+    """Contracts live in real comments: a marker inside code declares nothing."""
+    lines = _visible(body, mask_code=False).split("\n")
+    for kind, text in _segments(body):
+        marker = CONTRACT.fullmatch(text) if kind == "comment" else None
+        if marker is None:
+            continue
+        fields = dict(match.groups() for match in CONTRACT_FIELD.finditer(marker[1]))
+        rest = CONTRACT_FIELD.sub("", marker[1]).strip()
+        columns = [column.strip().replace("\\|", "|") for column in re.split(r"(?<!\\),", fields.get("columns", "")) if column.strip()]
+        if rest or "heading" not in fields or not columns:
+            state.add("topology.table_contract", context, 'table-contract marker is malformed; write <!-- impacts:table-contract heading="<Heading>" columns="<Col1>, <Col2>" -->')
+            continue
+        heading = _title(fields["heading"])
+        headers = _table_headers(lines, heading)
+        label = ", ".join(columns)
+        if not headers:
+            state.add("topology.table_contract", context, f"required machine-written table columns {label} under '{heading}' are missing; restore the heading, its table and the header columns expected by workspace tools")
+            continue
+        for number, header in enumerate(headers, 1):
+            absent = [column for column in columns if _nfc(column) not in (header or set())]
+            where = f"'{heading}'" + (f" (section {number} of {len(headers)})" if len(headers) > 1 else "")
+            if absent:
+                state.add("topology.table_contract", context, f"required machine-written table columns {', '.join(absent)} under {where} are missing; restore the header columns expected by workspace tools")
+
+
+def _cells(line: str) -> list[str]:
+    """Cells of a table row; one unescaped outer pipe per side is the row's border."""
+    row = line.strip()
+    row = row[1:] if row.startswith("|") else row
+    row = row[:-1] if row.endswith("|") and not row.endswith("\\|") else row
+    return [cell.strip() for cell in re.split(r"(?<!\\)\|", row)]
+
+
+def _table_headers(lines: list[str], heading: str) -> list[set[str] | None]:
+    """For each section titled `heading`, in any letter case, the header cells of its first
+    table, or None. A table needs a delimiter row with as many cells as its header row."""
+    found: list[set[str] | None] = []
+    level = None
+    for index, line in enumerate(lines):
+        match = _heading(line)
+        if match and level is not None and match[0] <= level:
+            level = None
+        if match and match[1].casefold() == heading.casefold():
+            level = match[0]
+            found.append(None)
+            continue
+        if level is None or found[-1] is not None or "|" not in line or index + 1 >= len(lines):
+            continue
+        header, delimiter = _cells(line), _cells(lines[index + 1])
+        if len(header) == len(delimiter) and all(re.fullmatch(r":?-+:?", cell) for cell in delimiter):
+            found[-1] = {_nfc(cell.strip("`").strip().replace("\\|", "|")) for cell in header}
+    return found
+
+
+def _unindexed(state: Topology, folder: Path, located: Path) -> bool:
+    """A linked folder, other than an entry of the router's own level, with no index file.
+    Exempt: a declared level, whose own rules govern it (a file-per-entry kind needs no
+    router); code homes and held folders, which have no form to enter; and the Core folders,
+    whose layout Core owns. An index is a regular file named exactly CONTEXT.md or README.md."""
+    if not located.is_dir() or located.resolve().parent == folder.resolve():
+        return False
+    target = Path(os.path.normpath(located))
+    if target in state.forms or any(state.opaque(path) for path in (target, *target.parents)):
+        return False
+    if any(path.parent == state.root and path.name in WORKSPACE_FOLDERS for path in (target, *target.parents)):
+        return False
+    try:
+        return not any(child.name in (ROUTER, "README.md") and not state.skip(child) and child.is_file() and not child.is_symlink() for child in located.iterdir())
+    except OSError:
+        return False
+
+
+def _check_code_routers(state: Topology, home: Path) -> None:
+    """A code home's router and each direct entry's router, such as capabilities/<slug>/CONTEXT.md."""
+    _check_router_file(state, home / ROUTER)
+    try:
+        entries = sorted(home.iterdir())
+    except (OSError, ValueError):
+        return  # Code homes are opaque; their readability is not judged here.
+    for entry in entries:
+        try:
+            if not entry.name.startswith(".") and not state.skip(entry) and entry.is_dir() and not entry.is_symlink():
+                _check_router_file(state, entry / ROUTER)
+        except (OSError, ValueError):
+            continue
+
+
+def _check_definitions(state: Topology, folder: Path) -> None:
+    """Links in each Hauptprozess, Teilprozess and Arbeitsschritt body resolve inside the workspace.
+    Core reports unreadable or unparseable definitions; this check stays silent on them."""
+    try:
+        if state.skip(folder) or folder.is_symlink() or not folder.is_dir():
+            return
+        children = sorted(folder.iterdir())
+    except (OSError, ValueError):
+        return
+    context = folder / ROUTER
+    if folder.parent != state.root and context.is_file() and not context.is_symlink():
+        try:
+            _, body = load_frontmatter_and_body(context, state.root)
+        except (OSError, ValueError, YAMLError, RecursionError):
+            body = None
+        if body is not None:
+            _check_links(state, folder, body)
+            _check_table_contracts(state, context, body)
+    for child in children:
+        if not child.name.startswith(("_", ".")):
+            _check_definitions(state, child)

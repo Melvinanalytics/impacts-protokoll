@@ -192,7 +192,7 @@ def write_vorgang(root: Path, name: str, revision: str, entries: list[dict]) -> 
     write_context(
         vorgang / "CONTEXT.md",
         {
-            "type": "vorgang", "protocol": "v0.7.0",
+            "type": "vorgang", "protocol": "v0.8.0",
             "id": f"vorgang:{name}",
             "hauptprozess_revision": f"git-tree:{revision}",
             "laufpfad": entries,
@@ -223,7 +223,7 @@ def source_home(attempt: Path) -> Path:
     case = attempt.parents[1].name
     records_router = workspace / "records" / "CONTEXT.md"
     if not records_router.exists():
-        records_router.write_text("# Records\n")
+        records_router.write_text("# Records\n\n## What to load\n\n## Overview\n\n")
     link = f"- [{case}]({case}/)\n"
     if link not in records_router.read_text():
         with records_router.open("a") as handle:

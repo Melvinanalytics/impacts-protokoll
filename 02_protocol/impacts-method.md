@@ -339,16 +339,28 @@ Transfer only within demonstrated domain and operating assumptions. Protocol reu
 
 A Hauptprozess moves between repositories as a byte copy of `hauptprozesse/<slug>/`.
 
-For a first import, use an empty target directory. For takeover onto an existing target, review the update, referrers and recovery path before replacing it. Extract into an empty staging directory, compare the source tree OID, then replace the reviewed target. Never overlay an archive on existing work.
-
-```bash
-mkdir -p hauptprozesse/<slug>
-git -C <source-repo> archive <commit>:hauptprozesse/<slug> | tar -x -C hauptprozesse/<slug>
-git add hauptprozesse/<slug>
-git commit -m "import hauptprozesse/<slug> from <source>@<commit> (tree <oid>)"
-```
+A first import and a takeover onto an existing target use the commands of [Ongoing update](#ongoing-update-to-a-new-source-revision), step 2. Before a takeover, review the update, referrers and recovery path. Never copy files over existing work. Commit the result, for example with `git commit -m "import hauptprozesse/<slug> from <source>@<commit> (tree <oid>)"`.
 
 Matching tree OIDs establish content identity with the named source tree. Check the source repository and commit separately; an OID or a self-reported commit message authenticates neither origin nor approval. Record one line per imported tree in the workspace root `CONTEXT.md`, beside clearance lines: source repository, commit, tree OID and the Fachrepo protocol pin. Use the [import line shape](templates/workspace.md#tree-clearance-and-imports). Keeping this record outside the copied tree preserves its OID. An open Vorgang continues on its old tree, or a new Vorgang names it as `vorgaenger` and supersedes it; no end is needed. Never rewrite its `hauptprozess_revision`. New Vorgänge bind the new tree. A first import alone proves no reviewed takeover; exercise both branches and the affected destination walk.
+
+### Ongoing update to a new source revision
+
+When a source repository moves on and the workspace takes the change:
+
+1. Work on an own branch and worktree; the current checkout keeps serving open work.
+2. Take every bound tree at the same checked source commit: each imported Hauptprozess and every Capability tree it binds, not only the changed ones ([Transport](capabilities.md#transport)). For each `<path>`, `hauptprozesse/<slug>` or `capabilities/<slug>`, replace the target in the branch's worktree with the whole source tree; never copy single files over existing work, since that keeps files the source deleted:
+
+   ```bash
+   git fetch -q <source-repo> <commit>
+   git rm -r -q --ignore-unmatch <path>
+   git read-tree --prefix=<path>/ -u <commit>:<path>
+   git write-tree --prefix=<path>/
+   git rev-parse <commit>:<path>
+   ```
+
+   The two tree ids must be equal. `read-tree` takes the exact source tree: the workspace's `.gitignore` and the source's export attributes drop no file, as they would through `git archive` and `git add`. If the host refuses to fetch a bare commit, fetch the branch or tag that holds it. Then update each import line in the root `CONTEXT.md` with the new commit and tree id.
+3. After committing, check for every `hauptprozesse/<slug>` and `capabilities/<slug>` that `git rev-parse HEAD:<path>` equals its recorded tree id, then run every consumer's test suite and `impacts validate --require-judged`. A failure stops the takeover.
+4. Prove the effect at the consumer on a real use, not only at the source. Existing Vorgänge keep their bound revision. When the change alters a classification, run old and new on the same bounded set and compare their results before adopting it.
 
 For referenced Capabilities, follow [Transport](capabilities.md#transport). The [cold walk](../06_evaluations/cold-walk/CONTEXT.md) demonstrates missing-Capability rejection and imported-Capability execution through its stated, limited destination endpoint. It checks the supplied source snapshot against its configured source repository; acquiring the source from the destination alone remains open.
 
@@ -434,7 +446,7 @@ For each component you add or touch, answer five questions with evidence (a path
 - **Add.** Reuse an existing home first; if it is insufficient, record the gap and the smallest extension. State function, reader and loss in the commit body. Replace a competing maintained copy and its equality-only guard with the needed source reference. Integrity checks for a required transport, immutable evidence or independently needed delivery retain their demonstrated function.
 - **Touch.** Remove what fails the questions in the same change, with its cascade. A check and the rule it enforces change together.
 - **Defend.** Before deleting, search for the strongest function the component carries. It stays only with a named function. A function that holds only under the current pin names the condition under which the component falls.
-- **Sweep.** Before each minor release, sweep one area with one ledger row per component: path, function, reader, loss, copy of, birth commit, verdict (KEEP, DELETE, MERGE, MOVE, DERIVE, SIMPLIFY) and the condition that flips the verdict. Answer keys, plans and evaluations are components.
+- **Sweep.** Before each minor release, sweep one area with one ledger row per component: path, function, reader, loss, copy of, birth commit, verdict (KEEP, DELETE, MERGE, MOVE, DERIVE, SIMPLIFY) and the condition that flips the verdict. Answer keys, plans and evaluations are components. In a workspace, sweep one area when a Record Library router there passes the 24,000-byte [router ceiling](impacts-architect/references/formwahl.md#router-size-and-table-contracts), which no finding reports, when unneeded loaded context recurs there under [Reviewed correction](#reviewed-correction), or before lifting the protocol pin; `vorgaenge/` has no router to measure, so only recurring friction or the pin lift starts its sweep. Run the [Restructure reference check](impacts-architect/SKILL.md#restructure-mode) before any removal. A Record Library kind may SIMPLIFY into [period sub-levels](impacts-architect/references/formwahl.md#folder-structure-by-form); a finished Vorgang may DELETE into Git history only under [History retention](binding.md#history-retention). Removed material stays in Git history, never in `_archive/`.
 - **State what is.** A definition file states the current rule. Change history, dated lessons and tests that assert a removed string belong in Git history.
 
 The questions and the bullets are review duties. [test_necessity.py](../tests/test_necessity.py) detects identical-byte files outside its allowlist, files under `02_protocol`, `src`, `06_evaluations` and `tests` without a recognized inbound reference, history markers in protocol Markdown, and [retired names](ontology.md#retired-names) in protocol Markdown and the root guides. It compares individual findings with the recorded baseline: a new finding fails even when another disappears, and removed findings must leave the baseline. Counts are derived. The committed baseline bounds uncommitted additions; it does not authenticate a committed rewrite. These static checks expose review candidates, not actual execution reachability, component necessity or semantic completeness.

@@ -1,6 +1,6 @@
 ---
 type: vorgang
-protocol: v0.7.0
+protocol: v0.8.0
 id: vorgang:approval-001
 hauptprozess_revision: git-tree:@HAUPTPROZESS_REVISION@
 laufpfad:

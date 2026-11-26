@@ -18,7 +18,7 @@ def source_home(attempt: Path) -> Path:
                 handle.write("\n" + line + "\n")
     case = attempt.parents[1].name
     records = workspace / "records" / "CONTEXT.md"
-    body = records.read_text() if records.is_file() else "# Records\n\n"
+    body = records.read_text() if records.is_file() else "# Records\n\n## What to load\n\n## Overview\n\n"
     if f"- [{case}]({case}/)\n" not in body:
         records.write_text(body + f"- [{case}]({case}/)\n")
     return workspace / "records" / case / attempt.parent.name / attempt.name

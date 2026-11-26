@@ -55,6 +55,8 @@ def build_parser() -> argparse.ArgumentParser:
     validate_parser = subparsers.add_parser("validate", help="Validate a workspace")
     validate_parser.add_argument("path")
     validate_parser.add_argument("--json", action="store_true", help="Print a JSON report")
+    validate_parser.add_argument("--require-judged", action="store_true",
+                                 help="Exit 1 when the workspace pin names another release line, so nothing was judged")
 
     hash_parser = subparsers.add_parser("hash", help="List per-file SHA-256 references")
     hash_parser.add_argument("attempt", help="Reference root")
@@ -157,17 +159,18 @@ def main(argv: list[str] | None = None) -> int:
                 "external_references": list(report.external_references),
                 "external_references_not_verified": report.external_references_not_verified,
                 "valid": report.valid,
+                "workspace_judged": report.workspace_judged,
                 "root": args.path,
             }
         )
-        return 0 if report.valid else 1
+        return _validate_exit(report, args.require_judged)
     counts = report.judged
     print(f"impacts validate {report.release} against pin {report.pin or 'none'}: "
           f"{counts['hauptprozess']} Hauptprozesse, {counts['teilprozess']} Teilprozesse, "
           f"{counts['arbeitsschritt']} Arbeitsschritte, {counts['vorgang']} Vorgänge, "
           f"{counts['versuch']} Versuche judged; {report.not_judged_counts['vorgang']} Vorgänge not judged; "
           f"{report.not_judged_counts['definition_tree']} definition trees outside hauptprozesse/"
-          + ("; workspace not judged" if any(item.path == "CONTEXT.md" for item in report.not_judged) else ""))
+          + ("" if report.workspace_judged else "; workspace not judged"))
     for item in report.not_judged:
         print(item.message)
     if report.external_references_not_verified:
@@ -178,7 +181,11 @@ def main(argv: list[str] | None = None) -> int:
             print(f"held: {row['path']} ({row['reason']}; decided by {row['decided_by']})")
     for issue in report.issues:
         print(f"{issue.code}: {issue.path}: {issue.message} ({issue.rule})")
-    return 0 if report.valid else 1
+    return _validate_exit(report, args.require_judged)
+
+
+def _validate_exit(report, require_judged: bool) -> int:
+    return 0 if report.valid and (report.workspace_judged or not require_judged) else 1
 
 
 if __name__ == "__main__":

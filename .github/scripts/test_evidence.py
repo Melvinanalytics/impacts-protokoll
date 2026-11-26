@@ -8,7 +8,11 @@ from pathlib import Path
 import platform
 import re
 import subprocess
+import sys
 import xml.etree.ElementTree as ET
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from release_guard import release_section  # noqa: E402  one reader for guard and Release body
 
 START = "<!-- impacts-test-evidence:start -->"
 END = "<!-- impacts-test-evidence:end -->"
@@ -301,9 +305,8 @@ def release_scope(root: Path, tag: str) -> str:
     path = root / "CONTRIBUTING.md"
     if not path.is_file():
         return ""
-    match = re.search(r"^### " + re.escape(tag) + r"(?: [^\n]*)?\n(.*?)(?=^#{1,3} |\Z)",
-                      path.read_text(encoding="utf-8"), re.M | re.S)
-    return "## Changes in " + tag + "\n\n" + match[1].strip() if match else ""
+    section = release_section(path.read_text(encoding="utf-8"), tag)
+    return "## Changes in " + tag + "\n\n" + section[1].strip() if section else ""
 
 
 def release_patch(

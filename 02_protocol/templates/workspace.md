@@ -1,6 +1,6 @@
 ---
 type: workspace
-protocol: v0.7.0
+protocol: v0.8.0
 ---
 
 Working language: en
@@ -41,6 +41,8 @@ The standard case reads only Open; "Additional" names a trigger and the source i
 
 ### Read-only questions
 
+A pure read question goes straight to this table and skips the work rules above.
+
 | Question about | Open | Stop condition |
 |---|---|---|
 | `<foundations, rules, offerings>` | `<link to grundlagen/CONTEXT.md>` | `<cited rule and evidence status>` |
@@ -59,7 +61,7 @@ Clearance line shape:
 
 `hauptprozess:<slug> cleared for real work: human:<id>, <YYYY-MM-DD>, git-tree:<oid>, tested by vorgang:<id>[, ...]`
 
-Only the responsible person writes it, in their own commit or by dictating and confirming it. Strike through a superseded line. The line authenticates nobody; Core does not check it.
+Only the responsible person writes it, in their own commit or by dictating and confirming it. Delete a superseded line; Git history keeps it. The line authenticates nobody; Core does not check it.
 
 One import line per imported tree, outside that tree; first import and reviewed takeover follow `02_protocol/impacts-method.md#scale`:
 
@@ -71,7 +73,7 @@ One import line per imported tree, outside that tree; first import and reviewed 
 2. Design a Hauptprozess at its selected home; `impacts template <kind>` supplies each `CONTEXT.md`. Import from another repository only by `02_protocol/impacts-method.md#scale`; localization is a new revision.
 3. Before opening a real Vorgang, find a clearance line naming the current Hauptprozess tree. Without one, ask the responsible customer and open nothing. Mark a synthetic test subject "synthetic test case".
 4. Run Vorgänge under `02_protocol/binding.md#execution` of the pinned release.
-5. Run `impacts validate` for required Core conformance. It checks structure only (`02_protocol/ontology.md#enforcement-and-completion`) and replaces no domain check or human decision.
+5. Run `impacts validate` for required Core conformance; a commit gate runs `impacts validate --require-judged`, which fails when the pin names another release line. It checks structure only (`02_protocol/ontology.md#enforcement-and-completion`) and replaces no domain check or human decision.
 6. The bound Arbeitsschritt body supplies the prompt, operations, permitted effects and checks; the configured harness loads declared inputs and retains actual output evidence (`02_protocol/impacts-method.md#compose-an-arbeitsschritt`).
 7. Keep each recurring job without a Core Arbeitsschritt in one section of its owning file (`02_protocol/impacts-method.md#maintain-agent-instructions`).
 8. Agents never invent an `Ablage`, write a clearance line or create a human decision.

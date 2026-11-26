@@ -474,6 +474,7 @@ const WORDS = {
     "nicht_angezeigt_3": "Nicht angezeigt: ",
     "nur_aus_vorgangen_bekannt": " nur aus Vorgängen bekannt",
     "workspace_meldungen": "Workspace-Meldungen",
+    "validator_hinweise_blockieren_nicht": "Hinweise des Validators zur Navigation in dieser Definition; sie blockieren die Ansicht nicht.",
     "meldungen_des_validators_die_keiner_angezeigten": "Meldungen des Validators, die keiner angezeigten Auswahl gehören.",
     "nicht_zugeordnet": "Nicht zugeordnet",
     "vorgange_ohne_lesbare_gebundene_leistung": "Vorgänge ohne lesbare gebundene Leistung.",
@@ -830,6 +831,7 @@ const WORDS = {
     "nicht_angezeigt_3": "Not shown: ",
     "nur_aus_vorgangen_bekannt": " known only from Vorgänge",
     "workspace_meldungen": "Workspace messages",
+    "validator_hinweise_blockieren_nicht": "Validator notes on navigation in this definition; they do not block this view.",
     "meldungen_des_validators_die_keiner_angezeigten": "Validator messages that do not belong to any selection shown.",
     "nicht_zugeordnet": "Unassigned",
     "vorgange_ohne_lesbare_gebundene_leistung": "Vorgänge without a readable bound process result.",
@@ -1383,7 +1385,9 @@ function refusedPage() {
   const lead = MODEL.kind === "ist-prozess" ? W.der_leser_meldet_fehler : W.der_validator_oder_der_leser_meldet;
   put(crumbs([]), h("h1", {text: what + W.nicht_angezeigt}),
     h("p", {text: lead + W.die_ansicht_zeigt_nur_eine_gultige}),
-    issuesBlock(MODEL.issues), footer());
+    issuesBlock(MODEL.issues),
+    MODEL.notes && MODEL.notes.length ? [h("p", {class: "muted", text: W.validator_hinweise_blockieren_nicht}), issuesBlock(MODEL.notes)] : null,
+    footer());
   document.title = what + W.nicht_angezeigt;
 }
 
@@ -2067,6 +2071,7 @@ function selectionPage() {
       h("h1", {text: vorgang ? vorgangTitle : title(hp)}),
       vorgang ? h("p", {class: "lede muted", text: W.ablauf + title(hp)}) : null,
       h("div", {class: "lede"}, vorgang ? h("div", {class: "pills"}, standBadge(stand), stagePill(stand), leistungPill(stand)) : null, standSentence(stand)),
+      MODEL.notes && MODEL.notes.length ? h("div", {class: "lede"}, h("p", {class: "muted", text: W.validator_hinweise_blockieren_nicht}), issuesBlock(MODEL.notes)) : null,
       h("div", {class: "bar"}, toggle),
       legend());
   }

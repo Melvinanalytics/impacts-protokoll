@@ -19,8 +19,8 @@ from jsonschema import Draft202012Validator
 from referencing import Registry, Resource
 
 from .hashing import HashSurfaceError, _has_symlink_component, file_references, file_sha256
-from .io import load_frontmatter_and_body, load_yaml_strict
-from .topology import body_lines, check_topology
+from .io import load_frontmatter_and_body, parse_frontmatter
+from .topology import blocks_vorgaenge, body_lines, check_topology
 from .model import Issue, NotJudged, ValidationReport, derive_progress, judged_counts
 from .version import protocol_line, protocol_release
 from .generator import WORKSPACE_FOLDERS
@@ -181,7 +181,7 @@ def _declared_stores(body: str) -> set[str]:
             if (match := re.match(r"Ablage:[ \t]+(\S+)", line))}
 
 
-def _validate_workspace(root: Path, issues: list[Issue], not_judged: list[NotJudged], release: str, workspace_pin: str, external_references: list[dict], judged: dict[str, int], forms: dict[Path, str]) -> tuple[str, ...]:
+def _validate_workspace(root: Path, issues: list[Issue], not_judged: list[NotJudged], release: str, workspace_pin: str, external_references: list[dict], judged: dict[str, int], forms: dict[str, str]) -> tuple[str, ...]:
     for folder in WORKSPACE_FOLDERS:
         path = root / folder
         if path.is_symlink():
@@ -214,7 +214,7 @@ def _validate_workspace(root: Path, issues: list[Issue], not_judged: list[NotJud
                 _add(issues, "structure.level", path, root, "hauptprozesse/ contains a non-directory")
     # Retain the historical depth-one not-judged inventory; topology scans all depths.
     for child in sorted(root.iterdir()):
-        if forms.get(child) == "none" or child.name.startswith(".") or child.name in {"hauptprozesse", "vorgaenge"}:
+        if forms.get(child.name) == "none" or child.name.startswith(".") or child.name in WORKSPACE_FOLDERS:
             continue
         try:
             if child.is_symlink() or not child.is_dir():
@@ -241,20 +241,26 @@ def _validate_workspace(root: Path, issues: list[Issue], not_judged: list[NotJud
     # Definitions are immutable; Vorgang files and Git refs are rechecked on every call.
     definitions: dict[str, Hauptprozess | str] = {}
     successors: dict[str, Path] = {}
+    legacy_successors: dict[str, Path] = {}
     reachable = _ReachableHauptprozesse(workspace=root)
     with ExitStack() as snapshots:
+        snapshots.callback(reachable.close)
         if vorgaenge.is_dir() and not vorgaenge.is_symlink():
             for path in sorted(vorgaenge.iterdir(), key=lambda item: item.name):
                 if path.is_symlink():
                     _add(issues, "structure.symlink", path, root, "Vorgang is a symlink; use a regular Vorgang directory")
                 elif path.is_dir():
                     before = len(issues)
-                    _validate_vorgang(path, root, issues, definitions, snapshots, reachable, not_judged, release, workspace_pin, successors, external_references, judged)
+                    _validate_vorgang(path, root, issues, definitions, snapshots, reachable, not_judged, release, workspace_pin, successors, legacy_successors, external_references, judged)
                     router = (path / "CONTEXT.md").relative_to(root).as_posix()
                     issues[before:] = [replace(issue, path=router, message=f"{issue.path}: {issue.message}")
                                        if issue.path != router else issue for issue in issues[before:]]
                 else:
                     _add(issues, "structure.level", path, root, "Vorgaenge contains a non-directory")
+    for predecessor, successor in successors.items():
+        if predecessor in legacy_successors:
+            _add(issues, "execution.attempt", successor / "CONTEXT.md", root,
+                 f"Predecessor already has a successor not judged under this release: {legacy_successors[predecessor].name}; reference the continuing Vorgang instead of creating a second successor")
 
     _, body = load_frontmatter_and_body(root / "CONTEXT.md", root)
     stores = _declared_stores(body)
@@ -266,7 +272,7 @@ def _validate_workspace(root: Path, issues: list[Issue], not_judged: list[NotJud
 
     # Export the checked relation with the report; consumers must not reread mutable
     # successor metadata or independently decide whether it supersedes old work.
-    if any(not issue.path.startswith(("vorgaenge/", "hauptprozesse/")) for issue in issues):
+    if any(blocks_vorgaenge(issue) for issue in issues):
         return ()
     return tuple(sorted(predecessor for predecessor, successor in successors.items()
                         if not any(issue.path == successor.relative_to(root).as_posix()
@@ -485,7 +491,7 @@ def _validate_vorgang(
     definitions: dict[str, Hauptprozess | str], snapshots: ExitStack,
     reachable: "_ReachableHauptprozesse",
     not_judged: list[NotJudged], release: str, workspace_pin: str, successors: dict[str, Path],
-    external_references: list[dict], judged: dict[str, int],
+    legacy_successors: dict[str, Path], external_references: list[dict], judged: dict[str, int],
 ) -> None:
     judged["vorgang"] += 1
     document = _load_context(
@@ -511,6 +517,9 @@ def _validate_vorgang(
         not_judged.append(NotJudged(
             (vorgang_root / "CONTEXT.md").relative_to(workspace).as_posix(), recorded, release
         ))
+        # Legacy reading: the edge blocks a fork; it is not judged and supersedes nothing.
+        if isinstance(document.get("vorgaenger"), str):
+            legacy_successors.setdefault(document["vorgaenger"], vorgang_root)
         return
     judged["versuch"] += len(entries) if isinstance(entries, list) else 0
     if isinstance(entries, list):
@@ -557,7 +566,7 @@ def _validate_vorgang(
         return
     entry_refs = {hauptprozess.hauptprozess.get("einstieg_ref")}
     if "vorgaenger" in document:
-        entry_refs.add(_predecessor_position(document["vorgaenger"], vorgang_root, workspace, hauptprozess, issues, release))
+        entry_refs.add(_predecessor_position(document["vorgaenger"], vorgang_root, workspace, hauptprozess, issues, release, reachable))
     if not isinstance(entries[0], dict) or entries[0].get("arbeitsschritt_ref") not in entry_refs:
         _add(issues, "execution.attempt", vorgang_root / "CONTEXT.md", workspace, "Laufpfad starts outside permitted positions; start at Hauptprozess entry or the continuing predecessor position")
 
@@ -685,7 +694,7 @@ def _validate_vorgang(
                 _add(issues, "binding.reference_missing", vorgang_root / "CONTEXT.md", workspace,
                      prefix + f"gelesen does not cover eingaben slot: {missing}; add one gelesen reference with eingabe {missing!r} and its pfad, revision and sha256")
         for reference in entry.get("gelesen", []) if isinstance(entry.get("gelesen"), list) else []:
-            _validate_reference(reference, workspace, vorgang_root, issues, prefix, entries[:index], reachable=reachable)
+            _validate_reference(reference, workspace, vorgang_root, issues, prefix, reachable, entries[:index])
         if status in ("abgeschlossen", "abgebrochen"):
             written = entry.get("geschrieben")
             if status == "abgeschlossen" and not isinstance(written, list) and isinstance(step.get("ausgaben"), list):
@@ -694,7 +703,7 @@ def _validate_vorgang(
                 except HashSurfaceError as error:
                     _add(issues, error.code, error.path, workspace, prefix + error.message + "; restore the declared regular output files, preserving completed history")
             for reference in written if isinstance(written, list) else []:
-                _validate_reference(reference, workspace, vorgang_root, issues, prefix, output_root=attempt_root / "output")
+                _validate_reference(reference, workspace, vorgang_root, issues, prefix, reachable, output_root=attempt_root / "output")
             if isinstance(written, list):
                 try:
                     declared = step.get("ausgaben")
@@ -891,6 +900,13 @@ class _GitBatch:
             self.process.kill()
             self.process.wait()
             return False
+        finally:
+            for pipe in (self.process.stdin, self.process.stdout):
+                try:
+                    if pipe is not None:
+                        pipe.close()
+                except OSError:
+                    pass  # A broken pipe after a failed read leaves nothing to flush.
 
 
 def _batch_collect(
@@ -946,22 +962,94 @@ def _tree_entries(raw: bytes, oid_length: int) -> list[tuple[bytes, bytes, str]]
 
 
 class _ReachableHauptprozesse:
-    """Per-validation map from reachable commits to hauptprozesse/<slug> trees."""
+    """Per-validation map from reachable commits to hauptprozesse/<slug> trees, and the
+    one Git reader for committed reference bytes. Objects are immutable, so the object
+    caches hold for one validation."""
 
     def __init__(self, workspace: Path):
         self.workspace = workspace
         self.index: set[tuple[str, str]] | None = None
-        self.commits: set[str] = set()
+        self.commits: dict[str, str] = {}
+        self.batch: _GitBatch | None = None
+        self.trees: dict[str, dict[bytes, tuple[bytes, str]]] = {}
+        self.digests: dict[str, str | None] = {}
+        self.step_routes: dict[str, dict[str, list[Any]]] = {}
 
     def contains(self, oid: str, slug: str) -> bool:
         if self.index is None:
             self.index = self._build()
         return (oid, slug) in self.index
 
-    def contains_commit(self, oid: str) -> bool:
+    def close(self) -> None:
+        if self.batch is not None:
+            self.batch.close()
+
+    def _read(self, oid: str) -> tuple[str, bytes] | None:
+        # A failed read ends that process; the next object gets a fresh one.
+        if self.batch is None or self.batch.failed:
+            self.close()
+            try:
+                self.batch = _GitBatch(self.workspace)
+            except OSError:
+                self.batch = None
+                return None
+        return self.batch.read(oid)
+
+    def _tree(self, oid: str) -> dict[bytes, tuple[bytes, str]]:
+        if oid not in self.trees:
+            item = self._read(oid)
+            entries = _tree_entries(item[1], len(oid) // 2) if item and item[0] == "tree" else None
+            self.trees[oid] = {name: (mode, entry) for mode, name, entry in entries or []}
+        return self.trees[oid]
+
+    def blob_digest(self, commit: str, relative: str) -> str:
+        """sha256 of the regular file at <commit>:<relative>. The walk goes by exact name
+        and mode, so it never passes through a symlink or submodule."""
         if self.index is None:
             self.index = self._build()
-        return oid in self.commits
+        tree = self.commits.get(commit)
+        if tree is None:
+            item = self._read(commit)
+            raise ValueError("Reference commit is unreachable" if item and item[0] == "commit"
+                             else "Reference commit is missing")
+        *folders, name = relative.encode("utf-8").split(b"/")
+        for folder in folders:
+            mode, tree = self._tree(tree).get(folder, (b"", ""))
+            if mode not in {b"40000", b"040000"}:
+                raise ValueError("Reference blob is missing or unsafe")
+        mode, blob = self._tree(tree).get(name, (b"", ""))
+        if mode not in {b"100644", b"100755"}:
+            raise ValueError("Reference blob is missing or unsafe")
+        if blob not in self.digests:
+            item = self._read(blob)
+            self.digests[blob] = "sha256:" + hashlib.sha256(item[1]).hexdigest() if item and item[0] == "blob" else None
+        if self.digests[blob] is None:
+            raise ValueError("Reference blob is missing")
+        return self.digests[blob]
+
+    def routes(self, tree: str, step_id: str) -> list[Any]:
+        """The `routen` value of each Arbeitsschritt with this id in a bound tree, read once
+        per tree. A legacy tree may hold files Core never judged; those that do not parse
+        are skipped, since only the step must read."""
+        if tree not in self.step_routes:
+            found: dict[str, list[Any]] = {}
+
+            def walk(oid: str, top: bool) -> None:
+                for name, (mode, entry) in self._tree(oid).items():
+                    if mode in {b"40000", b"040000"}:
+                        walk(entry, False)
+                    elif mode in {b"100644", b"100755"} and name == b"CONTEXT.md" and not top:
+                        item = self._read(entry)
+                        try:
+                            step, _ = parse_frontmatter(item[1].decode("utf-8-sig")) if item and item[0] == "blob" else ({}, "")
+                        except ValueError:
+                            continue
+                        if isinstance(step, dict) and isinstance(step.get("id"), str):
+                            found.setdefault(step["id"], []).append(step.get("routen"))
+
+            walk(tree, True)
+            self.step_routes[tree] = found
+        return self.step_routes[tree].get(step_id, [])
 
     def _build(self) -> set[tuple[str, str]]:
         # Ordinary retained history excludes stash/auxiliary refs. Detached HEAD
@@ -977,7 +1065,7 @@ class _ReachableHauptprozesse:
         pairs = [line.split() for line in roots_text.splitlines()]
         if any(len(pair) != 2 or any(re.fullmatch(r"(?:[0-9a-f]{40}|[0-9a-f]{64})", oid) is None for oid in pair) for pair in pairs):
             return set()
-        self.commits = {commit for commit, _ in pairs}
+        self.commits = dict(pairs)
         roots = {tree for _, tree in pairs}
 
         def hauptprozess_tree(root_oid: str, content: bytes) -> list[str] | None:
@@ -1092,7 +1180,7 @@ def _git(root: Path, *args: str, binary: bool = False) -> str | bytes | None:
     return result.stdout if binary else result.stdout.strip()
 
 
-def _predecessor_position(value, vorgang_root, workspace, hauptprozess, issues, release):
+def _predecessor_position(value, vorgang_root, workspace, hauptprozess, issues, release, reachable):
     """Read position only, including legacy records; never judge their attempts."""
     path = workspace / value if isinstance(value, str) else workspace
     if (not isinstance(value, str) or re.fullmatch(r"vorgaenge/[a-z0-9]+(?:-[a-z0-9]+)*/CONTEXT\.md", value) is None
@@ -1113,18 +1201,8 @@ def _predecessor_position(value, vorgang_root, workspace, hauptprozess, issues, 
                 revision = predecessor.get("application_revision", "")
             if not isinstance(revision, str) or re.fullmatch(r"git-tree:(?:[0-9a-f]{40}|[0-9a-f]{64})", revision) is None:
                 raise ValueError("Predecessor has no readable definition revision")
-            tree = revision.removeprefix("git-tree:")
-            listing = _git(workspace, "ls-tree", "-rz", tree, binary=True)
-            routes = []
-            for item in (listing or b"").split(b"\0"):
-                metadata, _, name = item.partition(b"\t")
-                if metadata.startswith((b"100644 blob ", b"100755 blob ")) and name.endswith(b"/CONTEXT.md"):
-                    content = _git(workspace, "cat-file", "blob", f"{tree}:{name.decode('utf-8')}", binary=True)
-                    parts = content.decode("utf-8-sig").split("---", 2) if content else []
-                    step = load_yaml_strict(parts[1]) if len(parts) == 3 else None
-                    if isinstance(step, dict) and step.get("id") == step_id:
-                        route_table = step.get("routen")
-                        routes.append(route_table.get(last.get("gewaehlte_route")) if isinstance(route_table, dict) else None)
+            routes = [table.get(last.get("gewaehlte_route")) if isinstance(table, dict) else None
+                      for table in reachable.routes(revision.removeprefix("git-tree:"), step_id)]
             if len(routes) != 1:
                 raise ValueError("Predecessor route does not resolve uniquely")
             step_id = derive_progress(
@@ -1143,7 +1221,7 @@ def _predecessor_position(value, vorgang_root, workspace, hauptprozess, issues, 
         return None
 
 
-def _validate_reference(reference, workspace, vorgang_root, issues, prefix, prior=(), output_root=None, reachable=None):
+def _validate_reference(reference, workspace, vorgang_root, issues, prefix, reachable, prior=(), output_root=None):
     if not isinstance(reference, dict):
         return  # Schema owns malformed reference shapes.
     if "ablage" in reference:
@@ -1177,20 +1255,7 @@ def _validate_reference(reference, workspace, vorgang_root, issues, prefix, prio
                 raise ValueError("geschrieben needs a working-tree output reference")
             if not isinstance(revision, str) or re.fullmatch(r"git-commit:(?:[0-9a-f]{40}|[0-9a-f]{64})", revision) is None:
                 return
-            commit = revision.removeprefix("git-commit:")
-            if _git(workspace, "cat-file", "-t", commit) != "commit":
-                raise ValueError("Reference commit is missing")
-            if reachable is not None and not reachable.contains_commit(commit):
-                raise ValueError("Reference commit is unreachable")
-            # A recursive exact-path lookup cannot traverse a symlink or submodule.
-            listing = _git(workspace, "ls-tree", "-rz", commit, "--", relative, binary=True)
-            if (not listing or not listing.startswith((b"100644 blob ", b"100755 blob "))
-                    or listing.partition(b"\t")[2] != relative.encode("utf-8") + b"\0"):
-                raise ValueError("Reference blob is missing or unsafe")
-            content = _git(workspace, "cat-file", "blob", f"{commit}:{relative}", binary=True)
-            if content is None:
-                raise ValueError("Reference blob is missing")
-            actual = "sha256:" + hashlib.sha256(content).hexdigest()
+            actual = reachable.blob_digest(revision.removeprefix("git-commit:"), relative)
         else:
             if _has_symlink_component(path, workspace):
                 _add(issues, "structure.symlink", path, workspace, prefix + "Reference contains a symlink; reference a regular file without symlink components")

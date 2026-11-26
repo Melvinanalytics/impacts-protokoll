@@ -456,7 +456,7 @@ def test_level_template_overview_is_checked_by_the_existing_link_rule(tmp_path, 
     template = template_text("ebene", language=language)
     router.write_text(template, encoding="utf-8")
     verbatim = validate(root).issues
-    assert {issue.code for issue in verbatim} == {"topology.shape"}
+    assert {issue.code for issue in verbatim} == {"topology.link_missing"}
     assert sorted(issue.path for issue in verbatim) == ["records/one", "records/two"]
     overview = template.index("## " + ("Übersicht" if language == "de" else "Overview"))
     placeholder = "`<relativer Link auf <eintrag>/ oder <eintrag>/CONTEXT.md>`" if language == "de" else "`<relative link to <entry>/ or <entry>/CONTEXT.md>`"

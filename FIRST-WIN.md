@@ -33,6 +33,9 @@ When the draft exists, add a direct link here so a fresh session can continue.
 
 ```markdown
 # Foundations
+## What to load
+For an offer, load the catalog and the offer blank; nothing else lives here.
+## Overview
 - [Catalog](catalog.md): product/service kinds and source limits.
 - [Offer blank](angebotsvorlage.md): reusable internal document.
 ```
@@ -52,6 +55,9 @@ No price or availability source is supplied. Catalog kinds establish neither del
 
 ```markdown
 # Offers
+## What to load
+Open only the offer the task names.
+## Overview
 - [Offer O-1](offer-o1/): inquiry, and later the draft.
 ```
 

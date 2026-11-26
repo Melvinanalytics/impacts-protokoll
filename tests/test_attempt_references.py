@@ -1,5 +1,8 @@
 """W1 A+N+F: synthetic execution and byte-binding counterexamples."""
 import hashlib
+import os
+import re
+import subprocess
 
 import pytest
 
@@ -185,7 +188,7 @@ def test_external_store_key_cannot_name_a_working_tree_file(tmp_path, source):
         (root / key).write_text('Synthetic uncommitted source')
         with (root / 'CONTEXT.md').open('a') as router:
             router.write('\nForm: grundlagen/ Knowledge Bundle per topic\n[Grundlagen](grundlagen/CONTEXT.md)\n')
-        (root / 'grundlagen/CONTEXT.md').write_text('[Source](uncommitted.md)\n')
+        (root / 'grundlagen/CONTEXT.md').write_text('## What to load\n\n## Overview\n\n[Source](uncommitted.md)\n')
     if source == 'normalized':
         key = 'grundlagen/../' + key
     a['gelesen'] = [{'eingabe': 'input/auftrag.md', 'ablage': 'synthetic-store',
@@ -249,7 +252,7 @@ def test_versioned_source_unicode_name_is_read_as_raw_git_path(tmp_path, directo
     if directory == 'grundlagen':
         with (root / 'CONTEXT.md').open('a') as router:
             router.write('\nForm: grundlagen/ Knowledge Bundle per topic\n[Grundlagen](grundlagen/CONTEXT.md)\n')
-        (root / 'grundlagen/CONTEXT.md').write_text('[Source](quelle-ä.md)\n')
+        (root / 'grundlagen/CONTEXT.md').write_text('## What to load\n\n## Overview\n\n[Source](quelle-ä.md)\n')
     else:
         with (root / 'records/CONTEXT.md').open('a') as router:
             router.write('- [unicode](unicode/)\n')
@@ -293,6 +296,50 @@ def test_predecessor_completed_position_uses_its_own_definition(tmp_path, revisi
     meta['vorgaenger'] = 'vorgaenge/old/CONTEXT.md'
     replace_context(target / 'CONTEXT.md', meta)
     assert validate(root).valid, validate(root).issues
+
+
+def _successor_of_old(root, revision):
+    target = root / 'vorgaenge/new'
+    attempt = make_attempt(target, 'pruefen', 1, input_bytes='source')
+    write_vorgang(root, 'new', revision, [entry_active('pruefen', 1, attempt)])
+    meta = read_context(target / 'CONTEXT.md')
+    meta['vorgaenger'] = 'vorgaenge/old/CONTEXT.md'
+    replace_context(target / 'CONTEXT.md', meta)
+    return validate(root)
+
+
+@pytest.mark.parametrize('step', ['start', 'pruefen'])
+@pytest.mark.parametrize('line', ['pruefung: A---B geprueft', 'pruefung: "A---B geprueft"', 'pruefung: Teil 1 --- Teil 2'])
+def test_predecessor_tree_reads_dashes_inside_frontmatter_values(tmp_path, step, line):
+    root, _ = committed_workspace(tmp_path)
+    path = root / f'hauptprozesse/video/produktion/{step}/CONTEXT.md'
+    path.write_text(re.sub(r'^pruefung: .*$', line, path.read_text(encoding='utf-8'), count=1, flags=re.M), encoding='utf-8')
+    git(root, 'add', 'hauptprozesse')
+    git(root, 'commit', '-qm', 'Synthetic dashes inside a frontmatter value')
+    revision = git(root, 'rev-parse', 'HEAD:hauptprozesse/video')
+    first = make_attempt(root / 'vorgaenge/old', 'start', 1, input_bytes='source', output_bytes='result')
+    write_vorgang(root, 'old', revision, [entry_completed('start', 1, first, 'weiter')])
+    assert validate(root).valid, validate(root).issues
+    result = _successor_of_old(root, revision)
+    assert result.valid, result.issues
+
+
+@pytest.mark.parametrize('extra', ['---\nnotiz: alt\n\nText\n', '---\n- a\n---\nText\n', '---\nnotiz: [\n---\nText\n'])
+def test_legacy_predecessor_tree_skips_unreadable_files_beside_its_step(tmp_path, extra):
+    root, _ = committed_workspace(tmp_path)
+    note = root / 'hauptprozesse/video/produktion/start/notiz/CONTEXT.md'
+    note.parent.mkdir()
+    note.write_text(extra, encoding='utf-8')
+    git(root, 'add', 'hauptprozesse')
+    git(root, 'commit', '-qm', 'Synthetic legacy note')
+    old_revision = git(root, 'rev-parse', 'HEAD:hauptprozesse/video')
+    git(root, 'rm', '-rq', 'hauptprozesse/video/produktion/start/notiz')
+    git(root, 'commit', '-qm', 'Synthetic note removed')
+    first = make_attempt(root / 'vorgaenge/old', 'start', 1, input_bytes='source', output_bytes='result')
+    old = write_vorgang(root, 'old', old_revision, [entry_completed('start', 1, first, 'weiter')])
+    replace_context(old / 'CONTEXT.md', dict(read_context(old / 'CONTEXT.md'), protocol='v0.3.31'))
+    result = _successor_of_old(root, git(root, 'rev-parse', 'HEAD:hauptprozesse/video'))
+    assert result.valid, result.issues
 
 
 def test_quellen_is_an_ordinary_attempt_step(tmp_path):
@@ -375,3 +422,171 @@ def test_capture_home_is_flat(tmp_path):
     root, case, _, _ = pair(tmp_path)
     (case / '_quellen/start/001').mkdir(parents=True)
     assert any(i.code == 'execution.attempt' and '_quellen must be flat' in i.message for i in validate(root).issues)
+
+
+def _finished(root, revision, name, extra_reads=()):
+    case = root / f'vorgaenge/{name}'
+    first = make_attempt(case, 'start', 1, input_bytes=f'{name} source', output_bytes=f'{name} result')
+    a = entry_completed('start', 1, first, 'weiter')
+    a['gelesen'] += list(extra_reads)
+    second = make_attempt(case, 'pruefen', 1, input_bytes=f'{name} review', output_bytes=f'{name} ok')
+    write_vorgang(root, name, revision, [a, entry_completed('pruefen', 1, second, 'freigegeben', freigabe=HUMAN)])
+    return case
+
+
+@pytest.mark.parametrize('removed,valid', [(('producer',), False), (('producer', 'reader'), True), (('lone',), True)])
+def test_finished_vorgang_leaves_only_with_every_reader_of_its_output(tmp_path, removed, valid):
+    import shutil
+    root, revision = committed_workspace(tmp_path)
+    _finished(root, revision, 'producer')
+    _finished(root, revision, 'lone')
+    reads = [dict(ref, eingabe='input/auftrag.md') for ref in file_references(root, ['vorgaenge/producer/pruefen/001/output/ergebnis.md'])]
+    _finished(root, revision, 'reader', reads)
+    assert validate(root).valid
+    for name in removed:
+        shutil.rmtree(root / 'vorgaenge' / name)
+    assert validate(root).valid is valid
+    if not valid:
+        assert issue_codes(root) == {'binding.reference_missing'}
+
+
+def _bind_committed(case, a, b, pfad, revision, digest=None):
+    a['gelesen'] = [{'eingabe': 'input/auftrag.md', 'pfad': pfad, 'revision': revision,
+                     'sha256': digest or 'sha256:' + hashlib.sha256(b'synthetic\n').hexdigest()}]
+    replace_context(case / 'CONTEXT.md', dict(read_context(case / 'CONTEXT.md'), laufpfad=[a, b]))
+
+
+def _commit_source(root, files, links=()):
+    for name, data in files.items():
+        (root / 'grundlagen' / name).parent.mkdir(parents=True, exist_ok=True)
+        (root / 'grundlagen' / name).write_bytes(data)
+    for name, target in links:
+        os.symlink(target, root / 'grundlagen' / name)
+    git(root, 'add', '-f', 'grundlagen')
+    git(root, 'commit', '-qm', 'Synthetic source')
+    revision = 'git-commit:' + git(root, 'rev-parse', 'HEAD')
+    git(root, 'rm', '-rqf', 'grundlagen')
+    git(root, 'commit', '-qm', 'Remove synthetic source')
+    return revision
+
+
+def _reference_message(root):
+    found = [i.message for i in validate(root).issues if i.code == 'binding.reference_missing']
+    assert len(found) == 1, found
+    return found[0]
+
+
+@pytest.mark.parametrize('pfad', ['grundlagen/link.md', 'grundlagen/dirlink/real.md', 'grundlagen/folder',
+                                  'grundlagen/absent.md', 'grundlagen/real.md/below'])
+def test_committed_reference_never_reads_through_a_symlink_folder_or_absent_path(tmp_path, pfad):
+    root, case, a, b = pair(tmp_path)
+    revision = _commit_source(root, {'real.md': b'synthetic\n', 'folder/inner.md': b'synthetic\n'},
+                              links=[('link.md', 'real.md'), ('dirlink', 'folder')])
+    _bind_committed(case, a, b, pfad, revision)
+    assert 'Reference blob is missing or unsafe' in _reference_message(root)
+
+
+def test_committed_reference_never_reads_a_gitlink(tmp_path):
+    root, case, a, b = pair(tmp_path)
+    git(root, 'update-index', '--add', '--cacheinfo', f"160000,{git(root, 'rev-parse', 'HEAD')},grundlagen/sub")
+    git(root, 'commit', '-qm', 'Synthetic gitlink')
+    revision = 'git-commit:' + git(root, 'rev-parse', 'HEAD')
+    git(root, 'rm', '-q', '--cached', 'grundlagen/sub')
+    git(root, 'commit', '-qm', 'Remove gitlink')
+    _bind_committed(case, a, b, 'grundlagen/sub', revision)
+    assert 'Reference blob is missing or unsafe' in _reference_message(root)
+
+
+@pytest.mark.parametrize('kind', ['tree', 'tag', 'absent', 'long'])
+def test_committed_reference_revision_names_an_existing_commit(tmp_path, kind):
+    root, case, a, b = pair(tmp_path)
+    _commit_source(root, {'real.md': b'synthetic\n'})
+    git(root, 'tag', '-a', '-m', 'synthetic', 't1')
+    oid = {'tree': git(root, 'rev-parse', 'HEAD^{tree}'), 'tag': git(root, 'rev-parse', 't1'),
+           'absent': '0' * 40, 'long': '1' * 64}[kind]
+    _bind_committed(case, a, b, 'grundlagen/real.md', 'git-commit:' + oid)
+    assert 'Reference commit is missing' in _reference_message(root)
+
+
+def test_committed_reference_rejects_an_unreachable_commit(tmp_path):
+    root, case, a, b = pair(tmp_path)
+    dangling = git(root, 'commit-tree', git(root, 'rev-parse', 'HEAD^{tree}'), '-m', 'dangling')
+    _bind_committed(case, a, b, 'grundlagen/real.md', 'git-commit:' + dangling)
+    assert 'Reference commit is unreachable' in _reference_message(root)
+
+
+@pytest.mark.parametrize('executable', [False, True])
+def test_committed_reference_digest_is_checked(tmp_path, executable):
+    root, case, a, b = pair(tmp_path)
+    (root / 'grundlagen').mkdir()
+    (root / 'grundlagen/real.md').write_bytes(b'synthetic\n')
+    (root / 'grundlagen/real.md').chmod(0o755 if executable else 0o644)
+    revision = _commit_source(root, {})
+    _bind_committed(case, a, b, 'grundlagen/real.md', revision)
+    assert validate(root).valid
+    _bind_committed(case, a, b, 'grundlagen/real.md', revision, 'sha256:' + '0' * 64)
+    assert [i.code for i in validate(root).issues] == ['binding.reference_digest']
+
+
+def test_git_processes_do_not_grow_with_committed_references(tmp_path, monkeypatch):
+    root, case, a, b = pair(tmp_path)
+    files = {f'r{index}.md': f'synthetic {index}\n'.encode() for index in range(8)}
+    revision = _commit_source(root, files)
+    started = []
+    original = subprocess.Popen.__init__
+
+    def counting(self, *args, **kwargs):
+        started.append(1)
+        original(self, *args, **kwargs)
+
+    counts = []
+    for size in (4, 8):
+        a['gelesen'] = [{'eingabe': 'input/auftrag.md', 'pfad': f'grundlagen/r{index}.md', 'revision': revision,
+                         'sha256': 'sha256:' + hashlib.sha256(files[f'r{index}.md']).hexdigest()} for index in range(size)]
+        replace_context(case / 'CONTEXT.md', dict(read_context(case / 'CONTEXT.md'), laufpfad=[a, b]))
+        started.clear()
+        monkeypatch.setattr(subprocess.Popen, '__init__', counting)
+        assert validate(root).valid
+        monkeypatch.undo()
+        counts.append(len(started))
+    assert counts[0] == counts[1]
+
+
+def test_git_processes_do_not_grow_with_successors_of_one_tree(tmp_path, monkeypatch):
+    """Each bound tree is read once per validation, however many successors read it."""
+    root, revision = committed_workspace(tmp_path)
+    started = []
+    original = subprocess.Popen.__init__
+
+    def counting(self, *args, **kwargs):
+        started.append(1)
+        original(self, *args, **kwargs)
+
+    counts = []
+    for index in range(3):
+        first = make_attempt(root / f'vorgaenge/old{index}', 'start', 1, input_bytes='source', output_bytes='result')
+        write_vorgang(root, f'old{index}', revision, [entry_completed('start', 1, first, 'weiter')])
+        target = root / f'vorgaenge/new{index}'
+        attempt = make_attempt(target, 'pruefen', 1, input_bytes='source')
+        write_vorgang(root, f'new{index}', revision, [entry_active('pruefen', 1, attempt)])
+        replace_context(target / 'CONTEXT.md', dict(read_context(target / 'CONTEXT.md'), vorgaenger=f'vorgaenge/old{index}/CONTEXT.md'))
+        if index == 0:
+            continue
+        started.clear()
+        monkeypatch.setattr(subprocess.Popen, '__init__', counting)
+        report = validate(root)
+        monkeypatch.undo()
+        assert report.valid, report.issues
+        counts.append(len(started))
+    assert counts[0] == counts[1]
+
+
+def test_validation_closes_its_git_pipes(tmp_path):
+    import gc
+    import warnings
+    root, _, _, _ = pair(tmp_path)
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter('always', ResourceWarning)
+        assert validate(root).valid
+        gc.collect()
+    assert not [warning for warning in caught if issubclass(warning.category, ResourceWarning)]

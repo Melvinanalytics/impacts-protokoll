@@ -9,6 +9,9 @@ from impacts_protocol import init_workspace, validate
 from impacts_protocol.cli import main
 from .support import write_context, write_hauptprozess
 
+# The sections every level router carries since v0.8.0.
+SECTIONS = "## What to load\n\n## Overview"
+
 
 def workspace(tmp_path, declaration="Form: records/ Record Library per subject", *, linked=True):
     """Declare the given levels; linked=False leaves out the root links the route rule demands."""
@@ -25,7 +28,7 @@ def workspace(tmp_path, declaration="Form: records/ Record Library per subject",
 
 def router(folder, body):
     folder.mkdir(parents=True, exist_ok=True)
-    (folder / "CONTEXT.md").write_text(body + "\n")
+    (folder / "CONTEXT.md").write_text(body + "\n\n" + SECTIONS + "\n")
     root_link(folder)
 
 
@@ -41,7 +44,7 @@ def root_link(folder):
 def link_entries(folder):
     """A Record Library level's CONTEXT.md links each of its entries."""
     context = folder / "CONTEXT.md"
-    body = context.read_text() if context.is_file() else "# Records\n"
+    body = context.read_text() if context.is_file() else "# Records\n\n" + SECTIONS + "\n"
     for entry in sorted(path for path in folder.iterdir() if path.name != "CONTEXT.md"):
         link = f"[{entry.name}](<{entry.name}{'/' if entry.is_dir() else ''}>)"
         if link not in body:
@@ -192,13 +195,13 @@ def test_knowledge_bundle_unlinked_file(tmp_path):
     root = workspace(tmp_path, "Form: grundlagen/ Knowledge Bundle per topic")
     router(root / "grundlagen", "# Synthetic foundations")
     (root / "grundlagen/rule.md").touch()
-    assert_code(root, "topology.shape")
+    assert_code(root, "topology.link_missing")
 
 
 def test_knowledge_bundle_missing_router(tmp_path):
     root = workspace(tmp_path, "Form: grundlagen/ Knowledge Bundle per topic")
     (root / "grundlagen/rule.md").touch()
-    assert_code(root, "topology.shape")
+    assert_code(root, "topology.link_missing")
 
 
 def test_anchor_and_topic_context_links(tmp_path):
@@ -316,13 +319,6 @@ def test_undeclared_folder_in_bundle_is_a_finding(tmp_path):
     assert any("fall-alpha/ is not a declared sub-level" in message for message in messages)
 
 
-def test_case_folder_declared_linked_and_routed_is_still_a_finding(tmp_path):
-    root = bundle_beside_cases(tmp_path)
-    issues = validate(root).issues
-    assert [issue.code for issue in issues] == ["topology.shape"]
-    assert "records/fall-alpha" in issues[0].message
-
-
 def test_dated_file_in_bundle_is_a_finding(tmp_path):
     root = workspace(tmp_path, "Form: records/ Record Library per subject\nForm: grundlagen/ Knowledge Bundle per topic")
     router(root / "grundlagen", "[run](2026-09-13-run.md)")
@@ -343,7 +339,7 @@ def test_unresolved_router_link_is_a_finding(tmp_path):
     root = workspace(tmp_path, "Form: records/ Record Library per subject\nForm: grundlagen/ Knowledge Bundle per topic")
     router(root / "grundlagen", "[rule](rule.md)\n[gone](gone.md)\n[web](https://example.invalid/x)")
     (root / "grundlagen/rule.md").touch()
-    messages = [issue.message for issue in validate(root).issues if issue.code == "topology.shape"]
+    messages = [issue.message for issue in validate(root).issues if issue.code == "topology.link_broken"]
     assert messages == ["Link 'gone.md' does not resolve; correct or remove it"]
 
 
@@ -355,40 +351,6 @@ def test_each_offending_entry_is_named_once(tmp_path):
     paths = [issue.path for issue in validate(root).issues]
     assert paths == ["grundlagen/a.md", "grundlagen/b.md"]
     assert all("CONTEXT.md; link it" in issue.message for issue in validate(root).issues)
-
-
-def test_capture_folder_named_like_a_record_is_valid(tmp_path):
-    root = workspace(tmp_path, "Form: records/ Record Library per case\nForm: analyse/ Context Map per captured case")
-    router(root / "records/fall-alpha", "# Case")
-    router(root / "analyse/fall-alpha", "# Capture")
-    router(root / "analyse", "[capture](fall-alpha/)")
-    link_entries(root / "records")
-    assert validate(root).valid
-
-
-def test_rule_file_beside_kind_prefixed_record_is_valid(tmp_path):
-    root = workspace(tmp_path, "Form: records/ Record Library per offer\nForm: grundlagen/ Knowledge Bundle per topic")
-    (root / "records/angebot-1002").mkdir()
-    router(root / "grundlagen", "[offer rules](angebot.md)")
-    (root / "grundlagen/angebot.md").touch()
-    assert validate(root).valid
-
-
-def test_bundle_file_with_the_record_name_is_a_finding(tmp_path):
-    root = workspace(tmp_path, "Form: records/ Record Library per case\nForm: grundlagen/ Knowledge Bundle per topic")
-    router(root / "records/fall-alpha", "# Case")
-    router(root / "grundlagen", "[alpha](fall-alpha.md)")
-    (root / "grundlagen/fall-alpha.md").touch()
-    link_entries(root / "records")
-    assert_code(root, "topology.shape")
-
-
-def test_single_table_file_names_no_unit(tmp_path):
-    root = workspace(tmp_path, "Form: records/ Record Library per customer\nForm: grundlagen/ Knowledge Bundle per topic")
-    (root / "records/kunden.md").touch()
-    router(root / "grundlagen", "[discount](kunden.md)")
-    (root / "grundlagen/kunden.md").touch()
-    assert validate(root).valid
 
 
 @pytest.mark.parametrize("link", ["<rule%20one.md>", "rule%20one.md", "<rule one.md>"])
@@ -418,20 +380,6 @@ def test_root_router_links_are_checked_inside_only(tmp_path):
         handle.write("\n[gone](records/gone.md)\n")
     messages = [issue.message for issue in validate(root).issues]
     assert len(messages) == 1 and "does not resolve" in messages[0]
-
-
-@pytest.mark.parametrize("name", ["Fall-Alpha", "fall-alpha.md", "FALL-ALPHA.txt"])
-def test_unit_names_ignore_case_and_extension(tmp_path, name):
-    root = workspace(tmp_path, "Form: records/ Record Library per case\nForm: grundlagen/ Knowledge Bundle per topic")
-    (root / "records/fall-alpha.json").touch()
-    (root / "records/fall-beta.json").touch()
-    entry = root / "grundlagen" / name
-    router(root / "grundlagen", f"[x]({name}/)" if "." not in name else f"[x]({name})")
-    if "." in name:
-        entry.touch()
-    else:
-        router(entry, "Form: Knowledge Bundle per topic")
-    assert [issue.code for issue in validate(root).issues] == ["topology.shape"]
 
 
 @pytest.mark.parametrize(("parent", "child"), [("Knowledge Bundle per topic", "Record Library per case"),
@@ -479,58 +427,6 @@ def test_two_segment_path_fails_even_when_the_folder_exists(tmp_path):
     assert messages == ["Form path 'records/kind/' is not one folder; write one relative folder name with a trailing slash"]
 
 
-def test_equal_names_only_no_hyphen_prefix(tmp_path):
-    root = workspace(tmp_path, "Form: records/ Record Library per offer\nForm: grundlagen/ Knowledge Bundle per topic")
-    router(root / "records/angebot-2026-001", "# Offer")
-    router(root / "grundlagen", "[offer](angebot/)")
-    router(root / "grundlagen/angebot", "Form: Knowledge Bundle per topic")
-    link_entries(root / "records")
-    assert validate(root).issues == ()
-
-
-@pytest.mark.parametrize("name", ["ＦＡＬＬ", "fa\u200b\u200c\u200dll\ufeff"])
-def test_unit_equality_normalises_nfkc_and_zero_width(tmp_path, name):
-    root = workspace(tmp_path, "Form: records/ Record Library per case\nForm: grundlagen/ Knowledge Bundle per topic")
-    router(root / "records/fall", "# Case")
-    router(root / "grundlagen", f"[case]({name}.md)")
-    (root / "grundlagen" / (name + ".md")).touch()
-    link_entries(root / "records")
-    issue, = validate(root).issues
-    assert issue.code == "topology.shape"
-    assert "has the name of record records/fall; if it holds that record's material, move it there; otherwise rename it" in issue.message
-
-
-def test_record_kind_names_are_not_units(tmp_path):
-    root = bundle_beside_cases(tmp_path)
-    router(root / "records", "Form: fall-alpha/ Record Library per item\n[fall-alpha](fall-alpha/)")
-    assert validate(root).issues == ()
-
-
-def test_record_match_prefers_folder_and_counts_other_matches(tmp_path):
-    root = workspace(tmp_path, "Form: records/ Record Library per kind\nForm: grundlagen/ Knowledge Bundle per topic")
-    router(root / "records", "Form: a/ Record Library per case\nForm: b/ Record Library per case\n[a](a/)\n[b](b/)")
-    router(root / "records/a/fall", "# Case")
-    router(root / "records/a", "[fall](fall/)")
-    (root / "records/b").mkdir()
-    for name in ("fall.md", "other.md"):
-        (root / "records/b" / name).touch()
-    router(root / "grundlagen", "[fall](fall.md)")
-    (root / "grundlagen/fall.md").touch()
-    issue, = validate(root).issues
-    assert issue.code == "topology.shape"
-    assert "record records/a/fall and 1 more;" in issue.message
-
-
-@pytest.mark.parametrize("name", ["README.md", "readme.txt", "context.txt"])
-def test_router_and_readme_stems_never_register_units(tmp_path, name):
-    root = workspace(tmp_path, "Form: records/ Record Library per case\nForm: grundlagen/ Knowledge Bundle per topic")
-    for filename in (name, "other.md"):
-        (root / "records" / filename).touch()
-    router(root / "grundlagen", f"[rule]({Path(name).stem}.md)")
-    (root / "grundlagen" / (Path(name).stem + ".md")).touch()
-    assert validate(root).issues == ()
-
-
 @pytest.mark.parametrize(("name", "dated"), [("2024-02-29-work.md", True), ("2023-02-29-work.md", False), ("1000-10-99.md", False), ("2026-13-01.md", False)])
 def test_dated_requires_real_calendar_date(tmp_path, name, dated):
     root = workspace(tmp_path, "Form: records/ Record Library per case\nForm: grundlagen/ Knowledge Bundle per topic")
@@ -546,11 +442,9 @@ def test_dated_requires_real_calendar_date(tmp_path, name, dated):
         assert issues == ()
 
 
-@pytest.mark.parametrize(("record", "name", "message"), [(True, "2026-01-01", "has the name of record"), (False, "2026-01-01", "is dated work"), (False, "topic", "is not a declared sub-level")])
-def test_bundle_entry_emits_only_most_specific_finding(tmp_path, record, name, message):
+@pytest.mark.parametrize(("name", "message"), [("2026-01-01", "is dated work"), ("topic", "is not a declared sub-level")])
+def test_bundle_entry_emits_only_most_specific_finding(tmp_path, name, message):
     root = workspace(tmp_path, "Form: records/ Record Library per case\nForm: grundlagen/ Knowledge Bundle per topic")
-    if record:
-        router(root / "records" / name, "# Case")
     router(root / "grundlagen", "# Rules")
     router(root / "grundlagen" / name, "# Material")
     link_entries(root / "records")
@@ -581,7 +475,7 @@ def test_context_map_router_links_every_entry(tmp_path):
     router(root / "analyse", "# Captures")
     (root / "analyse/capture.md").touch()
     issue, = validate(root).issues
-    assert issue.code == "topology.shape"
+    assert issue.code == "topology.link_missing"
     assert "capture.md is not linked from analyse/CONTEXT.md;" in issue.message
 
 
@@ -591,7 +485,7 @@ def test_context_map_missing_router_is_one_level_finding(tmp_path):
     for name in ("a.md", "b.md"):
         (root / "analyse" / name).touch()
     issue, = validate(root).issues
-    assert (issue.code, issue.path, issue.message) == ("topology.shape", "analyse", "analyse/ has no CONTEXT.md; add one that links every entry")
+    assert (issue.code, issue.path, issue.message) == ("topology.link_missing", "analyse", "analyse/ has no CONTEXT.md; add one that links every entry")
 
 
 @pytest.mark.parametrize(("name", "form"), [("analyse", "Context Map per capture"), ("jobs", "Pipeline per job")])
@@ -689,7 +583,7 @@ def test_bad_links_are_unresolved_without_aborting(tmp_path, target):
     router(root / "grundlagen", f"[x]({target})\n[rule](rule.md)")
     (root / "grundlagen/rule.md").touch()
     issue, = validate(root).issues
-    assert issue.code == "topology.shape"
+    assert issue.code == "topology.link_broken"
     assert "does not resolve; correct or remove it" in issue.message
 
 
@@ -748,7 +642,7 @@ def test_unreadable_entry_does_not_hide_sibling_findings(tmp_path, monkeypatch, 
     monkeypatch.setattr(Path, operation, guarded)
     issues = validate(root).issues
     assert any(issue.code == "topology.shape" and issue.path == "grundlagen/blocked" and "cannot be read: synthetic denied; restore read access" in issue.message for issue in issues)
-    assert any(issue.code == "topology.shape" and issue.path == "grundlagen/loose.md" and "is not linked from" in issue.message for issue in issues)
+    assert any(issue.code == "topology.link_missing" and issue.path == "grundlagen/loose.md" and "is not linked from" in issue.message for issue in issues)
     assert not any(issue.code == "structure.level" for issue in issues)
 
 
@@ -826,34 +720,12 @@ def test_multiline_inline_code_hides_forms_and_links(tmp_path):
 
 
 
-def test_readme_named_record_folder_still_registers_a_unit(tmp_path):
-    root = workspace(tmp_path, "Form: records/ Record Library per case\nForm: grundlagen/ Knowledge Bundle per topic")
-    router(root / "records/readme", "# Case")
-    router(root / "grundlagen", "[Rule](readme.md)")
-    (root / "grundlagen/readme.md").touch()
-    link_entries(root / "records")
-    issue, = validate(root).issues
-    assert issue.code == "topology.shape"
-    assert "has the name of record records/readme;" in issue.message
-
-
 def test_loose_file_in_process_home_names_the_move(tmp_path):
     root = workspace(tmp_path, "Form: records/ Record Library per subject\nForm: prozesse/ Pipeline per job")
     router(root / "prozesse/anlage", "# Process")
     (root / "prozesse/notiz.md").touch()
     issue, = validate(root).issues
     assert issue.message == "notiz.md is loose in process home prozesse/; move it into its process folder or out of the process home"
-
-
-def test_context_map_entry_with_a_record_name_is_valid(tmp_path):
-    # akten/ sorts before analyse/, so the record unit is known when analyse/ is checked.
-    root = workspace(tmp_path, "Form: records/ Record Library per subject\nForm: akten/ Record Library per case\nForm: analyse/ Context Map per capture")
-    (root / "akten/fall-alpha").mkdir(parents=True)
-    (root / "akten/fall-alpha/akte.md").touch()
-    link_entries(root / "akten")
-    router(root / "analyse", "[alpha](fall-alpha.md)")
-    (root / "analyse/fall-alpha.md").touch()
-    assert validate(root).valid
 
 
 NFC, NFD = "vertr\u00e4ge", "vertra\u0308ge"
@@ -910,21 +782,7 @@ def test_x1_reference_definitions_do_not_link_entries(tmp_path, definition):
     router(root / "grundlagen", '[x][r]\n' + definition)
     (root / "grundlagen/rule.md").touch()
     issue, = validate(root).issues
-    assert (issue.code, issue.message) == ("topology.shape", "rule.md is not linked from grundlagen/CONTEXT.md; link it")
-
-
-def test_x2_record_kind_is_not_a_unit_but_instances_are(tmp_path):
-    root = workspace(tmp_path, "Form: records/ Record Library per kind\nForm: grundlagen/ Knowledge Bundle per topic")
-    router(root / "records", "Form: articles/ Record Library per article\n[articles](articles/)")
-    router(root / "records/articles", "[A-1002](A-1002.md)\n[A-1003](A-1003.md)")
-    for name in ("A-1002.md", "A-1003.md"):
-        (root / "records/articles" / name).touch()
-    router(root / "grundlagen", "[kind](articles.md)\n[instance](A-1002.md)")
-    for name in ("articles.md", "A-1002.md"):
-        (root / "grundlagen" / name).touch()
-    issue, = validate(root).issues
-    assert issue.code == "topology.shape"
-    assert issue.message == "grundlagen/A-1002.md has the name of record records/articles/A-1002.md; if it holds that record's material, move it there; otherwise rename it"
+    assert (issue.code, issue.message) == ("topology.link_missing", "rule.md is not linked from grundlagen/CONTEXT.md; link it")
 
 
 @pytest.mark.parametrize("name", ["analyse\u200b", "ａｎａｌｙｓｅ", "Analyse"])
@@ -950,14 +808,15 @@ def test_x4_gitignored_entries_skipped_at_root_and_all_depths(tmp_path):
     router(root / "grundlagen", "Form: nested/ Knowledge Bundle per topic\n[nested](nested/)")
     router(root / "grundlagen/nested", "# Rules")
     for home in ("dist", "tools/build", "grundlagen/build", "grundlagen/nested/build"):
-        router(root / home, "---\ntype: hauptprozess\n---")
+        (root / home).mkdir(parents=True)  # unlinked: a link to an ignored path is itself a finding
+        (root / home / "CONTEXT.md").write_text("---\ntype: hauptprozess\n---\n")
     (root / "grundlagen/nested/scratch.tmp").touch()
     assert validate(root).issues == ()
     tracked = root / "grundlagen/tracked.tmp"
     tracked.touch()
     subprocess.run(["git", "-C", str(root), "add", "-f", "grundlagen/tracked.tmp"], check=True)
     issue, = validate(root).issues
-    assert (issue.code, issue.message) == ("topology.shape", "tracked.tmp is not linked from grundlagen/CONTEXT.md; link it")
+    assert (issue.code, issue.message) == ("topology.link_missing", "tracked.tmp is not linked from grundlagen/CONTEXT.md; link it")
 
 
 def test_x4_git_failure_skips_nothing(tmp_path, monkeypatch):
@@ -1037,7 +896,7 @@ def test_x11_alias_link_names_disk_spelling(tmp_path, target):
     router(root / "grundlagen", f"[rule]({target})")
     (root / "grundlagen/rule.md").touch()
     issue, = validate(root).issues
-    assert (issue.code, issue.message) == ("topology.shape", f"rule.md is linked as {target!r}; use the on-disk spelling")
+    assert (issue.code, issue.message) == ("topology.link_broken", f"rule.md is linked as {target!r}; use the on-disk spelling")
 
 
 def test_x11_folder_alias_includes_entry_guidance(tmp_path):
@@ -1045,7 +904,7 @@ def test_x11_folder_alias_includes_entry_guidance(tmp_path):
     router(root / "grundlagen", "Form: topic/ Knowledge Bundle per topic\n[topic](TOPIC/CONTEXT.md)")
     router(root / "grundlagen/topic", "# Topic")
     issue, = validate(root).issues
-    assert (issue.code, issue.message) == ("topology.shape", "topic is linked as 'TOPIC/CONTEXT.md'; use the on-disk spelling; link the entry itself, not a file inside it")
+    assert (issue.code, issue.message) == ("topology.link_broken", "topic is linked as 'TOPIC/CONTEXT.md'; use the on-disk spelling; link the entry itself, not a file inside it")
 
 
 def test_x12_invalid_line_names_exact_code_choices(tmp_path):
@@ -1064,7 +923,7 @@ def test_x13_control_characters_cannot_split_findings(tmp_path, name):
     issues, _, _ = check_topology(root, r"human:[^:\s][^\s]*")
     issue, = issues
     escaped = repr(name)[1:-1]
-    assert (issue.code, issue.path, issue.message) == ("topology.shape", f"grundlagen/{escaped}", f"{escaped} is not linked from grundlagen/CONTEXT.md; link it")
+    assert (issue.code, issue.path, issue.message) == ("topology.link_missing", f"grundlagen/{escaped}", f"{escaped} is not linked from grundlagen/CONTEXT.md; link it")
 
 
 @pytest.mark.parametrize("name", ["\u20602026-11-16-plan.md", "2026\u201111\u201116-plan.md"])
@@ -1074,33 +933,6 @@ def test_x14_format_and_dash_characters_do_not_hide_dates(tmp_path, name):
     (root / "grundlagen" / name).touch()
     issue, = validate(root).issues
     assert (issue.code, issue.message) == ("topology.shape", f"{name} is dated work; move it to its case, its Vorgang or Git history; a rule's validity date goes inside the file or after its name")
-
-
-def test_x14_soft_hyphen_does_not_hide_record_name(tmp_path):
-    root = bundle_beside_cases(tmp_path)
-    (root / "grundlagen/fall-alpha/CONTEXT.md").unlink()
-    (root / "grundlagen/fall-alpha").rmdir()
-    name = "fall-al\u00adpha.md"
-    (root / "grundlagen" / name).touch()
-    router(root / "grundlagen", f"[case]({name})\n[rule](rule.md)")
-    issue, = validate(root).issues
-    assert (issue.code, issue.message) == ("topology.shape", f"grundlagen/{name} has the name of record records/fall-alpha; if it holds that record's material, move it there; otherwise rename it")
-
-
-@pytest.mark.parametrize("record_file", [False, True])
-def test_x15_first_dot_ends_file_unit_name(tmp_path, record_file):
-    root = workspace(tmp_path, "Form: records/ Record Library per case\nForm: grundlagen/ Knowledge Bundle per topic")
-    record = "A-1002.tar.gz" if record_file else "A-1002"
-    if record_file:
-        for name in (record, "other.md"):
-            (root / "records" / name).touch()
-    else:
-        router(root / "records" / record, "# Case")
-    router(root / "grundlagen", "[case](A-1002.tar.gz)")
-    (root / "grundlagen/A-1002.tar.gz").touch()
-    link_entries(root / "records")
-    issue, = validate(root).issues
-    assert (issue.code, issue.message) == ("topology.shape", f"grundlagen/A-1002.tar.gz has the name of record records/{record}; if it holds that record's material, move it there; otherwise rename it")
 
 
 @pytest.mark.parametrize("separator", ["\x85", "\u2028", "\u2029", "\v", "\f"])
@@ -1147,8 +979,9 @@ def test_x16c_1540_unresolved_links_stay_under_five_seconds(tmp_path):
     start = perf_counter()
     issues, _, _ = check_topology(root, r"human:[^:\s][^\s]*")
     assert perf_counter() - start < 5
-    assert len(issues) == 3080
-    assert all(issue.code == "topology.shape" for issue in issues)
+    # 1540 unresolved links, 1540 unlinked entries and one oversized router.
+    assert len(issues) == 3081 and sum(issue.code == "topology.router_size" for issue in issues) == 1
+    assert sum(issue.code == "topology.link_broken" for issue in issues) == sum(issue.code == "topology.link_missing" for issue in issues) == 1540
     assert sum("does not resolve; correct or remove it" in issue.message for issue in issues) == 1540
     assert sum("is not linked from grundlagen/CONTEXT.md; link it" in issue.message for issue in issues) == 1540
 
@@ -1159,7 +992,8 @@ def test_x4_ignored_router_and_declared_directory_are_not_read(tmp_path):
     root = workspace(tmp_path, "Form: tools/ Tool\nForm: dist/ Unknown")
     subprocess.run(["git", "init", "-q", str(root)], check=True)
     (root / ".gitignore").write_text("dist/\ntools/notes/CONTEXT.md\n")
-    router(root / "dist", "# Build")
+    (root / "dist").mkdir()
+    (root / "dist/CONTEXT.md").write_text("# Build\n")
     router(root / "tools/notes", "---\ntype: hauptprozess\nid: broken\nid: duplicate\n---")
     issues, _, _ = check_topology(root, r"human:[^:\s][^\s]*")
     assert issues == []
@@ -1264,7 +1098,7 @@ def test_unlinked_root_markdown_file_fails_while_linked_and_standard_docs_pass(t
 
     (root / "stray-notes.md").write_text("# Stray\n")
     issue, = validate(root).issues
-    assert issue.code == "topology.shape"
+    assert issue.code == "topology.link_missing"
     assert issue.path == "stray-notes.md"
     assert "sits unlinked at the workspace root" in issue.message
 
@@ -1278,13 +1112,13 @@ def test_unlinked_root_markdown_file_fails_while_linked_and_standard_docs_pass(t
 ], ids=["file_inside", "form_line_only", "folder", "router"])
 def test_root_must_link_each_level_router(tmp_path, link, reached):
     root = workspace(tmp_path, "Form: records/ Record Library per subject\nForm: grundlagen/ Knowledge Bundle per topic", linked=False)
-    (root / "grundlagen/CONTEXT.md").write_text("[rule](rule.md)\n")
+    (root / "grundlagen/CONTEXT.md").write_text("[rule](rule.md)\n\n" + SECTIONS + "\n")
     (root / "grundlagen/rule.md").touch()
     if link:
         with (root / "CONTEXT.md").open("a") as handle:
             handle.write(f"\n[Foundations]({link})\n")
     issues = [(issue.code, issue.path, issue.message) for issue in validate(root).issues]
-    assert issues == ([] if reached else [("topology.shape", "grundlagen", "grundlagen/ is not linked from the root CONTEXT.md; link the folder or its CONTEXT.md from the route that serves its readers")])
+    assert issues == ([] if reached else [("topology.link_missing", "grundlagen", "grundlagen/ is not linked from the root CONTEXT.md; link the folder or its CONTEXT.md from the route that serves its readers")])
 
 
 def test_record_library_router_must_link_its_sublevels_not_files_inside_them(tmp_path):
@@ -1294,7 +1128,7 @@ def test_record_library_router_must_link_its_sublevels_not_files_inside_them(tmp
     for name in ("one.md", "two.md"):
         (root / "records/people" / name).touch()
     issue, = validate(root).issues
-    assert (issue.code, issue.path) == ("topology.shape", "records/people")
+    assert (issue.code, issue.path) == ("topology.link_missing", "records/people")
     assert issue.message.startswith("people is not linked from records/CONTEXT.md; link it")
     router(root / "records", "Form: people/ Record Library per person\n[people](people/)")
     assert validate(root).valid
@@ -1307,7 +1141,7 @@ def test_record_kind_with_instance_folders_needs_a_router(tmp_path):
         (root / "records/people" / name).mkdir(parents=True)
         (root / "records/people" / name / "card.md").touch()
     issue, = validate(root).issues
-    assert (issue.code, issue.path, issue.message) == ("topology.shape", "records/people", "records/people/ has no CONTEXT.md; add one that links every entry")
+    assert (issue.code, issue.path, issue.message) == ("topology.link_missing", "records/people", "records/people/ has no CONTEXT.md; add one that links every entry")
     router(root / "records/people", "[one](one/)\n[two](two/CONTEXT.md)")
     (root / "records/people/two/CONTEXT.md").write_text("# Two\n")
     assert validate(root).valid
@@ -1350,7 +1184,7 @@ def test_misspelt_link_to_a_misplaced_record_entry_is_still_reported(tmp_path, b
 
 def test_misspelt_root_link_to_a_level_is_reported_once(tmp_path):
     root = workspace(tmp_path, "Form: records/ Record Library per subject\nForm: grundlagen/ Knowledge Bundle per topic", linked=False)
-    (root / "grundlagen/CONTEXT.md").write_text("[rule](rule.md)\n")
+    (root / "grundlagen/CONTEXT.md").write_text("[rule](rule.md)\n\n" + SECTIONS + "\n")
     (root / "grundlagen/rule.md").touch()
     with (root / "CONTEXT.md").open("a") as handle:
         handle.write("\n[Foundations](GRUNDLAGEN/)\n")
@@ -1396,3 +1230,197 @@ def test_root_links_every_declared_level_even_without_router(tmp_path, declarati
         (root / folder / "CONTEXT.md").write_text("[erster](erster/)\n")
     issue, = validate(root).issues
     assert (issue.path, issue.message) == (folder, f"{folder}/ is not linked from the root CONTEXT.md; link the folder or its CONTEXT.md from the route that serves its readers")
+
+
+def test_every_emitted_topology_code_is_classified_once():
+    from impacts_protocol.topology import NAVIGATION
+    from .test_conformance import emitted_issue_codes
+    structure = {"topology.shape", "topology.form_missing", "topology.form_invalid"}
+    emitted = {code for code in emitted_issue_codes(Path(__file__).resolve().parents[1] / "src/impacts_protocol") if code.startswith("topology.")}
+    assert not NAVIGATION & structure
+    assert emitted == NAVIGATION | structure
+
+
+@pytest.mark.parametrize("body,code", [
+    ("[gone](missing.md)", "topology.link_broken"),
+    ("[anchor](#nowhere)", "topology.link_broken"),
+])
+def test_unresolved_links_report_link_broken(tmp_path, body, code):
+    root = workspace(tmp_path)
+    (root / "CONTEXT.md").write_text((root / "CONTEXT.md").read_text() + "\n" + body + "\n")
+    assert_code(root, code)
+
+
+def test_absolute_link_in_level_router_reports_link_broken(tmp_path):
+    root = workspace(tmp_path, "Form: grundlagen/ Knowledge Bundle per topic")
+    router(root / "grundlagen", "## What to load\n\n## Overview\n\n[abs](/etc/hosts)")
+    assert_code(root, "topology.link_broken")
+
+
+def test_unlinked_root_file_reports_link_missing(tmp_path):
+    root = workspace(tmp_path)
+    (root / "notes.md").write_text("synthetic")
+    assert_code(root, "topology.link_missing")
+
+
+def test_level_without_router_reports_link_missing(tmp_path):
+    root = workspace(tmp_path)
+    for instance in ("one", "two"):
+        (root / "records" / instance).mkdir()
+        (root / "records" / instance / "x.md").touch()
+    assert_code(root, "topology.link_missing")
+
+
+def test_loose_file_in_process_home_stays_structure(tmp_path):
+    root = workspace(tmp_path, "Form: ablauf/ Pipeline per process")
+    (root / "ablauf").mkdir()
+    (root / "ablauf" / "loose.md").touch()
+    assert_code(root, "topology.shape")
+
+
+IGNORED = "points to a path Git ignores, which a clean clone lacks; link a committed file or stop ignoring it"
+
+
+def ignoring(root, patterns):
+    import subprocess
+    subprocess.run(["git", "init", "-q", str(root)], check=True)
+    (root / ".gitignore").write_text(patterns)
+
+
+@pytest.mark.parametrize("link", ["local.md", "local.md#part", "scratch/a.md", "scratch/", "../workspace/local.md"])
+def test_root_link_to_ignored_path_is_broken_where_written(tmp_path, link):
+    root = workspace(tmp_path, "")
+    ignoring(root, "local.md\nscratch/\n")
+    (root / "local.md").write_text("# Part\n")
+    (root / "scratch").mkdir()
+    (root / "scratch/a.md").touch()
+    with (root / "CONTEXT.md").open("a") as handle:
+        handle.write(f"\n[local]({link})\n")
+    issues = [(issue.code, issue.path, issue.message) for issue in validate(root).issues]
+    assert issues == [("topology.link_broken", "CONTEXT.md", f"Link {link.partition('#')[0]!r} {IGNORED}")]
+
+
+def test_root_link_outside_the_workspace_stays_unjudged_with_an_ignore_list(tmp_path):
+    root = workspace(tmp_path, "")
+    ignoring(root, "*.local\n")
+    (tmp_path / "sibling.md").touch()
+    with (root / "CONTEXT.md").open("a") as handle:
+        handle.write("\n[source](../sibling.md)\n")
+    assert validate(root).valid
+
+
+def test_level_link_to_ignored_file_is_broken(tmp_path):
+    root = workspace(tmp_path, "Form: grundlagen/ Knowledge Bundle per topic")
+    ignoring(root, "*.local.md\n")
+    router(root / "grundlagen", "[rule](rule.md) [draft](draft.local.md)")
+    (root / "grundlagen/rule.md").touch()
+    (root / "grundlagen/draft.local.md").touch()
+    issue, = validate(root).issues
+    assert (issue.code, issue.path, issue.message) == ("topology.link_broken", "grundlagen/CONTEXT.md", f"Link 'draft.local.md' {IGNORED}")
+
+
+def test_ignored_readme_does_not_index_a_linked_folder(tmp_path):
+    root = workspace(tmp_path)
+    ignoring(root, "records/one/raw/README.md\n")
+    (root / "records/one/raw").mkdir(parents=True)
+    (root / "records/one/raw/scan.md").touch()
+    (root / "records/one/raw/README.md").touch()
+    (root / "records/CONTEXT.md").write_text(f"# Records\n\n{SECTIONS}\n\n[one](one/)\n[raw](one/raw/)\n")
+    issue, = validate(root).issues
+    assert (issue.code, issue.path) == ("topology.link_unindexed", "records/CONTEXT.md")
+
+
+def test_ignored_level_router_is_missing(tmp_path):
+    root = workspace(tmp_path)
+    ignoring(root, "records/CONTEXT.md\n")
+    (root / "records/one").mkdir()
+    (root / "records/one/a.md").touch()
+    (root / "records/CONTEXT.md").write_text(f"# Records\n\n{SECTIONS}\n\n[one](one/)\n")
+    issue, = validate(root).issues
+    assert (issue.code, issue.path, issue.message) == ("topology.link_missing", "records", "records/CONTEXT.md is ignored by Git, so a clean clone lacks it; stop ignoring it")
+
+
+def test_untracked_link_target_that_git_would_carry_is_accepted(tmp_path):
+    root = workspace(tmp_path, "")
+    ignoring(root, "*.local\n")
+    (root / "draft.md").touch()
+    with (root / "CONTEXT.md").open("a") as handle:
+        handle.write("\n[draft](draft.md)\n")
+    assert validate(root).valid
+
+
+def test_link_to_force_added_file_under_ignored_pattern_is_accepted(tmp_path):
+    import subprocess
+    root = workspace(tmp_path, "")
+    ignoring(root, "*.local.md\n")
+    (root / "keep.local.md").touch()
+    subprocess.run(["git", "-C", str(root), "add", "-f", "keep.local.md"], check=True)
+    with (root / "CONTEXT.md").open("a") as handle:
+        handle.write("\n[keep](keep.local.md)\n")
+    assert validate(root).valid
+
+
+def test_ignored_optional_router_of_a_file_kind_is_not_read(tmp_path):
+    root = workspace(tmp_path)
+    ignoring(root, "records/CONTEXT.md\n")
+    for name in ("a.md", "b.md"):
+        (root / "records" / name).touch()
+    (root / "records/CONTEXT.md").write_text("[a](a.md)\n")
+    assert validate(root).valid
+
+
+def test_ignored_process_router_is_missing(tmp_path):
+    root = workspace(tmp_path, "Form: jobs/ Pipeline per job")
+    ignoring(root, "jobs/one/CONTEXT.md\n")
+    router(root / "jobs", "[one](one/)")
+    (root / "jobs/one").mkdir()
+    (root / "jobs/one/step.md").touch()
+    (root / "jobs/one/CONTEXT.md").write_text("# One\n")
+    issue, = validate(root).issues
+    assert (issue.code, issue.path) == ("topology.shape", "jobs/one")
+
+
+def test_level_holding_only_an_ignored_router_is_not_visited(tmp_path):
+    root = workspace(tmp_path, "Form: grundlagen/ Knowledge Bundle per topic", linked=False)
+    ignoring(root, "grundlagen/CONTEXT.md\n")
+    (root / "grundlagen/CONTEXT.md").write_text("# Rules\n")
+    (root / "grundlagen/.keep").touch()
+    assert validate(root).valid
+
+
+def bundle_rule_beside(tmp_path, *records):
+    """grundlagen/angebot.md is a linked rule file; records/ holds the given entries."""
+    root = workspace(tmp_path, "Form: records/ Record Library per customer\nForm: grundlagen/ Knowledge Bundle per topic")
+    router(root / "grundlagen", "[offer rules](angebot.md)")
+    (root / "grundlagen/angebot.md").touch()
+    for name in records:
+        if name.endswith("/"):
+            router(root / "records" / name, "# Instance")
+        else:
+            (root / "records" / name).touch()
+    if any(name.endswith("/") for name in records):
+        link_entries(root / "records")
+    return root
+
+
+@pytest.mark.parametrize("records", [("angebot.md", "bremen.md"), ("kunden.md", "angebot.md"), ("fall-1/", "angebot/")])
+def test_record_growth_never_changes_a_bundle_entry(tmp_path, records):
+    """A second record file or a new instance named like a bundle file leaves the bundle valid."""
+    assert validate(bundle_rule_beside(tmp_path, records[0])).valid
+    assert validate(bundle_rule_beside(tmp_path / "grown", *records)).issues == ()
+
+
+def test_record_kind_split_by_period_keeps_the_link_chain(tmp_path):
+    root = workspace(tmp_path)
+    router(root / "records", "Form: offers/ Record Library per offer\n[offers](offers/)")
+    router(root / "records/offers", "Form: 2025/ Record Library per offer\nForm: 2026/ Record Library per offer\n[2025](2025/)\n[2026](2026/)")
+    for period, names in (("2025", ("o-1", "o-2", "o-3")), ("2026", ("o-4",))):
+        router(root / "records/offers" / period, "\n".join(f"[{name}]({name}/)" for name in names))
+        for name in names:
+            (root / "records/offers" / period / name).mkdir()
+            (root / "records/offers" / period / name / "CONTEXT.md").write_text(f"# {name}\n\nStage: sent\n")
+    assert validate(root).valid
+    (root / "records/offers/2026/o-5").mkdir()
+    (root / "records/offers/2026/o-5/CONTEXT.md").write_text("# o-5\n")
+    issue, = validate(root).issues
+    assert (issue.code, issue.path) == ("topology.link_missing", "records/offers/2026/o-5")

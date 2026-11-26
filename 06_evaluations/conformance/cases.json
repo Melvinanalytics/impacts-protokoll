@@ -665,7 +665,7 @@
         "not_judged": [
           {
             "path": "vorgaenge/approval-001/CONTEXT.md",
-            "protocol": "v0.8.0"
+            "protocol": "v0.9.0"
           }
         ]
       }
@@ -736,6 +736,29 @@
         "not_judged": [
           {
             "path": "vorgaenge/approval-001/CONTEXT.md",
+            "protocol": "v0.3.31"
+          }
+        ]
+      }
+    },
+    {
+      "id": "run-predecessor-not-judged-successor",
+      "command": "validate",
+      "fixture": "fixtures/cases/run-predecessor-not-judged-successor",
+      "git_binding": true,
+      "expected": {
+        "exit_code": 1,
+        "valid": false,
+        "issue_codes": [
+          "execution.attempt"
+        ],
+        "not_judged": [
+          {
+            "path": "vorgaenge/approval-001/CONTEXT.md",
+            "protocol": "v0.3.31"
+          },
+          {
+            "path": "vorgaenge/restart/CONTEXT.md",
             "protocol": "v0.3.31"
           }
         ]
@@ -914,6 +937,18 @@
           "execution.attempt",
           "execution.attempt"
         ],
+        "not_judged": []
+      }
+    },
+    {
+      "id": "run-predecessor-dash-value",
+      "command": "validate",
+      "fixture": "fixtures/cases/run-predecessor-dash-value",
+      "git_binding": true,
+      "expected": {
+        "exit_code": 0,
+        "valid": true,
+        "issue_codes": [],
         "not_judged": []
       }
     },
@@ -1226,7 +1261,7 @@
         "exit_code": 1,
         "valid": false,
         "issue_codes": [
-          "topology.shape"
+          "topology.link_missing"
         ],
         "not_judged": []
       },
@@ -1245,7 +1280,7 @@
         "exit_code": 1,
         "valid": false,
         "issue_codes": [
-          "topology.shape"
+          "topology.link_missing"
         ],
         "not_judged": []
       },
@@ -1264,7 +1299,7 @@
         "exit_code": 1,
         "valid": false,
         "issue_codes": [
-          "topology.shape"
+          "topology.link_missing"
         ],
         "not_judged": []
       },
@@ -1283,7 +1318,7 @@
         "exit_code": 1,
         "valid": false,
         "issue_codes": [
-          "topology.shape"
+          "topology.link_missing"
         ],
         "not_judged": []
       },
@@ -1302,7 +1337,7 @@
         "exit_code": 1,
         "valid": false,
         "issue_codes": [
-          "topology.shape"
+          "topology.link_missing"
         ],
         "not_judged": []
       },
@@ -1312,6 +1347,229 @@
       "expected_issue_messages": [
         "ablauf/ is not linked from the root CONTEXT.md"
       ]
+    },
+    {
+      "id": "topology-navigation-vorgang-readable",
+      "command": "validate",
+      "fixture": "fixtures/cases/topology-navigation-vorgang-readable",
+      "git_binding": true,
+      "expected": {
+        "exit_code": 1,
+        "valid": false,
+        "issue_codes": [
+          "topology.link_missing"
+        ],
+        "not_judged": []
+      },
+      "expected_issue_paths": [
+        "stray.md"
+      ],
+      "expected_issue_messages": [
+        "stray.md sits unlinked at the workspace root"
+      ]
+    },
+    {
+      "id": "topology-structure-vorgang-refused",
+      "command": "validate",
+      "fixture": "fixtures/cases/topology-structure-vorgang-refused",
+      "git_binding": true,
+      "expected": {
+        "exit_code": 1,
+        "valid": false,
+        "issue_codes": [
+          "topology.shape"
+        ],
+        "not_judged": []
+      },
+      "expected_issue_paths": [
+        "ablauf/erster"
+      ],
+      "expected_issue_messages": [
+        "Process folder erster/ has no CONTEXT.md"
+      ]
+    },
+    {
+      "id": "topology-link-broken",
+      "command": "validate",
+      "fixture": "fixtures/cases/topology-link-broken",
+      "expected": {
+        "exit_code": 1,
+        "valid": false,
+        "issue_codes": [
+          "topology.link_broken"
+        ],
+        "not_judged": []
+      },
+      "expected_issue_paths": [
+        "grundlagen/CONTEXT.md"
+      ],
+      "expected_issue_messages": [
+        "Link '../../topology-root-unlinked-level/CONTEXT.md' leaves the workspace"
+      ]
+    },
+    {
+      "id": "topology-level-router-sections",
+      "command": "validate",
+      "fixture": "fixtures/cases/topology-level-router-sections",
+      "expected": {
+        "exit_code": 1,
+        "valid": false,
+        "issue_codes": [
+          "topology.router_sections"
+        ],
+        "not_judged": []
+      },
+      "expected_issue_paths": [
+        "records/CONTEXT.md"
+      ],
+      "expected_issue_messages": [
+        "records/CONTEXT.md lacks the section 'What to load'"
+      ]
+    },
+    {
+      "id": "topology-definition-link-broken",
+      "command": "validate",
+      "fixture": "fixtures/cases/topology-definition-link-broken",
+      "expected": {
+        "exit_code": 1,
+        "valid": false,
+        "issue_codes": [
+          "topology.link_broken"
+        ],
+        "not_judged": []
+      },
+      "expected_issue_paths": [
+        "hauptprozesse/approval/produktion/start/CONTEXT.md"
+      ],
+      "expected_issue_messages": [
+        "Link '../../../../../topology-root-unlinked-level/CONTEXT.md' leaves the workspace"
+      ]
+    },
+    {
+      "id": "topology-router-size",
+      "command": "validate",
+      "fixture": "fixtures/cases/topology-router-size",
+      "expected": {
+        "exit_code": 1,
+        "valid": false,
+        "issue_codes": [
+          "topology.router_size"
+        ],
+        "not_judged": []
+      },
+      "expected_issue_paths": [
+        "capabilities/rechner/CONTEXT.md"
+      ],
+      "expected_issue_messages": [
+        "capabilities/rechner/CONTEXT.md has 24,007 bytes, above the 24,000-byte router budget"
+      ]
+    },
+    {
+      "id": "topology-table-contract-satisfied",
+      "command": "validate",
+      "fixture": "fixtures/cases/topology-table-contract-satisfied",
+      "expected": {
+        "exit_code": 0,
+        "valid": true,
+        "issue_codes": [],
+        "not_judged": []
+      }
+    },
+    {
+      "id": "topology-table-contract-column-renamed",
+      "command": "validate",
+      "fixture": "fixtures/cases/topology-table-contract-column-renamed",
+      "expected": {
+        "exit_code": 1,
+        "valid": false,
+        "issue_codes": [
+          "topology.table_contract"
+        ],
+        "not_judged": []
+      },
+      "expected_issue_paths": [
+        "records/CONTEXT.md"
+      ],
+      "expected_issue_messages": [
+        "required machine-written table columns Stage under 'Overview' are missing"
+      ]
+    },
+    {
+      "id": "topology-link-unindexed",
+      "command": "validate",
+      "fixture": "fixtures/cases/topology-link-unindexed",
+      "expected": {
+        "exit_code": 1,
+        "valid": false,
+        "issue_codes": [
+          "topology.link_unindexed"
+        ],
+        "not_judged": []
+      },
+      "expected_issue_paths": [
+        "records/CONTEXT.md"
+      ],
+      "expected_issue_messages": [
+        "Link 'one/raw/' points to records/one/raw/, a folder outside this router's own entries with neither CONTEXT.md nor README.md"
+      ]
+    },
+    {
+      "id": "topology-link-instance-folder",
+      "command": "validate",
+      "fixture": "fixtures/cases/topology-link-instance-folder",
+      "expected": {
+        "exit_code": 0,
+        "valid": true,
+        "issue_codes": [],
+        "not_judged": []
+      }
+    },
+    {
+      "id": "topology-record-router-size-exempt",
+      "command": "validate",
+      "fixture": "fixtures/cases/topology-record-router-size-exempt",
+      "expected": {
+        "exit_code": 0,
+        "valid": true,
+        "issue_codes": [],
+        "not_judged": []
+      }
+    },
+    {
+      "id": "topology-record-period-sublevels",
+      "command": "validate",
+      "fixture": "fixtures/cases/topology-record-period-sublevels",
+      "expected": {
+        "exit_code": 0,
+        "valid": true,
+        "issue_codes": [],
+        "not_judged": []
+      }
+    },
+    {
+      "id": "run-producer-vorgang-removed",
+      "command": "validate",
+      "fixture": "fixtures/cases/run-producer-vorgang-removed",
+      "git_binding": true,
+      "expected": {
+        "exit_code": 1,
+        "valid": false,
+        "issue_codes": [
+          "binding.reference_missing"
+        ],
+        "not_judged": []
+      }
+    },
+    {
+      "id": "topology-context-map-router-size-exempt",
+      "command": "validate",
+      "fixture": "fixtures/cases/topology-context-map-router-size-exempt",
+      "expected": {
+        "exit_code": 0,
+        "valid": true,
+        "issue_codes": [],
+        "not_judged": []
+      }
     }
   ]
 }

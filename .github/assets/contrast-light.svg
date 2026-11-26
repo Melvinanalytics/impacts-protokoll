@@ -1,0 +1,91 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="412" viewBox="0 0 1200 412" role="img" aria-label="Ad-hoc Agent Workflows compared with IMPACTS Plain-File Workspace">
+  <defs>
+    <pattern id="grid" width="24" height="24" patternUnits="userSpaceOnUse">
+      <path d="M 24 0 L 0 0 0 24" fill="none" stroke="#efefe9" stroke-width="1"/>
+    </pattern>
+    <marker id="arrow-muted" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8.5 5 L 0 8.5 z" fill="#666660"/>
+    </marker>
+    <marker id="arrow-go" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8.5 5 L 0 8.5 z" fill="#2f7d32"/>
+    </marker>
+    <marker id="arrow-gate" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8.5 5 L 0 8.5 z" fill="#3346a8"/>
+    </marker>
+    <marker id="arrow-open" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8.5 5 L 0 8.5 z" fill="#c2410c"/>
+    </marker>
+    <style>
+      .sans { font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Helvetica, Arial, sans-serif; }
+      .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+    </style>
+  </defs>
+  <rect x="0.5" y="0.5" width="1199" height="411" rx="14" fill="#ffffff" stroke="#e1e1da" stroke-width="1"/>
+  
+  <text x="44" y="44" class="mono" font-size="11.5" font-weight="700" letter-spacing="1.2" fill="#666660">WHY PLAIN-FILE CONTRACTS</text>
+  <text x="44" y="72" class="sans" font-size="24" font-weight="700" fill="#121212">From opaque agent sessions to inspectable operations</text>
+
+  <!-- Left card -->
+  <rect x="44" y="96" width="528" height="292" rx="12" fill="#f8f8f5" stroke="#f5c5a8" stroke-width="1.2"/>
+  <rect x="44" y="96" width="528" height="42" rx="12" fill="#fff3eb"/>
+  <rect x="44" y="124" width="528" height="14" fill="#fff3eb"/>
+  <line x1="44" y1="138" x2="572" y2="138" stroke="#f5c5a8"/>
+  <circle cx="68" cy="117" r="5" fill="#c2410c"/>
+  <text x="84" y="122" class="sans" font-size="14" font-weight="700" fill="#c2410c">Ad-hoc Agent Workflows</text>
+  <text x="552" y="122" text-anchor="end" class="mono" font-size="11" fill="#c2410c">UNBOUND</text>
+
+  <!-- Center badge -->
+  <circle cx="600" cy="242" r="18" fill="#121212"/>
+  <text x="600" y="247" text-anchor="middle" class="sans" font-size="16" font-weight="700" fill="#ffffff">→</text>
+
+  <!-- Right card -->
+  <rect x="628" y="96" width="528" height="292" rx="12" fill="#f8f8f5" stroke="#b8dfb9" stroke-width="1.2"/>
+  <rect x="628" y="96" width="528" height="42" rx="12" fill="#ebf6ec"/>
+  <rect x="628" y="124" width="528" height="14" fill="#ebf6ec"/>
+  <line x1="628" y1="138" x2="1156" y2="138" stroke="#b8dfb9"/>
+  <circle cx="652" cy="117" r="5" fill="#2f7d32"/>
+  <text x="668" y="122" class="sans" font-size="14" font-weight="700" fill="#2f7d32">IMPACTS Plain-File Workspace</text>
+  <text x="1136" y="122" text-anchor="end" class="mono" font-size="11" fill="#2f7d32">VERIFIABLE</text>
+
+  <text x="68" y="166" class="mono" font-size="13" font-weight="700" fill="#c2410c">×</text>
+  <text x="88" y="166" class="sans" font-size="13.5" font-weight="700" fill="#121212">Sprawling prompt context</text>
+  <text x="88" y="184" class="sans" font-size="12" fill="#666660">Agents scan whole repos or rely on chat memory</text>
+
+  <text x="652" y="166" class="mono" font-size="13" font-weight="700" fill="#2f7d32">✓</text>
+  <text x="672" y="166" class="sans" font-size="13.5" font-weight="700" fill="#121212">Folder-directed routing</text>
+  <text x="672" y="184" class="sans" font-size="12" fill="#666660">CONTEXT.md maps each intent to exact files + exclusions</text>
+
+  <line x1="68" y1="196" x2="552" y2="196" stroke="#e1e1da"/>
+  <line x1="652" y1="196" x2="1136" y2="196" stroke="#e1e1da"/>
+
+  <text x="68" y="220" class="mono" font-size="13" font-weight="700" fill="#c2410c">×</text>
+  <text x="88" y="220" class="sans" font-size="13.5" font-weight="700" fill="#121212">Silent input drift</text>
+  <text x="88" y="238" class="sans" font-size="12" fill="#666660">Files change after a run; nobody knows what was read</text>
+
+  <text x="652" y="220" class="mono" font-size="13" font-weight="700" fill="#2f7d32">✓</text>
+  <text x="672" y="220" class="sans" font-size="13.5" font-weight="700" fill="#121212">Cryptographic binding</text>
+  <text x="672" y="238" class="sans" font-size="12" fill="#666660">git-tree OIDs + per-file sha256 on every input &amp; output</text>
+
+  <line x1="68" y1="250" x2="552" y2="250" stroke="#e1e1da"/>
+  <line x1="652" y1="250" x2="1136" y2="250" stroke="#e1e1da"/>
+
+  <text x="68" y="274" class="mono" font-size="13" font-weight="700" fill="#c2410c">×</text>
+  <text x="88" y="274" class="sans" font-size="13.5" font-weight="700" fill="#121212">Implicit approvals</text>
+  <text x="88" y="292" class="sans" font-size="12" fill="#666660">Chat text mixes suggestions with real decisions</text>
+
+  <text x="652" y="274" class="mono" font-size="13" font-weight="700" fill="#2f7d32">✓</text>
+  <text x="672" y="274" class="sans" font-size="13.5" font-weight="700" fill="#121212">Explicit human gates</text>
+  <text x="672" y="292" class="sans" font-size="12" fill="#666660">gate: human reserves decisions for named human:&lt;id&gt;</text>
+
+  <line x1="68" y1="304" x2="552" y2="304" stroke="#e1e1da"/>
+  <line x1="652" y1="304" x2="1136" y2="304" stroke="#e1e1da"/>
+
+  <text x="68" y="328" class="mono" font-size="13" font-weight="700" fill="#c2410c">×</text>
+  <text x="88" y="328" class="sans" font-size="13.5" font-weight="700" fill="#121212">Platform lock-in</text>
+  <text x="88" y="346" class="sans" font-size="12" fill="#666660">Workflow state trapped inside proprietary orchestrators</text>
+
+  <text x="652" y="328" class="mono" font-size="13" font-weight="700" fill="#2f7d32">✓</text>
+  <text x="672" y="328" class="sans" font-size="13.5" font-weight="700" fill="#121212">Plain files + Git</text>
+  <text x="672" y="346" class="sans" font-size="12" fill="#666660">Zero database, zero daemon; inspectable with any editor</text>
+
+</svg>

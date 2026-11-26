@@ -134,7 +134,7 @@ def open_offer(target: Path, values: dict, language: str) -> Path:
     with (root / "CONTEXT.md").open("a") as router:
         router.write("\nForm: grundlagen/ Knowledge Bundle per topic\n[Grundlagen](grundlagen/CONTEXT.md)\n")
     (root / "grundlagen/CONTEXT.md").write_text(
-        "# Synthetic offer sources\n\n" + "\n".join(f"[{name}]({name})" for name in sources) + "\n")
+        "# Synthetic offer sources\n\n## What to load\n\n## Overview\n\n" + "\n".join(f"[{name}]({name})" for name in sources) + "\n")
     result = "Menschlich freigegebener interner Angebotsentwurf" if de else "Human-approved internal offer draft"
     scope = f"Ziel: {result}. Versand ist nicht erlaubt." if de else f"Target: {result}. Sending is not permitted."
     acceptance = [
@@ -205,7 +205,7 @@ def open_offer(target: Path, values: dict, language: str) -> Path:
     (input_file(attempt, "material/herkunft.json")).write_text(encode(provenance))
     (attempt / "output").mkdir(parents=True, exist_ok=True)
     entry = {"arbeitsschritt_ref": "arbeitsschritt:entwerfen", "nummer": 1, "status": "aktiv", "gelesen": file_references(attempt, inputs)}
-    write_context(root / VORGANG / "CONTEXT.md", {"type": "vorgang", "protocol": "v0.7.0", "id": "vorgang:angebot-001", "hauptprozess_revision": "git-tree:" + git(root, "rev-parse", f"HEAD:{APP}"), "laufpfad": [entry]},
+    write_context(root / VORGANG / "CONTEXT.md", {"type": "vorgang", "protocol": "v0.8.0", "id": "vorgang:angebot-001", "hauptprozess_revision": "git-tree:" + git(root, "rev-parse", f"HEAD:{APP}"), "laufpfad": [entry]},
                   "Entwurf in Bearbeitung; Freigabe und Versand stehen aus." if de else "Draft in progress; approval and sending remain pending.")
     return root
 

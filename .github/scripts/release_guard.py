@@ -117,7 +117,35 @@ def verify_source_claims(root: Path, tag: str) -> str:
                 f"{relative} contains release versions {sorted(found)}, expected only {version}"
             )
     verify_translations(root)
+    verify_release_notes(root, tag)
     return version
+
+
+def release_section(text: str, tag: str) -> tuple[str, str] | None:
+    """The heading suffix and body of this version's CONTRIBUTING section; the tag workflow
+    copies the body into the Release (test_evidence.py release_scope)."""
+    match = re.search(r"^### " + re.escape(tag) + r"((?: [^\n]*)?)\n(.*?)(?=^#{1,3} |\Z)", text, re.M | re.S)
+    return (match[1], match[2]) if match else None
+
+
+def verify_release_notes(root: Path, tag: str) -> None:
+    path = root / "CONTRIBUTING.md"
+    section = release_section(path.read_text(encoding="utf-8"), tag) if path.is_file() else None
+    if section is None:
+        raise ReleaseGuardError(f"CONTRIBUTING.md has no section {tag}; write its release notes before tagging")
+    heading, body = section
+    if not body.strip():
+        raise ReleaseGuardError(f"CONTRIBUTING.md section {tag} is empty; write its release notes before tagging")
+    # A status line marks a draft: an optional quote, list or emphasis marker, optional
+    # "Status:", then "draft" or "Entwurf" ending the line or followed by punctuation, so
+    # "Draft Releases stay hidden" in a list item is prose, "- Draft" is a status.
+    mark = r"(?:\*\*|__|\*|_)?"
+    status = re.compile(r"[ \t]*(?:>[ \t]*)?(?:[-*+][ \t]+)?" + mark + r"[ \t]*(?:status[ \t]*" + mark
+                        + r"[ \t]*:[ \t]*" + mark + r"[ \t]*)?(?:draft|entwurf)(?=[ \t]*(?:$|[.:,;!)*_\u2013\u2014-]))", re.I)
+    if re.search(r"\b(?:draft|entwurf)\b", heading, re.I) or any(status.match(line) for line in body.splitlines()):
+        raise ReleaseGuardError(
+            f"CONTRIBUTING.md section {tag} is marked Draft; finish its release notes before tagging"
+        )
 
 
 def file_sha256(path: Path) -> str:
