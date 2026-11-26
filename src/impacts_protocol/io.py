@@ -196,6 +196,11 @@ def load_frontmatter_and_body(
         text = _read_text(path, root)
     except (OSError, UnicodeError) as error:
         raise ValueError(f"invalid Markdown: {error}") from error
+    return parse_frontmatter(text)
+
+
+def parse_frontmatter(text: str) -> tuple[dict[str, Any], str]:
+    """Split decoded context text into frontmatter and body; the one rule for every reader."""
     if text.startswith("\ufeff"):
         raise ValueError(
             "line 1: repeated UTF-8 BOM; remove extra leading BOMs (at most one is allowed)"

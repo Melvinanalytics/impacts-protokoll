@@ -23,8 +23,10 @@ from tempfile import TemporaryDirectory
 import yaml
 
 from .project import SUBJECT_HEADINGS
+from impacts_protocol.generator import WORKSPACE_FOLDERS
 from impacts_protocol.io import load_frontmatter
 from impacts_protocol.hashing import _has_symlink_component
+from impacts_protocol.topology import NAVIGATION, blocks_vorgaenge
 from impacts_protocol.validator import SCHEMA_REGISTRY, validate
 
 # Private on purpose: a bound revision must be materialized exactly as the validator does.
@@ -36,8 +38,7 @@ from .read import Unreadable, issue_list, read_hauptprozess, read_file, read_vor
 FORMAT = "impacts-view/5"
 TREE = re.compile(r"git-tree:([0-9a-f]{40}|[0-9a-f]{64})")
 SLUG = re.compile(r"[a-z0-9]+(?:-[a-z0-9]+)*")
-FOLDERS = ("hauptprozesse", "vorgaenge")
-IST = "analyse"  # source material, not a Core folder: kept out of FOLDERS and its issue filter
+IST = "analyse"  # source material, not a Core folder: kept out of WORKSPACE_FOLDERS and its issue filter
 
 
 def git(folder: Path, *args: str) -> str | None:
@@ -140,10 +141,18 @@ def hauptprozess_page(root: Path, algorithm: str | None = None) -> dict:
 
 
 def vorgang_issues(report, vorgang_rel: str) -> list[dict]:
-    """This Vorgang's issues plus every issue outside other Vorgänge and Hauptprozesse: a broken
-    workspace router or folder means Core may not have checked this Vorgang at all."""
+    """This Vorgang's issues plus every finding that blocks all Vorgänge (blocks_vorgaenge):
+    a broken workspace router or an unreadable or misplaced folder means Core may not have
+    checked this Vorgang at all. Navigation and router-shape findings never block; the
+    overview lists those outside the Core folders, a Hauptprozess page those inside it."""
     return issue_list([i for i in report.issues
-                       if i.path == vorgang_rel or i.path.startswith(vorgang_rel + "/") or not i.path.startswith(tuple(f + "/" for f in FOLDERS))])
+                       if i.path == vorgang_rel or i.path.startswith(vorgang_rel + "/") or blocks_vorgaenge(i)])
+
+
+def hauptprozess_notes(report, rel: str) -> list[dict]:
+    """Navigation findings inside one Hauptprozess folder, such as a broken body link: shown on
+    its page as notes; they never refuse it."""
+    return issue_list([i for i in report.issues if i.path.startswith(rel + "/") and i.code in NAVIGATION])
 
 
 def bound_hauptprozess(workspace: Path, revision: str, cache: dict) -> tuple[list[dict], list[dict]]:
@@ -329,7 +338,7 @@ def inventory(workspace: Path) -> dict[str, list[tuple[str, str]] | None]:
     Under analyse/ also each regular file's hash, since the view reads those
     files from the working tree (None: the folder does not exist)."""
     found = {}
-    for folder in FOLDERS:
+    for folder in WORKSPACE_FOLDERS:
         base = workspace / folder
         entries = sorted(base.iterdir()) if base.is_dir() and not base.is_symlink() else []
         found[folder] = [(p.name, "link" if p.is_symlink() else "dir" if p.is_dir() else "file") for p in entries]
@@ -406,6 +415,10 @@ def workspace_site(workspace: Path, only: set[str] | None = None) -> dict[str, d
         pages[page] = hauptprozess_page(workspace / rel, algorithm) if kind == "dir" else \
             refused("hauptprozess", {"hauptprozess": name, "folder": name, "revision": None, "vorgang": None, "tree": None},
                     entry_issues(report, rel, kind))
+        # Notes come from the workspace report, so only the workspace site carries them,
+        # on a shown and on a refused page alike.
+        if kind == "dir" and (notes := hauptprozess_notes(report, rel)):
+            pages[page]["notes"] = notes
         heads[name] = git(workspace, "rev-parse", f"{first[1]}:{rel}") if first[1] else None
     for name, kind in first[0]["vorgaenge"]:
         rel = f"vorgaenge/{name}"
@@ -419,9 +432,9 @@ def workspace_site(workspace: Path, only: set[str] | None = None) -> dict[str, d
         raise SystemExit("the workspace inventory, an Ist-Prozess file, a record or HEAD changed while the view was generated; "
                          "nothing was written")
     if only is None:
-        known = {f"{folder}/{name}" for folder in FOLDERS for name, _ in first[0][folder]}
+        known = {f"{folder}/{name}" for folder in WORKSPACE_FOLDERS for name, _ in first[0][folder]}
         workspace_issues = [i for i in issue_list(report.issues)
-                            if not i["path"].startswith(tuple(f + "/" for f in FOLDERS))
+                            if not i["path"].startswith(tuple(f + "/" for f in WORKSPACE_FOLDERS))
                             or "/".join(i["path"].split("/")[:2]) not in known]
         project.link_ist(pages)
         pages["index.html"] = project.overview(workspace.name, pages, heads, workspace_issues, bool(first[1]), skipped,

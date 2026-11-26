@@ -6,6 +6,9 @@ This table serves translators: it inventories finite labels parsed from readable
 |---|---|---|---|
 | External store declaration | `Ablage:` | — | `src/impacts_protocol/validator.py:_declared_stores`; first router body line label read by the validator (root router only) |
 | Folder form declaration | `Form:` | — | `src/impacts_protocol/topology.py:_read_level`, `src/impacts_protocol/topology.py:_declares_itself` |
+| Level router overview section | `Overview` | `Übersicht` | `src/impacts_protocol/topology.py:_check_sections` |
+| Level router load section | `What to load` | `Was laden` | `src/impacts_protocol/topology.py:_check_sections` |
+| Machine-written table declaration | `impacts:table-contract` | — | `src/impacts_protocol/topology.py:_check_table_contracts`; HTML comment in any router the validator reads and in Hauptprozess, Teilprozess and Arbeitsschritt bodies, as [Router size and table contracts](formwahl.md#router-size-and-table-contracts) lists them |
 | Working language setting | `Working language:` | — | `src/impacts_protocol/view/__init__.py:working_language` |
 | Flow headings | `flow` | `ablauf` | `src/impacts_protocol/view/page.html:headingText`, `src/impacts_protocol/view/project.py:annotate`, `src/impacts_protocol/view/project.py:sheet_parts`, `src/impacts_protocol/view/project.py:step_refs` |
 | Authority headings | `authority` | `befugnis` | `src/impacts_protocol/view/page.html:headingText`, `src/impacts_protocol/view/project.py:annotate`, `src/impacts_protocol/view/project.py:sheet_parts`, `src/impacts_protocol/view/project.py:step_refs` |

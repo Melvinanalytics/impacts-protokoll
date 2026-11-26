@@ -81,6 +81,11 @@ class ValidationReport:
     def valid(self) -> bool:
         return not self.issues
 
+    @property
+    def workspace_judged(self) -> bool:
+        """False when the workspace pin names another major.minor, so nothing beneath it was checked."""
+        return not any(item.path == "CONTEXT.md" and not item.reason for item in self.not_judged)
+
 
 ATTEMPT_PHASE = {"aktiv": "current", "wartend": "waiting", "abgeschlossen": "done", "abgebrochen": "stopped"}
 

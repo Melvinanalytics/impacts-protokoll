@@ -55,6 +55,17 @@ List the operations in order with their relevant data reads or changes; apply `0
 |---|---|---|---|---|
 | 1 | Open the check report | Select the case and report revision identified by the bound input and its provenance; use the declared input, not a newer live report | Case system: check report, read | Link, if helpful |
 
+### Tool sequence
+
+Only when this step runs tools. List the commands in the order they run, each with its exact call:
+
+1. Open: `<what to open, from which path or system>`
+2. Run: `<command with its inputs>`
+3. Take over: `<how the result enters the declared output>`
+4. Check before the step changes: `<check and its expected result>`
+
+Recovery paths for a failed command go into a linked side file beside this one, not into this list.
+
 ### Capability call
 
 Only for an earned Capability (`02_protocol/capabilities.md#capability-call`):

@@ -377,7 +377,7 @@ def _workspace(base: Path, hauptprozesse=("video",), vorgaenge=(("video-001", "v
                 (attempt / "output" / "ergebnis.md").write_text("fertig", encoding="utf-8")
                 entry |= {"gewaehlte_route": "weiter", "geschrieben": fixture_references(attempt, ["output/ergebnis.md"])}
             entries.append(entry)
-        write_context(vorgang / "CONTEXT.md", {"type": "vorgang", "protocol": "v0.7.0", "id": f"vorgang:{slug}",
+        write_context(vorgang / "CONTEXT.md", {"type": "vorgang", "protocol": "v0.8.0", "id": f"vorgang:{slug}",
                                            "hauptprozess_revision": f"git-tree:{revision}", "laufpfad": entries}, f"# {slug}")
     return root
 
@@ -408,6 +408,60 @@ def test_vorgang_outside_vorgaenge_is_refused(tmp_path):
     shutil.copytree(root / "vorgaenge" / "video-001", copy)
     with pytest.raises(SystemExit):
         selection.single_vorgang(copy / "CONTEXT.md")
+
+
+def test_navigation_only_finding_leaves_the_vorgang_page_readable(tmp_path):
+    """An unlinked root file is a navigation finding: Core still read and checked the Vorgang."""
+    root = _workspace(tmp_path)
+    (root / "stray.md").write_text("synthetic", encoding="utf-8")
+    report = selection.validate(root)
+    assert [issue.code for issue in report.issues] == ["topology.link_missing"]
+    model = selection.single_vorgang(root / "vorgaenge" / "video-001" / "CONTEXT.md")
+    assert model["issues"] == [] and model["nodes"]
+
+
+def test_link_finding_in_a_definition_shows_as_a_note_on_its_page(tmp_path):
+    root = _workspace(tmp_path)
+    step = root / "hauptprozesse" / "video" / "produktion" / "start" / "CONTEXT.md"
+    step.write_text(step.read_text(encoding="utf-8") + "\n[gone](missing.md)\n", encoding="utf-8")
+    git(root, "add", ".")
+    git(root, "commit", "-m", "broken link")
+    report = selection.validate(root)
+    assert [issue.code for issue in report.issues] == ["topology.link_broken"]
+    pages = selection.workspace_site(root)
+    page, = [model for model in pages.values() if model["kind"] == "hauptprozess"]
+    assert page["issues"] == [] and page["nodes"]
+    assert [(note["code"], note["path"]) for note in page["notes"]] == [("topology.link_broken", "hauptprozesse/video/produktion/start/CONTEXT.md")]
+    page["language"] = "en"
+    head = text_content(render_page(tmp_path, write.page_html(page))["head"])
+    assert "topology.link_broken" in head and "missing.md" in head and "Validator notes on navigation in this definition" in head
+    page["language"] = "de"
+    head = text_content(render_page(tmp_path, write.page_html(page))["head"])
+    assert "Hinweise des Validators zur Navigation in dieser Definition" in head
+
+
+def test_link_notes_also_show_on_a_refused_hauptprozess_page_in_german(tmp_path):
+    root = _workspace(tmp_path)
+    part = root / "hauptprozesse" / "video" / "produktion" / "CONTEXT.md"
+    part.write_text(part.read_text(encoding="utf-8").replace("teilprozess:produktion", "teilprozess:falsch") + "\n[gone](missing.md)\n", encoding="utf-8")
+    pages = selection.workspace_site(root)
+    page, = [model for model in pages.values() if model["kind"] == "hauptprozess"]
+    assert page["issues"] and "nodes" not in page
+    assert [note["code"] for note in page["notes"]] == ["topology.link_broken"]
+    page["language"] = "de"
+    sheet = text_content(render_page(tmp_path, write.page_html(page))["sheet"])
+    assert "blockieren die Ansicht nicht" in sheet and "missing.md" in sheet
+
+
+def test_unreadable_level_still_refuses_the_vorgang_page(tmp_path):
+    root = _workspace(tmp_path)
+    process = root / "ablauf" / "erster"
+    process.mkdir(parents=True)
+    (process / "notes.md").write_text("synthetic", encoding="utf-8")
+    router = root / "CONTEXT.md"
+    router.write_text(router.read_text(encoding="utf-8") + "\nForm: ablauf/ Pipeline per process\n[ablauf](ablauf/)\n", encoding="utf-8")
+    model = selection.single_vorgang(root / "vorgaenge" / "video-001" / "CONTEXT.md")
+    assert "nodes" not in model and {i["code"] for i in model["issues"]} == {"topology.shape"}
 
 
 def test_broken_workspace_router_blocks_the_vorgang(tmp_path):
@@ -1399,7 +1453,7 @@ def test_english_workspace_renders_english_words_and_model(tmp_path):
     (folder / "note.txt").write_text("Do not read", encoding="utf-8")
     (folder / "no-type.md").write_text("# No type", encoding="utf-8")
     (folder / "wrong-type.md").write_text("---\ntype: workspace\n---\n", encoding="utf-8")
-    (folder / "CONTEXT.md").write_text("[Request](request.md) · [Note](note.txt) · [Untyped](no-type.md) · [Other](wrong-type.md)\n", encoding="utf-8")
+    (folder / "CONTEXT.md").write_text("## What to load\n\n## Overview\n\n[Request](request.md) · [Note](note.txt) · [Untyped](no-type.md) · [Other](wrong-type.md)\n", encoding="utf-8")
     git(root, "init", "-b", "main")
     out = tmp_path / "english-view"
     assert run_cli(root, "--out", out) == 0

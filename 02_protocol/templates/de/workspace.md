@@ -1,9 +1,9 @@
 ---
 type: workspace
-protocol: v0.7.0
+protocol: v0.8.0
 ---
 
-<!-- Translation source: 02_protocol/templates/workspace.md; sha256: 935d4d9163773769dd88e375a5bc3a408891ec90823a848d39834f792562484a -->
+<!-- Translation source: 02_protocol/templates/workspace.md; sha256: 9957a4102625c3ffd6d7e1c83a5bc4bcf7577f7dc4f1bcced967fd04498f0bf6 -->
 
 Working language: de
 
@@ -43,6 +43,8 @@ Der Standardfall liest nur „Öffnen“; „Zusätzlich“ nennt einen Auslöse
 
 ### Reine Lese-Fragen
 
+Eine reine Lese-Frage geht direkt in diese Tabelle und überspringt die Arbeitsregeln oben.
+
 | Frage zu | Öffnen | Stoppbedingung |
 |---|---|---|
 | `<Grundlagen, Regeln, Angebote>` | `<Link auf grundlagen/CONTEXT.md>` | `<zitierte Regel und Evidenzstatus>` |
@@ -62,7 +64,7 @@ Form der Freigabezeile:
 
 `hauptprozess:<slug> cleared for real work: human:<id>, <YYYY-MM-DD>, git-tree:<oid>, tested by vorgang:<id>[, ...]`
 
-Nur die verantwortliche Person schreibt sie, in ihrem eigenen Commit oder diktiert und bestätigt. Eine abgelöste Zeile durchstreichen. Die Zeile authentifiziert niemanden; der Core prüft sie nicht.
+Nur die verantwortliche Person schreibt sie, in ihrem eigenen Commit oder diktiert und bestätigt. Eine abgelöste Zeile löschen; die Git-Historie behält sie. Die Zeile authentifiziert niemanden; der Core prüft sie nicht.
 
 Eine Importzeile je importiertem Tree, außerhalb dieses Trees; Erstimport und geprüfte Übernahme folgen `02_protocol/impacts-method.md#scale`:
 
@@ -74,7 +76,7 @@ Eine Importzeile je importiertem Tree, außerhalb dieses Trees; Erstimport und g
 2. Einen Hauptprozess an seiner gewählten Heimat entwerfen; `impacts template <art> --language de` liefert jede `CONTEXT.md`. Aus einem anderen Repository nur nach `02_protocol/impacts-method.md#scale` übernehmen; eine Übersetzung ist eine neue Revision.
 3. Vor einem echten Vorgang eine Freigabezeile für den aktuellen Hauptprozess-Tree finden. Fehlt sie, den verantwortlichen Kunden fragen und nichts öffnen. Einen synthetischen Testgegenstand als "synthetischer Testfall" markieren.
 4. Vorgänge nach `02_protocol/binding.md#execution` des gepinnten Releases ausführen.
-5. Für erforderliche Core-Konformität `impacts validate` ausführen. Es prüft nur Struktur (`02_protocol/ontology.md#enforcement-and-completion`) und ersetzt keine Fachprüfung und keine menschliche Entscheidung.
+5. Für erforderliche Core-Konformität `impacts validate` ausführen; ein Commit-Gate führt `impacts validate --require-judged` aus, das scheitert, wenn der Pin eine andere Release-Linie nennt. Es prüft nur Struktur (`02_protocol/ontology.md#enforcement-and-completion`) und ersetzt keine Fachprüfung und keine menschliche Entscheidung.
 6. Der gebundene Arbeitsschritt-Body liefert Prompt, Operationen, erlaubte Eingriffe und Checks; das eingerichtete Harness lädt deklarierte Eingaben und hält tatsächliche Ergebnisnachweise fest (`02_protocol/impacts-method.md#compose-an-arbeitsschritt`).
 7. Jeden wiederkehrenden Job ohne Core-Arbeitsschritt in einem Abschnitt seiner zuständigen Datei festhalten (`02_protocol/impacts-method.md#maintain-agent-instructions`).
 8. Agenten erfinden keine `Ablage`, schreiben keine Freigabezeile und erzeugen keine menschliche Entscheidung.

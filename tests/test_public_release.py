@@ -173,7 +173,7 @@ def test_candidate_public_contract_and_scope():
     contributing = (ROOT / "CONTRIBUTING.md").read_text()
     first_win = (ROOT / "FIRST-WIN.md").read_text()
 
-    assert version == "0.7.0"
+    assert version == "0.8.0"
     assert "report_version: 3" in readme
     assert "message" in readme and "diagnostic" in readme.lower()
     assert "does not authenticate people" in readme
@@ -192,9 +192,10 @@ def test_candidate_public_contract_and_scope():
     assert "Human-readable `message` values are diagnostic and may change" in readme
     assert "frozen `cases.json` corpus defines the issue codes" in readme
     assert "independent defects remain reportable" in readme
-    assert "Changing the report shape requires a `report_version` change" in readme
+    assert "Removing or renaming a key, or changing its meaning, requires a `report_version` change" in readme
+    assert "readers ignore keys they do not know" in readme
     assert "No separate protocol-specification version" in readme
-    assert "report_version` versions the report shape" in contributing
+    assert "[`report_version` rule](README.md#optional-technical-use)" in contributing
     assert "extra cases authored independently" in conformance
     assert "prior" in conformance.lower() and "source exposure" in conformance.lower()
     assert "Production use outside this inspected scope is unknown." in conformance

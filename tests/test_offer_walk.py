@@ -410,8 +410,8 @@ def bound_answer(tmp_path, request):
         path.write_bytes(data)
     with (repo / 'CONTEXT.md').open('a') as router:
         router.write('\nForm: 02_protocol/ Knowledge Bundle per protocol document\nForm: grundlagen/ Knowledge Bundle per topic\n[Protocol](02_protocol/CONTEXT.md) · [Grundlagen](grundlagen/CONTEXT.md)\n')
-    (repo / '02_protocol/CONTEXT.md').write_text('[Binding](binding.md) · [Method](impacts-method.md)\n')
-    (repo / 'grundlagen/CONTEXT.md').write_text('[Request](request.json) · [Origin](origin.md)\n')
+    (repo / '02_protocol/CONTEXT.md').write_text('## What to load\n\n## Overview\n\n[Binding](binding.md) · [Method](impacts-method.md)\n')
+    (repo / 'grundlagen/CONTEXT.md').write_text('## What to load\n\n## Overview\n\n[Request](request.json) · [Origin](origin.md)\n')
     step = app / 'produktion/start/CONTEXT.md'
     doc = read_context(step)
     doc['eingaben'] = ['material/request.json', 'material/request-herkunft.md']
@@ -506,7 +506,7 @@ def _start_answer_vorgang(fixture, operational=False, denied=False):
     (input_file(prep, 'material')).mkdir(parents=True)
     request = {'revision': revision, 'access': {name: not denied for name in case_names}}
     (input_file(prep, 'material/request.json')).write_text(json.dumps(request) + '\n')
-    metadata = {'type': 'vorgang', 'protocol': 'v0.7.0', 'id': 'vorgang:answer-001', 'hauptprozess_revision': 'git-tree:' + tree,
+    metadata = {'type': 'vorgang', 'protocol': 'v0.8.0', 'id': 'vorgang:answer-001', 'hauptprozess_revision': 'git-tree:' + tree,
                 'laufpfad': [{'arbeitsschritt_ref': 'arbeitsschritt:prepare', 'nummer': 1, 'status': 'aktiv',
                              'gelesen': file_references(prep, ['material/request.json'])}]}
     write_context(vorgang / 'CONTEXT.md', metadata, 'Synthetic preparation active; no business action permitted.')
@@ -775,7 +775,7 @@ def test_reviewed_positioning_repoint_changes_future_binding_only(tmp_path):
     domain.mkdir()
     with (repo / 'CONTEXT.md').open('a') as router:
         router.write('\nForm: grundlagen/ Knowledge Bundle per topic\n[Grundlagen](grundlagen/CONTEXT.md)\n')
-    (domain / 'CONTEXT.md').write_text('[Campaign](campaign.md) · [Positioning](positioning.md)\n')
+    (domain / 'CONTEXT.md').write_text('## What to load\n\n## Overview\n\n[Campaign](campaign.md) · [Positioning](positioning.md)\n')
     (domain / 'campaign.md').write_text('Synthetic historical campaign: broad enterprise positioning.\n')
     (domain / 'positioning.md').write_text('Synthetic current positioning: small teams, inspectable work. Assumed approval in this fixture only.\n')
     write_context(step, definition, 'Read grundlagen/campaign.md for this campaign interpretation; this is not current policy.')
@@ -791,7 +791,7 @@ def test_reviewed_positioning_repoint_changes_future_binding_only(tmp_path):
         (input_file(attempt, 'material')).mkdir(parents=True)
         (input_file(attempt, 'material/positioning.md')).write_bytes((domain / origin).read_bytes())
         (input_file(attempt, 'material/positioning-herkunft.md')).write_text(json.dumps({'origin': 'grundlagen/' + origin, 'revision': walk.git(repo, 'rev-parse', 'HEAD').strip()}) + '\n')
-        write_context(vorgang / 'CONTEXT.md', {'type': 'vorgang', 'protocol': 'v0.7.0', 'id': 'vorgang:' + slug,
+        write_context(vorgang / 'CONTEXT.md', {'type': 'vorgang', 'protocol': 'v0.8.0', 'id': 'vorgang:' + slug,
             'hauptprozess_revision': 'git-tree:' + walk.git(repo, 'rev-parse', 'HEAD:hauptprozesse/video').strip(),
             'laufpfad': [{'arbeitsschritt_ref': 'arbeitsschritt:start', 'nummer': 1,
                          'status': 'aktiv', 'gelesen': file_references(attempt, definition['eingaben'])}]},

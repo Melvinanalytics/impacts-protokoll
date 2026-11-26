@@ -37,13 +37,13 @@ def test_status_counts_header_and_external_pointer(tmp_path, capsys, reference_i
     assert report.judged == expected
     assert main(["validate", str(root)]) == 0
     assert capsys.readouterr().out.splitlines()[0] == (
-        "impacts validate v0.7.0 against pin v0.7.0: 1 Hauptprozesse, 1 Teilprozesse, "
+        "impacts validate v0.8.0 against pin v0.8.0: 1 Hauptprozesse, 1 Teilprozesse, "
         "2 Arbeitsschritte, 1 Vorgänge, 2 Versuche judged; 0 Vorgänge not judged; 0 definition trees outside hauptprozesse/"
     )
     assert main(["validate", str(root), "--json"]) == 0
     data = json.loads(capsys.readouterr().out)
     assert data["judged"] == expected
-    assert data["release"] == data["pin"] == "v0.7.0"
+    assert data["release"] == data["pin"] == "v0.8.0"
     assert data["superseded"] == []
     assert data["external_references"] == [{"vorgang": "vorgaenge/test/CONTEXT.md", "pointer": f"/laufpfad/0/gelesen/{reference_index}"}]
     assert data["external_references_not_verified"] == 1
@@ -61,7 +61,7 @@ def test_excluded_definition_trees_are_reported_without_judging_or_following_lin
             form = {"analyse": "Context Map per candidate", "applications": "Pipeline per job",
                     "other": "Pipeline per job", "notes": "Record Library per note"}[home]
             router.write(f"\nForm: {home}/ {form}\n[{home}]({home}/)\n")
-        (root / home / "CONTEXT.md").write_text(f"[Definition]({entry}/)\n")
+        (root / home / "CONTEXT.md").write_text(f"## What to load\n\n## Overview\n\n[Definition]({entry}/)\n")
     (root / ".linked").symlink_to(root / "analyse", target_is_directory=True)
     report = validate(root)
     assert [(issue.code, issue.path) for issue in report.issues] == [
@@ -131,6 +131,28 @@ def test_successor_can_restart_at_entry_or_waiting_predecessor_position(tmp_path
     assert json.loads(capsys.readouterr().out)["superseded"] == ["vorgaenge/test/CONTEXT.md"]
 
 
+def test_navigation_finding_keeps_the_superseded_relation(tmp_path):
+    root, case, first, second = pair(tmp_path)
+    second["status"] = "wartend"
+    second["wiedereinstieg"] = {"ausloeser": "Synthetic response",
+                               "continuation_ref": "vorgaenge/test/start/001/output/ergebnis.md"}
+    replace_context(case / "CONTEXT.md", dict(read_context(case / "CONTEXT.md"), laufpfad=[first, second]))
+    revision = read_context(case / "CONTEXT.md")["hauptprozess_revision"].removeprefix("git-tree:")
+    attempt = make_attempt(root / "vorgaenge/restart", "start", 1, input_bytes="source")
+    write_vorgang(root, "restart", revision, [entry_active("start", 1, attempt)])
+    context = root / "vorgaenge/restart/CONTEXT.md"
+    replace_context(context, dict(read_context(context), vorgaenger="vorgaenge/test/CONTEXT.md"))
+    (root / "stray.md").write_text("synthetic", encoding="utf-8")
+    report = validate(root)
+    assert [issue.code for issue in report.issues] == ["topology.link_missing"]
+    assert report.superseded == ("vorgaenge/test/CONTEXT.md",)
+    (root / "stray.md").unlink()
+    (root / "odd").mkdir()
+    (root / "odd" / "x.md").write_text("synthetic", encoding="utf-8")
+    report = validate(root)
+    assert [issue.code for issue in report.issues] == ["topology.form_missing"] and report.superseded == ()
+
+
 def test_missing_pin_names_the_fix_and_rule(tmp_path, capsys):
     root, _ = committed_workspace(tmp_path)
     replace_context(root / "CONTEXT.md", {"type": "workspace"})
@@ -138,7 +160,7 @@ def test_missing_pin_names_the_fix_and_rule(tmp_path, capsys):
     lines = capsys.readouterr().out.splitlines()
     assert "against pin none" in lines[0]
     assert lines[1] == (
-        "schema.invalid: CONTEXT.md: protocol pin missing; add protocol: v0.7.0 to the frontmatter "
+        "schema.invalid: CONTEXT.md: protocol pin missing; add protocol: v0.8.0 to the frontmatter "
         "(02_protocol/binding.md#validation-issue-codes)"
     )
 
@@ -192,7 +214,7 @@ def test_all_emitted_rule_anchors_resolve_in_protocol_docs():
 @pytest.mark.parametrize("field", ["gelesen", "geschrieben"])
 def test_external_store_requires_exact_root_body_declaration(tmp_path, declaration, valid, field):
     root, case, first, second = pair(tmp_path)
-    write_context(root / "CONTEXT.md", {"type": "workspace", "protocol": "v0.7.0"}, declaration + "\nForm: records/ Record Library per source record\n[Records](records/CONTEXT.md)\n")
+    write_context(root / "CONTEXT.md", {"type": "workspace", "protocol": "v0.8.0"}, declaration + "\nForm: records/ Record Library per source record\n[Records](records/CONTEXT.md)\n")
     pointer = {"ablage": "synthetic-store", "schluessel": "unavailable-object", "sha256": "sha256:" + "a" * 64}
     if field == "gelesen":
         first[field] = [dict(pointer, eingabe="input/auftrag.md")]
@@ -228,7 +250,7 @@ def test_process_rules_select_specific_anchor_or_family_fallback(code, anchor):
 
 def test_undeclared_store_issue_names_each_reference_position(tmp_path):
     root, case, first, second = pair(tmp_path)
-    write_context(root / "CONTEXT.md", {"type": "workspace", "protocol": "v0.7.0"}, "")
+    write_context(root / "CONTEXT.md", {"type": "workspace", "protocol": "v0.8.0"}, "")
     pointer = {"ablage": "synthetic-store", "schluessel": "unavailable-object", "sha256": "sha256:" + "a" * 64}
     first["gelesen"] = [dict(pointer, eingabe="input/auftrag.md"), dict(pointer, eingabe="input/auftrag.md", schluessel="other")]
     replace_context(case / "CONTEXT.md", dict(read_context(case / "CONTEXT.md"), laufpfad=[first, second]))

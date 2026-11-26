@@ -74,7 +74,7 @@ if command == "validate":
     report["not_judged"] = []
     report["not_judged_counts"] = {{"vorgang": 0, "definition_tree": 0}}
     report["external_references_not_verified"] = 0
-    report.update(release="v0.4.0", pin="v0.4.0", judged={{"hauptprozess": 1, "teilprozess": 1, "arbeitsschritt": 2, "vorgang": 0, "versuch": 0}}, superseded=[], external_references=[], held=[])
+    report.update(release="v0.4.0", pin="v0.4.0", judged={{"hauptprozess": 1, "teilprozess": 1, "arbeitsschritt": 2, "vorgang": 0, "versuch": 0}}, superseded=[], external_references=[], held=[], workspace_judged=True)
 else:
     report["attempt"] = sys.argv[2]
     report["surfaces"] = sys.argv[3:-1]
@@ -122,7 +122,7 @@ report = {
     "root": sys.argv[2],
     "valid": True,
     "not_judged": [], "not_judged_counts": {"vorgang": 0, "definition_tree": 0}, "external_references_not_verified": 0, "release": "v0.4.0", "pin": "v0.4.0",
-        "judged": {"hauptprozess": 1, "teilprozess": 1, "arbeitsschritt": 2, "vorgang": 0, "versuch": 0}, "held": [], "superseded": [], "external_references": [],
+        "judged": {"hauptprozess": 1, "teilprozess": 1, "arbeitsschritt": 2, "vorgang": 0, "versuch": 0}, "held": [], "superseded": [], "external_references": [], "workspace_judged": True,
     "issues": [],
 }
 print(json.dumps(report, separators=(",", ":")))
@@ -210,7 +210,7 @@ def test_unicode_equivalent_folder_spellings_keep_distinct_issue_occurrences(tmp
         "root": str(root),
         "valid": False,
         "not_judged": [], "not_judged_counts": {"vorgang": 0, "definition_tree": 0}, "external_references_not_verified": 0, "release": "v0.4.0", "pin": "v0.4.0",
-        "judged": {"hauptprozess": 1, "teilprozess": 1, "arbeitsschritt": 2, "vorgang": 0, "versuch": 0}, "held": [], "superseded": [], "external_references": [],
+        "judged": {"hauptprozess": 1, "teilprozess": 1, "arbeitsschritt": 2, "vorgang": 0, "versuch": 0}, "held": [], "superseded": [], "external_references": [], "workspace_judged": True,
         "issues": [
             {
                 "code": "structure.level",
@@ -489,7 +489,7 @@ def test_runner_checks_frozen_issue_explanations():
     report = {"report_version": 3, "command": "validate", "tool": {
         "name": "synthetic", "version": None, "version_source": "test"},
         "root": "/synthetic", "valid": False, "not_judged": [], "not_judged_counts": {"vorgang": 0, "definition_tree": 0}, "external_references_not_verified": 0, "release": "v0.4.0", "pin": "v0.4.0",
-        "judged": {"hauptprozess": 1, "teilprozess": 1, "arbeitsschritt": 2, "vorgang": 0, "versuch": 0}, "held": [], "superseded": [], "external_references": [], "issues": [{
+        "judged": {"hauptprozess": 1, "teilprozess": 1, "arbeitsschritt": 2, "vorgang": 0, "versuch": 0}, "held": [], "superseded": [], "external_references": [], "workspace_judged": True, "issues": [{
             "code": "structure.level", "path": "24-x",
             "message": "misleading numeric prefix diagnostic", "rule": "binding.md#hauptprozess-tree-rules"}]}
     with pytest.raises(runner.ConformanceError, match="frozen explanations"):
@@ -506,11 +506,12 @@ def emitted_issue_codes(source):
         for node in ast.walk(ast.parse(path.read_text())):
             if not isinstance(node, ast.Call):
                 continue
-            name = getattr(node.func, "id", None)
-            index = 1 if name == "_add" else 0 if name in {"Issue", "HashSurfaceError"} else None
+            name = getattr(node.func, "id", None) or getattr(node.func, "attr", None)
+            index = 1 if name == "_add" else 0 if name in {"Issue", "HashSurfaceError", "add"} else None
             if index is not None and len(node.args) > index:
                 value = node.args[index]
-                if isinstance(value, ast.Constant) and isinstance(value.value, str):
+                # A set's .add of an ordinary string is no issue code; codes are family.name.
+                if isinstance(value, ast.Constant) and isinstance(value.value, str) and (name != "add" or re.fullmatch(r"[a-z]+\.[a-z_]+", value.value)):
                     codes.add(value.value)
     return codes
 
@@ -571,3 +572,39 @@ def test_runner_rejects_empty_issue_rule(tmp_path):
     result = _run(tmp_path, source, case="application-unresolved-route")
     assert result.returncode == 1
     assert "issue rule must be a non-empty Markdown anchor" in result.stderr
+
+
+@pytest.mark.parametrize("case_id,refused", [
+    ("topology-navigation-vorgang-readable", None), ("topology-structure-vorgang-refused", "topology.shape")])
+def test_frozen_topology_case_decides_the_vorgang_page(tmp_path, case_id, refused):
+    """The runner covers validate only; the Vorgang page result is the reference view's contract."""
+    from impacts_protocol.view import selection
+    runner = _runner_module()
+    manifest, cases = runner._load_manifest()
+    case, = [case for case in cases if case["id"] == case_id]
+    root = tmp_path / "workspace"
+    root.mkdir()
+    runner._prepare_workspace(case, manifest, root)
+    model = selection.single_vorgang(root / "vorgaenge" / "approval-001" / "CONTEXT.md")
+    if refused is None:
+        assert model["issues"] == [] and model["nodes"]
+    else:
+        assert "nodes" not in model and {issue["code"] for issue in model["issues"]} == {refused}
+
+
+@pytest.mark.parametrize("workspace_judged", [True, "false"])
+def test_runner_rejects_workspace_judged_that_contradicts_the_root_skip(workspace_judged):
+    runner = _runner_module()
+    skipped = [{"path": "CONTEXT.md", "protocol": "v0.3.31"}]
+    case = {"command": "validate", "expected": {
+        "exit_code": 0, "valid": True, "issue_codes": [], "not_judged": skipped}}
+    report = {"report_version": 3, "command": "validate", "tool": {
+        "name": "synthetic", "version": None, "version_source": "test"},
+        "root": "/synthetic", "valid": True, "not_judged": skipped, "not_judged_counts": {"vorgang": 0, "definition_tree": 0},
+        "external_references_not_verified": 0, "release": "v0.8.0", "pin": "v0.3.31",
+        "judged": {"hauptprozess": 0, "teilprozess": 0, "arbeitsschritt": 0, "vorgang": 0, "versuch": 0}, "held": [], "superseded": [],
+        "external_references": [], "workspace_judged": workspace_judged, "issues": []}
+    with pytest.raises(runner.ConformanceError, match="workspace_judged"):
+        runner._check_report(report, case, Path("/synthetic"), 0)
+    report["workspace_judged"] = False
+    runner._check_report(report, case, Path("/synthetic"), 0)

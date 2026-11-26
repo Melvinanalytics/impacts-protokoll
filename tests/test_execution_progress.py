@@ -145,7 +145,7 @@ def test_one_subject_crosses_offer_and_study_without_an_award_gate(tmp_path):
     record = root / 'records/lots/A/CONTEXT.md'
     record.parent.mkdir(parents=True)
     record.write_text('Identity: lot-A\nStage: awarded\nVorgänge: offer-A, study-A\nCommitments: study order citing award.md\nDecisions: [selection-11](../../decisions/selection-11.md)\nOutcome: award.md, received 2026-11-11, synthetic\n')
-    (root / 'records/lots/CONTEXT.md').write_text('Identity rule: issuer and lot ID. Stage words: short-listed, offered, awarded, studied.\n\n[A](A/) · [B](B/) · [C](C/)\n')
+    (root / 'records/lots/CONTEXT.md').write_text('## What to load\n\n## Overview\n\nIdentity rule: issuer and lot ID. Stage words: short-listed, offered, awarded, studied.\n\n[A](A/) · [B](B/) · [C](C/)\n')
     decision = root / 'records/decisions/selection-11.md'
     decision.parent.mkdir(parents=True)
     decision.write_text('Synthetic selection-11. Customer, 2026-11-10: yes for lots A and B, no for C. Cites round-11 line A.\n')
@@ -164,8 +164,8 @@ def test_one_subject_crosses_offer_and_study_without_an_award_gate(tmp_path):
                             'Input: grundlagen/preferences.md; sha256:' + hashlib.sha256(preferences.read_bytes()).hexdigest() + '\n')
     with (root / 'CONTEXT.md').open('a') as router:
         router.write('\nForm: records/ Record Library per record kind\nForm: grundlagen/ Knowledge Bundle per topic\n[Records](records/CONTEXT.md) · [Grundlagen](grundlagen/CONTEXT.md)\n')
-    (root / 'grundlagen/CONTEXT.md').write_text('[Preferences](preferences.md)\n')
-    (root / 'records/CONTEXT.md').write_text('Form: lots/ Record Library per lot\nForm: decisions/ Record Library per decision\nForm: rounds/ Record Library per round\n[Lots](lots/) · [Decisions](decisions/) · [Rounds](rounds/)\n')
+    (root / 'grundlagen/CONTEXT.md').write_text('## What to load\n\n## Overview\n\n[Preferences](preferences.md)\n')
+    (root / 'records/CONTEXT.md').write_text('## What to load\n\n## Overview\n\nForm: lots/ Record Library per lot\nForm: decisions/ Record Library per decision\nForm: rounds/ Record Library per round\n[Lots](lots/) · [Decisions](decisions/) · [Rounds](rounds/)\n')
     award = root / 'records/lots/A/award.md'
     award.write_text('Synthetic received award from outside buyer for lot A, 2026-11-11.\n')
     for name, slots in [('offer', ['records/rounds/round-11.md', 'records/decisions/selection-11.md']),
@@ -224,3 +224,20 @@ def test_owner_end_does_not_require_unfinished_job_outputs(tmp_path, gate):
                  geschrieben=file_references(root, [decision.relative_to(root).as_posix()]))
     replace_context(case / 'CONTEXT.md', dict(read_context(case / 'CONTEXT.md'), laufpfad=entries))
     assert validate(root).valid, validate(root).issues
+
+
+@pytest.mark.parametrize('fork', ['v3', 'a-fork'])
+def test_not_judged_successor_still_blocks_a_second_successor(tmp_path, fork):
+    from tests.support import entry_active
+    root, revision = committed_workspace(tmp_path)
+    attempt = make_attempt(root / 'vorgaenge/v1', 'start', 1, input_bytes='source', output_bytes='result')
+    first = write_vorgang(root, 'v1', revision, [entry_completed('start', 1, attempt, 'weiter')])
+    replace_context(first / 'CONTEXT.md', dict(read_context(first / 'CONTEXT.md'), protocol='v0.7.0'))
+    tree = read_context(first / 'CONTEXT.md')['hauptprozess_revision'].removeprefix('git-tree:')
+    for name, pin in (('v2', 'v0.7.0'), (fork, None)):
+        case = write_vorgang(root, name, tree, [entry_active('pruefen', 1, make_attempt(root / f'vorgaenge/{name}', 'pruefen', 1, input_bytes='source'))])
+        meta = dict(read_context(case / 'CONTEXT.md'), vorgaenger='vorgaenge/v1/CONTEXT.md')
+        replace_context(case / 'CONTEXT.md', dict(meta, protocol=pin) if pin else meta)
+    report = validate(root)
+    assert [(i.code, i.path) for i in report.issues] == [('execution.attempt', f'vorgaenge/{fork}/CONTEXT.md')]
+    assert report.superseded == ()

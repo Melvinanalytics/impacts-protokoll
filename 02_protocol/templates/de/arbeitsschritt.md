@@ -14,7 +14,7 @@ routen:
 customer_touchpoint: sacred  # standard oder sacred: 02_protocol/impacts-method.md#identify; ohne Kundenkontakt diese Zeile löschen
 ---
 
-<!-- Translation source: 02_protocol/templates/arbeitsschritt.md; sha256: fc07e138f969a2f4fb4dab3e3c0e6a71323c7d94e024bccfe4e51684f01b0b65 -->
+<!-- Translation source: 02_protocol/templates/arbeitsschritt.md; sha256: 16f8f0fc235cf4b913284eda59db1358f8bc9a3c349518a172903cc19aa0b0ce -->
 
 # Entscheiden
 
@@ -56,6 +56,17 @@ Die Operationen in Reihenfolge mit ihren relevanten Lese- oder Änderungsvorgän
 | Nr. | Handgriff | Detail | System und Daten | Screenshot |
 |---|---|---|---|---|
 | 1 | Prüfbericht öffnen | Fall und Berichtsfassung aus gebundener Eingabe und Herkunftsnachweis wählen; die deklarierte Eingabe nutzen, keinen neueren Live-Bericht | Fachanwendung: Prüfbericht, lesen | Link, falls hilfreich |
+
+### Werkzeugfolge
+
+Nur wenn dieser Schritt Werkzeuge ausführt. Die Befehle in der Reihenfolge aufführen, in der sie laufen, jeweils mit ihrem genauen Aufruf:
+
+1. Öffnen: `<was zu öffnen ist, aus welchem Pfad oder System>`
+2. Ausführen: `<Befehl mit seinen Eingaben>`
+3. Übernehmen: `<wie das Ergebnis in die deklarierte Ausgabe gelangt>`
+4. Prüfen vor dem Schrittwechsel: `<Prüfung und ihr erwartetes Ergebnis>`
+
+Wiederherstellungswege für einen fehlgeschlagenen Befehl gehören in eine verlinkte Nebendatei neben dieser, nicht in diese Liste.
 
 ### Capability-Aufruf
 

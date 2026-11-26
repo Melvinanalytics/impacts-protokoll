@@ -70,6 +70,12 @@ def inventory():
         for name in names:
             assert name in source, (path, function, name)
         add(names, path, function)
+    # Router sections and the table-contract marker are module-level constants of topology.py.
+    from impacts_protocol import topology
+    assert topology.SECTIONS == (("Overview", "Übersicht"), ("What to load", "Was laden"))
+    add([label for pair in topology.SECTIONS for label in pair], 'src/impacts_protocol/topology.py', '_check_sections')
+    assert 'impacts:table-contract' in topology.CONTRACT.pattern
+    add(['impacts:table-contract'], 'src/impacts_protocol/topology.py', '_check_table_contracts')
     # The working-language setting is a module-level pattern read by working_language().
     from impacts_protocol import view as view_package
     assert view_package.SETTING.pattern.startswith('^Working language: ')
@@ -98,7 +104,7 @@ def spellings():
     names = ['Ablage:', 'Form:', 'Working language:', 'Quell-Eingabe', 'Datenart', 'Subject', 'Gegenstand', 'Stage', 'Aufruf-ID',
              'Capability-Pfad', 'Capability-Revision', 'Operation', 'Herkunft', 'Ursprung',
              'Stand', 'Erforderliche Kontrolle', 'Loop bound', 'Bei Route', 'Befund: fehlt',
-             'Pflichtfelder']
+             'Pflichtfelder', 'Overview', 'Übersicht', 'What to load', 'Was laden', 'impacts:table-contract']
     names += list(project.DATA_KINDS)
     names += list(literal(COLD, 'recognized', '_fields'))
     return {name.casefold(): name for name in names}

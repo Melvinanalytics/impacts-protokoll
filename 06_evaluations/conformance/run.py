@@ -552,7 +552,7 @@ def _check_report(report: dict[str, Any], case: dict[str, Any], root: Path, retu
     expected = case["expected"]
     command = case["command"]
     if command == "validate":
-        required = {"report_version", "command", "tool", "root", "valid", "issues", "not_judged", "external_references_not_verified", "release", "pin", "judged", "not_judged_counts", "superseded", "external_references", "held"}
+        required = {"report_version", "command", "tool", "root", "valid", "issues", "not_judged", "external_references_not_verified", "release", "pin", "judged", "not_judged_counts", "superseded", "external_references", "held", "workspace_judged"}
     else:
         required = {"report_version", "command", "tool", "attempt", "surfaces", "references", "issues"}
     if set(report) != required:
@@ -651,6 +651,9 @@ def _check_report(report: dict[str, Any], case: dict[str, Any], root: Path, retu
         if (not isinstance(counts, dict) or counts != expected_counts
                 or any(type(value) is not int for value in counts.values())):
             raise ConformanceError("not_judged_counts must match the skipped Vorgänge and definition trees")
+        if report["workspace_judged"] is not (not any(
+                item["path"] == "CONTEXT.md" and not item.get("reason") for item in report["not_judged"])):
+            raise ConformanceError("workspace_judged must be false exactly when the root is not judged")
         valid = report["valid"]
         if type(valid) is not bool:
             raise ConformanceError("validate valid field must be boolean")

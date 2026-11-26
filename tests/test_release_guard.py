@@ -35,12 +35,99 @@ def test_current_source_claims_match_current_tag(tmp_path):
             path.read_text(encoding="utf-8"),
         ), encoding="utf-8")
     version = guard.project_version(tmp_path)
+    # Synthetic final notes: the real section may still be a draft on a release branch.
+    (tmp_path / "CONTRIBUTING.md").write_text(f"### v{version}\n\nSynthetic final notes.\n")
     assert guard.verify_source_claims(tmp_path, f"v{version}") == version
     source, _ = guard.PAIRS[0]
     with (tmp_path / source).open("a", encoding="utf-8") as handle:
         handle.write("\nChanged rule.\n")
     with pytest.raises(guard.ReleaseGuardError, match="Stale translations"):
         guard.verify_source_claims(tmp_path, f"v{version}")
+
+
+def _release_source(tmp_path, notes):
+    (tmp_path / "pyproject.toml").write_text('[project]\nname = "x"\nversion = "0.9.1"\n')
+    for relative in guard.DOC_PATHS:
+        (tmp_path / relative).write_text("Edition v0.9.1 [v0.9.1 release](https://example.invalid/releases/tag/v0.9.1) impacts_protocol-0.9.1-py3-none-any.whl\n")
+    for source, target in guard.PAIRS:
+        (tmp_path / source).parent.mkdir(parents=True, exist_ok=True)
+        (tmp_path / source).write_text("Synthetic source\n")
+        (tmp_path / target).parent.mkdir(parents=True, exist_ok=True)
+        (tmp_path / target).write_text(f"<!-- Translation source: {source}; sha256: {guard.file_sha256(tmp_path / source)} -->\n")
+    (tmp_path / "CONTRIBUTING.md").write_text(notes)
+
+
+def test_draft_release_notes_cannot_pass_the_source_guard(tmp_path):
+    _release_source(tmp_path, "# Contributing\n\n### v0.9.1\n\nDraft, not released. Synthetic change.\n\n### v0.9.0\n\nOld.\n")
+    with pytest.raises(guard.ReleaseGuardError, match="CONTRIBUTING.md section v0.9.1 is marked Draft"):
+        guard.verify_source_claims(tmp_path, "v0.9.1")
+
+
+@pytest.mark.parametrize("notes", [
+    "### v0.9.1\n\nDRAFT. Synthetic change.\n",
+    "### v0.9.1\n\ndraft, not released. Synthetic change.\n",
+    "### v0.9.1\n\n**Draft:** synthetic change.\n",
+    "### v0.9.1 (Draft)\n\nSynthetic change.\n",
+])
+def test_draft_marker_is_refused_in_any_case_and_in_the_heading(tmp_path, notes):
+    _release_source(tmp_path, "# Contributing\n\n" + notes + "\n### v0.9.0\n\nOld.\n")
+    with pytest.raises(guard.ReleaseGuardError, match="marked Draft"):
+        guard.verify_source_claims(tmp_path, "v0.9.1")
+
+
+@pytest.mark.parametrize("notes", [
+    "### v0.9.1\n\nSynthetic change.\n\nStatus: draft\n",
+    "### v0.9.1\n\nSynthetic change.\n\n**Status:** Draft\n",
+    "### v0.9.1\n\nSynthetic change.\n__Draft__ until checked.\n",
+])
+def test_draft_status_line_anywhere_in_the_section_is_refused(tmp_path, notes):
+    _release_source(tmp_path, "# Contributing\n\n" + notes + "\n### v0.9.0\n\nOld.\n")
+    with pytest.raises(guard.ReleaseGuardError, match="marked Draft"):
+        guard.verify_source_claims(tmp_path, "v0.9.1")
+
+
+@pytest.mark.parametrize("line", ["*Draft*", "> Draft", "- Draft", "Status: Draft \u2013 do not publish", "Entwurf, nicht veröffentlicht.", "**Status:** Entwurf"])
+def test_more_draft_status_spellings_are_refused(tmp_path, line):
+    _release_source(tmp_path, f"# Contributing\n\n### v0.9.1\n\nSynthetic change.\n\n{line}\n\n### v0.9.0\n\nOld.\n")
+    with pytest.raises(guard.ReleaseGuardError, match="marked Draft"):
+        guard.verify_source_claims(tmp_path, "v0.9.1")
+
+
+def test_german_draft_heading_is_refused(tmp_path):
+    _release_source(tmp_path, "# Contributing\n\n### v0.9.1 (Entwurf)\n\nSynthetic change.\n")
+    with pytest.raises(guard.ReleaseGuardError, match="marked Draft"):
+        guard.verify_source_claims(tmp_path, "v0.9.1")
+
+
+def test_empty_release_section_is_refused(tmp_path):
+    _release_source(tmp_path, "# Contributing\n\n### v0.9.1\n\n### v0.9.0\n\nOld.\n")
+    with pytest.raises(guard.ReleaseGuardError, match="section v0.9.1 is empty"):
+        guard.verify_source_claims(tmp_path, "v0.9.1")
+
+
+def test_missing_release_section_is_refused(tmp_path):
+    _release_source(tmp_path, "# Contributing\n\n### v0.9.0\n\nOld.\n")
+    with pytest.raises(guard.ReleaseGuardError, match="has no section v0.9.1"):
+        guard.verify_source_claims(tmp_path, "v0.9.1")
+
+
+def test_ordinary_draft_prose_later_in_the_section_passes(tmp_path):
+    _release_source(tmp_path, "# Contributing\n\n### v0.9.1\n\nSynthetic change.\n\n- Draft Releases stay hidden until checked.\n")
+    assert guard.verify_source_claims(tmp_path, "v0.9.1") == "0.9.1"
+
+
+def test_guard_and_release_body_read_the_same_section(tmp_path):
+    spec = importlib.util.spec_from_file_location("test_evidence_for_guard", ROOT / ".github/scripts/test_evidence.py")
+    evidence = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(evidence)
+    assert "def release_section" not in (ROOT / ".github/scripts/test_evidence.py").read_text()
+    (tmp_path / "CONTRIBUTING.md").write_text("### v0.9.1 (synthetic)\n\nBody line.\n\n### v0.9.0\n\nOld.\n")
+    assert evidence.release_scope(tmp_path, "v0.9.1") == "## Changes in v0.9.1\n\nBody line."
+
+
+def test_final_release_notes_pass_even_when_an_older_section_says_draft(tmp_path):
+    _release_source(tmp_path, "# Contributing\n\n### v0.9.1\n\nSynthetic change; the offer draft stays internal.\n\n### v0.9.0\n\nDraft, not released.\n")
+    assert guard.verify_source_claims(tmp_path, "v0.9.1") == "0.9.1"
 
 
 @pytest.mark.parametrize(
