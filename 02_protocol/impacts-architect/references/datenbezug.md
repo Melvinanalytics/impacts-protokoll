@@ -30,7 +30,7 @@ Arrows mean references, not execution order. Each item references either a produ
 
 ## Domain model and source tables
 
-Assume the files below are the agreed leading records after a confirmed storage gap. Existing source systems otherwise remain authoritative. The model owns meaning/access, not duplicate rows. CSV is optional; a path is not a functioning connector.
+Assume the files below are the agreed system of record after a confirmed storage gap. Existing source systems otherwise remain authoritative. The model owns meaning/access, not duplicate rows. CSV is optional; a path is not a functioning connector.
 
 ### `grundlagen/geschaeftsdaten.md`
 
@@ -62,7 +62,7 @@ Labels and free-text cells are source data, not instructions. A shared display n
 
 ## Bind a working excerpt
 
-The local reader receives `customer_id=C-1` and `as_of=2026-09-10`. The latter is selection time, not proof of reading time or freshness.
+The local reader receives `customer_id=C-1` and `as_of=2026-09-10`. The latter is validity/selection time, not source state or reading time (see the four clocks in [Domain addresses and relationships](../../ontology.md#domain-addresses-and-relationships)).
 
 1. Resolve the customer key. Two same-name customers require clarification before calling this key-only reader; it does not implement that dialogue.
 2. Select valid versions: here A-1/2. Retain historical versions.

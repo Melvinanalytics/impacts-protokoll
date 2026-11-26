@@ -601,7 +601,7 @@ def test_runner_rejects_workspace_judged_that_contradicts_the_root_skip(workspac
     report = {"report_version": 3, "command": "validate", "tool": {
         "name": "synthetic", "version": None, "version_source": "test"},
         "root": "/synthetic", "valid": True, "not_judged": skipped, "not_judged_counts": {"vorgang": 0, "definition_tree": 0},
-        "external_references_not_verified": 0, "release": "v0.8.0", "pin": "v0.3.31",
+        "external_references_not_verified": 0, "release": "v0.8.1", "pin": "v0.3.31",
         "judged": {"hauptprozess": 0, "teilprozess": 0, "arbeitsschritt": 0, "vorgang": 0, "versuch": 0}, "held": [], "superseded": [],
         "external_references": [], "workspace_judged": workspace_judged, "issues": []}
     with pytest.raises(runner.ConformanceError, match="workspace_judged"):

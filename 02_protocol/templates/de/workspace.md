@@ -1,9 +1,9 @@
 ---
 type: workspace
-protocol: v0.8.0
+protocol: v0.8.1
 ---
 
-<!-- Translation source: 02_protocol/templates/workspace.md; sha256: 9957a4102625c3ffd6d7e1c83a5bc4bcf7577f7dc4f1bcced967fd04498f0bf6 -->
+<!-- Translation source: 02_protocol/templates/workspace.md; sha256: a3a1b7fdb4a588c4827dddb8eb33e54756d0b5487c983f50d5c088398cc75c2f -->
 
 Working language: de
 
