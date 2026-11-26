@@ -16,7 +16,7 @@ touchpoint: standard
 evidence_status: reported
 ---
 
-<!-- Translation source: 02_protocol/impacts-architect/templates/ist-prozess.md; sha256: c858fb146598c7ce5b244e8118100e7ac2672bcf98e10ab81fb28b4af61dfe8b -->
+<!-- Translation source: 02_protocol/impacts-architect/templates/ist-prozess.md; sha256: 82a262a46d1e7b6ccb69578859bf8583785ccef81743a634a597f254bc21b4fd -->
 
 # Antrag prüfen und entscheiden
 

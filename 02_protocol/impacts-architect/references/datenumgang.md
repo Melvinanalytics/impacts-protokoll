@@ -8,23 +8,36 @@ Three homes stay separate throughout:
 
 | Home | Owns | Does not own |
 |---|---|---|
-| Domain home | Meaning, keys, units, source mappings, leading system per attribute, responsibility | Values of a case, credentials, a Vorgang |
+| Domain home | Meaning, keys, units, source mappings, system of record per attribute, responsibility | Values of a case, credentials, a Vorgang |
 | Arbeitsschritt | Selection for this job: which identity, purpose, time, fields, reader, effect and check | Reusable meaning; a second copy of the source mapping |
 | Harness | Access, credentials, execution of the bound operation, actual evidence | Meaning |
 
 An Arbeitsschritt references the domain home by link and anchor instead of maintaining its own mapping. In a selected Core attempt, also bind the needed description or sufficient excerpt under [snapshot and provenance](../../binding.md#snapshot-and-provenance). That preserved input is evidence of the cited revision, not a second maintained authority. Ten Arbeitsschritte on one customer table then share one description while their Vorgänge preserve the definitions actually used.
 
+## Business data at a glance
+
+Four separate questions locate any value in a workspace:
+
+| Question | Home | Example |
+|---|---|---|
+| Where does the fact come from? | [System of record](#source-descriptions) (German: *führendes System*) | ERP, stock per item |
+| Where do meaning and rule live? | `grundlagen/` (one domain home) | `kennzahl:geschaetzte-lieferzeit`, `rechenweg:lieferzeit-angebot` |
+| Where does the calculation run? | Placement chosen by the workspace under [Augment](../../impacts-method.md#augment) | Computed field in the ERP, versioned code/Capability, or checked table |
+| What does the workspace keep? | Bounded excerpt with provenance under [Snapshot and provenance](../../binding.md#snapshot-and-provenance) | `vorgaenge/<vorgang>/_quellen/materialbestand.csv` + `*-herkunft.md` |
+
+No data department is required: what is often called data management lives in [source descriptions](#source-descriptions), the system of record, keys and [retention classes](../../binding.md#retention-and-deletion); business intelligence lives in `kennzahl:` and `rechenweg:` definitions with [checks before calculating](#checks-before-calculating); data science lives in comparisons, segments and projections checked under the same rules. Across everyday work activities, deterministic systems or code calculate and run formal checks; an agent analyzes, summarizes, drafts, enriches and communicates with provenance; a human decides at declared gates while the agent prepares options; coordination is first reduced under [Minimize](../../impacts-method.md#minimize).
+
 ## Source descriptions
 
 Describe needed sources at existing domain/source homes, including ordinary files without a Hauptprozess or live connection.
 
-For each relevant attribute/domain and effective period, identify its authoritative factual source, the responsible decision-maker for meaning and allowed changes, and the duties of its maintainer and data provider. One person may perform several duties; unknown owners stay `open`. Within existing descriptions and without new types, distinguish the role of business data (reference data such as code lists, master data that transactions refer to, transaction or event rows) from its origin: captured at the source, copied as an export or replica, derived by a rule, or set by a decision. Bounded observations and derived KPI values remain distinct from both. A transaction row does not by itself prove the real event. For data-derived metric inputs, trace reports and exports to the collection/fields that capture the relevant event or attribute; constants, decided parameters and case observations retain their own rule, authority or evidence origin.
+A **system of record** (German: *führendes System*) is the system that is authoritative for a given data element in a stated scope and effective period. For each relevant attribute/domain and effective period, identify its system of record, the responsible decision-maker for meaning and allowed changes, and the duties of its maintainer and data provider. One person may perform several duties; unknown owners stay `open`. Within existing descriptions and without new types, distinguish the role of business data (reference data such as code lists, master data that transactions refer to, transaction or event rows) from its origin: captured at the source, copied as an export or replica, derived by a rule, or set by a decision. Bounded observations and derived KPI values remain distinct from both. A transaction row does not by itself prove the real event. For data-derived metric inputs, trace reports and exports to the collection/fields that capture the relevant event or attribute; constants, decided parameters and case observations retain their own rule, authority or evidence origin.
 
 Use [Tables and relationships](#tables-and-relationships) and [ontology inference](../../ontology.md#meaning-and-valid-inference) to describe units, row meaning/grain, selection/validity time, identity and namespace, relationships and source-field semantics needed for the intended result. Document sources need the same relevant distinctions without becoming tables.
 
 Record the known source form: file, export, report, manual input or API. The form establishes neither origin nor access route. Retain provenance and, for documentation actually read, its URL/path, version/date and read date; describe possible endpoints, schemas, authentication and access conditions only when known. Retrieve locally first; discover sources for explicit gaps. Unknown details remain questions, not fabricated interfaces.
 
-An interface being publicly documented does not by itself establish customer-data access, current values, factual authority or permission for the intended use; retain applicable access/use terms when known. Source descriptions require no API probe, credentials or live integration. Reuse existing valid source/identity mappings and their fact/domain homes; clarify only mappings missing or conflicting for the intended use. Source equivalence or selection among competing masters needs evidence of their applicable scope/mapping. Preserve unresolved choices with their responsible decision-maker and unknown ownership at their homes, restricting only dependent uses.
+An interface being publicly documented does not by itself establish customer-data access, current values, factual authority or permission for the intended use; retain applicable access/use terms when known. Source descriptions require no API probe, credentials or live integration. Reuse existing valid source/identity mappings and their fact/domain homes; clarify only mappings missing or conflicting for the intended use. Source equivalence or selection among competing masters needs evidence of their applicable scope/mapping. Preserve unresolved choices with their responsible decision-maker and unknown ownership at their homes, restricting only dependent uses. If a referenced record is deleted in its system of record, its value stays `open` and is never replaced by a default. If a source ID changes, record the transition with its validity period in the existing key mapping.
 
 ## Tables and relationships
 
@@ -45,7 +58,7 @@ The objects, facets and route names below are optional capture guidance. Use onl
 | Value domain | Allowed values with meaning, type and unit: a code list or a rule | none | The code list and its maintained content (reference data) |
 | Event | Occurrence in the world with a time that produces data: offer sent | none | The stored row about it: “offer created” is not “offer sent” |
 | System | Software system or channel that keeps or supplies data: ERP, CRM, shared mailbox, recurring manual input | `quelle:` | The table inside it |
-| Data collection | Named set of rows with one structure: table, report, export, file or hand list | `quelle:` | A report or export taken as the originating maintained system |
+| Data collection | Named set of rows with one structure: table, report, export, file or hand list | `quelle:` | A report or export taken as the system of record |
 | Field | Physical carrier of an attribute in a data collection | part of a source description | Entry date taken as event date |
 | Key mapping | Evidenced link between keys of two systems or collections, with multiplicity and match rate | scoped mapping home | Equal names or numbers taken as the same identity |
 | Lineage edge | Directed link: B derives from A, as designed flow or as actual execution | none | The derivation rule: lineage says from where, the rule says how |
@@ -59,7 +72,7 @@ A concrete value or source state stays at the home its [data kind](formwahl.md#d
 | Term | Composed of |
 |---|---|
 | Data model | Business objects, attributes, keys and relationships; physically, data collections and fields |
-| Master data management | Leading system per attribute, key mappings, duplicates and responsibility |
+| Master data management | System of record per attribute, key mappings, duplicates and responsibility |
 | Golden record | A record derived from several systems by a key mapping and a rule; a hub that maintains it is a system |
 | KPI | A metric with a target and a steering purpose; the role sits in the result contract |
 | Data quality | Results of checking rules against an explicit requirement |
@@ -78,7 +91,7 @@ Each facet answers a separate question about a scoped definition or claim. Apply
 | Aggregation | May it be summed? | additive · semi-additive (not across a named dimension, usually time) · non-additive |
 | Evidence | How established? | [evidence labels](../../ontology.md#evidence-and-obligations) per claim |
 
-Record these details at the object's domain home where they apply: grain and complete key (including tenant and version); which [clock](../../ontology.md#domain-addresses-and-relationships) counts; population and filters; unit and conversion; location as system › collection › field; responsibility; leading system with valid-from date; validity of master data at event time.
+Record these details at the object's domain home where they apply: grain and complete key (including tenant and version); which [clock](../../ontology.md#domain-addresses-and-relationships) counts; population and filters; unit and conversion; location as system › collection › field; responsibility; system of record with valid-from date; validity of master data at event time.
 
 ## The data path through one Arbeitsschritt
 
@@ -87,7 +100,7 @@ Each station names the question, the existing contract slot that answers it and 
 | Station | Question | Contract slot | Evidence left | Typical failure |
 |---|---|---|---|---|
 | Define | What does the input mean? | [Use](../../ontology.md#use) for an existing definition; [Author or change](../../ontology.md#author-or-change) for missing meaning | Definition with address and revision; needed meaning bound in a selected Core attempt | Live link treated as a bound definition |
-| Locate | Which object in which system holds it, and which system leads? | [Source descriptions](#source-descriptions) | Source description with form, leading system, responsibility | Export or report named as the source |
+| Locate | Which object in which system holds it, and which system is the system of record? | [Source descriptions](#source-descriptions) | Source description with form, system of record, responsibility | Export or report named as the source |
 | Reach | By which route can a reader get it, and may that route write? | Source description and tool line; [access routes](#access-routes) when reader, effect or permission is unresolved | The four separate access findings | Tool listed, therefore treated as usable |
 | Bind | Which bounded excerpt does this attempt use? | [Quellenanforderung](../../binding.md#source-inputs-for-core-hauptprozesse) and `*-herkunft.md` | Input bytes, provenance, digest | New live read used as an input during the same attempt |
 | Check input | Is the excerpt usable for this job? | Required control in Quellenanforderung | Executed input checks | Missing values counted as zero |
@@ -131,7 +144,8 @@ The processing body names route, operation, timing and effect. Synthetic German 
 ```markdown
 ### Quellenanforderung
 
-- Quell-Eingabe: `records/materialbestand.csv`
+- Quell-Eingabe: `vorgaenge/<vorgang>/_quellen/materialbestand.csv` (mit `materialbestand-herkunft.md`)
+- Datenart: `Subject record`
 - Herkunft: `Lesezugriff ERP-Materialbestand`
 - Ursprung: `ERP, Materialbestand` ([Quellenbeschreibung](grundlagen/lieferzeit.md#quelle-erp-materialbestand): nur Bestand je Artikel und Lager; Preise nicht)
 - Stand: `fachlicher Stand 2026-09-16 06:00`
@@ -139,7 +153,8 @@ The processing body names route, operation, timing and effect. Synthetic German 
 
 ### Quellenanforderung
 
-- Quell-Eingabe: `records/kapazitaet.csv`
+- Quell-Eingabe: `vorgaenge/<vorgang>/_quellen/kapazitaet.csv` (mit `kapazitaet-herkunft.md`)
+- Datenart: `Subject record`
 - Herkunft: `Lesezugriff Produktionsplanung`
 - Ursprung: `Produktionsplanung, freie Kapazität` ([Quellenbeschreibung](grundlagen/lieferzeit.md#quelle-produktionsplanung): sechs Wochen ab Stichtag)
 - Stand: `Planungsstand 2026-09-16 06:00`
@@ -172,7 +187,7 @@ Four ways a result leaves an Arbeitsschritt. Only the first changes a continuing
 
 ## Checks before calculating
 
-Select checks required by the calculation's grain, rule and intended use; these are examples, not a universal list. Keep any missing premise and its dependent-use restriction explicit. When a provider such as the leading system, a calculation service or a Capability delivers a derived item, the applicable rows below are premises its provider must evidence; the consuming Arbeitsschritt checks that evidence for fit to its use and keeps an unevidenced premise `open`. A KPI already maintained or shown in a system of record, report or dashboard is such an item. With verified access, read it there with its definition, filters and as-of time, and check it under the Metric row before counting, comparing or acting on it.
+Select checks required by the calculation's grain, rule and intended use; these are examples, not a universal list. Keep any missing premise and its dependent-use restriction explicit. When a provider such as the system of record, a calculation service or a Capability delivers a derived item, the applicable rows below are premises its provider must evidence; the consuming Arbeitsschritt checks that evidence for fit to its use and keeps an unevidenced premise `open`. A KPI already maintained or shown in a system of record, report or dashboard is such an item. With verified access, read it there with its definition, filters and [source state and validity time](../../ontology.md#domain-addresses-and-relationships), and check it under the Metric row before counting, comparing or acting on it.
 
 | Object | Check |
 |---|---|
@@ -184,9 +199,9 @@ Select checks required by the calculation's grain, rule and intended use; these 
 | Data collection | Check the complete key against the declared row grain; count duplicates and required-period gaps. Trace report filters/formulas and export source/state; where needed, reconcile with the underlying data |
 | Key mapping | Declare multiplicity and show unmatched and multiple matches. Before aggregation, check whether the join repeats a measure; aggregate the contributing side to the needed grain or apply an explicitly sanctioned allocation. A legitimate one-to-many relationship remains one-to-many, not a first-match lookup |
 | Chain | A result's support is limited by each needed input and rule premise; retain their separate evidence and scope instead of inventing a combined confidence score |
-| Comparison across cases or periods | Same definition and population on both sides, including cases that left; outcomes mature at the as-of time or the open share stated; composition checked before a difference is read as change |
+| Comparison across cases or periods | Same definition and population on both sides, including cases that left; outcomes mature at the [validity/source-state time](../../ontology.md#domain-addresses-and-relationships) or the open share stated; composition checked before a difference is read as change |
 | Segment, cluster or outlier | Enough cases per group; group assignment as of the event time; the number of groups scanned stated |
-| Projection | History over several cycles under one definition; no input from after the as-of time; fit and sensitivity under [Scenario use](../../impacts-method.md#scenario-use); an expectation carries its range and base rate over a stated horizon. When the result steers who is acted on, later outcomes reflect that steering; retain who was acted on and why, so that [Test](../../impacts-method.md#test) can separate that effect |
+| Projection | History over several cycles under one definition; no input from after the [validity/source-state time](../../ontology.md#domain-addresses-and-relationships); fit and sensitivity under [Scenario use](../../impacts-method.md#scenario-use); an expectation carries its range and base rate over a stated horizon. When the result steers who is acted on, later outcomes reflect that steering; retain who was acted on and why, so that [Test](../../impacts-method.md#test) can separate that effect |
 
 ## Worked example: estimated delivery time
 
@@ -195,14 +210,22 @@ Synthetic design continuation of the [ontology relationship example](../../ontol
 | Station | In this Arbeitsschritt |
 |---|---|
 | Define | Resolve `kennzahl:geschaetzte-lieferzeit` and the proposed rule revision at `grundlagen/lieferzeit.md`; establish its sanction before dependent calculation and bind the required definitions as inputs |
-| Locate | Intended mappings: `quelle:erp-materialbestand` for stock per item and warehouse; `quelle:produktionsplanung` for free capacity per week. Confirm their leading-system scope with the responsible source owner |
+| Locate | Intended mappings: `quelle:erp-materialbestand` for stock per item and warehouse; `quelle:produktionsplanung` for free capacity per week. Confirm their system-of-record scope with the responsible source owner |
 | Reach | Proposed ERP CLI and planning MCP readers, both read-only. Verify documentation, configured access and permission for this purpose; none is established by this example |
-| Bind | Stock excerpt for the requested items at cut-off 06:00 and capacity for six weeks, each with `*-herkunft.md` |
+| Bind | Stock excerpt (`_quellen/materialbestand.csv`) for the requested items at source state 06:00 and capacity (`_quellen/kapazitaet.csv`) for six weeks, each with `*-herkunft.md` |
 | Check input | Keys unique; missing stock counted; capacity weeks complete |
-| Process | Code applies the rule; the model only writes the explanation text |
+| Process | Code applies the rule; the agent only writes the explanation text |
 | Check result | Estimate recalculated from bound inputs; the rule's assumptions listed |
 | Hand off | To `vorbereiten`: first action, place the estimate on the offer positions; needed content, estimate in calendar days, rule revision, inputs' source state and stated limits |
-| Write back | None in this Arbeitsschritt. The offer system leads the offer revision; the estimate reaches it only through the separately permitted writeback after offer approval |
+| Write back | None in this Arbeitsschritt. The offer system is the system of record for the offer revision; the estimate reaches it only through the separately permitted writeback after offer approval |
+
+Illustrative three-step view of the same delivery-time flow (example only, not a second table to maintain; actual bindings stay on each Arbeitsschritt, and the table above zooms into step 2):
+
+| Step | Input and origin | Rule | Where it runs and who acts | Check |
+|---|---|---|---|---|
+| `daten-lesen` | ERP (stock per item, 06:00) and planning (free capacity, 6 weeks), each from its system of record | Each system's own stock and capacity fields | Read-only readers capture `vorgaenge/<vorgang>/_quellen/{materialbestand,kapazitaet}.csv` with `*-herkunft.md` | Readers check unique keys, missing stock and complete weeks |
+| `lieferzeit-schaetzen` | Both bound excerpts from `_quellen/` | `rechenweg:lieferzeit-angebot` | Deterministic code (Capability) in this workspace; agent only writes the explanation and limits | Code recalculates from bound inputs; reviewer checks stated limits |
+| `vorbereiten` | Handed-off delivery estimate (calendar days + limits) | None (carry value unchanged) | Agent drafts the offer text; does not recalculate | Offer check confirms stated days equal the handed-off input |
 
 The example records no executed read, check, approval or writeback.
 

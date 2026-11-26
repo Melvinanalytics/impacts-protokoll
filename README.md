@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  <a href="#version-and-entry-points"><img alt="Edition v0.8.0" src="https://img.shields.io/badge/Edition-v0.8.0-121212?style=flat-square"></a>
+  <a href="#version-and-entry-points"><img alt="Edition v0.8.1" src="https://img.shields.io/badge/Edition-v0.8.1-121212?style=flat-square"></a>
   <a href="LICENSE"><img alt="Apache-2.0 License" src="https://img.shields.io/badge/License-Apache--2.0-2f7d32?style=flat-square"></a>
   <img alt="Python 3.11+" src="https://img.shields.io/badge/Python-3.11%2B-3346a8?style=flat-square">
   <img alt="Runtime: Plain Files + Git" src="https://img.shields.io/badge/Runtime-Plain_Files_%2B_Git-8a6d1d?style=flat-square">
@@ -107,7 +107,7 @@ stateDiagram-v2
 
 The CLI requires Python 3.11+. Create a virtual environment (`python3 -m venv .venv && source .venv/bin/activate`), then install from one verified source:
 
-From the published immutable Release [v0.8.0](https://github.com/Melvinanalytics/impacts-protokoll/releases/tag/v0.8.0), download the wheel, complete source archive and `SHA256SUMS` into one folder, verify every listed asset with `shasum -a 256 -c SHA256SUMS`, then run `python -m pip install ./impacts_protocol-0.8.0-py3-none-any.whl` (or extract the verified source archive and run `python -m pip install -e .`).
+From the published immutable Release [v0.8.1](https://github.com/Melvinanalytics/impacts-protokoll/releases/tag/v0.8.1), download the wheel, complete source archive and `SHA256SUMS` into one folder, verify every listed asset with `shasum -a 256 -c SHA256SUMS`, then run `python -m pip install ./impacts_protocol-0.8.1-py3-none-any.whl` (or extract the verified source archive and run `python -m pip install -e .`).
 
 ```bash
 impacts init ../impacts-demo             # add --language de for German
@@ -147,7 +147,7 @@ IMPACTS defines file contracts and authority boundaries; the configured harness 
 
 ## Version and entry points
 
-Edition v0.8.0. Use the published immutable Release [v0.8.0 release](https://github.com/Melvinanalytics/impacts-protokoll/releases/tag/v0.8.0) for new work. Check `[project].version` in [pyproject.toml](pyproject.toml), `impacts --version` or `python -m pip show impacts-protocol`. Keep the complete source archive together: the wheel ships only the CLI, static viewer HTML, schemas and templates (including `impacts template herkunft` with nine fields, which is a template layout and not a universal line-count rule, and `impacts template ebene` for level routers); method, Architect, references and evaluations live in the complete source. A copied Architect folder is incomplete: it depends on parent protocol files and root guidance.
+Edition v0.8.1. Use the published immutable Release [v0.8.1 release](https://github.com/Melvinanalytics/impacts-protokoll/releases/tag/v0.8.1) for new work. Check `[project].version` in [pyproject.toml](pyproject.toml), `impacts --version` or `python -m pip show impacts-protocol`. Keep the complete source archive together: the wheel ships only the CLI, static viewer HTML, schemas and templates (including `impacts template herkunft` with nine fields, which is a template layout and not a universal line-count rule, and `impacts template ebene` for level routers); method, Architect, references and evaluations live in the complete source. A copied Architect folder is incomplete: it depends on parent protocol files and root guidance.
 
 Record the actual protocol source, commit (`git rev-parse HEAD` and `git status --short`, or verified archive identity) and Architect entry in each workspace's root `CONTEXT.md`. English owns the protocol; German customer work uses `Working language: de` and German templates under [language.md](02_protocol/language.md).
 

@@ -2,6 +2,18 @@
 
 Changes enter `main` through a reviewed pull request. Keep customer material in its customer repository. Report the revision, expected and observed behavior, synthetic evidence, and checks not run.
 
+### v0.8.1
+
+This patch edition makes the data-handling contract consistent and readable for companies without a data department. Schemas, required fields, issue codes, validator rules and CLI commands are unchanged; `v0.8.0` pins remain judged.
+
+- **One term for the authoritative system:** `system of record` (German *führendes System*) is defined once in [Source descriptions](02_protocol/impacts-architect/references/datenumgang.md#source-descriptions) and replaces seven earlier names; `tests/retired_names.md` blocks the old ones.
+- **Personal data default:** [Retention and deletion](02_protocol/binding.md#retention-and-deletion) replaces the absolute ban on personal data in Git with three classes: no personal data; people in a professional role, allowed in a private workspace with the fewest needed fields; private or sensitive data, kept in the company's system of record or an external `ablage` with a store-keyed digest. Legal basis, retention and deletion stay with the company's data-protection governance. The Subject record examples no longer list addresses or candidate status.
+- **Consistent homes:** the ERP and planning example captures moved from `records/` to `vorgaenge/<vorgang>/_quellen/` with provenance files; a local copy of a subject record needs a confirmed storage gap; a population row becomes a subject record at the first decision about it alone; `as-of` wording now names the [clock](02_protocol/ontology.md#domain-addresses-and-relationships) it means; the scope line of `binding.md` covers writeback, promotion and retention in ordinary work.
+- **Readable entry:** [Business data at a glance](02_protocol/impacts-architect/references/datenumgang.md#business-data-at-a-glance) answers where a fact comes from, where meaning and rule live, where a calculation runs and what the workspace keeps, and maps data management, business intelligence and data science to these homes. A three-step delivery-time example shows the flow without a second table to maintain. `02_protocol/CONTEXT.md` gains a task row for business data.
+- **Two lifecycle cases:** a record deleted in its system of record leaves its value `open`; a changed source ID goes into the key mapping with its validity period.
+
+Migration: none required. A workspace that keeps private or sensitive personal data in Git should move it under its own governance; the protocol does not rewrite history. Limits: a cold-reader test ran with agents, not with a company reader; the store-keyed digest is a harness duty that `impacts validate` cannot check.
+
 ### v0.8.0
 
 This minor edition splits topology findings into structure and navigation codes and adds four router checks. Workspaces pinned to `v0.7.x` are reported as `not_judged` until they lift their pin to `v0.8.0`; rehearse the lift on a copy, since the new findings appear only on the new line. Schemas, required fields, CLI commands and folder forms are unchanged; `impacts validate` gains one flag and the JSON report one field.

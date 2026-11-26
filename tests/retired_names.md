@@ -26,3 +26,4 @@
 | eingabe_hash, ausgabe_hash | `gelesen`, `geschrieben` file references |
 | use case, Use Case, use-case-agnostic | intended use (*beabsichtigte Verwendung*) |
 | reference material, Referenzmaterial | [foundations, Grundlagen](../02_protocol/impacts-architect/references/formwahl.md#data-kinds) |
+| leading system, leading systems, leading-system, authoritative source system, authoritative factual source, fact authority, originating maintained system | [system of record (*führendes System*)](../02_protocol/impacts-architect/references/datenumgang.md#source-descriptions) |
