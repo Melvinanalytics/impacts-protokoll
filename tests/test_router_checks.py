@@ -527,7 +527,9 @@ def test_ignored_folder_with_a_decomposed_name_is_absent(tmp_path):
         handle.write(f"\n[n]({unicodedata.normalize('NFC', 'notiz-ü')}/a.md)\n[p](notiz-plain/a.md)\n")
     ignoring(root, "notiz-*/\n")
     ignored = [issue for issue in validate(root).issues if "Git ignores" in issue.message]
-    assert codes(root) == [("topology.link_broken", "CONTEXT.md")] * 2 and len(ignored) == 2
+    # Only a file system that folds NFC and NFD finds the folder; elsewhere the link does not resolve.
+    folds = (root / unicodedata.normalize("NFC", "notiz-ü")).exists()
+    assert codes(root) == [("topology.link_broken", "CONTEXT.md")] * 2 and len(ignored) == (2 if folds else 1)
 
 
 def test_unlinked_symlink_entry_is_not_covered_by_its_linked_target(tmp_path):
