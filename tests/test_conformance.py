@@ -74,7 +74,7 @@ if command == "validate":
     report["not_judged"] = []
     report["not_judged_counts"] = {{"vorgang": 0, "definition_tree": 0}}
     report["external_references_not_verified"] = 0
-    report.update(release="v0.4.0", pin="v0.4.0", judged={{"hauptprozess": 1, "teilprozess": 1, "arbeitsschritt": 2, "vorgang": 0, "versuch": 0}}, superseded=[], external_references=[], held=[], workspace_judged=True)
+    report.update(release="v0.4.0", pin="v0.4.0", judged={{"hauptprozess": 1, "teilprozess": 1, "arbeitsschritt": 2, "vorgang": 0, "versuch": 0}}, superseded=[], external_references=[], held=[], top_level_forms={{}}, workspace_judged=True)
 else:
     report["attempt"] = sys.argv[2]
     report["surfaces"] = sys.argv[3:-1]
@@ -122,7 +122,7 @@ report = {
     "root": sys.argv[2],
     "valid": True,
     "not_judged": [], "not_judged_counts": {"vorgang": 0, "definition_tree": 0}, "external_references_not_verified": 0, "release": "v0.4.0", "pin": "v0.4.0",
-        "judged": {"hauptprozess": 1, "teilprozess": 1, "arbeitsschritt": 2, "vorgang": 0, "versuch": 0}, "held": [], "superseded": [], "external_references": [], "workspace_judged": True,
+        "judged": {"hauptprozess": 1, "teilprozess": 1, "arbeitsschritt": 2, "vorgang": 0, "versuch": 0}, "held": [], "top_level_forms": {}, "superseded": [], "external_references": [], "workspace_judged": True,
     "issues": [],
 }
 print(json.dumps(report, separators=(",", ":")))
@@ -210,7 +210,7 @@ def test_unicode_equivalent_folder_spellings_keep_distinct_issue_occurrences(tmp
         "root": str(root),
         "valid": False,
         "not_judged": [], "not_judged_counts": {"vorgang": 0, "definition_tree": 0}, "external_references_not_verified": 0, "release": "v0.4.0", "pin": "v0.4.0",
-        "judged": {"hauptprozess": 1, "teilprozess": 1, "arbeitsschritt": 2, "vorgang": 0, "versuch": 0}, "held": [], "superseded": [], "external_references": [], "workspace_judged": True,
+        "judged": {"hauptprozess": 1, "teilprozess": 1, "arbeitsschritt": 2, "vorgang": 0, "versuch": 0}, "held": [], "top_level_forms": {}, "superseded": [], "external_references": [], "workspace_judged": True,
         "issues": [
             {
                 "code": "structure.level",
@@ -489,7 +489,7 @@ def test_runner_checks_frozen_issue_explanations():
     report = {"report_version": 3, "command": "validate", "tool": {
         "name": "synthetic", "version": None, "version_source": "test"},
         "root": "/synthetic", "valid": False, "not_judged": [], "not_judged_counts": {"vorgang": 0, "definition_tree": 0}, "external_references_not_verified": 0, "release": "v0.4.0", "pin": "v0.4.0",
-        "judged": {"hauptprozess": 1, "teilprozess": 1, "arbeitsschritt": 2, "vorgang": 0, "versuch": 0}, "held": [], "superseded": [], "external_references": [], "workspace_judged": True, "issues": [{
+        "judged": {"hauptprozess": 1, "teilprozess": 1, "arbeitsschritt": 2, "vorgang": 0, "versuch": 0}, "held": [], "top_level_forms": {}, "superseded": [], "external_references": [], "workspace_judged": True, "issues": [{
             "code": "structure.level", "path": "24-x",
             "message": "misleading numeric prefix diagnostic", "rule": "binding.md#hauptprozess-tree-rules"}]}
     with pytest.raises(runner.ConformanceError, match="frozen explanations"):
@@ -601,10 +601,44 @@ def test_runner_rejects_workspace_judged_that_contradicts_the_root_skip(workspac
     report = {"report_version": 3, "command": "validate", "tool": {
         "name": "synthetic", "version": None, "version_source": "test"},
         "root": "/synthetic", "valid": True, "not_judged": skipped, "not_judged_counts": {"vorgang": 0, "definition_tree": 0},
-        "external_references_not_verified": 0, "release": "v0.8.1", "pin": "v0.3.31",
-        "judged": {"hauptprozess": 0, "teilprozess": 0, "arbeitsschritt": 0, "vorgang": 0, "versuch": 0}, "held": [], "superseded": [],
+        "external_references_not_verified": 0, "release": "v0.8.2", "pin": "v0.3.31",
+        "judged": {"hauptprozess": 0, "teilprozess": 0, "arbeitsschritt": 0, "vorgang": 0, "versuch": 0}, "held": [], "top_level_forms": {}, "superseded": [],
         "external_references": [], "workspace_judged": workspace_judged, "issues": []}
     with pytest.raises(runner.ConformanceError, match="workspace_judged"):
         runner._check_report(report, case, Path("/synthetic"), 0)
     report["workspace_judged"] = False
     runner._check_report(report, case, Path("/synthetic"), 0)
+
+
+@pytest.mark.parametrize("bad_forms,expected_error", [
+    ([], "top_level_forms must map folder names"),
+    ({"records": "UnknownForm"}, "top_level_forms must map folder names"),
+    ({"": "Record Library"}, "top_level_forms must map folder names"),
+])
+def test_runner_rejects_malformed_top_level_forms(bad_forms, expected_error):
+    runner = _runner_module()
+    case = {"command": "validate", "expected": {
+        "exit_code": 0, "valid": True, "issue_codes": [], "not_judged": []}}
+    report = {"report_version": 3, "command": "validate", "tool": {
+        "name": "synthetic", "version": None, "version_source": "test"},
+        "root": "/synthetic", "valid": True, "not_judged": [], "not_judged_counts": {"vorgang": 0, "definition_tree": 0},
+        "external_references_not_verified": 0, "release": "v0.8.2", "pin": "v0.8.2",
+        "judged": {"hauptprozess": 0, "teilprozess": 0, "arbeitsschritt": 0, "vorgang": 0, "versuch": 0}, "held": [], "top_level_forms": bad_forms, "superseded": [],
+        "external_references": [], "workspace_judged": True, "issues": []}
+    with pytest.raises(runner.ConformanceError, match=expected_error):
+        runner._check_report(report, case, Path("/synthetic"), 0)
+
+
+def test_runner_rejects_nonempty_top_level_forms_when_workspace_not_judged():
+    runner = _runner_module()
+    skipped = [{"path": "CONTEXT.md", "protocol": "v0.3.31"}]
+    case = {"command": "validate", "expected": {
+        "exit_code": 0, "valid": True, "issue_codes": [], "not_judged": skipped}}
+    report = {"report_version": 3, "command": "validate", "tool": {
+        "name": "synthetic", "version": None, "version_source": "test"},
+        "root": "/synthetic", "valid": True, "not_judged": skipped, "not_judged_counts": {"vorgang": 0, "definition_tree": 0},
+        "external_references_not_verified": 0, "release": "v0.8.2", "pin": "v0.3.31",
+        "judged": {"hauptprozess": 0, "teilprozess": 0, "arbeitsschritt": 0, "vorgang": 0, "versuch": 0}, "held": [], "top_level_forms": {"records": "Record Library"}, "superseded": [],
+        "external_references": [], "workspace_judged": False, "issues": []}
+    with pytest.raises(runner.ConformanceError, match="top_level_forms must be empty"):
+        runner._check_report(report, case, Path("/synthetic"), 0)

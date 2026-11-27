@@ -1093,6 +1093,7 @@ def test_unlinked_root_markdown_file_fails_while_linked_and_standard_docs_pass(t
     root = workspace(tmp_path)
     (root / "README.md").write_text("# Workspace README\n")
     (root / "CLAUDE.md").write_text("@AGENTS.md\n")
+    (root / "GEMINI.md").write_text("@AGENTS.md\n")
     (root / "pyproject.toml").write_text("[project]\nname = 'x'\n")
     assert validate(root).valid
 
@@ -1424,3 +1425,68 @@ def test_record_kind_split_by_period_keeps_the_link_chain(tmp_path):
     (root / "records/offers/2026/o-5/CONTEXT.md").write_text("# o-5\n")
     issue, = validate(root).issues
     assert (issue.code, issue.path) == ("topology.link_missing", "records/offers/2026/o-5")
+
+
+def test_unbracketed_space_link_reports_link_broken_with_angle_bracket_hint(tmp_path):
+    root = workspace(tmp_path, "Form: grundlagen/ Knowledge Bundle per topic")
+    (root / "grundlagen/Die 21 Prinzipien.md").write_text("# Prinzipien\n")
+    router(root / "grundlagen", "[Prinzipien](Die 21 Prinzipien.md)")
+    issues = [(issue.code, issue.path, issue.message) for issue in validate(root).issues]
+    assert issues == [
+        ("topology.link_broken", "grundlagen/CONTEXT.md", "Link 'Die 21 Prinzipien.md' contains spaces without angle brackets; wrap the path in '<...>' or encode spaces as '%20'"),
+        ("topology.link_missing", "grundlagen/Die 21 Prinzipien.md", "Die 21 Prinzipien.md is not linked from grundlagen/CONTEXT.md; link it"),
+    ]
+    router(root / "grundlagen", "[Prinzipien](<Die 21 Prinzipien.md>)")
+    assert validate(root).valid
+    router(root / "grundlagen", "[Prinzipien](Die%2021%20Prinzipien.md)")
+    assert validate(root).valid
+
+
+def test_unbracketed_space_link_with_parens_and_valid_titled_link_stay_distinct(tmp_path):
+    root = workspace(tmp_path, "Form: grundlagen/ Knowledge Bundle per topic")
+    (root / "grundlagen/rule.md").write_text("# Rule\n")
+    (root / "grundlagen/note (1).md").write_text("# Note\n")
+    router(root / "grundlagen", '[Rule](rule.md "Title with spaces")\n[Note](note (1).md)')
+    issues = [(issue.code, issue.path) for issue in validate(root).issues]
+    assert issues == [("topology.link_broken", "grundlagen/CONTEXT.md"), ("topology.link_missing", "grundlagen/note (1).md")]
+    router(root / "grundlagen", '[Rule](rule.md "Title with spaces")\n[Note](<note (1).md> "Also titled")')
+    assert validate(root).valid
+
+
+def test_spaced_link_scan_stays_linear_on_adversarial_inputs():
+    from time import perf_counter
+    from impacts_protocol.topology import _scan_links
+    for text in ("](" * 40000, "](" + "a " * 40000, "](" + "(a) " * 40000):
+        start = perf_counter()
+        assert _scan_links(text) == ([], [])
+        assert perf_counter() - start < 1
+
+
+def test_top_level_forms_reported_in_validation_report_and_json(tmp_path, capsys):
+    import json
+    from impacts_protocol.cli import main
+    root = workspace(
+        tmp_path,
+        "Form: records/ Record Library per subject\n"
+        "Form: grundlagen/ Knowledge Bundle per topic\n"
+        "Form: tools/ Tool\n"
+        "Form: legacy/ none: awaiting split; decided by human:fixture",
+    )
+    (root / "grundlagen/CONTEXT.md").write_text(f"# Foundations\n\n{SECTIONS}\n")
+    (root / "tools/run.py").write_text("# synthetic\n")
+    (root / "legacy/old.md").write_text("# legacy\n")
+    expected = {"grundlagen": "Knowledge Bundle", "legacy": "none", "records": "Record Library", "tools": "Tool"}
+    report = validate(root)
+    assert report.valid, report.issues
+    assert report.top_level_forms == expected
+    assert main(["validate", str(root), "--json"]) == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["top_level_forms"] == expected
+    assert list(payload["top_level_forms"]) == sorted(expected)
+    # Standalone Hauptprozess and unjudged workspace emit empty top_level_forms.
+    write_hauptprozess(root / "hauptprozesse/video")
+    assert validate(root / "hauptprozesse/video").top_level_forms == {}
+    context = root / "CONTEXT.md"
+    context.write_text(context.read_text().replace("protocol: v0.8.2", "protocol: v0.7.0"))
+    unjudged = validate(root)
+    assert not unjudged.workspace_judged and unjudged.top_level_forms == {}

@@ -1570,6 +1570,28 @@
         "issue_codes": [],
         "not_judged": []
       }
+    },
+    {
+      "id": "topology-link-unbracketed-spaces",
+      "command": "validate",
+      "fixture": "fixtures/cases/topology-link-unbracketed-spaces",
+      "expected": {
+        "exit_code": 1,
+        "valid": false,
+        "issue_codes": [
+          "topology.link_broken",
+          "topology.link_missing"
+        ],
+        "not_judged": []
+      },
+      "expected_issue_paths": [
+        "grundlagen/CONTEXT.md",
+        "grundlagen/Our Core Rules.md"
+      ],
+      "expected_issue_messages": [
+        "Link 'Our Core Rules.md' contains spaces without angle brackets; wrap the path in '<...>' or encode spaces as '%20'",
+        "Our Core Rules.md is not linked from grundlagen/CONTEXT.md; link it"
+      ]
     }
   ]
 }

@@ -155,6 +155,7 @@ def main(argv: list[str] | None = None) -> int:
                 "pin": report.pin,
                 "judged": report.judged,
                 "held": list(report.held),
+                "top_level_forms": report.top_level_forms,
                 "superseded": list(report.superseded),
                 "external_references": list(report.external_references),
                 "external_references_not_verified": report.external_references_not_verified,

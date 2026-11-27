@@ -377,7 +377,7 @@ def _workspace(base: Path, hauptprozesse=("video",), vorgaenge=(("video-001", "v
                 (attempt / "output" / "ergebnis.md").write_text("fertig", encoding="utf-8")
                 entry |= {"gewaehlte_route": "weiter", "geschrieben": fixture_references(attempt, ["output/ergebnis.md"])}
             entries.append(entry)
-        write_context(vorgang / "CONTEXT.md", {"type": "vorgang", "protocol": "v0.8.1", "id": f"vorgang:{slug}",
+        write_context(vorgang / "CONTEXT.md", {"type": "vorgang", "protocol": "v0.8.2", "id": f"vorgang:{slug}",
                                            "hauptprozess_revision": f"git-tree:{revision}", "laufpfad": entries}, f"# {slug}")
     return root
 

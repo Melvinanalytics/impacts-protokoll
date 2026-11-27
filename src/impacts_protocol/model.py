@@ -69,6 +69,7 @@ class ValidationReport:
     judged: dict[str, int] = field(default_factory=judged_counts)
 
     held: tuple[dict, ...] = ()
+    top_level_forms: dict[str, str] = field(default_factory=dict)
 
     @property
     def not_judged_counts(self) -> dict[str, int]:

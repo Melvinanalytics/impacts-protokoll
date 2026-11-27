@@ -1,6 +1,6 @@
 ---
 type: workspace
-protocol: v0.8.1
+protocol: v0.8.2
 ---
 
 Working language: en

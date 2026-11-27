@@ -552,7 +552,7 @@ def _check_report(report: dict[str, Any], case: dict[str, Any], root: Path, retu
     expected = case["expected"]
     command = case["command"]
     if command == "validate":
-        required = {"report_version", "command", "tool", "root", "valid", "issues", "not_judged", "external_references_not_verified", "release", "pin", "judged", "not_judged_counts", "superseded", "external_references", "held", "workspace_judged"}
+        required = {"report_version", "command", "tool", "root", "valid", "issues", "not_judged", "external_references_not_verified", "release", "pin", "judged", "not_judged_counts", "superseded", "external_references", "held", "top_level_forms", "workspace_judged"}
     else:
         required = {"report_version", "command", "tool", "attempt", "surfaces", "references", "issues"}
     if set(report) != required:
@@ -654,6 +654,14 @@ def _check_report(report: dict[str, Any], case: dict[str, Any], root: Path, retu
         if report["workspace_judged"] is not (not any(
                 item["path"] == "CONTEXT.md" and not item.get("reason") for item in report["not_judged"])):
             raise ConformanceError("workspace_judged must be false exactly when the root is not judged")
+        forms = report["top_level_forms"]
+        valid_forms = {"Record Library", "Knowledge Bundle", "Context Map", "Pipeline", "Capability", "Tool", "Check", "none"}
+        if (not isinstance(forms, dict)
+                or any(not isinstance(folder, str) or not folder or not isinstance(form, str) or form not in valid_forms
+                       for folder, form in forms.items())):
+            raise ConformanceError("top_level_forms must map folder names to declared form tokens")
+        if not report["workspace_judged"] and forms:
+            raise ConformanceError("top_level_forms must be empty when workspace_judged is false")
         valid = report["valid"]
         if type(valid) is not bool:
             raise ConformanceError("validate valid field must be boolean")

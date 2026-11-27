@@ -125,6 +125,7 @@ def validate(root: Path, *, release: str | None = None) -> ValidationReport:
     judged = judged_counts()
     pin = None
     held: tuple[dict, ...] = ()
+    top_level_forms: dict[str, str] = {}
     superseded: tuple[str, ...] = ()
     root = Path(root)
     issues: list[Issue] = []
@@ -162,6 +163,7 @@ def validate(root: Path, *, release: str | None = None) -> ValidationReport:
                 return ValidationReport(_ordered(issues), release=release, pin=pin)
             topology_issues, held, forms = check_topology(
                 root, SCHEMA_REGISTRY.schemas()["vorgang"]["$defs"]["freigabe"]["properties"]["by"]["pattern"])
+            top_level_forms = dict(sorted(forms.items()))
             issues.extend(topology_issues)
             superseded = _validate_workspace(root, issues, not_judged, release, metadata["protocol"], external_references, judged, forms)
         elif root_type == "hauptprozess":
@@ -172,7 +174,7 @@ def validate(root: Path, *, release: str | None = None) -> ValidationReport:
         _add(issues, "structure.level", root, root, f"Core tree cannot be read: {error}; restore read access to the workspace and its regular files")
     return ValidationReport(_ordered(issues), tuple(not_judged), superseded, len(external_references),
                             tuple({"vorgang": ref["vorgang"], "pointer": ref["pointer"]} for ref in external_references),
-                            release, pin, judged, held)
+                            release, pin, judged, held, top_level_forms)
 
 
 def _declared_stores(body: str) -> set[str]:
