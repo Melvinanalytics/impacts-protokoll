@@ -20,7 +20,7 @@ from .model import Issue
 LEVEL_FORMS = ("Record Library", "Knowledge Bundle", "Context Map")
 CODE_FORMS = ("Capability", "Tool", "Check")
 IMPLICIT = {"hauptprozesse", "vorgaenge", "__pycache__"}
-ROOT_STANDARD_DOCS = frozenset({"agents.md", "claude.md", "context.md", "readme.md", "contributing.md", "changelog.md", "license.md"})
+ROOT_STANDARD_DOCS = frozenset({"agents.md", "claude.md", "gemini.md", "context.md", "readme.md", "contributing.md", "changelog.md", "license.md"})
 DATED = re.compile(r"\d{4}-\d{2}-\d{2}")
 SCHEME = re.compile(r"[a-z][a-z0-9+.-]*:", re.IGNORECASE)
 ROUTER = "CONTEXT.md"
@@ -569,13 +569,32 @@ SHAPES: dict[str, Callable[[Topology, Path, str, list[Path]], None]] = {
 }
 
 
-def _links(body: str) -> list[str]:
-    # Destination atoms cannot consume an opener; failed long runs stay linear.
+_LINK_ATOM = r"(?:\\[()]|[^\s()<>\\])"
+_LINK_DEST = rf"(?:{_LINK_ATOM}|\((?:{_LINK_ATOM})*\))+"
+_LINK_SCAN = re.compile(
+    rf"\]\([ \t]*(<[^<>\n]*>|{_LINK_DEST})(?:[ \t]+(?:\"[^\"\n]*\"|'[^'\n]*'|\([^()\n]*\)))?[ \t]*\)"
+    r"|\]\([ \t]*((?:[^<>\n()\[\]]|\([^<>\n()\[\]]*\))+)[ \t]*\)"
+)
+
+
+def _scan_links(body: str) -> tuple[list[str], list[str]]:
+    """Return valid inline link destinations and unbracketed destinations containing spaces.
+    Destination atoms cannot consume an opener; failed long runs stay linear."""
     visible = "\n".join(body_lines(body))
-    atom = r"(?:\\[()]|[^\s()<>\\])"
-    destination = rf"(?:{atom}|\((?:{atom})*\))+"
-    pattern = rf"\]\([ \t]*(<[^<>\n]*>|{destination})(?:[ \t]+(?:\"[^\"\n]*\"|'[^'\n]*'|\([^()\n]*\)))?[ \t]*\)"
-    return [match[1] for match in re.finditer(pattern, visible)]
+    valid: list[str] = []
+    spaced: list[str] = []
+    for match in _LINK_SCAN.finditer(visible):
+        if match[1] is not None:
+            valid.append(match[1])
+        else:
+            raw = match[2].strip()
+            if raw and any(char in " \t" for char in raw):
+                spaced.append(raw)
+    return valid, spaced
+
+
+def _links(body: str) -> list[str]:
+    return _scan_links(body)[0]
 
 
 def _split_link(link: str) -> tuple[str, str]:
@@ -640,7 +659,10 @@ def _file_anchors(state: Topology, path: Path) -> set[str]:
 
 def _check_links(state: Topology, folder: Path, body: str, *, may_leave: bool = False, unindexed: bool = False) -> None:
     context = folder / ROUTER
-    for link in _links(body):
+    links, spaced = _scan_links(body)
+    for raw in spaced:
+        state.add("topology.link_broken", context, f"Link {raw!r} contains spaces without angle brackets; wrap the path in '<...>' or encode spaces as '%20'")
+    for link in links:
         target = link
         try:
             target, fragment = _split_link(link)
