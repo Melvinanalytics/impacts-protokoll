@@ -1487,6 +1487,6 @@ def test_top_level_forms_reported_in_validation_report_and_json(tmp_path, capsys
     write_hauptprozess(root / "hauptprozesse/video")
     assert validate(root / "hauptprozesse/video").top_level_forms == {}
     context = root / "CONTEXT.md"
-    context.write_text(context.read_text().replace("protocol: v0.8.2", "protocol: v0.7.0"))
+    context.write_text(context.read_text().replace("protocol: v0.9.0", "protocol: v0.7.0"))
     unjudged = validate(root)
     assert not unjudged.workspace_judged and unjudged.top_level_forms == {}

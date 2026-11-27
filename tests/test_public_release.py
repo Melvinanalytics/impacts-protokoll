@@ -173,7 +173,7 @@ def test_candidate_public_contract_and_scope():
     contributing = (ROOT / "CONTRIBUTING.md").read_text()
     first_win = (ROOT / "FIRST-WIN.md").read_text()
 
-    assert version == "0.8.2"
+    assert version == "0.9.0"
     assert "report_version: 3" in readme
     assert "message" in readme and "diagnostic" in readme.lower()
     assert "does not authenticate people" in readme

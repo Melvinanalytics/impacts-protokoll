@@ -111,15 +111,23 @@ def test_record_library_router_that_links_every_instance_has_no_size_cap(tmp_pat
     assert validate(root).valid
 
 
-def test_capability_routers_are_measured_but_process_definitions_are_not(tmp_path):
+def test_capability_and_arbeitsschritt_routers_are_measured_but_hp_and_tp_are_not(tmp_path):
     root = workspace(tmp_path, "Form: capabilities/ Capability")
     (root / "capabilities" / "rechner" / "deep").mkdir(parents=True)
     (root / "capabilities" / "rechner" / "CONTEXT.md").write_text("z" * 24_001)
     (root / "capabilities" / "rechner" / "deep" / "CONTEXT.md").write_text("z" * 24_001)
     write_hauptprozess(root / "hauptprozesse" / "video")
+    hp = root / "hauptprozesse" / "video" / "CONTEXT.md"
+    hp.write_text(hp.read_text() + "\n" + "h" * 24_001 + "\n")
+    tp = next((root / "hauptprozesse" / "video").glob("*/CONTEXT.md"))
+    tp.write_text(tp.read_text() + "\n" + "t" * 24_001 + "\n")
     step = next((root / "hauptprozesse" / "video").rglob("start/CONTEXT.md"))
     step.write_text(step.read_text() + "\n" + "w" * 24_001 + "\n")
-    assert codes(root) == [("topology.router_size", "capabilities/rechner/CONTEXT.md")]
+    step_rel = step.relative_to(root).as_posix()
+    assert codes(root) == [
+        ("topology.router_size", "capabilities/rechner/CONTEXT.md"),
+        ("topology.router_size", step_rel),
+    ]
 
 
 # E: opt-in table contracts

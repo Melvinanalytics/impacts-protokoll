@@ -20,7 +20,7 @@ from referencing import Registry, Resource
 
 from .hashing import HashSurfaceError, _has_symlink_component, file_references, file_sha256
 from .io import load_frontmatter_and_body, parse_frontmatter
-from .topology import blocks_vorgaenge, body_lines, check_topology
+from .topology import blocks_vorgaenge, body_lines, check_protocol_citations_tree, check_topology
 from .model import Issue, NotJudged, ValidationReport, derive_progress, judged_counts
 from .version import protocol_line, protocol_release
 from .generator import WORKSPACE_FOLDERS
@@ -115,7 +115,8 @@ class SchemaRegistry:
 SCHEMA_REGISTRY = SchemaRegistry()
 
 
-def validate(root: Path, *, release: str | None = None) -> ValidationReport:
+def validate(root: Path, *, release: str | None = None, preview_pin: bool = False,
+             protocol_source: Path | None = None) -> ValidationReport:
     """Validate a Workspace or Hauptprozess without changing files."""
     release = protocol_release() if release is None else release
     if protocol_line(release) is None:
@@ -127,6 +128,7 @@ def validate(root: Path, *, release: str | None = None) -> ValidationReport:
     held: tuple[dict, ...] = ()
     top_level_forms: dict[str, str] = {}
     superseded: tuple[str, ...] = ()
+    used_preview = False
     root = Path(root)
     issues: list[Issue] = []
     if root.is_symlink():
@@ -137,6 +139,18 @@ def validate(root: Path, *, release: str | None = None) -> ValidationReport:
         return ValidationReport(
             (Issue("structure.level", str(root), "Root directory does not exist; supply an existing workspace or Hauptprozess"),), release=release
         )
+    checked_protocol_source: Path | None = None
+    if protocol_source is not None:
+        ps = Path(protocol_source)
+        if ps.is_symlink() or (ps / "02_protocol").is_symlink():
+            return ValidationReport(
+                (Issue("structure.symlink", str(ps), "Protocol source or its 02_protocol/ directory is a symlink; use a regular directory"),), release=release
+            )
+        if not ps.is_dir() or not (ps / "02_protocol").is_dir():
+            return ValidationReport(
+                (Issue("structure.level", str(ps), "Protocol source must be an existing directory containing 02_protocol/"),), release=release
+            )
+        checked_protocol_source = ps
     try:
         metadata = _load_context(root / "CONTEXT.md", root, issues)
         root_type = metadata.get("type") if metadata is not None else None
@@ -150,6 +164,7 @@ def validate(root: Path, *, release: str | None = None) -> ValidationReport:
             )
         if root_type == "workspace":
             pin = metadata.get("protocol") if isinstance(metadata.get("protocol"), str) else None
+            effective_pin = pin
             if "protocol" not in metadata:
                 _add(issues, "schema.invalid", root / "CONTEXT.md", root,
                      f"protocol pin missing; add protocol: {release} to the frontmatter")
@@ -157,24 +172,31 @@ def validate(root: Path, *, release: str | None = None) -> ValidationReport:
                 _add(issues, "schema.invalid", root / "CONTEXT.md", root,
                      "Workspace protocol must be a release tag vMAJOR.MINOR.PATCH")
             elif protocol_line(metadata["protocol"]) != protocol_line(release):
-                not_judged.append(NotJudged("CONTEXT.md", metadata["protocol"], release))
-                return ValidationReport((), tuple(not_judged), release=release, pin=pin)
+                if preview_pin:
+                    used_preview = True
+                    effective_pin = release
+                else:
+                    not_judged.append(NotJudged("CONTEXT.md", metadata["protocol"], release))
+                    return ValidationReport((), tuple(not_judged), release=release, pin=pin)
             if issues:
                 return ValidationReport(_ordered(issues), release=release, pin=pin)
             topology_issues, held, forms = check_topology(
-                root, SCHEMA_REGISTRY.schemas()["vorgang"]["$defs"]["freigabe"]["properties"]["by"]["pattern"])
+                root, SCHEMA_REGISTRY.schemas()["vorgang"]["$defs"]["freigabe"]["properties"]["by"]["pattern"],
+                protocol_source=checked_protocol_source)
             top_level_forms = dict(sorted(forms.items()))
             issues.extend(topology_issues)
-            superseded = _validate_workspace(root, issues, not_judged, release, metadata["protocol"], external_references, judged, forms)
+            superseded = _validate_workspace(root, issues, not_judged, release, effective_pin, external_references, judged, forms)
         elif root_type == "hauptprozess":
             _validate_hauptprozess(root, issues, judged=judged)
+            if checked_protocol_source is not None:
+                issues.extend(check_protocol_citations_tree(root, checked_protocol_source))
         elif metadata is not None:
             _add(issues, "routing.type", root / "CONTEXT.md", root, "Root type must be workspace or hauptprozess")
     except (OSError, RuntimeError) as error:
         _add(issues, "structure.level", root, root, f"Core tree cannot be read: {error}; restore read access to the workspace and its regular files")
     return ValidationReport(_ordered(issues), tuple(not_judged), superseded, len(external_references),
                             tuple({"vorgang": ref["vorgang"], "pointer": ref["pointer"]} for ref in external_references),
-                            release, pin, judged, held, top_level_forms)
+                            release, pin, judged, held, top_level_forms, used_preview)
 
 
 def _declared_stores(body: str) -> set[str]:

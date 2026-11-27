@@ -52,7 +52,7 @@ def inventory():
         ("src/impacts_protocol/topology.py", "_read_level", ["Form:"]),
         ("src/impacts_protocol/topology.py", "_declares_itself", ["Form:"]),
         (PROJECT, 'source_kinds', ['Quell-Eingabe', 'Datenart']),
-        ('src/impacts_protocol/view/selection.py', 'record_stages', ['Stage']),
+        ('src/impacts_protocol/view/selection.py', 'record_stages', ['Stage', 'Stufe']),
         (COLD, '_hauptprozess_call', ['Aufruf-ID', 'Capability-Pfad', 'Capability-Revision', 'Operation']),
         (COLD, '_hauptprozess_source', ['Quell-Eingabe', 'Herkunft', 'Ursprung', 'Stand', 'Erforderliche Kontrolle']),
         (COLD, '_check_loop_bounds', ['Loop bound']),
@@ -81,6 +81,10 @@ def inventory():
     assert view_package.SETTING.pattern.startswith('^Working language: ')
     assert 'SETTING' in ast.get_source_segment((ROOT / 'src/impacts_protocol/view/__init__.py').read_text(), next(n for n in ast.walk(ast.parse((ROOT / 'src/impacts_protocol/view/__init__.py').read_text())) if isinstance(n, ast.FunctionDef) and n.name == 'working_language'))
     add(['Working language:'], 'src/impacts_protocol/view/__init__.py', 'working_language')
+    from impacts_protocol.view import selection as view_selection
+    assert view_selection.VIEW_LINE.pattern.startswith('^View:')
+    assert 'VIEW_LINE' in ast.get_source_segment((ROOT / 'src/impacts_protocol/view/selection.py').read_text(), next(n for n in ast.walk(ast.parse((ROOT / 'src/impacts_protocol/view/selection.py').read_text())) if isinstance(n, ast.FunctionDef) and n.name == 'declared_views'))
+    add(['View:'], 'src/impacts_protocol/view/selection.py', 'declared_views')
     # The page also recognizes source headings/executors and optional capture metadata.
     page_path = 'src/impacts_protocol/view/page.html'
     page = (ROOT / page_path).read_text()
@@ -101,7 +105,7 @@ def inventory():
 
 def spellings():
     """Preserve exact spelling for case-sensitive interfaces, including data-kind values."""
-    names = ['Ablage:', 'Form:', 'Working language:', 'Quell-Eingabe', 'Datenart', 'Subject', 'Gegenstand', 'Stage', 'Aufruf-ID',
+    names = ['Ablage:', 'Form:', 'Working language:', 'View:', 'Quell-Eingabe', 'Datenart', 'Subject', 'Gegenstand', 'Stage', 'Stufe', 'Aufruf-ID',
              'Capability-Pfad', 'Capability-Revision', 'Operation', 'Herkunft', 'Ursprung',
              'Stand', 'Erforderliche Kontrolle', 'Loop bound', 'Bei Route', 'Befund: fehlt',
              'Pflichtfelder', 'Overview', 'Übersicht', 'What to load', 'Was laden', 'impacts:table-contract']

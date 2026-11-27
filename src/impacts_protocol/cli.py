@@ -57,6 +57,10 @@ def build_parser() -> argparse.ArgumentParser:
     validate_parser.add_argument("--json", action="store_true", help="Print a JSON report")
     validate_parser.add_argument("--require-judged", action="store_true",
                                  help="Exit 1 when the workspace pin names another release line, so nothing was judged")
+    validate_parser.add_argument("--preview-pin", action="store_true",
+                                 help="Judge the workspace as if its root protocol pin matched this release, without writing files")
+    validate_parser.add_argument("--protocol-source", default=None,
+                                 help="Path to a protocol checkout containing 02_protocol/ to check `02_protocol/...` code-span citations")
 
     hash_parser = subparsers.add_parser("hash", help="List per-file SHA-256 references")
     hash_parser.add_argument("attempt", help="Reference root")
@@ -69,8 +73,10 @@ def build_parser() -> argparse.ArgumentParser:
 
     view_parser = subparsers.add_parser("view", help="Write a read-only HTML view of a workspace, Hauptprozess or Vorgang")
     view_parser.add_argument("source", help="Workspace folder, Hauptprozess folder or vorgaenge/<slug>/CONTEXT.md")
-    view_parser.add_argument("--out", required=True, help="New folder for the pages; must not exist")
+    view_parser.add_argument("--out", default=None, help="New folder for the pages; must not exist")
     view_parser.add_argument("--json", action="store_true", help="Also write model.json, an export, never a source")
+    view_parser.add_argument("--json-stdout", action="store_true",
+                             help="Print the view JSON model to stdout without writing any files")
     view_parser.add_argument("--language", choices=LANGUAGES, help="Page language when the workspace records none")
     return parser
 
@@ -92,8 +98,16 @@ def main(argv: list[str] | None = None) -> int:
         print(f"impacts validate {shlex.quote(str(target))}")
         return 0
     if args.command == "view":
-        from .view import run
+        if args.json_stdout and args.out is not None:
+            parser.error("use either --out or --json-stdout, not both")
+        if not args.json_stdout and args.out is None:
+            parser.error("one of --out or --json-stdout is required")
+        if args.json_stdout and args.json:
+            parser.error("--json applies only with --out")
+        from .view import run, run_json_stdout
 
+        if args.json_stdout:
+            return run_json_stdout(Path(args.source), language=args.language)
         return run(Path(args.source), Path(args.out), write_json=args.json, language=args.language)
     if args.command == "template":
         print(template_text(args.kind, language=args.language), end="")
@@ -134,10 +148,16 @@ def main(argv: list[str] | None = None) -> int:
             print(error, file=sys.stderr)
             return 1
         return 0
+    if args.command == "validate" and args.preview_pin and args.require_judged:
+        parser.error("--preview-pin cannot be combined with --require-judged")
     tool = _package_metadata() if args.json else None
     from .validator import validate
 
-    report = validate(Path(args.path))
+    report = validate(
+        Path(args.path),
+        preview_pin=args.preview_pin,
+        protocol_source=Path(args.protocol_source) if args.protocol_source is not None else None,
+    )
     if args.json:
         _print_json_report(
             {
@@ -153,6 +173,7 @@ def main(argv: list[str] | None = None) -> int:
                 "not_judged_counts": report.not_judged_counts,
                 "release": report.release,
                 "pin": report.pin,
+                "preview_pin": report.preview_pin,
                 "judged": report.judged,
                 "held": list(report.held),
                 "top_level_forms": report.top_level_forms,
@@ -166,7 +187,8 @@ def main(argv: list[str] | None = None) -> int:
         )
         return _validate_exit(report, args.require_judged)
     counts = report.judged
-    print(f"impacts validate {report.release} against pin {report.pin or 'none'}: "
+    preview_note = " (preview)" if report.preview_pin else ""
+    print(f"impacts validate {report.release} against pin {report.pin or 'none'}{preview_note}: "
           f"{counts['hauptprozess']} Hauptprozesse, {counts['teilprozess']} Teilprozesse, "
           f"{counts['arbeitsschritt']} Arbeitsschritte, {counts['vorgang']} Vorgänge, "
           f"{counts['versuch']} Versuche judged; {report.not_judged_counts['vorgang']} Vorgänge not judged; "

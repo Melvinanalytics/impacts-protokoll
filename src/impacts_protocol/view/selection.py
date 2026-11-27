@@ -24,9 +24,9 @@ import yaml
 
 from .project import SUBJECT_HEADINGS
 from impacts_protocol.generator import WORKSPACE_FOLDERS
-from impacts_protocol.io import load_frontmatter
+from impacts_protocol.io import load_frontmatter, load_frontmatter_and_body
 from impacts_protocol.hashing import _has_symlink_component
-from impacts_protocol.topology import NAVIGATION, blocks_vorgaenge
+from impacts_protocol.topology import NAVIGATION, blocks_vorgaenge, body_lines
 from impacts_protocol.validator import SCHEMA_REGISTRY, validate
 
 # Private on purpose: a bound revision must be materialized exactly as the validator does.
@@ -39,6 +39,11 @@ FORMAT = "impacts-view/5"
 TREE = re.compile(r"git-tree:([0-9a-f]{40}|[0-9a-f]{64})")
 SLUG = re.compile(r"[a-z0-9]+(?:-[a-z0-9]+)*")
 IST = "analyse"  # source material, not a Core folder: kept out of WORKSPACE_FOLDERS and its issue filter
+OUTPUT_TEXT_EXTS = frozenset({".md", ".txt", ".json", ".yaml", ".yml", ".csv"})
+OUTPUT_PREVIEW_LIMIT = 12_000
+VIEW_LINE = re.compile(r"^View:[ \t]+(.+?)(?:[ \t]+\|[ \t]+(.+?))?[ \t]*$")
+RECORD_LIB_LINE = re.compile(r"^Form:[ \t]+([^/\s]+)/[ \t]+Record Library per \S")
+BRIDGE_PREFIXES = ("Reality and Leistungsstückliste bridge:", "Realitäts- und Leistungsstücklisten-Brücke:")
 
 
 def git(folder: Path, *args: str) -> str | None:
@@ -166,16 +171,124 @@ def bound_hauptprozess(workspace: Path, revision: str, cache: dict) -> tuple[lis
     return cache[revision]
 
 
+def legacy_vorgang_projection(path: Path, workspace: Path) -> dict | None:
+    """Best-effort read projection for a `not_judged` Vorgang (`binding.md#snapshot-and-provenance`).
+    Never adds Core issues and never counts as checked by this release."""
+    rel = path.relative_to(workspace).as_posix()
+    try:
+        if path.is_symlink() or not path.is_file() or _has_symlink_component(path, workspace):
+            return None
+        content = read_file(path, rel)
+    except (Unreadable, OSError, ValueError, yaml.YAMLError):
+        return None
+    meta = content["meta"] if isinstance(content.get("meta"), dict) else {}
+    raw_entries = meta.get("laufpfad") if isinstance(meta.get("laufpfad"), list) else []
+    entries = []
+    for entry in raw_entries:
+        if not isinstance(entry, dict):
+            continue
+        item = {key: entry[key] for key in ("arbeitsschritt_ref", "nummer", "status", "gewaehlte_route", "status_seit")
+                if key in entry}
+        if isinstance(entry.get("wiedereinstieg"), dict):
+            item["wiedereinstieg"] = {k: entry["wiedereinstieg"][k]
+                                      for k in ("ausloeser", "faellig", "continuation_ref")
+                                      if k in entry["wiedereinstieg"]}
+        if isinstance(entry.get("geschrieben"), list):
+            item["geschrieben"] = [ref for ref in entry["geschrieben"] if isinstance(ref, dict) and "pfad" in ref]
+        entries.append(item)
+    return {
+        "id": meta.get("id") if isinstance(meta.get("id"), str) else None,
+        "title": content.get("title"),
+        "protocol": meta.get("protocol") if isinstance(meta.get("protocol"), str) else None,
+        "hauptprozess_revision": meta.get("hauptprozess_revision") if isinstance(meta.get("hauptprozess_revision"), str) else None,
+        "subject": subject_record(path, workspace),
+        "laufpfad": entries,
+        "sections": content.get("sections", []),
+        "path": rel,
+        "sha256": content.get("sha256"),
+    }
+
+
+def _read_output_preview(target: Path, vorgang_dir: Path, workspace: Path) -> tuple[str | None, bool, str | None]:
+    """Read a bounded UTF-8 text preview from a regular file inside `vorgang_dir`, without symlinks."""
+    try:
+        if target.is_symlink() or not target.is_file() or _has_symlink_component(target, workspace):
+            return None, False, None
+        resolved = target.resolve()
+        if not resolved.is_relative_to(vorgang_dir.resolve()):
+            return None, False, None
+        raw = resolved.read_bytes()
+        digest_hex = "sha256:" + hashlib.sha256(raw).hexdigest()
+        if resolved.suffix.lower() not in OUTPUT_TEXT_EXTS:
+            return None, False, digest_hex
+        text = raw.decode("utf-8")
+        truncated = len(text) > OUTPUT_PREVIEW_LIMIT
+        return (text[:OUTPUT_PREVIEW_LIMIT] if truncated else text), truncated, digest_hex
+    except (OSError, UnicodeError, RuntimeError):
+        return None, False, None
+
+
+def attempt_outputs(vorgang_dir: Path, workspace: Path, laufpfad: list[dict]) -> list[list[dict]]:
+    """Readable previews for declared `geschrieben` outputs and open-attempt drafts (labelled draft=True)."""
+    all_outputs: list[list[dict]] = []
+    for entry in laufpfad:
+        items: list[dict] = []
+        seen: set[str] = set()
+        for ref in entry.get("geschrieben") or []:
+            if not isinstance(ref, dict) or not isinstance(ref.get("pfad"), str):
+                continue
+            rel = ref["pfad"]
+            seen.add(rel)
+            preview, truncated, _ = _read_output_preview(workspace / rel, vorgang_dir, workspace)
+            items.append({
+                "pfad": rel,
+                "sha256": ref.get("sha256"),
+                "draft": False,
+                "preview": preview,
+                "truncated": truncated,
+            })
+        if entry.get("status") in ("aktiv", "wartend"):
+            step_ref = str(entry.get("arbeitsschritt_ref") or "")
+            step_slug = step_ref.split(":", 1)[1] if ":" in step_ref else step_ref
+            nummer = entry.get("nummer")
+            if step_slug and isinstance(nummer, int):
+                out_dir = vorgang_dir / step_slug / f"{nummer:03d}" / "output"
+                if out_dir.is_dir() and not out_dir.is_symlink() and not _has_symlink_component(out_dir, workspace):
+                    for candidate in sorted(out_dir.rglob("*")):
+                        if candidate.is_symlink() or not candidate.is_file():
+                            continue
+                        rel = candidate.relative_to(workspace).as_posix()
+                        if rel in seen:
+                            continue
+                        seen.add(rel)
+                        preview, truncated, digest_hex = _read_output_preview(candidate, vorgang_dir, workspace)
+                        items.append({
+                            "pfad": rel,
+                            "sha256": digest_hex,
+                            "draft": True,
+                            "preview": preview,
+                            "truncated": truncated,
+                        })
+        all_outputs.append(items)
+    return all_outputs
+
+
 def vorgang_page(path: Path, workspace: Path, report, before: dict | Exception, cache: dict) -> dict:
     """`report` is Core's validation of `workspace`; `before` is the Vorgang folder's state captured before it."""
     vorgang_rel = path.parent.relative_to(workspace).as_posix()
     selection = {"hauptprozess": None, "revision": None, "vorgang": vorgang_rel}
     skipped = [item for item in report.not_judged if item.path == f"{vorgang_rel}/CONTEXT.md"]
+    if not skipped and not report.workspace_judged:
+        skipped = [item for item in report.not_judged if item.path == "CONTEXT.md" and not item.reason]
     if skipped:
         item = skipped[0]
-        return {"format": FORMAT, "kind": "vorgang", "selection": selection, "issues": [],
-                "not_judged": {"path": item.path, "protocol": item.protocol,
-                               "validator_protocol": item.validator_protocol, "message": item.message}}
+        model = {"format": FORMAT, "kind": "vorgang", "selection": selection, "issues": [],
+                 "not_judged": {"path": item.path, "protocol": item.protocol,
+                                "validator_protocol": item.validator_protocol, "message": item.message}}
+        legacy = legacy_vorgang_projection(path, workspace)
+        if legacy is not None:
+            model["legacy"] = legacy
+        return model
     issues = vorgang_issues(report, vorgang_rel)
     if issues:
         return refused("vorgang", selection, issues)
@@ -199,9 +312,13 @@ def vorgang_page(path: Path, workspace: Path, report, before: dict | Exception, 
     view = project.phases(nodes, vorgang["meta"]["laufpfad"], superseded=superseded)
     subject = subject_record(path, workspace)
     view["subject_stage"] = subject["stage"] if subject else "open"
-    return {"format": FORMAT, "kind": "vorgang", "selection": selection, "issues": [], "nodes": nodes, "vorgang": vorgang,
+    outputs = attempt_outputs(path.parent, workspace, vorgang["meta"]["laufpfad"])
+    page = {"format": FORMAT, "kind": "vorgang", "selection": selection, "issues": [], "nodes": nodes, "vorgang": vorgang,
             "subject": subject, "attempt_phases": [project.ATTEMPT_PHASE[e["status"]] for e in vorgang["meta"]["laufpfad"]],
             "view": view, "stand": project.stand(nodes, vorgang, view), "map": project.map_tree(nodes, vorgang, view)}
+    if any(outputs):
+        page["attempt_outputs"] = outputs
+    return page
 
 
 def subject_record(path: Path, workspace: Path) -> dict | None:
@@ -230,51 +347,160 @@ def subject_record(path: Path, workspace: Path) -> dict | None:
 
 
 def record_stages(text: str) -> dict[str, str]:
-    """W4's Stage line or anchored Stage column; repeated declarations stay open."""
+    """W4's Stage/Stufe line or anchored Stage/Stufe column; repeated declarations stay open."""
     found = {}
-    lines = re.findall(r"(?m)^Stage:(.*?)$", text)
+    lines = re.findall(r"(?m)^(?:Stage|Stufe):(.*?)$", text)
     if lines:
         found[""] = [line.strip() or "open" for line in lines]
     headers = []
+    stage_idx = None
     for row in text.splitlines():
         if not row.startswith("|"):
             headers = []
+            stage_idx = None
             continue
         cells = [cell.strip() for cell in row.strip("|").split("|")]
-        if "Stage" in cells:
+        stage_cols = [i for i, cell in enumerate(cells) if cell in ("Stage", "Stufe")]
+        if stage_cols:
             headers = cells
+            stage_idx = stage_cols[0] if len(stage_cols) == 1 else None
         elif headers:
             for anchor in re.findall(r"<a id=[\"']([^\"']+)[\"']></a>", row):
-                stage = (cells[headers.index("Stage")] if headers.count("Stage") == 1
-                         and len(cells) == len(headers) else "open")
+                stage = (cells[stage_idx] if stage_idx is not None and len(cells) == len(headers) else "open")
                 found.setdefault(anchor, []).append(stage or "open")
     return {anchor: values[0] if len(values) == 1 else "open" for anchor, values in found.items()}
 
 
+def _record_library_roots(workspace: Path) -> list[Path]:
+    """All declared top-level Record Library folders plus `records/`, without symlinks."""
+    names: list[str] = []
+    context = workspace / "CONTEXT.md"
+    try:
+        if context.is_file() and not context.is_symlink():
+            _, body = load_frontmatter_and_body(context, workspace)
+            for line in body_lines(body):
+                if match := RECORD_LIB_LINE.match(line):
+                    names.append(match.group(1))
+    except (OSError, ValueError, yaml.YAMLError):
+        pass
+    if "records" not in names:
+        names.append("records")
+    roots = []
+    for name in sorted(set(names)):
+        folder = workspace / name
+        if folder.is_dir() and not folder.is_symlink():
+            roots.append(folder)
+    return roots
+
+
 def record_inventory(workspace: Path) -> list[dict]:
-    """Readable Stage records under records/, without following symbolic links.
+    """Readable Stage/Stufe records across declared Record Libraries, without following symlinks.
 
     The digest participates in the generation stability check, not in domain identity.
     """
-    root = workspace / "records"
-    if not root.is_dir() or root.is_symlink():
-        return []
     found = []
-    for directory, folders, files in os.walk(root, followlinks=False):
-        folders[:] = sorted(name for name in folders if not Path(directory, name).is_symlink())
-        for name in sorted(files):
-            path = Path(directory, name)
-            if path.suffix != ".md" or path.is_symlink() or not path.is_file():
-                continue
-            try:
-                data = path.read_bytes()
-                stages = record_stages(data.decode("utf-8"))
-            except (OSError, UnicodeError) as error:
-                raise SystemExit(f"cannot read record {path}: {error}") from error
-            rel = path.relative_to(workspace).as_posix()
-            found.extend({"record": rel + ("#" + anchor if anchor else ""), "stage": stage,
-                          "sha256": hashlib.sha256(data).hexdigest()} for anchor, stage in stages.items())
+    for root in _record_library_roots(workspace):
+        for directory, folders, files in os.walk(root, followlinks=False):
+            folders[:] = sorted(name for name in folders if not Path(directory, name).is_symlink())
+            for name in sorted(files):
+                path = Path(directory, name)
+                if path.suffix != ".md" or path.is_symlink() or not path.is_file():
+                    continue
+                try:
+                    data = path.read_bytes()
+                    stages = record_stages(data.decode("utf-8"))
+                except (OSError, UnicodeError) as error:
+                    raise SystemExit(f"cannot read record {path}: {error}") from error
+                rel = path.relative_to(workspace).as_posix()
+                found.extend({"record": rel + ("#" + anchor if anchor else ""), "stage": stage,
+                              "sha256": hashlib.sha256(data).hexdigest()} for anchor, stage in stages.items())
     return found
+
+
+def declared_views(workspace: Path) -> list[tuple[str, str | None]]:
+    """Column-zero `View: <relative-path> [| <title>]` declarations in root CONTEXT.md."""
+    context = workspace / "CONTEXT.md"
+    found: list[tuple[str, str | None]] = []
+    try:
+        if not context.is_file() or context.is_symlink():
+            return found
+        _, body = load_frontmatter_and_body(context, workspace)
+    except (OSError, ValueError, yaml.YAMLError):
+        return found
+    for line in body_lines(body):
+        if match := VIEW_LINE.match(line):
+            found.append((match.group(1).strip(), match.group(2).strip() if match.group(2) else None))
+    return found
+
+
+def view_inventory(workspace: Path) -> list[tuple[str, str | None, str]]:
+    """Stability snapshot of declared `View:` entries."""
+    items = []
+    for rel, title in declared_views(workspace):
+        target = workspace / rel
+        if rel.startswith("/") or ".." in Path(rel).parts or not target.exists() or target.is_symlink() or _has_symlink_component(target, workspace):
+            items.append((rel, title, "missing-or-invalid"))
+        else:
+            items.append((rel, title, entry_state(target)))
+    return items
+
+
+def system_view_pages(workspace: Path, entries: list[tuple[str, str | None, str]], used: set[str], pages: dict) -> list[dict]:
+    """Build `s-*.html` system/market-topology view entries declared via `View:` in root CONTEXT.md."""
+    summary = []
+    for rel, explicit_title, state_token in entries:
+        stem = rel.rsplit("/", 1)[-1].rsplit(".", 1)[0].lower()
+        slug = re.sub(r"[^a-z0-9]+", "-", stem).strip("-") or "view"
+        page = page_name("s", slug, used)
+        target = workspace / rel
+        if rel.startswith("/") or ".." in Path(rel).parts or "\\" in rel:
+            model = refused("system-view", {"view": rel, "title": explicit_title or stem},
+                            [{"code": "view.unreadable", "path": rel, "message": "View path must be relative inside the workspace"}])
+            pages[page] = model
+            summary.append({"page": page, "file": rel, "title": explicit_title or stem, "source_kind": None, "issues": model["issues"]})
+            continue
+        if target.is_symlink() or _has_symlink_component(target, workspace) or not target.is_file():
+            model = refused("system-view", {"view": rel, "title": explicit_title or stem},
+                            [{"code": "view.unreadable", "path": rel, "message": f"View file {rel} is missing, not a regular file, or crosses a symlink"}])
+            pages[page] = model
+            summary.append({"page": page, "file": rel, "title": explicit_title or stem, "source_kind": None, "issues": model["issues"]})
+            continue
+        ext = target.suffix.lower()
+        if ext == ".html":
+            raw = target.read_bytes()
+            sha = hashlib.sha256(raw).hexdigest()
+            title = explicit_title
+            if not title:
+                m = re.search(r"<title>(.*?)</title>", raw.decode("utf-8", errors="replace"), re.I | re.S)
+                title = re.sub(r"\s+", " ", m.group(1)).strip() if m else stem
+            pages[page] = {
+                "format": FORMAT, "kind": "system-view",
+                "selection": {"view": rel, "title": title, "source_kind": "html", "sha256": sha},
+                "issues": [],
+            }
+            summary.append({"page": page, "file": rel, "title": title, "source_kind": "html", "issues": []})
+        elif ext == ".md":
+            try:
+                content = read_file(target, rel)
+            except (Unreadable, OSError, ValueError, yaml.YAMLError) as error:
+                model = unreadable("system-view", {"view": rel, "title": explicit_title or stem}, rel, error)
+                pages[page] = model
+                summary.append({"page": page, "file": rel, "title": explicit_title or stem, "source_kind": "markdown", "issues": model["issues"]})
+                continue
+            title = explicit_title or content.get("title") or stem
+            node = {"id": rel, "kind": "system-view", "parent": None, "children": [], **content}
+            pages[page] = {
+                "format": FORMAT, "kind": "system-view",
+                "selection": {"view": rel, "title": title, "source_kind": "markdown", "sha256": content["sha256"]},
+                "issues": [], "nodes": [node],
+            }
+            summary.append({"page": page, "file": rel, "title": title, "source_kind": "markdown", "issues": []})
+        else:
+            model = refused("system-view", {"view": rel, "title": explicit_title or stem},
+                            [{"code": "view.unreadable", "path": rel, "message": f"View file {rel} must end in .html or .md"}])
+            pages[page] = model
+            summary.append({"page": page, "file": rel, "title": explicit_title or stem, "source_kind": None, "issues": model["issues"]})
+    return summary
 
 
 def capture(folder: Path) -> dict | Exception:
@@ -333,9 +559,62 @@ def kind_of_entry(path: Path) -> str:
     return "link" if stat.S_ISLNK(mode) else "dir" if stat.S_ISDIR(mode) else "file" if stat.S_ISREG(mode) else "special"
 
 
+def _is_candidate_hauptprozess(folder: Path) -> bool:
+    context = folder / "CONTEXT.md"
+    try:
+        if not context.is_file() or context.is_symlink():
+            return False
+        return load_frontmatter(context).get("type") == "hauptprozess"
+    except (OSError, ValueError, yaml.YAMLError):
+        return False
+
+
+def _is_bridge_content(path: Path, content: dict) -> bool:
+    meta = content.get("meta") if isinstance(content.get("meta"), dict) else {}
+    if meta.get("type") == "bridge":
+        return True
+    if meta.get("type") is not None:
+        return False
+    name = path.name.lower()
+    title = (content.get("title") or "").strip()
+    return name == "bridge.md" or name.endswith("-bridge.md") or title.startswith(BRIDGE_PREFIXES)
+
+
+def _is_renderable_analysis(path: Path, rel: str) -> bool:
+    try:
+        content = read_file(path, rel)
+    except (Unreadable, OSError, ValueError, yaml.YAMLError):
+        return False
+    meta = content.get("meta") if isinstance(content.get("meta"), dict) else {}
+    return meta.get("type") == "ist-prozess" or _is_bridge_content(path, content)
+
+
+def _nested_analysis_files(base: Path, folder: Path) -> list[tuple[str, str, str]]:
+    """Collect nested `ist-prozess` or `bridge` Markdown files under one `analyse/` subfolder without following symlinks."""
+    if _is_candidate_hauptprozess(folder):
+        return []
+    found: list[tuple[str, str, str]] = []
+    for directory, subdirs, files in os.walk(folder, followlinks=False):
+        subdirs[:] = sorted(name for name in subdirs
+                            if not name.startswith((".", "_"))
+                            and not Path(directory, name).is_symlink()
+                            and not _is_candidate_hauptprozess(Path(directory, name)))
+        for name in sorted(files):
+            if name.startswith(".") or not name.endswith(".md") or name == "CONTEXT.md":
+                continue
+            path = Path(directory, name)
+            if path.is_symlink() or not path.is_file():
+                continue
+            rel_in_ist = path.relative_to(base).as_posix()
+            if _is_renderable_analysis(path, f"{IST}/{rel_in_ist}"):
+                found.append((rel_in_ist, "file", entry_state(path)))
+    return found
+
+
 def inventory(workspace: Path) -> dict[str, list[tuple[str, str]] | None]:
     """Every entry under hauptprozesse/ and vorgaenge/, with what it is; nothing is skipped.
-    Under analyse/ also each regular file's hash, since the view reads those
+    Under analyse/ also each regular file's hash (including nested Ist-Prozess/Bridge captures
+    inside case folders, excluding candidate Hauptprozess trees), since the view reads those
     files from the working tree (None: the folder does not exist)."""
     found = {}
     for folder in WORKSPACE_FOLDERS:
@@ -349,8 +628,16 @@ def inventory(workspace: Path) -> dict[str, list[tuple[str, str]] | None]:
     if base.is_symlink() or not base.is_dir():
         found[IST] = [(".", kind_of_entry(base), IST)]
         return found
-    found[IST] = [(p.name, kind, entry_state(p) if kind == "file" else "")
-                  for p in sorted(base.iterdir()) for kind in [kind_of_entry(p)]]
+    items: list[tuple[str, str, str]] = []
+    for p in sorted(base.iterdir()):
+        kind = kind_of_entry(p)
+        if kind == "dir" and not p.name.startswith((".", "_")):
+            nested = _nested_analysis_files(base, p)
+            if nested:
+                items.extend(nested)
+                continue
+        items.append((p.name, kind, entry_state(p) if kind == "file" else ""))
+    found[IST] = items
     return found
 
 
@@ -358,22 +645,26 @@ SKIPPED = {"link", "dir", "special"}
 
 
 def ist_page(path: Path, rel: str) -> dict:
-    """The page model of one Ist-Prozess file, or why the file is not one."""
+    """The page model of one Ist-Prozess or Bridge file, or why the file is not one."""
     selection = {"ist_prozess": rel, "revision": "working-tree"}
     try:
         content = read_file(path, rel)
     except (Unreadable, OSError, ValueError, yaml.YAMLError) as error:
         return unreadable("ist-prozess", selection, rel, error)
     kind = content["meta"].get("type") if isinstance(content["meta"], dict) else None
-    if kind != "ist-prozess":
+    is_bridge = _is_bridge_content(path, content)
+    if kind != "ist-prozess" and not is_bridge:
         return {"reason": "wrong-type", "type": kind} if kind is not None else {"reason": "missing-type"}
     node = {"id": rel, "kind": "ist-prozess", "parent": None, "children": [], **content}
-    return {"format": FORMAT, "kind": "ist-prozess", "selection": selection, "issues": [],
-            "nodes": [node], "necessity": project.necessity(node)}
+    model = {"format": FORMAT, "kind": "ist-prozess", "selection": selection, "issues": [],
+             "nodes": [node], "necessity": project.necessity(node)}
+    if is_bridge:
+        model["bridge"] = True
+    return model
 
 
 def ist_pages(workspace: Path, listing: list[tuple[str, str, str]], used: set[str], pages: dict) -> list[dict]:
-    """Each Ist-Prozess file becomes its own page; every other entry is listed with its reason."""
+    """Each Ist-Prozess or Bridge file becomes its own page; every other entry is listed with its reason."""
     skipped = []
     for name, kind, third in listing:
         rel = third if name == "." else f"{IST}/{name}"
@@ -382,7 +673,8 @@ def ist_pages(workspace: Path, listing: list[tuple[str, str, str]], used: set[st
         if "reason" in model:
             skipped.append({"file": rel, **model})
         else:
-            pages[page_name("i", name.removesuffix(".md"), used)] = model
+            slug = name.removesuffix(".md").replace("/", "-")
+            pages[page_name("i", slug, used)] = model
     return skipped
 
 
@@ -400,7 +692,8 @@ def workspace_site(workspace: Path, only: set[str] | None = None) -> dict[str, d
         raise SystemExit(f"{workspace} must be the root of a Git repository; Core resolves bound Vorgänge there")
     algorithm = git(workspace, "rev-parse", "--show-object-format") or "sha1"
     state = lambda: (inventory(workspace), git(workspace, "rev-parse", "--verify", "-q", "HEAD"),
-                     record_inventory(workspace) if only is None else [])
+                     record_inventory(workspace) if only is None else [],
+                     view_inventory(workspace) if only is None else [])
     first = state()
     if only is not None and (unknown := sorted(only - {name for name, _ in first[0]["vorgaenge"]})):
         raise SystemExit(f"no entry in vorgaenge/ is named {', '.join(unknown)}")
@@ -428,6 +721,7 @@ def workspace_site(workspace: Path, only: set[str] | None = None) -> dict[str, d
         pages[page] = vorgang_page(workspace / rel / "CONTEXT.md", workspace, report, vorgaenge[name], cache) if kind == "dir" else \
             refused("vorgang", {"hauptprozess": None, "revision": None, "vorgang": rel}, entry_issues(report, rel, kind))
     skipped = None if first[0][IST] is None or only is not None else ist_pages(workspace, first[0][IST], used, pages)
+    system_views = [] if only is not None else system_view_pages(workspace, first[3], used, pages)
     if state() != first:
         raise SystemExit("the workspace inventory, an Ist-Prozess file, a record or HEAD changed while the view was generated; "
                          "nothing was written")
@@ -438,7 +732,7 @@ def workspace_site(workspace: Path, only: set[str] | None = None) -> dict[str, d
                             or "/".join(i["path"].split("/")[:2]) not in known]
         project.link_ist(pages)
         pages["index.html"] = project.overview(workspace.name, pages, heads, workspace_issues, bool(first[1]), skipped,
-                                               SCHEMA_REGISTRY.schemas(), records=first[2])
+                                               SCHEMA_REGISTRY.schemas(), records=first[2], system_views=system_views)
     for name, model in pages.items():
         model["site"] = {"index": "index.html", "self": name}
     return pages

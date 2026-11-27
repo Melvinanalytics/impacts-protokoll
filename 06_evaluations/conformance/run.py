@@ -552,7 +552,7 @@ def _check_report(report: dict[str, Any], case: dict[str, Any], root: Path, retu
     expected = case["expected"]
     command = case["command"]
     if command == "validate":
-        required = {"report_version", "command", "tool", "root", "valid", "issues", "not_judged", "external_references_not_verified", "release", "pin", "judged", "not_judged_counts", "superseded", "external_references", "held", "top_level_forms", "workspace_judged"}
+        required = {"report_version", "command", "tool", "root", "valid", "issues", "not_judged", "external_references_not_verified", "release", "pin", "preview_pin", "judged", "not_judged_counts", "superseded", "external_references", "held", "top_level_forms", "workspace_judged"}
     else:
         required = {"report_version", "command", "tool", "attempt", "surfaces", "references", "issues"}
     if set(report) != required:
@@ -654,6 +654,8 @@ def _check_report(report: dict[str, Any], case: dict[str, Any], root: Path, retu
         if report["workspace_judged"] is not (not any(
                 item["path"] == "CONTEXT.md" and not item.get("reason") for item in report["not_judged"])):
             raise ConformanceError("workspace_judged must be false exactly when the root is not judged")
+        if type(report["preview_pin"]) is not bool or report["preview_pin"] is not False:
+            raise ConformanceError("preview_pin must be false without --preview-pin")
         forms = report["top_level_forms"]
         valid_forms = {"Record Library", "Knowledge Bundle", "Context Map", "Pipeline", "Capability", "Tool", "Check", "none"}
         if (not isinstance(forms, dict)
