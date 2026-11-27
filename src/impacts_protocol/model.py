@@ -70,6 +70,7 @@ class ValidationReport:
 
     held: tuple[dict, ...] = ()
     top_level_forms: dict[str, str] = field(default_factory=dict)
+    preview_pin: bool = False
 
     @property
     def not_judged_counts(self) -> dict[str, int]:

@@ -405,7 +405,8 @@ def ist_title(model: dict) -> str:
 
 def overview(workspace: str, pages: dict[str, dict], heads: dict[str, str | None],
              workspace_issues: list[dict], has_head: bool, ist_skipped: list[dict] | None,
-             schemas: dict[str, dict], *, records: list[dict] | None = None) -> dict:
+             schemas: dict[str, dict], *, records: list[dict] | None = None,
+             system_views: list[dict] | None = None) -> dict:
     """Leistungen, each with its Vorgänge, and the Ist-Prozess files. No edges between Hauptprozesse:
     Core declares none, and the view does not invent them. A Vorgang whose Hauptprozess is
     no longer in the working files keeps the Leistung of the revision it binds."""
@@ -445,7 +446,7 @@ def overview(workspace: str, pages: dict[str, dict], heads: dict[str, str | None
     if ist_skipped is not None:
         ist = {"pages": [{"page": name, "file": m["selection"]["ist_prozess"], "title": ist_title(m), "issues": m["issues"],
                           "evidence_status": None if m["issues"] else m["nodes"][0]["meta"].get("evidence_status"),
-                          "analysis": None if m["issues"] else m["necessity"]["status"],
+                          "analysis": None if m["issues"] else ("bridge" if m.get("bridge") else m["necessity"]["status"]),
                           "rows": 0 if m["issues"] else len(m["necessity"]["rows"])}
                          for name, m in pages.items() if m["kind"] == "ist-prozess"],
                "skipped": ist_skipped}
@@ -460,11 +461,14 @@ def overview(workspace: str, pages: dict[str, dict], heads: dict[str, str | None
     counts = {kind: sum(n["kind"] == kind for m in shown for n in m["nodes"]) for kind in ("hauptprozess", "teilprozess", "arbeitsschritt")}
     counts |= {"leistung": counts["hauptprozess"], "vorgang": sum(not m["issues"] and not m.get("not_judged") for m in vorgaenge),
                "versuch": sum(len(m["vorgang"]["meta"]["laufpfad"]) for m in vorgaenge if not m["issues"] and not m.get("not_judged"))}
-    return {"format": "impacts-view/5", "kind": "overview", "selection": {"workspace": workspace, "head": has_head},
-            "issues": workspace_issues, "population": population,
-            "hauptprozesse": hauptprozesse, "unassigned": unassigned, "ist": ist,
-            "due_list": due_list(pages), "funnel": funnel(pages, records), "step_queues": step_queues(pages),
-            "data_model": data_model(schemas, counts)}
+    result = {"format": "impacts-view/5", "kind": "overview", "selection": {"workspace": workspace, "head": has_head},
+              "issues": workspace_issues, "population": population,
+              "hauptprozesse": hauptprozesse, "unassigned": unassigned, "ist": ist,
+              "due_list": due_list(pages), "funnel": funnel(pages, records), "step_queues": step_queues(pages),
+              "data_model": data_model(schemas, counts)}
+    if system_views:
+        result["system_views"] = system_views
+    return result
 
 
 # ---------- Data model: the packaged schemas, read and never restated ----------

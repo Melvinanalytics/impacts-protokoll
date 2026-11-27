@@ -127,6 +127,8 @@ class Topology:
     ignored: set[str] = field(default_factory=set)
     # Folder links wait for the walk to end, so every declared level is known when judged.
     folder_links: list[tuple[Path, Path, Path, str]] = field(default_factory=list)
+    protocol_source: Path | None = None
+    protocol_listings: dict[Path, tuple[dict[str, Path], dict[str, Path]]] = field(default_factory=dict)
 
     def skip(self, path: Path) -> bool:
         if not path.is_relative_to(self.root):
@@ -151,12 +153,12 @@ def blocks_vorgaenge(issue: Issue) -> bool:
     return not issue.path.startswith(tuple(folder + "/" for folder in WORKSPACE_FOLDERS)) and issue.code not in NAVIGATION
 
 
-def check_topology(root: Path, human_pattern: str) -> tuple[list[Issue], tuple[dict, ...], dict[str, str]]:
+def check_topology(root: Path, human_pattern: str, *, protocol_source: Path | None = None) -> tuple[list[Issue], tuple[dict, ...], dict[str, str]]:
     """Return topology issues, held rows and the top-level forms by folder name, which
     stays the same however the caller spells the root."""
     # One spelling of the root, so `zz/../ws` and `ws` compare paths alike.
     root = Path(os.path.abspath(root))
-    state = Topology(root, human_pattern)
+    state = Topology(root, human_pattern, protocol_source=Path(os.path.abspath(protocol_source)) if protocol_source is not None else None)
     try:
         result = subprocess.run(["git", "-C", str(root), "ls-files", "--others", "--ignored", "--exclude-standard", "--directory", "-z"], capture_output=True, check=True)
         state.ignored = {_nfc(name) for name in result.stdout.decode("utf-8", errors="surrogateescape").rstrip("\0").split("\0")}
@@ -713,14 +715,96 @@ def _check_sections(state: Topology, folder: Path, body: str) -> None:
 
 
 SPLIT = "move detail into linked sibling files and keep the router to routes"
+ARBEITSSCHRITT_SPLIT = "move detail into linked sibling files or referenced foundations and keep the Arbeitsschritt body within the Knowledge Walk budget"
 # A router that must link every entry cannot shed links, so the advice depends on the form.
 # Record Library and Context Map routers have no size advice: they are not measured, since
 # a Context Map cannot have sub-levels and a Record Library kind splits by period instead.
 SIZE_ADVICE = {"Knowledge Bundle": "split it into declared Knowledge Bundle sub-levels, each with its own router that links its entries"}
+PROTOCOL_CITATION = re.compile(r"02_protocol/([^#:\s<>`]+?)(?::\d+(?:-\d+)?)?(?:#([^\s<>`]+))?\Z")
+
+
+def _locate_protocol(state: Topology, relative: str) -> tuple[Path | None, str | None]:
+    """Resolve `02_protocol/...` strictly inside `protocol_source` without symlinks or `..`."""
+    assert state.protocol_source is not None
+    parts = [part for part in relative.split("/") if part not in {"", "."}]
+    if not parts or any(part == ".." for part in parts):
+        return None, "escapes the protocol source"
+    current = state.protocol_source
+    for part in parts:
+        try:
+            if current not in state.protocol_listings:
+                children = list(current.iterdir())
+                state.protocol_listings[current] = (
+                    {_nfc(child.name): child for child in children},
+                    {_normal(child.name): child for child in children},
+                )
+            exact, aliases = state.protocol_listings[current]
+            candidate = exact.get(_nfc(part))
+            if candidate is None:
+                alias = aliases.get(_normal(part))
+                if alias is not None:
+                    return None, f"differs from on-disk spelling {alias.relative_to(state.protocol_source).as_posix()!r}"
+                return None, "does not resolve in the protocol source"
+            if candidate.is_symlink():
+                return None, "crosses a symlink in the protocol source"
+            current = candidate
+        except (OSError, ValueError):
+            return None, "cannot be read in the protocol source"
+    if not current.exists():
+        return None, "does not resolve in the protocol source"
+    return current, None
+
+
+def _check_protocol_citations(state: Topology, context: Path, body: str) -> None:
+    """When `--protocol-source` is supplied, verify `02_protocol/<path>#<anchor>` code spans."""
+    if state.protocol_source is None:
+        return
+    for kind, text in _segments(body):
+        if kind != "code":
+            continue
+        inner = text.strip("`").strip()
+        match = PROTOCOL_CITATION.fullmatch(inner)
+        if match is None:
+            continue
+        target_rel, fragment = "02_protocol/" + match[1], match[2] or ""
+        try:
+            decoded_target = unquote(target_rel, errors="strict")
+            decoded_fragment = unquote(fragment, errors="strict") if fragment else ""
+        except UnicodeDecodeError:
+            state.add("topology.link_broken", context, f"Protocol citation {inner!r} has invalid percent-encoding")
+            continue
+        located, problem = _locate_protocol(state, decoded_target)
+        if located is None:
+            state.add("topology.link_broken", context, f"Protocol citation {inner!r} {problem}; update the path or pin")
+            continue
+        if decoded_target.endswith("/") and not located.is_dir():
+            state.add("topology.link_broken", context, f"Protocol citation {inner!r} names a directory but resolves to a file")
+            continue
+        if decoded_fragment:
+            if not located.is_file() or located.suffix.lower() != ".md":
+                state.add("topology.link_broken", context, f"Protocol citation {inner!r} has anchor '#{decoded_fragment}' on a non-Markdown target")
+            elif _nfc(decoded_fragment) not in _file_anchors(state, located):
+                state.add("topology.link_broken", context, f"Protocol citation {inner!r} has unresolved anchor '#{decoded_fragment}' in {decoded_target}; update the anchor")
+
+
+def check_protocol_citations_tree(root: Path, protocol_source: Path) -> list[Issue]:
+    """Check `02_protocol/...` code-span citations in a standalone Hauptprozess tree."""
+    state = Topology(Path(os.path.abspath(root)), "", protocol_source=Path(os.path.abspath(protocol_source)))
+    for context in sorted(state.root.rglob(ROUTER)):
+        if any(part.startswith(("_", ".")) for part in context.relative_to(state.root).parts):
+            continue
+        if context.is_symlink() or not context.is_file():
+            continue
+        try:
+            _, body = load_frontmatter_and_body(context, state.root)
+        except (OSError, ValueError, YAMLError, RecursionError):
+            continue
+        _check_protocol_citations(state, context, body)
+    return state.issues
 
 
 def _check_router_file(state: Topology, context: Path, *, advice: str | None = SPLIT) -> None:
-    """Size, when `advice` says how to shrink it, and table contracts of one router."""
+    """Size, when `advice` says how to shrink it, table contracts and optional protocol citations."""
     try:
         if state.skip(context) or context.is_symlink() or not context.is_file():
             return
@@ -731,6 +815,7 @@ def _check_router_file(state: Topology, context: Path, *, advice: str | None = S
     except (OSError, ValueError, YAMLError, RecursionError):
         return  # Unreadable routers are reported where they are read.
     _check_table_contracts(state, context, body)
+    _check_protocol_citations(state, context, body)
 
 
 def _check_table_contracts(state: Topology, context: Path, body: str) -> None:
@@ -833,12 +918,20 @@ def _check_definitions(state: Topology, folder: Path) -> None:
     context = folder / ROUTER
     if folder.parent != state.root and context.is_file() and not context.is_symlink():
         try:
-            _, body = load_frontmatter_and_body(context, state.root)
+            meta, body = load_frontmatter_and_body(context, state.root)
         except (OSError, ValueError, YAMLError, RecursionError):
-            body = None
+            meta, body = None, None
         if body is not None:
+            if isinstance(meta, dict) and meta.get("type") == "arbeitsschritt":
+                try:
+                    size = context.stat().st_size
+                except OSError:
+                    size = 0
+                if size > ROUTER_BYTES:
+                    state.add("topology.router_size", context, f"{state.name(context)} has {size:,} bytes, above the {ROUTER_BYTES:,}-byte router budget; {ARBEITSSCHRITT_SPLIT}")
             _check_links(state, folder, body)
             _check_table_contracts(state, context, body)
+            _check_protocol_citations(state, context, body)
     for child in children:
         if not child.name.startswith(("_", ".")):
             _check_definitions(state, child)

@@ -23,7 +23,7 @@ from .blocks import FENCE, closes
 from .write import write_site
 
 SETTING = re.compile(r"^Working language: (\S+)\s*$", re.M)
-__all__ = ["site_model"]
+__all__ = ["site_model", "vorgang_model"]
 
 
 def working_language(source: Path) -> str | None:
@@ -77,13 +77,23 @@ def site_model(workspace: Path, vorgaenge: Iterable[str] | None = None) -> dict[
         raise ValueError(str(error)) from None
 
 
-def run(source: Path, out: Path, *, write_json: bool = False, language: str | None = None) -> int:
-    source = source.resolve()
-    chosen = choose_language(source, language)
+def vorgang_model(path: Path) -> dict:
+    """The read-only page model for one Vorgang (`vorgaenge/<slug>/CONTEXT.md`), without the display language.
+
+    Stable like `site_model`: Core validates the owning Git workspace once, reads the bound tree
+    through Git, and returns a refused or not_judged (with legacy read projection) model without
+    writing files. Raises ValueError if the path is not a Vorgang inside a Git workspace."""
+    try:
+        return json.loads(json.dumps(selection.single_vorgang(Path(path)), default=str))
+    except SystemExit as error:
+        raise ValueError(str(error)) from None
+
+
+def _build_pages(source: Path, chosen: str) -> tuple[dict[str, dict], Path, bool]:
     kind = selection.kind_of(source)
     if kind == "workspace":
-        pages, protected = selection.workspace_site(source), source
-    elif kind == "hauptprozess":
+        return selection.workspace_site(source), source, True
+    if kind == "hauptprozess":
         pages = {"index.html": selection.hauptprozess_page(source)}
         protected = source
         for parent in source.parents:
@@ -94,9 +104,29 @@ def run(source: Path, out: Path, *, write_json: bool = False, language: str | No
                     break
             except (OSError, ValueError):
                 continue
-    else:
-        pages = {"index.html": selection.single_vorgang(source)}
-        protected = selection.workspace_of(source.parent) or source.parent
+        return pages, protected, False
+    pages = {"index.html": selection.single_vorgang(source)}
+    protected = selection.workspace_of(source.parent) or source.parent
+    return pages, protected, False
+
+
+def run_json_stdout(source: Path, *, language: str | None = None) -> int:
+    source = source.resolve()
+    chosen = choose_language(source, language)
+    pages, _, is_workspace = _build_pages(source, chosen)
+    pages = {name: {**model, "language": chosen} for name, model in pages.items()}
+    payload = pages if is_workspace else pages["index.html"]
+    print(json.dumps(payload, ensure_ascii=False, default=str))
+    problems = [(name, issue) for name, model in pages.items() for issue in model["issues"]]
+    for name, issue in problems:
+        print(f"{name}: {issue['path']}: {issue['code']}: {issue['message']}", file=sys.stderr)
+    return 1 if problems else 0
+
+
+def run(source: Path, out: Path, *, write_json: bool = False, language: str | None = None) -> int:
+    source = source.resolve()
+    chosen = choose_language(source, language)
+    pages, protected, _ = _build_pages(source, chosen)
     pages = {name: {**model, "language": chosen} for name, model in pages.items()}
     write_site(out, protected, pages, write_json)
     problems = [(name, issue) for name, model in pages.items() for issue in model["issues"]]

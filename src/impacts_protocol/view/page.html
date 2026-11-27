@@ -686,7 +686,25 @@ const WORDS = {
     "open_title": "Offen",
     "nicht_laden": "Nicht laden",
     "geschutzt": "geschützt",
-    "menschlich_standard": "menschlich (standard)"
+    "menschlich_standard": "menschlich (standard)",
+    "system_views": "Systembild & Markttopologie",
+    "system_views_sub": "Übergeordnete Markt-, Wertketten- oder Systemansichten aus dem Wurzelrouter (Ebene 0).",
+    "system_view_badge_html": "Domänen-HTML",
+    "system_view_badge_md": "Markdown-Ansicht",
+    "legacy_banner": "Legacy-Lesung · nicht unter dieser Protokollversion geprüft",
+    "legacy_sub": "Leseprojektion aus der Vorgangsdatei. Nichts auf dieser Seite gilt als durch diese Protokollversion geprüft.",
+    "legacy_subject": "Gegenstand und Stufe",
+    "legacy_revision": "Verzeichnete Fassung",
+    "legacy_laufpfad": "Verlauf (Legacy-Lesung)",
+    "legacy_sections": "Abschnitte der Vorgangsdatei",
+    "output_draft": "Entwurf im offenen Versuch · noch nicht geprüft",
+    "output_truncated": "Vorschau gekürzt (erste 12.000 Zeichen).",
+    "output_binary": "Keine Textvorschau verfügbar.",
+    "empty_step_queues": "Leere Schritt-Warteschlangen anzeigen",
+    "no_due_items": "Keine fälligen Wartepunkte",
+    "no_stage_records": "Keine Stufen-Records gefunden",
+    "export_svg": "SVG exportieren",
+    "bridge_chip": "Leistungsstücklisten-Brücke"
   },
   "en": {
     "prozessansicht": "Process view",
@@ -1043,7 +1061,25 @@ const WORDS = {
     "open_title": "Open",
     "nicht_laden": "Excluded context",
     "geschutzt": "protected",
-    "menschlich_standard": "human (standard)"
+    "menschlich_standard": "human (standard)",
+    "system_views": "System & Market Views",
+    "system_views_sub": "Top-level market topology, value-chain or architecture views declared in the root router (Level 0).",
+    "system_view_badge_html": "Domain HTML",
+    "system_view_badge_md": "Markdown view",
+    "legacy_banner": "Legacy reading · not judged under this protocol release",
+    "legacy_sub": "Read projection from the Vorgang file. Nothing shown on this page counts as checked by this release.",
+    "legacy_subject": "Subject and stage",
+    "legacy_revision": "Recorded revision",
+    "legacy_laufpfad": "History (legacy reading)",
+    "legacy_sections": "Vorgang file sections",
+    "output_draft": "Draft in open attempt · not yet checked",
+    "output_truncated": "Preview truncated (first 12,000 characters).",
+    "output_binary": "No text preview available.",
+    "empty_step_queues": "Show empty step queues",
+    "no_due_items": "No waiting due items",
+    "no_stage_records": "No stage records found",
+    "export_svg": "Export SVG",
+    "bridge_chip": "Leistungsstückliste bridge"
   }
 };
 const W = Object.hasOwn(WORDS, MODEL.language) ? WORDS[MODEL.language] : null;
@@ -1221,7 +1257,7 @@ const card = (no, heading, sub, origin, content, wide, extra) => h("section", {c
   h("div", {class: "box"}, content));
 
 /* Links lead only to generated page names; a fragment is any id, fully percent-encoded. */
-const PAGE = /^(index|[aiv]-[a-z0-9-]+)\.html$/;
+const PAGE = /^(index|[aivs]-[a-z0-9-]+)\.html$/;
 const safeHref = (page, id) => !PAGE.test(String(page)) ? null : id == null ? page
   : page + "#" + encodeURIComponent(String(id)).replace(/[!'()*]/g, c => "%" + c.charCodeAt(0).toString(16).toUpperCase());
 const deep = (page, id, label, arrow = true) => {
@@ -1375,9 +1411,60 @@ const notJudgedText = item => MODEL.language === "de"
   : item.message;
 function notJudgedPage() {
   show("sheet-view");
-  put(crumbs([]), h("h1", {text: MODEL.language === "de" ? "Vorgang nicht beurteilt" : "Vorgang not judged"}),
-    h("p", {text: notJudgedText(MODEL.not_judged)}), footer());
-  document.title = MODEL.language === "de" ? "Vorgang nicht beurteilt" : "Vorgang not judged";
+  const leg = MODEL.legacy;
+  const heading = (leg && (leg.title || short(leg.id || ""))) || (MODEL.language === "de" ? "Vorgang nicht beurteilt" : "Vorgang not judged");
+  const parts = [
+    crumbs([]),
+    h("header", {class: "head"}, markHead("V", W.vorgang),
+      h("div", {class: "headmain"},
+        h("h1", {text: heading}),
+        h("div", {class: "pills"},
+          h("span", {class: "badge b-open"}, icon("q", 14), W.legacy_banner),
+          leg && leg.subject ? h("span", {class: "tag", text: leg.subject.record + " · " + leg.subject.stage}) : null),
+        h("p", {class: "warnline", text: notJudgedText(MODEL.not_judged)}),
+        h("p", {class: "muted", text: W.legacy_sub}))),
+  ];
+  if (leg) {
+    const metaItems = [];
+    if (leg.subject) metaItems.push(kv(W.legacy_subject, leg.subject.record + " · " + leg.subject.stage));
+    if (leg.hauptprozess_revision) metaItems.push(kv(W.legacy_revision, h("code", {text: String(leg.hauptprozess_revision)})));
+    if (metaItems.length) parts.push(card(null, W.stand, null, leg.path, metaItems, true));
+    if (leg.laufpfad && leg.laufpfad.length) {
+      const legacyRows = leg.laufpfad.map((e, idx) => h("tr", null,
+        h("td", {text: String(idx + 1)}),
+        h("td", {text: e.arbeitsschritt_ref ? short(String(e.arbeitsschritt_ref)) : "—"}),
+        h("td", {text: e.nummer != null ? String(e.nummer) : "—"}),
+        h("td", {text: e.status != null ? String(e.status) : "—"}),
+        h("td", {text: e.gewaehlte_route != null ? String(e.gewaehlte_route) : (e.wiedereinstieg && e.wiedereinstieg.ausloeser ? e.wiedereinstieg.ausloeser : "—")})));
+      parts.push(card(null, W.legacy_laufpfad, W.jeder_eintrag_in_reihenfolge_der_datei, leg.path + " · laufpfad",
+        h("div", {class: "tablewrap"}, h("table", {class: "t rt"},
+          h("thead", null, h("tr", null, ["#", W.arbeitsschritt, W.versuch, W.stand, W.ergebnis_der_prufung].map(t => h("th", {text: t})))),
+          h("tbody", null, legacyRows))), true));
+    }
+    if (leg.sections && leg.sections.length) {
+      parts.push(card(null, W.legacy_sections, null, leg.path,
+        leg.sections.map(part => h("div", null, part.heading ? h("h4", {text: part.heading}) : null, part.blocks.map(b => block(b)))), true));
+    }
+  }
+  parts.push(footer());
+  put(...parts);
+  document.title = (MODEL.language === "de" ? "Vorgang nicht beurteilt: " : "Vorgang not judged: ") + heading;
+}
+function systemViewPage() {
+  show("sheet-view"); sheetMode(false);
+  const n = MODEL.nodes[0], sel = MODEL.selection;
+  const title = sel.title || n.title || sel.view;
+  put(crumbs([crumb("SYS", title)]),
+    h("header", {class: "head"}, markHead("SYS", W.system_views),
+      h("div", {class: "headmain"},
+        h("h1", {text: title}),
+        h("p", {class: "muted", text: sel.view}),
+        fileStand(n))),
+    h("div", {class: "stack"},
+      (n.sections || []).map(part => card(null, part.heading || title, null, sel.view + W.zeile_3 + part.line,
+        part.blocks.map(b => block(b)), true))),
+    footer());
+  document.title = title;
 }
 function refusedPage() {
   show("sheet-view");
@@ -1474,7 +1561,8 @@ function overviewPage() {
     const rows = ist.pages.map(x => {
       if (x.issues.length) return h("tr", null, h("td", {"data-label": W.ist_prozess}, link(x.page, x.title)),
         h("td", {colspan: "2", "data-label": W.analyse}, h("span", {class: "badge b-open"}, icon("q", 14), W.nicht_lesbar), issuesBlock(x.issues)));
-      const analysis = x.analysis === "table" ? W.analyse_tabelle + count(x.rows, W.tatigkeit, W.tatigkeiten)
+      const analysis = x.analysis === "bridge" ? h("span", {class: "tag", text: W.bridge_chip})
+        : x.analysis === "table" ? W.analyse_tabelle + count(x.rows, W.tatigkeit, W.tatigkeiten)
         : x.analysis === "none" ? line(icon("q", 14), W.keine_analyse_tabelle_erfasst) : W.tabelle_in_anderer_form_wortlich_gezeigt;
       return h("tr", null, h("td", {"data-label": W.ist_prozess}, link(x.page, x.title)), h("td", {"data-label": W.analyse}, analysis),
         h("td", {"data-label": W.beleglabel_der_datei}, x.evidence_status == null ? W.nicht_angegeben : evidence(x.evidence_status)));
@@ -1501,9 +1589,53 @@ function overviewPage() {
       h("td", {"data-label": W.art}, h("strong", {text: KIND_WORD[r.name]}), h("div", null, h("small", null, h("code", {text: r.home})))),
       h("td", {"data-label": W.pflichtfelder}, fieldList(r.required)), h("td", {"data-label": W.optionale_felder}, fieldList(r.optional)),
       h("td", {"data-label": W.verweist_auf}, refersList(r.refers)), h("td", {"data-label": W.hier, text: String(r.count)})));
-    return card(pad(no), W.datenmodell, W.datenmodell_sub, "02_protocol/schemas/", h("div", {class: "tablewrap"}, h("table", {class: "t rt"},
-      h("thead", null, h("tr", null, [W.art, W.pflichtfelder, W.optionale_felder, W.verweist_auf, W.hier].map(t => h("th", {text: t})))),
-      h("tbody", null, rows))), true);
+    return h("details", {class: "rawdata"},
+      h("summary", {text: pad(no) + " · " + W.datenmodell + " (" + W.datenmodell_sub + ")"}),
+      card(null, W.datenmodell, W.datenmodell_sub, "02_protocol/schemas/", h("div", {class: "tablewrap"}, h("table", {class: "t rt"},
+        h("thead", null, h("tr", null, [W.art, W.pflichtfelder, W.optionale_felder, W.verweist_auf, W.hier].map(t => h("th", {text: t})))),
+        h("tbody", null, rows))), true));
+  };
+  const systemViewsCard = () => {
+    const views = MODEL.system_views || [];
+    if (!views.length) return null;
+    return card("00", W.system_views, W.system_views_sub, "CONTEXT.md · View:",
+      h("ul", {class: "plain"}, views.map(v => h("li", {class: "line"},
+        v.issues && v.issues.length
+          ? [h("span", {class: "badge b-open"}, icon("q", 14), v.title), issuesBlock(v.issues)]
+          : [link(v.page, v.title), h("span", {class: "tag", text: v.source_kind === "html" ? W.system_view_badge_html : W.system_view_badge_md}), h("small", null, h("code", {text: v.file}))]))), true);
+  };
+  const dueBlock = () => MODEL.due_list.length
+    ? card(null, W.due_list, W.due_scope, null,
+        h("ul", {class: "plain"}, MODEL.due_list.map(r => h("li", {class: r.missing_due ? "warnline" : "line"},
+          link(r.page, short(r.id)), " · ", r.faellig || W.nicht_angegeben, " · ", r.ausloeser || W.offen))), true)
+    : h("details", {class: "rawdata"},
+        h("summary", {text: W.due_list + " (0 · " + W.no_due_items + ")"}),
+        h("p", {class: "muted", text: W.due_scope}));
+  const funnelBlock = () => MODEL.funnel.length
+    ? card(null, W.subject_funnel, W.funnel_scope, null,
+        h("ul", {class: "plain"}, MODEL.funnel.map(r => h("li", null,
+          h("b", {text: (r.stage === "open" ? W.offen : r.stage) + ": " + r.count}),
+          h("ul", null, r.records.map(record => h("li", {text: record})))))))
+    : h("details", {class: "rawdata"},
+        h("summary", {text: W.subject_funnel + " (0 · " + W.no_stage_records + ")"}),
+        h("p", {class: "muted", text: W.funnel_scope}));
+  const stepQueuesBlock = () => {
+    const active = MODEL.step_queues.filter(q => q.vorgaenge.length > 0);
+    const empty = MODEL.step_queues.filter(q => q.vorgaenge.length === 0);
+    const renderQueue = q => h("div", null,
+      h("h4", {text: short(q.hauptprozess) + " · " + q.title + " · " + rev8(q.revision)}),
+      h("ul", {class: "plain"}, q.vorgaenge.map(r => h("li", null, deep(r.page, q.step, short(r.id)), " · ", r.status))));
+    if (!active.length) {
+      return h("details", {class: "rawdata"},
+        h("summary", {text: W.step_queues + " (0 / " + MODEL.step_queues.length + ")"}),
+        empty.map(renderQueue));
+    }
+    return card(null, W.step_queues, null, null, [
+      active.map(renderQueue),
+      empty.length ? h("details", {class: "rawdata"},
+        h("summary", {text: W.empty_step_queues + " (" + empty.length + ")"}),
+        empty.map(renderQueue)) : null,
+    ], true);
   };
   const refused = p.hauptprozesse_refused + p.vorgaenge_refused;
   put(h("header", {class: "head"}, markHead("WS", W.workspace),
@@ -1513,20 +1645,14 @@ function overviewPage() {
         p.historic ? h("p", {class: "muted", text: count(p.historic, W.leistung, W.leistungen) + W.nur_aus_vorgangen_bekannt}) : null)),
     MODEL.issues.length ? card("!!", W.workspace_meldungen, W.meldungen_des_validators_die_keiner_angezeigten, null, issuesBlock(MODEL.issues), true) : null,
     h("div", {class: "stack"},
-      card(null, W.due_list, W.due_scope, null,
-        h("ul", {class: "plain"}, MODEL.due_list.map(r => h("li", {class: r.missing_due ? "warnline" : "line"},
-          link(r.page, short(r.id)), " · ", r.faellig || W.nicht_angegeben, " · ", r.ausloeser || W.offen))), true),
-      card(null, W.subject_funnel, W.funnel_scope, null,
-        h("ul", {class: "plain"}, MODEL.funnel.map(r => h("li", null,
-          h("b", {text: (r.stage === "open" ? W.offen : r.stage) + ": " + r.count}),
-          h("ul", null, r.records.map(record => h("li", {text: record}))))))),
-      card(null, W.step_queues, null, null,
-        MODEL.step_queues.map(q => h("div", null,
-          h("h4", {text: short(q.hauptprozess) + " · " + q.title + " · " + rev8(q.revision)}),
-          h("ul", {class: "plain"}, q.vorgaenge.map(r => h("li", null,
-            deep(r.page, q.step, short(r.id)), " · ", r.status))))), true),
-      MODEL.hauptprozesse.map(hauptprozess), ist ? istCard() : null,
+      systemViewsCard(),
+      MODEL.due_list.length ? dueBlock() : null,
+      MODEL.hauptprozesse.map(hauptprozess),
       MODEL.unassigned.length ? (no++, card(pad(no), W.nicht_zugeordnet, W.vorgange_ohne_lesbare_gebundene_leistung, "vorgaenge/", vorgaengeTable(MODEL.unassigned, null), true)) : null,
+      ist ? istCard() : null,
+      funnelBlock(),
+      stepQueuesBlock(),
+      !MODEL.due_list.length ? dueBlock() : null,
       dataModelCard()),
     footer());
   document.title = W.workspace_2 + MODEL.selection.workspace;
@@ -2062,6 +2188,48 @@ function selectionPage() {
       toggle.textContent = expanded ? W.zuklappen : W.alles_aufklappen;
       draw();
     });
+    const SVG_TOKENS = {
+      "--bg": "#ffffff", "--ink": "#121212", "--muted": "#6b6b6b", "--soft": "#f3f3f1", "--line": "#e3e3df",
+      "--open": "#c2410c", "--open-bg": "#fff4ed", "--derived": "#8a6d1d", "--gate": "#3346a8", "--gate-bg": "#eef0fb",
+      "--go": "#2f7d32", "--go-ink": "#ffffff", "--panel": "#f3f3f1", "--hair": "#e3e3df", "--strong": "#6b6b6b",
+      "--action": "#121212", "--action-ink": "#ffffff", "--done": "#6b6b6b", "--done-tint": "#f3f3f1",
+      "--now": "#2f7d32", "--now-ink": "#ffffff"
+    };
+    function standaloneMapSvg() {
+      const cs = typeof getComputedStyle === "function" ? getComputedStyle(document.documentElement) : null;
+      const resolved = Object.fromEntries(Object.entries(SVG_TOKENS).map(([k, fb]) => {
+        const val = cs ? cs.getPropertyValue(k).trim() : "";
+        return [k, val || fb];
+      }));
+      const replaceVars = text => Object.entries(resolved).reduce((s, [k, v]) => s.split("var(" + k + ")").join(v), text);
+      const clone = svg.cloneNode(true);
+      clone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+      const css = replaceVars(
+        'svg{background:var(--bg);color:var(--ink)}'
+        + 'text{font:12.5px -apple-system,BlinkMacSystemFont,"Inter","Segoe UI",Helvetica,Arial,sans-serif}'
+        + 'text.kc{font-size:10px;font-weight:700}'
+        + '.edge{fill:none;stroke:var(--line)}.edge.on{stroke:var(--now);stroke-width:3}'
+        + '.edge.ok{stroke:var(--done);stroke-width:1.5}.edge.wait{stroke:var(--strong);stroke-width:1.5;stroke-dasharray:5 4}'
+        + '.node .ring{fill:none;stroke:none}'
+      );
+      const styleEl = document.createElementNS(NS, "style");
+      styleEl.textContent = css;
+      const bgRect = document.createElementNS(NS, "rect");
+      bgRect.setAttribute("width", "100%");
+      bgRect.setAttribute("height", "100%");
+      bgRect.setAttribute("fill", resolved["--bg"]);
+      clone.insertBefore(bgRect, clone.firstChild);
+      clone.insertBefore(styleEl, clone.firstChild);
+      return replaceVars(new XMLSerializer().serializeToString(clone));
+    }
+    const exportSvg = h("button", {type: "button", text: W.export_svg});
+    exportSvg.addEventListener("click", () => {
+      const raw = standaloneMapSvg();
+      const a = document.createElement("a");
+      a.href = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(raw);
+      a.download = (vorgang ? short(vorgang.id) : short(hp.id)) + "-map.svg";
+      a.click();
+    });
     /* The h1 names the selection; this crumb says where it leads, and keeps its words on narrow screens. */
     const up = vorgang ? crumb("V", W.vorgangsblatt_mit_verlauf, () => open(vorgang.id)) : crumb("HP", W.blatt_des_hauptprozesses, () => open(hp.id));
     up.append(icon("arrow", 14));
@@ -2072,7 +2240,7 @@ function selectionPage() {
       vorgang ? h("p", {class: "lede muted", text: W.ablauf + title(hp)}) : null,
       h("div", {class: "lede"}, vorgang ? h("div", {class: "pills"}, standBadge(stand), stagePill(stand), leistungPill(stand)) : null, standSentence(stand)),
       MODEL.notes && MODEL.notes.length ? h("div", {class: "lede"}, h("p", {class: "muted", text: W.validator_hinweise_blockieren_nicht}), issuesBlock(MODEL.notes)) : null,
-      h("div", {class: "bar"}, toggle),
+      h("div", {class: "bar"}, toggle, exportSvg),
       legend());
   }
 
@@ -2090,6 +2258,19 @@ function selectionPage() {
         nodes.get(c).kind === "arbeitsschritt" && vorgang ? h("small", {text: PHASE[phaseOf(c)][0]}) : null))), false);
   }
 
+  function outputPreviews(index) {
+    const list = (MODEL.attempt_outputs && MODEL.attempt_outputs[index - 1]) || [];
+    if (!list.length) return null;
+    return h("div", {class: "stack"}, list.map(item => h("details", {class: "rawdata"},
+      h("summary", null,
+        h("code", {text: item.pfad}),
+        item.draft ? [" ", h("span", {class: "badge b-open", text: W.output_draft})] : null,
+        item.sha256 ? [" ", h("small", {text: item.sha256.slice(0, 15)})] : null),
+      item.preview != null
+        ? [h("pre", {text: item.preview}), item.truncated ? h("small", {class: "muted", text: W.output_truncated}) : null]
+        : h("p", {class: "muted", text: W.output_binary}))));
+  }
+
   function timeline(list) {
     return h("ol", {class: "timeline"}, list.map(([e, i]) => {
       const key = MODEL.attempt_phases[i - 1], resume = e.wiedereinstieg || {};
@@ -2099,6 +2280,7 @@ function selectionPage() {
         key === "done" && row ? h("div", null, routeChip(e.arbeitsschritt_ref, row)) : null,
         key === "waiting" ? [line(icon("hourglass", 14), resume.ausloeser ? W.weiter_wenn_2 + resume.ausloeser : W.der_verlauf_nennt_keinen_ausloser_fur),
           resume.continuation_ref ? h("small", {text: W.fortsetzung_in_2 + resume.continuation_ref}) : null] : null,
+        outputPreviews(i),
         attemptTriad(i, true));
     }));
   }
@@ -2291,6 +2473,7 @@ function selectionPage() {
 if (MODEL.kind === "overview") overviewPage();
 else if (MODEL.not_judged) notJudgedPage();
 else if (MODEL.issues.length) refusedPage();
+else if (MODEL.kind === "system-view") systemViewPage();
 else if (MODEL.kind === "ist-prozess") istPage();
 else selectionPage();
 }

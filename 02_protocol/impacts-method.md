@@ -480,3 +480,20 @@ Apply these acceptance questions to existing surfaces at capture, processing, ve
 - DX: Can a developer locate the authoritative contract, responsible implementation and applicable verification and change path?
 
 Human-readable meaning and machine-readable fields must agree. Different views use the same authoritative definition. These questions add no mandatory fields or documents; fix the existing rule, wording or link when a reader cannot apply it.
+
+## Human view
+
+`impacts view` renders a read-only static HTML inspection surface (and optional `model.json` export) over a workspace, a Hauptprozess or a single Vorgang. It decides, schedules and changes nothing: every approval (`human:<id>`), writeback and state change stays with the responsible person, the harness and Git.
+
+Use the Human view at four lifecycle checkpoints:
+
+| Phase or boundary | What the person inspects in `impacts view` |
+|---|---|
+| **Identify & System orientation** | Level-0 system or market-topology views (`View:` lines in root `CONTEXT.md`, such as a [Market relationships](#market-relationships) note or a domain HTML architecture view) and the workspace's Leistungen before diving into individual steps. |
+| **Minimize** | Rendered `analyse/` captures (`type: ist-prozess` and [bridge](impacts-architect/templates/bridge.md) files, including case subfolders), checking the five-question necessity table, `entfaellt` proposals and bidirectional `arbeitsschritt:<slug>` links to target steps. |
+| **Perfect & Test** | Process map (with standalone SVG export) and Arbeitsschritt sheets covering all seven [step areas](#step-areas), declared `gate: human` and `sacred` boundaries, routes and open items. |
+| **Execution & Human gates** | Vorgang history, derived [progress](binding.md#vorgang-progress), `Stage:`/`Stufe:` subject state across declared Record Libraries, and readable previews of `geschrieben` outputs and open-attempt drafts (labelled as unchecked drafts under [Work from prerequisites](binding.md#work-from-prerequisites)). |
+
+A workspace declares optional Level-0 views at column zero of its root `CONTEXT.md` body as `View: <relative-path>` or `View: <relative-path> | <title>` (`.html` or `.md`, regular file inside the workspace, no symlinks). Domain-specific market or matching diagrams stay in their domain or Fachrepo home and dock into `index.html` through `View:`, keeping the protocol itself domain-free. For every valid `hauptprozesse/<slug>/` whose folder slug matches `[a-z0-9]+(?:-[a-z0-9]+)*` (up to 200 characters), the workspace site writes `a-<slug>.html` alongside `index.html` and optional `model.json`; a docked `.html` view may link directly to those sibling filenames. Because a `.html` `View:` file is copied verbatim with SHA-256 verification, the generator injects no back-link into it; authors who want one include `<a href="index.html">` in their HTML or rely on browser Back.
+
+Pages with blocking Core or structure findings are refused and shown with their exact diagnostics; navigation findings appear as non-blocking notes on Hauptprozess pages. A `not_judged` Vorgang keeps a read projection clearly bannered as unjudged legacy reading under [Snapshot and provenance](binding.md#snapshot-and-provenance), and never enters due lists or step queues. For programmatic single-Vorgang status reads without writing files, use `impacts view <source> --json-stdout` or `impacts_protocol.view.vorgang_model(path)`.

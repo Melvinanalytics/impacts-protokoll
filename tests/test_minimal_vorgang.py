@@ -168,7 +168,7 @@ def _prepare_workspace(base: Path) -> tuple[Path, Path]:
     write_context(
         vorgang / "CONTEXT.md",
         {
-            "type": "vorgang", "protocol": "v0.8.2",
+            "type": "vorgang", "protocol": "v0.9.0",
             "id": "vorgang:video-001",
             "hauptprozess_revision": f"git-tree:{revision}",
             "laufpfad": entries,

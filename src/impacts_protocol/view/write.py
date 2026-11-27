@@ -22,7 +22,7 @@ from pathlib import Path
 from .project import PAGE_HEADINGS, EXECUTION, OWNER_LABELS
 
 TEMPLATE = Path(__file__).with_name("page.html")
-NAME = re.compile(r"(index|[aiv]-[a-z0-9-]+)\.html|model\.json")
+NAME = re.compile(r"(index|[aivs]-[a-z0-9-]+)\.html|model\.json")
 
 
 def embed(model: dict) -> str:
@@ -69,10 +69,24 @@ def outside(real: Path, source: Path) -> bool:
     return real not in source.parents
 
 
+def _render_file(source: Path, model: dict) -> bytes:
+    if model.get("kind") == "system-view" and model.get("selection", {}).get("source_kind") == "html" and not model.get("issues"):
+        rel = model["selection"]["view"]
+        expected = model["selection"].get("sha256")
+        target = (source / rel).resolve()
+        if not target.is_relative_to(source) or not target.is_file():
+            raise SystemExit(f"system view {rel} changed or disappeared during generation; nothing was written")
+        raw = target.read_bytes()
+        if expected and hashlib.sha256(raw).hexdigest() != expected:
+            raise SystemExit(f"system view {rel} changed during generation; nothing was written")
+        return raw
+    return page_html(model).encode()
+
+
 def write_site(out: Path, source: Path, pages: dict[str, dict], export: bool) -> None:
     source = Path(os.path.realpath(source))
     out = Path(os.path.abspath(out))
-    files = {name: page_html(model).encode() for name, model in pages.items()}
+    files = {name: _render_file(source, model) for name, model in pages.items()}
     if export:
         files["model.json"] = (json.dumps(pages, ensure_ascii=False, indent=1, default=str) + "\n").encode()
     if not all(NAME.fullmatch(name) for name in files) or "index.html" not in files:

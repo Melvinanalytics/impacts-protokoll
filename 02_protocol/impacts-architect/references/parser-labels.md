@@ -10,6 +10,7 @@ This table serves translators: it inventories finite labels parsed from readable
 | Level router load section | `What to load` | `Was laden` | `src/impacts_protocol/topology.py:_check_sections` |
 | Machine-written table declaration | `impacts:table-contract` | — | `src/impacts_protocol/topology.py:_check_table_contracts`; HTML comment in any router the validator reads and in Hauptprozess, Teilprozess and Arbeitsschritt bodies, as [Router size and table contracts](formwahl.md#router-size-and-table-contracts) lists them |
 | Working language setting | `Working language:` | — | `src/impacts_protocol/view/__init__.py:working_language` |
+| System view declaration | `View:` | — | `src/impacts_protocol/view/selection.py:declared_views` |
 | Flow headings | `flow` | `ablauf` | `src/impacts_protocol/view/page.html:headingText`, `src/impacts_protocol/view/project.py:annotate`, `src/impacts_protocol/view/project.py:sheet_parts`, `src/impacts_protocol/view/project.py:step_refs` |
 | Authority headings | `authority` | `befugnis` | `src/impacts_protocol/view/page.html:headingText`, `src/impacts_protocol/view/project.py:annotate`, `src/impacts_protocol/view/project.py:sheet_parts`, `src/impacts_protocol/view/project.py:step_refs` |
 | Job headings | `one job` | `ein job` | `src/impacts_protocol/view/page.html:headingText`, `src/impacts_protocol/view/project.py:annotate`, `src/impacts_protocol/view/project.py:sheet_parts`, `src/impacts_protocol/view/project.py:step_refs` |
@@ -88,7 +89,7 @@ This table serves translators: it inventories finite labels parsed from readable
 | Remove contribution | `remove` | — | `src/impacts_protocol/view/project.py:minimize` |
 | Reported evidence | `reported` | — | `src/impacts_protocol/view/project.py:labels` |
 | Run data kind | `Run record` | — | `src/impacts_protocol/view/project.py:source_kinds` |
-| Subject stage | `Stage` | — | `src/impacts_protocol/view/selection.py:record_stages` |
+| Subject stage | `Stage` | `Stufe` | `src/impacts_protocol/view/selection.py:record_stages` |
 | Source version | `Stand` | — | `06_evaluations/cold-walk/check.py:_fields`, `06_evaluations/cold-walk/check.py:_hauptprozess_source` |
 | Subject data kind | `Subject record` | — | `src/impacts_protocol/view/project.py:source_kinds` |
 | Control origin | `Ursprung` | — | `06_evaluations/cold-walk/check.py:_fields`, `06_evaluations/cold-walk/check.py:_hauptprozess_source` |

@@ -145,7 +145,7 @@ class CliTests(unittest.TestCase):
                 self.assertEqual(0, main(["validate", str(target)]))
 
         self.assertEqual(
-            "impacts validate v0.8.2 against pin v0.8.2: 0 Hauptprozesse, 0 Teilprozesse, "
+            "impacts validate v0.9.0 against pin v0.9.0: 0 Hauptprozesse, 0 Teilprozesse, "
             "0 Arbeitsschritte, 0 Vorgänge, 0 Versuche judged; 0 Vorgänge not judged; 0 definition trees outside hauptprozesse/\n",
             default_stdout.getvalue(),
         )
@@ -295,9 +295,10 @@ def test_validate_json_subprocess_reports_valid_and_invalid_without_text_leaks(t
     assert valid.stderr == ""
     valid_report = _json_stdout(valid)
     assert set(valid_report) == {
-        "report_version", "command", "tool", "issues", "valid", "root", "not_judged", "external_references_not_verified", "release", "pin", "judged", "not_judged_counts", "superseded", "external_references", "held", "top_level_forms", "workspace_judged"
+        "report_version", "command", "tool", "issues", "valid", "root", "not_judged", "external_references_not_verified", "release", "pin", "preview_pin", "judged", "not_judged_counts", "superseded", "external_references", "held", "top_level_forms", "workspace_judged"
     }
     assert valid_report["top_level_forms"] == {}
+    assert valid_report["preview_pin"] is False
     assert valid_report["report_version"] == 3
     assert valid_report["command"] == "validate"
     _assert_tool_metadata(valid_report["tool"])
